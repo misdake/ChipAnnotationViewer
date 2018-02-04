@@ -1,7 +1,10 @@
 define('Canvas', ['Renderer'], function (Renderer) {
     function Canvas(domElement, name) {
         this.domElement = domElement;
-        this.name = name
+        this.name = name;
+
+        this.layers = [];
+        this.layerByName = {};
     }
 
     Canvas.prototype.load = function () {
@@ -9,27 +12,26 @@ define('Canvas', ['Renderer'], function (Renderer) {
         this.canvasElement = document.getElementById(this.name);
         this.context = this.canvasElement.getContext("2d");
         this.renderer = new Renderer(this.canvasElement, this.context);
-
-        this.renderer.clear();
-
-        this.image = new Image();
-        this.image.src = "icon.jpg";
     };
 
-    Canvas.prototype.addLayer = function () {
+    Canvas.prototype.addLayer = function (layer) {
+        var name = layer.name;
+        var renderOrder = layer.renderOrder;
 
+        //TODO deny duplicate names?
+        this.layers[renderOrder] = this.layers[renderOrder] || [];
+        this.layers[renderOrder].push(layer);
+        this.layerByName[name] = layer;
     };
 
-    Canvas.prototype.createOrGetLayer = function (name) {
-
-    };
-
-    Canvas.prototype.removeLayer = function (name) {
-
+    Canvas.prototype.removeLayer = function (layer) {
+        //TODO
+        //remove from layers
+        //remove from layerByName
     };
 
     Canvas.prototype.getLayer = function (name) {
-
+        return this.layerByName[name];
     };
 
     Canvas.prototype.requestRender = function () {
@@ -40,12 +42,20 @@ define('Canvas', ['Renderer'], function (Renderer) {
     };
     Canvas.prototype.render = function () {
         this.renderer.clear();
-        this.r = this.r || 0;
-        this.r += 0.1;
-        if (this.image && this.image.complete) {
-            this.renderer.drawImage(this.image, Math.sin(this.r) * 5 + 5, Math.cos(this.r) * 5 + 5);
+
+        var requestNextFrame = false;
+        var canvas = this;
+        var renderer = this.renderer;
+        Object.keys(this.layers).sort().forEach(function (renderOrder) {
+            canvas.layers[renderOrder].forEach(function (layer) {
+                requestNextFrame |= layer.render(0, canvas, renderer)
+            })
+        });
+        if (requestNextFrame) {
+            this.requestRender();
+        } else {
+            console.log('stopped');
         }
-        this.requestRender();
     };
 
     Canvas.prototype.unload = function () {

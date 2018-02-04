@@ -1,25 +1,20 @@
 define('Layer', [], function () {
-    function Layer(dom) {
-        this.dom = dom;
+    function Layer(name, renderOrder) {
+        this.name = name;
+        this.renderOrder = renderOrder;
     }
 
-    Layer.prototype.load = function () {
+    Layer.prototype.add = function (canvas) {
 
     };
 
-    Layer.prototype.addLayer = function () {
-
-    };
-
-    Layer.prototype.getLayer = function (name) {
-
-    };
-
-    Layer.prototype.render = function () {
+    Layer.prototype.render = function (deltatime, canvas, renderer) {
 
     };
 
     Layer.prototype.unload = function () {
 
     };
+
+    return Layer;
 });

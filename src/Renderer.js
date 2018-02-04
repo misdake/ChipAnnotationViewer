@@ -5,7 +5,7 @@ define('Renderer', [], function () {
     }
 
     Renderer.prototype.clear = function () {
-        this.context.fillStyle = "#FF0000";
+        this.context.fillStyle = "#000000";
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     };
     Renderer.prototype.setColor = function (color) {

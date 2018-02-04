@@ -8,10 +8,22 @@ define('Canvas', ['Renderer'], function (Renderer) {
     }
 
     Canvas.prototype.load = function () {
-        this.domElement.innerHTML = "<canvas id=\"" + this.name + "\" style='overflow:hidden'></canvas>";
+        this.domElement.innerHTML = "<canvas id=\"" + this.name + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
         this.canvasElement = document.getElementById(this.name);
+        this.canvasElement.width = this.canvasElement.clientWidth;
+        this.canvasElement.height = this.canvasElement.clientHeight;
         this.context = this.canvasElement.getContext("2d");
         this.renderer = new Renderer(this.canvasElement, this.context);
+
+        var self = this;
+        this.canvasElement.onmousewheel = function (event) {
+            event = event || window.event;
+            var layerImage = self.getLayer('image');
+            if (layerImage.zoomLevel !== undefined && layerImage.maxLevel) {
+                var diff = event.wheelDelta > 0 ? -1 : 1;
+                layerImage.loadImageZoom(layerImage.zoomLevel + diff);
+            }
+        };
     };
 
     Canvas.prototype.addLayer = function (layer) {

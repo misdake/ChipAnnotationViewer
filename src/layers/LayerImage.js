@@ -1,9 +1,9 @@
-define('LayerImage', ['Layer'], function(Layer) {
+define('LayerImage', ['Layer'], function (Layer) {
     function LayerImage() {
     }
     LayerImage.prototype = new Layer('image', 0);
 
-    LayerImage.prototype.loadImagePack = function (content, path) {
+    LayerImage.prototype.load = function (content, path) {
         this.content = content;
         this.maxLevel = content.maxLevel;
         this.imageBasePath = path;
@@ -32,12 +32,12 @@ define('LayerImage', ['Layer'], function(Layer) {
         }
     };
 
-    LayerImage.prototype.render = function(deltatime, canvas, renderer) {
+    LayerImage.prototype.render = function (deltatime, canvas, renderer, camera) {
         if (this.imageMatrix) {
             for (var i = 0; i < this.xCount; i++) {
                 for (var j = 0; j < this.yCount; j++) {
                     if (this.imageMatrix[i][j] && this.imageMatrix[i][j].complete) {
-                        renderer.drawImage(this.imageMatrix[i][j], i * this.content.tileSize, j * this.content.tileSize);
+                        renderer.drawImage(this.imageMatrix[i][j], i, j, this.zoomLevel, this.content.tileSize);
                     }
                 }
             }

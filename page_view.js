@@ -5,6 +5,7 @@ requirejs.config({
 
         Canvas: 'src/Canvas',
         Renderer: 'src/Renderer',
+        Camera: 'src/Camera',
 
         Layer: 'src/Layer',
         LayerImage: 'src/layers/LayerImage',
@@ -17,13 +18,13 @@ requirejs.config({
 // your application logic in there.
 require(['Canvas', 'LayerImage', 'NetUtil'], function (Canvas, LayerImage, NetUtil) {
     var canvas = new Canvas(document.getElementById("container"), 'canvas2d');
-    canvas.load();
+    canvas.init();
     var layerImage = new LayerImage();
     canvas.addLayer(layerImage);
     canvas.requestRender();
 
     NetUtil.get("data/fiji/content.json", function (content) {
-        layerImage.loadImagePack(JSON.parse(content), "data/fiji");
+        canvas.load(JSON.parse(content), "data/fiji");
         layerImage.loadImageZoom(2);
         canvas.requestRender();
     });

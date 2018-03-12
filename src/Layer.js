@@ -8,11 +8,11 @@ define('Layer', [], function () {
 
     };
 
-    Layer.prototype.render = function (deltatime, canvas, renderer) {
+    Layer.prototype.load = function (content, folder) {
 
     };
 
-    Layer.prototype.unload = function () {
+    Layer.prototype.render = function (deltatime, canvas, renderer) {
 
     };
 

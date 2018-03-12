@@ -8,11 +8,9 @@ define('Renderer', [], function () {
         this.context.fillStyle = "#000000";
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     };
-    Renderer.prototype.setColor = function (color) {
-
-    };
-    Renderer.prototype.drawImage = function (image, x, y) {
-        this.context.drawImage(image, x, y);
+    Renderer.prototype.drawImage = function (image, x, y, zoom, tileSize) {
+        var targetSize = tileSize << zoom;
+        this.context.drawImage(image, x * targetSize, y * targetSize, targetSize, targetSize);
     };
 
     return Renderer;

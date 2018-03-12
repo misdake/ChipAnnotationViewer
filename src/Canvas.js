@@ -1,13 +1,15 @@
-define('Canvas', ['Renderer'], function (Renderer) {
+define('Canvas', ['Renderer', 'Camera'], function (Renderer, Camera) {
     function Canvas(domElement, name) {
         this.domElement = domElement;
         this.name = name;
 
         this.layers = [];
         this.layerByName = {};
+
+        this.camera = new Camera();
     }
 
-    Canvas.prototype.load = function () {
+    Canvas.prototype.init = function () {
         this.domElement.innerHTML = "<canvas id=\"" + this.name + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
         this.canvasElement = document.getElementById(this.name);
         this.canvasElement.width = this.canvasElement.clientWidth;
@@ -16,6 +18,7 @@ define('Canvas', ['Renderer'], function (Renderer) {
         this.renderer = new Renderer(this.canvasElement, this.context);
 
         var self = this;
+
         this.canvasElement.onmousewheel = function (event) {
             event = event || window.event;
             var layerImage = self.getLayer('image');
@@ -36,12 +39,6 @@ define('Canvas', ['Renderer'], function (Renderer) {
         this.layerByName[name] = layer;
     };
 
-    Canvas.prototype.removeLayer = function (layer) {
-        //TODO
-        //remove from layers
-        //remove from layerByName
-    };
-
     Canvas.prototype.getLayer = function (name) {
         return this.layerByName[name];
     };
@@ -52,15 +49,26 @@ define('Canvas', ['Renderer'], function (Renderer) {
             self.render();
         })
     };
+
+    Canvas.prototype.load = function (content, folder) {
+        var canvas = this;
+        Object.keys(this.layers).sort().forEach(function (renderOrder) {
+            canvas.layers[renderOrder].forEach(function (layer) {
+                layer.load(content, folder);
+            })
+        });
+    };
+
     Canvas.prototype.render = function () {
         this.renderer.clear();
 
         var requestNextFrame = false;
         var canvas = this;
         var renderer = this.renderer;
+        var camera = this.camera;
         Object.keys(this.layers).sort().forEach(function (renderOrder) {
             canvas.layers[renderOrder].forEach(function (layer) {
-                requestNextFrame |= layer.render(0, canvas, renderer)
+                requestNextFrame |= layer.render(0, canvas, renderer, camera);
             })
         });
         if (requestNextFrame) {
@@ -68,12 +76,6 @@ define('Canvas', ['Renderer'], function (Renderer) {
         } else {
             console.log('stopped');
         }
-    };
-
-    Canvas.prototype.unload = function () {
-        this.domElement.innerHTML = "";
-        this.canvasElement = undefined;
-        this.context = undefined;
     };
 
     return Canvas;

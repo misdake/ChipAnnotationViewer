@@ -14,9 +14,16 @@
             height:100%;
         }
     </style>
-    <!-- data-main attribute tells require.js to load
-         scripts/main.js after require.js loads. -->
-    <script data-main="page_view" src="lib/require.js"></script>
+    <script src="lib/require.js"></script>
+    <script>
+        requirejs.config({
+            baseUrl: 'js',
+            paths: {
+                'Main': 'Main',
+            }
+        });
+        require(['Main']);
+    </script>
 </head>
 <body>
 <div id='container'></div>

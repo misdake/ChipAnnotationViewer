@@ -32,7 +32,9 @@ define(["require", "exports", "./Renderer", "./Camera"], function (require, expo
             };
             this.canvasElement.onmousemove = function (event) {
                 if (event.which > 0) {
-                    _this.camera.move(lastX - event.clientX, lastY - event.clientY);
+                    var dx = (lastX - event.clientX) << _this.camera.getZoom();
+                    var dy = (lastY - event.clientY) << _this.camera.getZoom();
+                    _this.camera.move(dx, dy);
                     lastX = event.clientX;
                     lastY = event.clientY;
                     self.requestRender();
@@ -71,7 +73,7 @@ define(["require", "exports", "./Renderer", "./Camera"], function (require, expo
                 this.canvasElement.width = this.width;
             if (this.canvasElement.height !== this.height)
                 this.canvasElement.height = this.height;
-            this.renderer.clear();
+            this.renderer.begin(this.camera);
             for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
                 var layer = _a[_i];
                 layer.render(this, this.renderer, this.camera);

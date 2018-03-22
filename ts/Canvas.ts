@@ -33,6 +33,7 @@ export class Canvas {
     public init() {
         this.layers = [];
         let self = this;
+
         this.canvasElement.onmousewheel = event => {
             self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
             self.requestRender();
@@ -44,10 +45,11 @@ export class Canvas {
             lastX = event.clientX;
             lastY = event.clientY;
         };
-
         this.canvasElement.onmousemove = event => {
             if (event.which > 0) {
-                this.camera.move(lastX - event.clientX, lastY - event.clientY);
+                let dx = (lastX - event.clientX) << this.camera.getZoom();
+                let dy = (lastY - event.clientY) << this.camera.getZoom();
+                this.camera.move(dx, dy);
                 lastX = event.clientX;
                 lastY = event.clientY;
                 self.requestRender();
@@ -93,7 +95,7 @@ export class Canvas {
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;
         if (this.canvasElement.height !== this.height) this.canvasElement.height = this.height;
 
-        this.renderer.clear();
+        this.renderer.begin(this.camera);
         for (let layer of this.layers) {
             layer.render(this, this.renderer, this.camera);
         }

@@ -55,14 +55,11 @@ export class LayerImage extends Layer {
 
         this.prepare(camera, canvas);
 
-        let dx = canvas.getWidth() / 2 - camera.getX();
-        let dy = canvas.getHeight() / 2 - camera.getY();
-
         if (this.imageMatrix) {
             for (let i = 0; i < this.xCount; i++) {
                 for (let j = 0; j < this.yCount; j++) {
                     if (this.imageMatrix[i][j] && this.imageMatrix[i][j].complete) {
-                        renderer.image(this.imageMatrix[i][j], i * targetSize + dx, j * targetSize + dy, targetSize, targetSize);
+                        renderer.image(this.imageMatrix[i][j], i * targetSize, j * targetSize, targetSize, targetSize);
                     }
                 }
             }

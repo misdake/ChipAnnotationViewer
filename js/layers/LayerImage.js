@@ -47,13 +47,11 @@ define(["require", "exports", "../Layer"], function (require, exports, Layer_1) 
             var zoom = camera.getZoom();
             var targetSize = this.content.tileSize << zoom;
             this.prepare(camera, canvas);
-            var dx = canvas.getWidth() / 2 - camera.getX();
-            var dy = canvas.getHeight() / 2 - camera.getY();
             if (this.imageMatrix) {
                 for (var i = 0; i < this.xCount; i++) {
                     for (var j = 0; j < this.yCount; j++) {
                         if (this.imageMatrix[i][j] && this.imageMatrix[i][j].complete) {
-                            renderer.image(this.imageMatrix[i][j], i * targetSize + dx, j * targetSize + dy, targetSize, targetSize);
+                            renderer.image(this.imageMatrix[i][j], i * targetSize, j * targetSize, targetSize, targetSize);
                         }
                     }
                 }

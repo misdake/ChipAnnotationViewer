@@ -25,11 +25,9 @@ export class Camera {
         this.cx += dx;
         this.cy += dy;
     }
-
     public getX(): number {
         return this.cx;
     }
-
     public getY(): number {
         return this.cy;
     }
@@ -37,17 +35,14 @@ export class Camera {
     public getZoom(): number {
         return this.zoom;
     }
-
     public changeZoomBy(amount: number) {
         this.zoom += amount;
         this.checkZoom();
     }
-
     public setZoomTo(zoom: number) {
         this.zoom = zoom;
         this.checkZoom();
     }
-
     private checkZoom() {
         if (this.zoom < this.zoomMin) this.zoom = this.zoomMin;
         if (this.zoom > this.zoomMax) this.zoom = this.zoomMax;

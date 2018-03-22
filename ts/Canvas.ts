@@ -18,8 +18,8 @@ export class Canvas {
         this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
         this.canvasElement = document.getElementById(id) as HTMLCanvasElement;
         this.context = this.canvasElement.getContext("2d");
-        this.renderer = new Renderer(this, this.canvasElement, this.context);
         this.camera = new Camera();
+        this.renderer = new Renderer(this, this.canvasElement, this.context);
 
         this.width = this.canvasElement.clientWidth;
         this.height = this.canvasElement.clientHeight;
@@ -35,7 +35,14 @@ export class Canvas {
         let self = this;
 
         this.canvasElement.onmousewheel = event => {
+            self.camera.action();
+            let point1 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
             self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
+            self.camera.action();
+            let point2 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+            let dx = point1.x - point2.x;
+            let dy = point1.y - point2.y;
+            self.camera.moveXy(dx, dy);
             self.requestRender();
         };
 
@@ -47,9 +54,12 @@ export class Canvas {
         };
         this.canvasElement.onmousemove = event => {
             if (event.which > 0) {
-                let dx = (lastX - event.clientX) << this.camera.getZoom();
-                let dy = (lastY - event.clientY) << this.camera.getZoom();
-                this.camera.move(dx, dy);
+                self.camera.action();
+                let point1 = self.camera.screenXyToCanvas(lastX, lastY);
+                let point2 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                let dx = point1.x - point2.x;
+                let dy = point1.y - point2.y;
+                self.camera.moveXy(dx, dy);
                 lastX = event.clientX;
                 lastY = event.clientY;
                 self.requestRender();
@@ -83,7 +93,7 @@ export class Canvas {
     }
 
     public load(content: Content, folder: string) {
-        this.camera.load(content);
+        this.camera.load(this, content);
         for (let layer of this.layers) {
             layer.load(this, content, folder);
         }
@@ -95,7 +105,9 @@ export class Canvas {
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;
         if (this.canvasElement.height !== this.height) this.canvasElement.height = this.height;
 
-        this.renderer.begin(this.camera);
+        this.camera.action();
+
+        this.renderer.clear();
         for (let layer of this.layers) {
             layer.render(this, this.renderer, this.camera);
         }

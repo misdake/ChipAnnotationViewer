@@ -51,7 +51,7 @@ define(["require", "exports", "../Layer"], function (require, exports, Layer_1) 
                 for (var i = 0; i < this.xCount; i++) {
                     for (var j = 0; j < this.yCount; j++) {
                         if (this.imageMatrix[i][j] && this.imageMatrix[i][j].complete) {
-                            renderer.image(this.imageMatrix[i][j], i * targetSize, j * targetSize, targetSize, targetSize);
+                            renderer.image(camera, this.imageMatrix[i][j], i * targetSize, j * targetSize, targetSize, targetSize);
                         }
                     }
                 }

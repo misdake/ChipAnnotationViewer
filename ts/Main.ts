@@ -11,7 +11,6 @@ canvas.addLayer(layerImage);
 
 NetUtil.get("data/fiji/content.json", text => {
     let content: Content = JSON.parse(text) as Content;
-    console.log(text);
     canvas.load(content, "data/fiji");
     canvas.requestRender();
 });

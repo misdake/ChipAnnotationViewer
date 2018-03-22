@@ -5,6 +5,9 @@ export class Camera {
     private zoomMax: number;
     private zoom: number;
 
+    private cx: number;
+    private cy: number;
+
     public constructor() {
     }
 
@@ -13,6 +16,22 @@ export class Camera {
         this.zoomMax = content.maxLevel;
         this.zoom = content.maxLevel;
         this.checkZoom();
+
+        this.cx = content.width / 2;
+        this.cy = content.height / 2;
+    }
+
+    public move(dx: number, dy: number) {
+        this.cx += dx;
+        this.cy += dy;
+    }
+
+    public getX(): number {
+        return this.cx;
+    }
+
+    public getY(): number {
+        return this.cy;
     }
 
     public getZoom(): number {

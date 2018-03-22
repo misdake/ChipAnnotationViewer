@@ -9,6 +9,18 @@ define(["require", "exports"], function (require, exports) {
             this.zoomMax = content.maxLevel;
             this.zoom = content.maxLevel;
             this.checkZoom();
+            this.cx = content.width / 2;
+            this.cy = content.height / 2;
+        };
+        Camera.prototype.move = function (dx, dy) {
+            this.cx += dx;
+            this.cy += dy;
+        };
+        Camera.prototype.getX = function () {
+            return this.cx;
+        };
+        Camera.prototype.getY = function () {
+            return this.cy;
         };
         Camera.prototype.getZoom = function () {
             return this.zoom;

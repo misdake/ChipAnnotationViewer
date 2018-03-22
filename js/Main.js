@@ -7,7 +7,6 @@ define(["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage
     canvas.addLayer(layerImage);
     NetUtil_1.NetUtil.get("data/fiji/content.json", function (text) {
         var content = JSON.parse(text);
-        console.log(text);
         canvas.load(content, "data/fiji");
         canvas.requestRender();
     });

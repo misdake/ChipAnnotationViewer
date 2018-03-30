@@ -14,8 +14,14 @@
             height:100%;
         }
     </style>
-    <script src="lib/require.js" data-main="main"></script>
+    <script src="lib/require.js"></script>
     <script>
+        requirejs.config({
+            baseUrl: 'js',
+            paths: {
+                'Main': 'Main',
+            }
+        });
         require(['Main']);
     </script>
 </head>

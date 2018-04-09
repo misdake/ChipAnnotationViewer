@@ -11,6 +11,10 @@ define('Renderer',["require", "exports"], function (require, exports) {
             this.context.fillStyle = "#000000";
             this.context.fillRect(0, 0, this.canvasElement.width, this.canvasElement.height);
         };
+        Renderer.prototype.setColor = function (color) {
+            this.context.fillStyle = color;
+            this.context.strokeStyle = color;
+        };
         Renderer.prototype.image = function (camera, image, x, y, width, height) {
             //transform to screen space
             var point = camera.canvasXyToScreen(x, y);
@@ -134,6 +138,7 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
     Object.defineProperty(exports, "__esModule", { value: true });
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
+            this.renderNext = false;
             this.domElement = domElement;
             this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
             this.canvasElement = document.getElementById(id);
@@ -194,9 +199,14 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
             return this.height;
         };
         Canvas.prototype.requestRender = function () {
+            if (this.renderNext)
+                return;
+            this.renderNext = true;
             var self = this;
             requestAnimationFrame(function () {
                 self.render();
+                self.renderNext = false;
+                console.log("render");
             });
         };
         Canvas.prototype.load = function (content, folder) {
@@ -265,6 +275,30 @@ define('Layer',["require", "exports"], function (require, exports) {
     exports.Layer = Layer;
 });
 //# sourceMappingURL=Layer.js.map;
+define('drawable/Drawable',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Drawable = /** @class */ (function () {
+        function Drawable() {
+            //TODO
+            // x, y, scaleX, scaleY, rotate
+            this.color = null;
+        }
+        Drawable.prototype.setColor = function (color) {
+            this.color = color;
+        };
+        Drawable.prototype.getColor = function () {
+            return this.color;
+        };
+        Drawable.prototype.render = function (canvas, renderer, camera) {
+            if (this.color)
+                renderer.setColor(this.color);
+        };
+        return Drawable;
+    }());
+    exports.Drawable = Drawable;
+});
+//# sourceMappingURL=Drawable.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -275,7 +309,45 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerImage',["require", "exports", "../Layer"], function (require, exports, Layer_1) {
+define('drawable/Img',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Img = /** @class */ (function (_super) {
+        __extends(Img, _super);
+        function Img(src, x, y, w, h, onload) {
+            var _this = _super.call(this) || this;
+            _this.x = x;
+            _this.y = y;
+            _this.w = w;
+            _this.h = h;
+            _this.img = new Image();
+            _this.img.src = src;
+            var self = _this;
+            _this.img.onload = function (ev) {
+                if (onload)
+                    onload(self);
+            };
+            return _this;
+        }
+        Img.prototype.render = function (canvas, renderer, camera) {
+            renderer.image(camera, this.img, this.x, this.y, this.w, this.h);
+        };
+        return Img;
+    }(Drawable_1.Drawable));
+    exports.Img = Img;
+});
+//# sourceMappingURL=Img.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Img"], function (require, exports, Layer_1, Img_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerImage = /** @class */ (function (_super) {
@@ -295,6 +367,7 @@ define('layers/LayerImage',["require", "exports", "../Layer"], function (require
             if (this.currentZoom === zoom)
                 return;
             this.currentZoom = zoom;
+            var targetSize = this.content.tileSize << zoom;
             var levelData = this.content.levels[zoom];
             this.xCount = levelData.xMax;
             this.yCount = levelData.yMax;
@@ -302,24 +375,19 @@ define('layers/LayerImage',["require", "exports", "../Layer"], function (require
             for (var i = 0; i < this.xCount; i++) {
                 this.imageMatrix[i] = [];
                 for (var j = 0; j < this.yCount; j++) {
-                    var image = new Image();
-                    image.src = this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg";
-                    this.imageMatrix[i][j] = image;
-                    image.onload = function (event) { return canvas.requestRender(); };
+                    this.imageMatrix[i][j] = new Img_1.Img(this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg", i * targetSize, j * targetSize, targetSize, targetSize, function (image) {
+                        canvas.requestRender();
+                    });
                 }
             }
         };
         LayerImage.prototype.render = function (canvas, renderer, camera) {
             _super.prototype.render.call(this, canvas, renderer, camera);
-            var zoom = camera.getZoom();
-            var targetSize = this.content.tileSize << zoom;
             this.prepare(camera, canvas);
             if (this.imageMatrix) {
                 for (var i = 0; i < this.xCount; i++) {
                     for (var j = 0; j < this.yCount; j++) {
-                        if (this.imageMatrix[i][j] && this.imageMatrix[i][j].complete) {
-                            renderer.image(camera, this.imageMatrix[i][j], i * targetSize, j * targetSize, targetSize, targetSize);
-                        }
+                        this.imageMatrix[i][j].render(canvas, renderer, camera);
                     }
                 }
             }

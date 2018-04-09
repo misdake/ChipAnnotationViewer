@@ -5,5 +5,5 @@
     },
     optimize: "none",
     name: "Main",
-    out: "../Main.js"
+    out: "../app.js"
 })

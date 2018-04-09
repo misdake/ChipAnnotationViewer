@@ -85,10 +85,15 @@ export class Canvas {
         return this.height;
     }
 
+    private renderNext = false;
     public requestRender() {
+        if (this.renderNext) return;
+        this.renderNext = true;
         let self = this;
         requestAnimationFrame(function () {
             self.render();
+            self.renderNext = false;
+            console.log("render");
         })
     }
 

@@ -17,6 +17,11 @@ export class Renderer {
         this.context.fillRect(0, 0, this.canvasElement.width, this.canvasElement.height);
     }
 
+    public setColor(color: string) {
+        this.context.fillStyle = color;
+        this.context.strokeStyle = color;
+    }
+
     public image(camera: Camera, image: HTMLImageElement, x: number, y: number, width: number, height: number) {
         //transform to screen space
         let point = camera.canvasXyToScreen(x, y);

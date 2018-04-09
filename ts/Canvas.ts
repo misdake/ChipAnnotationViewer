@@ -52,6 +52,12 @@ export class Canvas {
             lastX = event.clientX;
             lastY = event.clientY;
         };
+        this.canvasElement.ontouchstart = event => {
+            event.preventDefault();
+            let touch = event.touches[0];
+            lastX = touch.clientX;
+            lastY = touch.clientY;
+        };
         this.canvasElement.onmousemove = event => {
             if (event.which > 0) {
                 self.camera.action();
@@ -64,6 +70,19 @@ export class Canvas {
                 lastY = event.clientY;
                 self.requestRender();
             }
+        };
+        this.canvasElement.ontouchmove = event => {
+            event.preventDefault();
+            let touch = event.touches[0];
+            self.camera.action();
+            let point1 = self.camera.screenXyToCanvas(lastX, lastY);
+            let point2 = self.camera.screenXyToCanvas(touch.clientX, touch.clientY);
+            let dx = point1.x - point2.x;
+            let dy = point1.y - point2.y;
+            self.camera.moveXy(dx, dy);
+            lastX = touch.clientX;
+            lastY = touch.clientY;
+            self.requestRender();
         };
     }
 
@@ -91,9 +110,8 @@ export class Canvas {
         this.renderNext = true;
         let self = this;
         requestAnimationFrame(function () {
-            self.render();
             self.renderNext = false;
-            console.log("render");
+            self.render();
         })
     }
 

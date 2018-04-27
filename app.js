@@ -157,10 +157,10 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
             var self = this;
             this.canvasElement.onmousewheel = function (event) {
                 self.camera.action();
-                var point1 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                var point1 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                 self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
                 self.camera.action();
-                var point2 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                var point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                 var dx = point1.x - point2.x;
                 var dy = point1.y - point2.y;
                 self.camera.moveXy(dx, dy);
@@ -169,19 +169,19 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
             var lastX = -1;
             var lastY = -1;
             this.canvasElement.onmousedown = function (event) {
-                lastX = event.clientX;
-                lastY = event.clientY;
+                lastX = event.offsetX;
+                lastY = event.offsetY;
             };
             this.canvasElement.onmousemove = function (event) {
-                if (event.which > 0) {
+                if (event.buttons > 0) {
                     self.camera.action();
                     var point1 = self.camera.screenXyToCanvas(lastX, lastY);
-                    var point2 = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                    var point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     var dx = point1.x - point2.x;
                     var dy = point1.y - point2.y;
                     self.camera.moveXy(dx, dy);
-                    lastX = event.clientX;
-                    lastY = event.clientY;
+                    lastX = event.offsetX;
+                    lastY = event.offsetY;
                     self.requestRender();
                 }
             };
@@ -204,9 +204,8 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
             this.renderNext = true;
             var self = this;
             requestAnimationFrame(function () {
-                self.render();
                 self.renderNext = false;
-                console.log("render");
+                self.render();
             });
         };
         Canvas.prototype.load = function (content, folder) {

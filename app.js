@@ -15,9 +15,9 @@ define('Renderer',["require", "exports"], function (require, exports) {
             this.context.fillStyle = color;
             this.context.strokeStyle = color;
         };
-        Renderer.prototype.image = function (camera, image, x, y, width, height) {
+        Renderer.prototype.image = function (camera, image, transform, width, height) {
             //transform to screen space
-            var point = camera.canvasXyToScreen(x, y);
+            var point = camera.canvasXyToScreen(transform.position.x, transform.position.y);
             var targetW = camera.canvasSizeToScreen(width);
             var targetH = camera.canvasSizeToScreen(height);
             //skip out-of-screen images
@@ -32,24 +32,54 @@ define('Renderer',["require", "exports"], function (require, exports) {
     exports.Renderer = Renderer;
 });
 //# sourceMappingURL=Renderer.js.map;
-define('Point',["require", "exports"], function (require, exports) {
+define('util/Transform',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var Point = /** @class */ (function () {
-        function Point(x, y) {
-            this.x = x;
-            this.y = y;
+    var Transform = /** @class */ (function () {
+        function Transform() {
+            this.position = new Position(0, 0);
         }
-        return Point;
+        return Transform;
     }());
-    exports.Point = Point;
+    exports.Transform = Transform;
+    var Position = /** @class */ (function () {
+        function Position(x, y) {
+            this._x = 0;
+            this._y = 0;
+            this._x = x;
+            this._y = y;
+        }
+        Object.defineProperty(Position.prototype, "x", {
+            get: function () {
+                return this._x;
+            },
+            set: function (x) {
+                this._x = x;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Position.prototype, "y", {
+            get: function () {
+                return this._y;
+            },
+            set: function (y) {
+                this._y = y;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return Position;
+    }());
+    exports.Position = Position;
 });
-//# sourceMappingURL=Point.js.map;
-define('Camera',["require", "exports", "./Point"], function (require, exports, Point_1) {
+//# sourceMappingURL=Transform.js.map;
+define('Camera',["require", "exports", "./util/Transform"], function (require, exports, Transform_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Camera = /** @class */ (function () {
         function Camera() {
+            this.position = new Transform_1.Position(0, 0);
         }
         Camera.prototype.load = function (canvas, content) {
             this.canvas = canvas;
@@ -57,32 +87,21 @@ define('Camera',["require", "exports", "./Point"], function (require, exports, P
             this.zoomMax = content.maxLevel;
             this.zoom = content.maxLevel;
             this.checkZoom();
-            this.x = content.width / 2;
-            this.y = content.height / 2;
+            this.position.x = content.width / 2;
+            this.position.y = content.height / 2;
             this.xMin = 0;
             this.xMax = content.width;
             this.yMin = 0;
             this.yMax = content.height;
         };
-        Camera.prototype.setXy = function (x, y) {
-            this.x = x;
-            this.y = y;
-            this.checkXy();
-        };
         Camera.prototype.moveXy = function (dx, dy) {
-            this.x += dx;
-            this.y += dy;
+            this.position.x += dx;
+            this.position.y += dy;
             this.checkXy();
-        };
-        Camera.prototype.getX = function () {
-            return this.x;
-        };
-        Camera.prototype.getY = function () {
-            return this.y;
         };
         Camera.prototype.checkXy = function () {
-            this.x = Math.min(Math.max(this.x, this.xMin), this.xMax);
-            this.y = Math.min(Math.max(this.y, this.yMin), this.yMax);
+            this.position.x = Math.min(Math.max(this.position.x, this.xMin), this.xMax);
+            this.position.y = Math.min(Math.max(this.position.y, this.yMin), this.yMax);
         };
         Camera.prototype.getZoom = function () {
             return this.zoom;
@@ -103,24 +122,24 @@ define('Camera',["require", "exports", "./Point"], function (require, exports, P
             this.checkZoom();
             var scale = 1.0 / (1 << this.zoom);
             this.scale = scale;
-            this.tx = this.canvas.getWidth() / 2 - this.x * scale;
-            this.ty = this.canvas.getHeight() / 2 - this.y * scale;
+            this.tx = this.canvas.getWidth() / 2 - this.position.x * scale;
+            this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;
         };
-        Camera.prototype.screenPointToCanvas = function (point) {
-            return this.screenXyToCanvas(point.x, point.y);
+        Camera.prototype.screenToCanvas = function (position) {
+            return this.screenXyToCanvas(position.x, position.y);
         };
         Camera.prototype.screenXyToCanvas = function (x, y) {
             var targetX = (x - this.tx) / this.scale;
             var targetY = (y - this.ty) / this.scale;
-            return new Point_1.Point(targetX, targetY);
+            return new Transform_1.Position(targetX, targetY);
         };
-        Camera.prototype.canvasPointToScreen = function (point) {
-            return this.canvasXyToScreen(point.x, point.y);
+        Camera.prototype.canvasToScreen = function (position) {
+            return this.canvasXyToScreen(position.x, position.y);
         };
         Camera.prototype.canvasXyToScreen = function (x, y) {
             var targetX = x * this.scale + this.tx;
             var targetY = y * this.scale + this.ty;
-            return new Point_1.Point(targetX, targetY);
+            return new Transform_1.Position(targetX, targetY);
         };
         Camera.prototype.screenSizeToCanvas = function (s) {
             return s / this.scale;
@@ -188,9 +207,6 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
         };
         Canvas.prototype.addLayer = function (layer) {
             this.layers.push(layer);
-        };
-        Canvas.prototype.getLayer = function () {
-            //TODO
         };
         Canvas.prototype.getWidth = function () {
             return this.width;
@@ -274,24 +290,28 @@ define('Layer',["require", "exports"], function (require, exports) {
     exports.Layer = Layer;
 });
 //# sourceMappingURL=Layer.js.map;
-define('drawable/Drawable',["require", "exports"], function (require, exports) {
+define('drawable/Drawable',["require", "exports", "../util/Transform"], function (require, exports, Transform_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Drawable = /** @class */ (function () {
         function Drawable() {
-            //TODO
-            // x, y, scaleX, scaleY, rotate
-            this.color = null;
+            this.transformation = new Transform_1.Transform();
+            this._color = null;
         }
-        Drawable.prototype.setColor = function (color) {
-            this.color = color;
-        };
-        Drawable.prototype.getColor = function () {
-            return this.color;
-        };
+        Object.defineProperty(Drawable.prototype, "color", {
+            get: function () {
+                return this._color;
+            },
+            set: function (color) {
+                this._color = color;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Drawable.prototype.render = function (canvas, renderer, camera) {
-            if (this.color)
+            if (this.color) {
                 renderer.setColor(this.color);
+            }
         };
         return Drawable;
     }());
@@ -299,9 +319,12 @@ define('drawable/Drawable',["require", "exports"], function (require, exports) {
 });
 //# sourceMappingURL=Drawable.js.map;
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -315,8 +338,8 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
         __extends(Img, _super);
         function Img(src, x, y, w, h, onload) {
             var _this = _super.call(this) || this;
-            _this.x = x;
-            _this.y = y;
+            _this.transformation.position.x = x;
+            _this.transformation.position.y = y;
             _this.w = w;
             _this.h = h;
             _this.img = new Image();
@@ -329,7 +352,7 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
             return _this;
         }
         Img.prototype.render = function (canvas, renderer, camera) {
-            renderer.image(camera, this.img, this.x, this.y, this.w, this.h);
+            renderer.image(camera, this.img, this.transformation, this.w, this.h);
         };
         return Img;
     }(Drawable_1.Drawable));
@@ -337,9 +360,12 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
 });
 //# sourceMappingURL=Img.js.map;
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }

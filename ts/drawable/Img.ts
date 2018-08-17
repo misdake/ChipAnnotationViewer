@@ -6,28 +6,27 @@ import {Camera} from "../Camera";
 export class Img extends Drawable {
 
     private readonly img: HTMLImageElement;
-    private x: number;
-    private y: number;
+
     private w: number;
     private h: number;
 
-    public constructor(src: string, x: number, y: number, w: number, h :number, onload: (image: Img) => void) {
+    public constructor(src: string, x: number, y: number, w: number, h: number, onload: (image: Img) => void) {
         super();
-        this.x = x;
-        this.y = y;
+        this.transformation.position.x = x;
+        this.transformation.position.y = y;
         this.w = w;
         this.h = h;
         this.img = new Image();
         this.img.src = src;
 
-        var self = this;
+        let self = this;
         this.img.onload = ev => {
             if (onload) onload(self);
         }
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        renderer.image(camera, this.img, this.x, this.y, this.w, this.h);
+        renderer.image(camera, this.img, this.transformation, this.w, this.h);
     }
 
 }

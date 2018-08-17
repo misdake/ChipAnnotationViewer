@@ -1,25 +1,27 @@
 import {Canvas} from "../Canvas";
 import {Camera} from "../Camera";
 import {Renderer} from "../Renderer";
+import {Transform} from "../util/Transform";
 
 export class Drawable {
 
     public constructor() {
     }
 
-    //TODO
-    // x, y, scaleX, scaleY, rotate
+    public readonly transformation: Transform = new Transform();
 
-    private color: string = null;
-    public setColor(color: string): void {
-        this.color = color;
+    private _color: string = null;
+    set color(color: string) {
+        this._color = color;
     }
-    public getColor(): string {
-        return this.color;
+    get color(): string {
+        return this._color;
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        if (this.color) renderer.setColor(this.color)
+        if (this.color) {
+            renderer.setColor(this.color);
+        }
     }
 
 }

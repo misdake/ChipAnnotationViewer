@@ -1,5 +1,6 @@
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
+import {Transform} from "./util/Transform";
 
 export class Renderer {
     private canvas: Canvas;
@@ -22,9 +23,9 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
-    public image(camera: Camera, image: HTMLImageElement, x: number, y: number, width: number, height: number) {
+    public image(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
         //transform to screen space
-        let point = camera.canvasXyToScreen(x, y);
+        let point = camera.canvasXyToScreen(transform.position.x, transform.position.y);
         let targetW = camera.canvasSizeToScreen(width);
         let targetH = camera.canvasSizeToScreen(height);
 

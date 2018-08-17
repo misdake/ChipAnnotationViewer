@@ -73,10 +73,6 @@ export class Canvas {
         this.layers.push(layer);
     }
 
-    public getLayer() {
-        //TODO
-    }
-
     public getWidth(): number {
         return this.width;
     }

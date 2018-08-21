@@ -3,7 +3,7 @@ import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
 import {Content} from "../Content";
 import {Renderer} from "../Renderer";
-import {Img} from "../drawable/Img";
+import {DrawableImage} from "../drawable/DrawableImage";
 
 export class LayerImage extends Layer {
     private content: Content;
@@ -25,7 +25,7 @@ export class LayerImage extends Layer {
     private currentZoom: number;
     private xCount: number;
     private yCount: number;
-    private imageMatrix: Img[][];
+    private imageMatrix: DrawableImage[][];
 
     private prepare(camera: Camera, canvas: Canvas) {
         let zoom = camera.getZoom();
@@ -42,7 +42,7 @@ export class LayerImage extends Layer {
         for (let i = 0; i < this.xCount; i++) {
             this.imageMatrix[i] = [];
             for (let j = 0; j < this.yCount; j++) {
-                this.imageMatrix[i][j] = new Img(
+                this.imageMatrix[i][j] = new DrawableImage(
                     this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg",
                     i * targetSize, j * targetSize,
                     targetSize, targetSize,

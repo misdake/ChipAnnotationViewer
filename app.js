@@ -345,12 +345,12 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('drawable/Img',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+define('drawable/DrawableImage',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var Img = /** @class */ (function (_super) {
-        __extends(Img, _super);
-        function Img(src, x, y, w, h, onload) {
+    var DrawableImage = /** @class */ (function (_super) {
+        __extends(DrawableImage, _super);
+        function DrawableImage(src, x, y, w, h, onload) {
             var _this = _super.call(this) || this;
             _this.transformation.position.x = x;
             _this.transformation.position.y = y;
@@ -368,13 +368,13 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
             };
             return _this;
         }
-        Img.prototype.loadIfNotLoaded = function () {
+        DrawableImage.prototype.loadIfNotLoaded = function () {
             if (!this.loading) {
                 this.loading = true;
                 this.img.src = this.src;
             }
         };
-        Img.prototype.render = function (canvas, renderer, camera) {
+        DrawableImage.prototype.render = function (canvas, renderer, camera) {
             var rect = renderer.testImageVisibility(camera, this.img, this.transformation, this.w, this.h, 100);
             if (rect) {
                 this.loadIfNotLoaded();
@@ -383,11 +383,11 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
                 }
             }
         };
-        return Img;
+        return DrawableImage;
     }(Drawable_1.Drawable));
-    exports.Img = Img;
+    exports.DrawableImage = DrawableImage;
 });
-//# sourceMappingURL=Img.js.map;
+//# sourceMappingURL=DrawableImage.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -401,7 +401,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Img"], function (require, exports, Layer_1, Img_1) {
+define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/DrawableImage"], function (require, exports, Layer_1, DrawableImage_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerImage = /** @class */ (function (_super) {
@@ -429,7 +429,7 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Img"]
             for (var i = 0; i < this.xCount; i++) {
                 this.imageMatrix[i] = [];
                 for (var j = 0; j < this.yCount; j++) {
-                    this.imageMatrix[i][j] = new Img_1.Img(this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg", i * targetSize, j * targetSize, targetSize, targetSize, function (image) {
+                    this.imageMatrix[i][j] = new DrawableImage_1.DrawableImage(this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg", i * targetSize, j * targetSize, targetSize, targetSize, function (image) {
                         canvas.requestRender();
                     });
                 }

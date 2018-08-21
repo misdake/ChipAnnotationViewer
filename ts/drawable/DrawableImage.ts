@@ -3,7 +3,7 @@ import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 
-export class Img extends Drawable {
+export class DrawableImage extends Drawable {
 
     private readonly img: HTMLImageElement;
 
@@ -14,7 +14,7 @@ export class Img extends Drawable {
     private loading: boolean;
     private loaded: boolean;
 
-    public constructor(src: string, x: number, y: number, w: number, h: number, onload: (image: Img) => void) {
+    public constructor(src: string, x: number, y: number, w: number, h: number, onload: (image: DrawableImage) => void) {
         super();
         this.transformation.position.x = x;
         this.transformation.position.y = y;

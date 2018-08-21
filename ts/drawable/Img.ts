@@ -7,8 +7,12 @@ export class Img extends Drawable {
 
     private readonly img: HTMLImageElement;
 
-    private w: number;
-    private h: number;
+    private readonly w: number;
+    private readonly h: number;
+
+    private readonly src: string;
+    private loading: boolean;
+    private loaded: boolean;
 
     public constructor(src: string, x: number, y: number, w: number, h: number, onload: (image: Img) => void) {
         super();
@@ -17,16 +21,33 @@ export class Img extends Drawable {
         this.w = w;
         this.h = h;
         this.img = new Image();
-        this.img.src = src;
+        // img.src is not set, will be set and image will start loading once it is visible to camera.
+
+        this.src = src;
+        this.loaded = false;
 
         let self = this;
         this.img.onload = ev => {
+            this.loaded = true;
             if (onload) onload(self);
         }
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        renderer.image(camera, this.img, this.transformation, this.w, this.h);
+    private loadIfNotLoaded() {
+        if (!this.loading) {
+            this.loading = true;
+            this.img.src = this.src;
+        }
+    }
+
+    public render(canvas: Canvas, renderer: Renderer, camera: Camera) {
+        let rect = renderer.testImageVisibility(camera, this.img, this.transformation, this.w, this.h, 100);
+        if (rect) {
+            this.loadIfNotLoaded();
+            if (this.loaded) {
+                renderer.drawImage(this.img, rect);
+            }
+        }
     }
 
 }

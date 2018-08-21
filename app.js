@@ -1,6 +1,16 @@
 define('Renderer',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var ScreenRect = /** @class */ (function () {
+        function ScreenRect(left, top, width, height) {
+            this.left = left;
+            this.top = top;
+            this.width = width;
+            this.height = height;
+        }
+        return ScreenRect;
+    }());
+    exports.ScreenRect = ScreenRect;
     var Renderer = /** @class */ (function () {
         function Renderer(canvas, canvasElement, context) {
             this.canvas = canvas;
@@ -15,17 +25,27 @@ define('Renderer',["require", "exports"], function (require, exports) {
             this.context.fillStyle = color;
             this.context.strokeStyle = color;
         };
-        Renderer.prototype.image = function (camera, image, transform, width, height) {
+        Renderer.prototype.testImageVisibility = function (camera, image, transform, width, height, range) {
             //transform to screen space
-            var point = camera.canvasXyToScreen(transform.position.x, transform.position.y);
+            var point = camera.canvasToScreen(transform.position.x, transform.position.y);
             var targetW = camera.canvasSizeToScreen(width);
             var targetH = camera.canvasSizeToScreen(height);
             //skip out-of-screen images
-            if (point.x > this.canvas.getWidth() || point.y > this.canvas.getHeight())
-                return;
-            if (point.x + targetW < 0 || point.y + targetH < 0)
-                return;
-            this.context.drawImage(image, point.x, point.y, targetW, targetH);
+            if (point.x - range > this.canvas.getWidth() || point.y - range > this.canvas.getHeight())
+                return null;
+            if (point.x + targetW + range < 0 || point.y + targetH + range < 0)
+                return null;
+            return new ScreenRect(point.x, point.y, targetW, targetH);
+        };
+        Renderer.prototype.renderImgae = function (camera, image, transform, width, height) {
+            var rect = this.testImageVisibility(camera, image, transform, width, height, 0);
+            this.drawImage(image, rect);
+        };
+        Renderer.prototype.drawImage = function (image, rect) {
+            if (rect) {
+                //actually render image
+                this.context.drawImage(image, rect.left, rect.top, rect.width, rect.height);
+            }
         };
         return Renderer;
     }());
@@ -125,18 +145,12 @@ define('Camera',["require", "exports", "./util/Transform"], function (require, e
             this.tx = this.canvas.getWidth() / 2 - this.position.x * scale;
             this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;
         };
-        Camera.prototype.screenToCanvas = function (position) {
-            return this.screenXyToCanvas(position.x, position.y);
-        };
         Camera.prototype.screenXyToCanvas = function (x, y) {
             var targetX = (x - this.tx) / this.scale;
             var targetY = (y - this.ty) / this.scale;
             return new Transform_1.Position(targetX, targetY);
         };
-        Camera.prototype.canvasToScreen = function (position) {
-            return this.canvasXyToScreen(position.x, position.y);
-        };
-        Camera.prototype.canvasXyToScreen = function (x, y) {
+        Camera.prototype.canvasToScreen = function (x, y) {
             var targetX = x * this.scale + this.tx;
             var targetY = y * this.scale + this.ty;
             return new Transform_1.Position(targetX, targetY);
@@ -343,16 +357,31 @@ define('drawable/Img',["require", "exports", "./Drawable"], function (require, e
             _this.w = w;
             _this.h = h;
             _this.img = new Image();
-            _this.img.src = src;
+            // img.src is not set, will be set and image will start loading once it is visible to camera.
+            _this.src = src;
+            _this.loaded = false;
             var self = _this;
             _this.img.onload = function (ev) {
+                _this.loaded = true;
                 if (onload)
                     onload(self);
             };
             return _this;
         }
+        Img.prototype.loadIfNotLoaded = function () {
+            if (!this.loading) {
+                this.loading = true;
+                this.img.src = this.src;
+            }
+        };
         Img.prototype.render = function (canvas, renderer, camera) {
-            renderer.image(camera, this.img, this.transformation, this.w, this.h);
+            var rect = renderer.testImageVisibility(camera, this.img, this.transformation, this.w, this.h, 100);
+            if (rect) {
+                this.loadIfNotLoaded();
+                if (this.loaded) {
+                    renderer.drawImage(this.img, rect);
+                }
+            }
         };
         return Img;
     }(Drawable_1.Drawable));

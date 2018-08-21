@@ -73,18 +73,12 @@ export class Camera {
         this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;
     }
 
-    public screenToCanvas(position: Position): Position {
-        return this.screenXyToCanvas(position.x, position.y);
-    }
     public screenXyToCanvas(x: number, y: number): Position {
         let targetX = (x - this.tx) / this.scale;
         let targetY = (y - this.ty) / this.scale;
         return new Position(targetX, targetY);
     }
-    public canvasToScreen(position: Position): Position {
-        return this.canvasXyToScreen(position.x, position.y);
-    }
-    public canvasXyToScreen(x: number, y: number): Position {
+    public canvasToScreen(x: number, y: number): Position {
         let targetX = x * this.scale + this.tx;
         let targetY = y * this.scale + this.ty;
         return new Position(targetX, targetY);

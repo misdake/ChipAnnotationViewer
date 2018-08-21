@@ -2,6 +2,20 @@ import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
 
+export class ScreenRect {
+    public readonly left: number;
+    public readonly top: number;
+    public readonly width: number;
+    public readonly height: number;
+
+    constructor(left: number, top: number, width: number, height: number) {
+        this.left = left;
+        this.top = top;
+        this.width = width;
+        this.height = height;
+    }
+}
+
 export class Renderer {
     private canvas: Canvas;
     private canvasElement: HTMLCanvasElement;
@@ -23,17 +37,28 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
-    public image(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
+    public testImageVisibility(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number, range: number): ScreenRect {
         //transform to screen space
-        let point = camera.canvasXyToScreen(transform.position.x, transform.position.y);
+        let point = camera.canvasToScreen(transform.position.x, transform.position.y);
         let targetW = camera.canvasSizeToScreen(width);
         let targetH = camera.canvasSizeToScreen(height);
 
         //skip out-of-screen images
-        if (point.x > this.canvas.getWidth() || point.y > this.canvas.getHeight()) return;
-        if (point.x + targetW < 0 || point.y + targetH < 0) return;
+        if (point.x - range > this.canvas.getWidth() || point.y - range > this.canvas.getHeight()) return null;
+        if (point.x + targetW + range < 0 || point.y + targetH + range < 0) return null;
 
-        this.context.drawImage(image, point.x, point.y, targetW, targetH);
+        return new ScreenRect(point.x, point.y, targetW, targetH);
     }
 
+    public renderImgae(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
+        let rect = this.testImageVisibility(camera, image, transform, width, height, 0);
+        this.drawImage(image, rect);
+    }
+
+    public drawImage(image: HTMLImageElement, rect: ScreenRect) {
+        if (rect) {
+            //actually render image
+            this.context.drawImage(image, rect.left, rect.top, rect.width, rect.height);
+        }
+    }
 }

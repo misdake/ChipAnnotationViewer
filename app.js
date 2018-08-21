@@ -25,6 +25,32 @@ define('Renderer',["require", "exports"], function (require, exports) {
             this.context.fillStyle = color;
             this.context.strokeStyle = color;
         };
+        //---------------------------------------------
+        //polyline
+        Renderer.prototype.renderPolyline = function (camera, points, closed, fill, lineWidth) {
+            this.context.lineWidth = lineWidth;
+            this.context.beginPath();
+            var start = camera.canvasToScreen(points[0][0], points[0][1]);
+            this.context.moveTo(start.x, start.y);
+            for (var i = 1; i < points.length; i++) {
+                var point = camera.canvasToScreen(points[i][0], points[i][1]);
+                this.context.lineTo(point.x, point.y);
+            }
+            if (closed) {
+                this.context.lineTo(start.x, start.y);
+            }
+            this.context.closePath();
+            if (fill) {
+                this.context.fill();
+            }
+            else {
+                this.context.stroke();
+            }
+        };
+        //polyline
+        //---------------------------------------------
+        //---------------------------------------------
+        //image
         Renderer.prototype.testImageVisibility = function (camera, image, transform, width, height, range) {
             //transform to screen space
             var point = camera.canvasToScreen(transform.position.x, transform.position.y);
@@ -37,7 +63,7 @@ define('Renderer',["require", "exports"], function (require, exports) {
                 return null;
             return new ScreenRect(point.x, point.y, targetW, targetH);
         };
-        Renderer.prototype.renderImgae = function (camera, image, transform, width, height) {
+        Renderer.prototype.renderImage = function (camera, image, transform, width, height) {
             var rect = this.testImageVisibility(camera, image, transform, width, height, 0);
             this.drawImage(image, rect);
         };
@@ -454,13 +480,95 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
     exports.LayerImage = LayerImage;
 });
 //# sourceMappingURL=LayerImage.js.map;
-define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1) {
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var DrawablePolyline = /** @class */ (function (_super) {
+        __extends(DrawablePolyline, _super);
+        function DrawablePolyline(points, closed, fill, lineWidth) {
+            var _this = _super.call(this) || this;
+            _this.points = points;
+            _this.closed = closed;
+            _this.fill = fill;
+            _this.lineWidth = lineWidth;
+            return _this;
+        }
+        DrawablePolyline.prototype.render = function (canvas, renderer, camera) {
+            _super.prototype.render.call(this, canvas, renderer, camera);
+            renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.lineWidth);
+        };
+        return DrawablePolyline;
+    }(Drawable_1.Drawable));
+    exports.DrawablePolyline = DrawablePolyline;
+});
+//# sourceMappingURL=DrawablePolyline.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerPolyline',["require", "exports", "../Layer", "../drawable/DrawablePolyline"], function (require, exports, Layer_1, DrawablePolyline_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerPolyline = /** @class */ (function (_super) {
+        __extends(LayerPolyline, _super);
+        function LayerPolyline() {
+            var _this = _super.call(this, "polyline", 1) || this;
+            _this.polylines = [];
+            return _this;
+        }
+        LayerPolyline.prototype.load = function (canvas, content, folder) {
+            _super.prototype.load.call(this, canvas, content, folder);
+            this.content = content;
+            var polyline1 = new DrawablePolyline_1.DrawablePolyline([[0, 1000], [1000, 1000], [1000, 0], [0, 0]], true, false, 5);
+            polyline1.color = "#ff0000";
+            this.polylines.push(polyline1);
+            var polyline2 = new DrawablePolyline_1.DrawablePolyline([[1000, 1000], [2000, 1000], [2000, 0], [1000, 0]], true, true, 0);
+            polyline2.color = "#0000ff";
+            this.polylines.push(polyline2);
+        };
+        LayerPolyline.prototype.render = function (canvas, renderer, camera) {
+            _super.prototype.render.call(this, canvas, renderer, camera);
+            this.polylines.forEach(function (polyline) {
+                polyline.render(canvas, renderer, camera);
+            });
+        };
+        LayerPolyline.prototype.unload = function () {
+            _super.prototype.unload.call(this);
+        };
+        return LayerPolyline;
+    }(Layer_1.Layer));
+    exports.LayerPolyline = LayerPolyline;
+});
+//# sourceMappingURL=LayerPolyline.js.map;
+define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolyline"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolyline_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
-    var layerImage = new LayerImage_1.LayerImage();
-    canvas.addLayer(layerImage);
+    canvas.addLayer(new LayerImage_1.LayerImage());
+    canvas.addLayer(new LayerPolyline_1.LayerPolyline());
     NetUtil_1.NetUtil.get("data/fiji/content.json", function (text) {
         var content = JSON.parse(text);
         canvas.load(content, "data/fiji");

@@ -37,6 +37,39 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
+
+    //---------------------------------------------
+    //polyline
+
+    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, lineWidth: number) {
+        this.context.lineWidth = lineWidth;
+        this.context.beginPath();
+
+        let start = camera.canvasToScreen(points[0][0], points[0][1]);
+        this.context.moveTo(start.x, start.y);
+        for (let i = 1; i < points.length; i++) {
+            let point = camera.canvasToScreen(points[i][0], points[i][1]);
+            this.context.lineTo(point.x, point.y);
+        }
+        if (closed) {
+            this.context.lineTo(start.x, start.y);
+        }
+        this.context.closePath();
+
+        if (fill) {
+            this.context.fill();
+        } else {
+            this.context.stroke();
+        }
+    }
+
+    //polyline
+    //---------------------------------------------
+
+
+    //---------------------------------------------
+    //image
+
     public testImageVisibility(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number, range: number): ScreenRect {
         //transform to screen space
         let point = camera.canvasToScreen(transform.position.x, transform.position.y);
@@ -50,7 +83,7 @@ export class Renderer {
         return new ScreenRect(point.x, point.y, targetW, targetH);
     }
 
-    public renderImgae(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
+    public renderImage(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
         let rect = this.testImageVisibility(camera, image, transform, width, height, 0);
         this.drawImage(image, rect);
     }
@@ -61,4 +94,7 @@ export class Renderer {
             this.context.drawImage(image, rect.left, rect.top, rect.width, rect.height);
         }
     }
+
+    //image
+    //---------------------------------------------
 }

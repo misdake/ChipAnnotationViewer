@@ -12,7 +12,7 @@ export class LayerPolyline extends Layer {
     private polylines: DrawablePolyline[] = [];
 
     public constructor() {
-        super("polyline", 1);
+        super("polyline");
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {

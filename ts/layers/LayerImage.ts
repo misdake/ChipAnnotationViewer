@@ -11,7 +11,7 @@ export class LayerImage extends Layer {
     private baseFolder: string;
 
     public constructor() {
-        super("image", 0);
+        super("image");
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {

@@ -5,11 +5,9 @@ import {Renderer} from "./Renderer";
 
 export class Layer {
     private name: string;
-    private renderOrder: number;
 
-    public constructor(name: string, renderOrder: number) {
+    public constructor(name: string) {
         this.name = name;
-        this.renderOrder = renderOrder;
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {

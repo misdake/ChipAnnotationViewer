@@ -10,13 +10,7 @@ export class Drawable {
 
     public readonly transformation: Transform = new Transform();
 
-    private _color: string = null;
-    set color(color: string) {
-        this._color = color;
-    }
-    get color(): string {
-        return this._color;
-    }
+    public color: string = null;
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
         if (this.color) {

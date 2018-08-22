@@ -3,29 +3,46 @@ import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
 import {Content} from "../Content";
 import {Renderer} from "../Renderer";
-import {DrawableImage} from "../drawable/DrawableImage";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
+import {LineWidth} from "../util/LineWidth";
 
 export class LayerPolyline extends Layer {
-    private content: Content;
 
+    private content: Content;
     private polylines: DrawablePolyline[] = [];
 
     public constructor() {
-        super("polyline", 1);
+        super("polyline");
+    }
+
+    private static prepareRect(x1: number, y1: number, x2: number, y2: number): number[][] {
+        return [
+            [x1, y1],
+            [x2, y1],
+            [x2, y2],
+            [x1, y2]
+        ];
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {
         super.load(canvas, content, folder);
         this.content = content;
 
-        let polyline1 = new DrawablePolyline([[0, 1000], [1000, 1000], [1000, 0], [0, 0]], true, false, 5);
+        let polyline1 = new DrawablePolyline(LayerPolyline.prepareRect(100, 100, 900, 900), true, false, new LineWidth(0, 10));
         polyline1.color = "#ff0000";
         this.polylines.push(polyline1);
 
-        let polyline2 = new DrawablePolyline([[1000, 1000], [2000, 1000], [2000, 0], [1000, 0]], true, true, 0);
-        polyline2.color = "#0000ff";
+        let polyline2 = new DrawablePolyline(LayerPolyline.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth(5, 0));
+        polyline2.color = "#00ff00";
         this.polylines.push(polyline2);
+
+        let polyline3 = new DrawablePolyline(LayerPolyline.prepareRect(1100, 100, 1900, 900), true, true);
+        polyline3.color = "#0000ff";
+        this.polylines.push(polyline3);
+
+        let polyline4 = new DrawablePolyline(LayerPolyline.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth(0, 0, 0.002));
+        polyline4.color = "#ffff00";
+        this.polylines.push(polyline4);
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {

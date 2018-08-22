@@ -1,20 +1,8 @@
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
-
-export class ScreenRect {
-    public readonly left: number;
-    public readonly top: number;
-    public readonly width: number;
-    public readonly height: number;
-
-    constructor(left: number, top: number, width: number, height: number) {
-        this.left = left;
-        this.top = top;
-        this.width = width;
-        this.height = height;
-    }
-}
+import {LineWidth} from "./util/LineWidth";
+import {ScreenRect} from "./util/ScreenRect";
 
 export class Renderer {
     private canvas: Canvas;
@@ -37,12 +25,20 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
+    private calculateLineWidth(camera: Camera, lineWidth?: LineWidth): number {
+        if (!lineWidth) return 0;
+        let onScreen = lineWidth.onScreen;
+        let onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
+        let ofScreenSize = lineWidth.ofScreenSize * Math.min(this.canvasElement.width, this.canvasElement.height);
+        return onScreen + onCanvas + ofScreenSize;
+    }
+
 
     //---------------------------------------------
     //polyline
 
-    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, lineWidth: number) {
-        this.context.lineWidth = lineWidth;
+    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, lineWidth?: LineWidth) {
+        this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
         this.context.beginPath();
 
         let start = camera.canvasToScreen(points[0][0], points[0][1]);
@@ -52,9 +48,8 @@ export class Renderer {
             this.context.lineTo(point.x, point.y);
         }
         if (closed) {
-            this.context.lineTo(start.x, start.y);
+            this.context.closePath();
         }
-        this.context.closePath();
 
         if (fill) {
             this.context.fill();

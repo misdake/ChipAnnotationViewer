@@ -2,16 +2,17 @@ import {Drawable} from "./Drawable";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
+import {LineWidth} from "../util/LineWidth";
 
 export class DrawablePolyline extends Drawable {
 
     public closed: boolean;
     public fill: boolean;
-    public lineWidth: number;
+    public lineWidth?: LineWidth;
 
     private readonly points: number[][];
 
-    public constructor(points: number[][], closed: boolean, fill: boolean, lineWidth: number) {
+    public constructor(points: number[][], closed: boolean, fill: boolean, lineWidth?: LineWidth) {
         super();
         this.points = points;
         this.closed = closed;

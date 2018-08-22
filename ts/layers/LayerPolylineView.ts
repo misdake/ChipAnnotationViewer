@@ -6,7 +6,7 @@ import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {LineWidth} from "../util/LineWidth";
 
-export class LayerPolyline extends Layer {
+export class LayerPolylineView extends Layer {
 
     private content: Content;
     private polylines: DrawablePolyline[] = [];
@@ -28,19 +28,19 @@ export class LayerPolyline extends Layer {
         super.load(canvas, content, folder);
         this.content = content;
 
-        let polyline1 = new DrawablePolyline(LayerPolyline.prepareRect(100, 100, 900, 900), true, false, new LineWidth(0, 10));
+        let polyline1 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new LineWidth(0, 10));
         polyline1.color = "#ff0000";
         this.polylines.push(polyline1);
 
-        let polyline2 = new DrawablePolyline(LayerPolyline.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth(5, 0));
+        let polyline2 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth(5, 0));
         polyline2.color = "#00ff00";
         this.polylines.push(polyline2);
 
-        let polyline3 = new DrawablePolyline(LayerPolyline.prepareRect(1100, 100, 1900, 900), true, true);
+        let polyline3 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true);
         polyline3.color = "#0000ff";
         this.polylines.push(polyline3);
 
-        let polyline4 = new DrawablePolyline(LayerPolyline.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth(0, 0, 0.002));
+        let polyline4 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth(0, 0, 0.002));
         polyline4.color = "#ffff00";
         this.polylines.push(polyline4);
     }
@@ -55,4 +55,14 @@ export class LayerPolyline extends Layer {
     public unload(): void {
         super.unload();
     }
+
+    public startEditing() : void {
+
+    }
+    public finishEditing() : void {
+
+    }
+
+
+
 }

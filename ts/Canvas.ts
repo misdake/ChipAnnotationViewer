@@ -30,39 +30,82 @@ export class Canvas {
         })
     }
 
+    public getCamera(): Camera {
+        return this.camera;
+    }
+
     public init() {
         this.layers = [];
-        let self = this;
 
-        this.canvasElement.onmousewheel = event => {
-            self.camera.action();
-            let point1 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-            self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
-            self.camera.action();
-            let point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-            let dx = point1.x - point2.x;
-            let dy = point1.y - point2.y;
-            self.camera.moveXy(dx, dy);
-            self.requestRender();
+        this.canvasElement.onclick = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onclick(event)) break;
+            }
         };
-
-        let lastX = -1;
-        let lastY = -1;
+        this.canvasElement.ondblclick = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.ondblclick(event)) break;
+            }
+        };
+        this.canvasElement.onwheel = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onwheel(event)) break;
+            }
+        };
         this.canvasElement.onmousedown = event => {
-            lastX = event.offsetX;
-            lastY = event.offsetY;
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmousedown(event)) break;
+            }
+        };
+        this.canvasElement.onmouseup = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmouseup(event)) break;
+            }
         };
         this.canvasElement.onmousemove = event => {
-            if (event.buttons > 0) {
-                self.camera.action();
-                let point1 = self.camera.screenXyToCanvas(lastX, lastY);
-                let point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                let dx = point1.x - point2.x;
-                let dy = point1.y - point2.y;
-                self.camera.moveXy(dx, dy);
-                lastX = event.offsetX;
-                lastY = event.offsetY;
-                self.requestRender();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmousemove(event)) break;
+            }
+        };
+        this.canvasElement.onmouseout = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmouseout(event)) break;
+            }
+        };
+
+        this.canvasElement.onkeydown = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) break;
+            }
+        };
+        this.canvasElement.onkeyup = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) break;
+            }
+        };
+        this.canvasElement.onkeypress = event => {
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) break;
             }
         };
     }

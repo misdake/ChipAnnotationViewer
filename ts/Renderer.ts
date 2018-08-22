@@ -2,20 +2,7 @@ import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
 import {LineWidth} from "./util/LineWidth";
-
-export class ScreenRect {
-    public readonly left: number;
-    public readonly top: number;
-    public readonly width: number;
-    public readonly height: number;
-
-    constructor(left: number, top: number, width: number, height: number) {
-        this.left = left;
-        this.top = top;
-        this.width = width;
-        this.height = height;
-    }
-}
+import {ScreenRect} from "./util/ScreenRect";
 
 export class Renderer {
     private canvas: Canvas;

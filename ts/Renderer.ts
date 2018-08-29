@@ -37,7 +37,7 @@ export class Renderer {
     //---------------------------------------------
     //polyline
 
-    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, lineWidth?: LineWidth) {
+    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
         if (points.length == 0) return;
 
         this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
@@ -55,7 +55,8 @@ export class Renderer {
 
         if (fill) {
             this.context.fill();
-        } else {
+        }
+        if (stroke) {
             this.context.stroke();
         }
     }

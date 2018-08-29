@@ -34,7 +34,7 @@ export class Canvas {
         return this.camera;
     }
 
-    public init() {
+    public init(): void {
         this.layers = [];
 
         this.canvasElement.onclick = event => {
@@ -142,7 +142,7 @@ export class Canvas {
 
     private layers: Layer[];
 
-    public addLayer(layer: Layer) {
+    public addLayer(layer: Layer): void {
         this.layers.push(layer);
     }
 
@@ -155,7 +155,7 @@ export class Canvas {
     }
 
     private renderNext = false;
-    public requestRender() {
+    public requestRender(): void {
         if (this.renderNext) return;
         this.renderNext = true;
         let self = this;
@@ -165,14 +165,14 @@ export class Canvas {
         })
     }
 
-    public load(content: Content, folder: string) {
+    public load(content: Content, folder: string): void {
         this.camera.load(this, content);
         for (let layer of this.layers) {
             layer.load(this, content, folder);
         }
     }
 
-    public render() {
+    public render(): void {
         this.width = this.canvasElement.clientWidth;
         this.height = this.canvasElement.clientHeight;
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;

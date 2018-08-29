@@ -3,6 +3,7 @@ import {NetUtil} from "./util/NetUtil";
 import {Content} from "./Content";
 import {LayerImage} from "./layers/LayerImage";
 import {LayerPolylineView} from "./layers/LayerPolylineView";
+import {LayerPolylineEdit} from "./layers/LayerPolylineEdit";
 
 document.oncontextmenu = function (ev) {
     return false; //disable context menu
@@ -13,6 +14,7 @@ canvas.init();
 
 canvas.addLayer(new LayerImage(canvas));
 canvas.addLayer(new LayerPolylineView(canvas));
+canvas.addLayer(new LayerPolylineEdit(canvas));
 
 NetUtil.get("data/fiji/content.json", text => {
     let content: Content = JSON.parse(text) as Content;

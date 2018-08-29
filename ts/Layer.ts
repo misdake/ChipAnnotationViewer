@@ -8,10 +8,12 @@ import {KeyboardListener} from "./KeyboardListener";
 export class Layer {
 
     private name: string;
-    public renderer?: Renderer;
 
-    protected _mouseListener?: MouseListener;
-    protected _keyboardListener?: KeyboardListener;
+    protected readonly canvas: Canvas;
+    protected readonly camera: Camera;
+
+    protected _mouseListener?: MouseListener = null;
+    protected _keyboardListener?: KeyboardListener = null;
     get mouseListener(): MouseListener {
         return this._mouseListener;
     }
@@ -19,8 +21,10 @@ export class Layer {
         return this._keyboardListener;
     }
 
-    public constructor(name: string) {
+    public constructor(name: string, canvas: Canvas) {
         this.name = name;
+        this.canvas = canvas;
+        this.camera = canvas.getCamera();
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {

@@ -11,8 +11,8 @@ export class LayerPolylineView extends Layer {
     private content: Content;
     private polylines: DrawablePolyline[] = [];
 
-    public constructor() {
-        super("polyline");
+    public constructor(canvas: Canvas) {
+        super("polyline_view", canvas);
     }
 
     private static prepareRect(x1: number, y1: number, x2: number, y2: number): number[][] {
@@ -43,6 +43,8 @@ export class LayerPolylineView extends Layer {
         let polyline4 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth(0, 0, 0.002));
         polyline4.color = "#ffff00";
         this.polylines.push(polyline4);
+
+        //TODO listen to mouse click to select polyline
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
@@ -55,14 +57,5 @@ export class LayerPolylineView extends Layer {
     public unload(): void {
         super.unload();
     }
-
-    public startEditing() : void {
-
-    }
-    public finishEditing() : void {
-
-    }
-
-
 
 }

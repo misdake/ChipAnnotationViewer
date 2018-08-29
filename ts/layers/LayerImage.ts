@@ -11,8 +11,8 @@ export class LayerImage extends Layer {
     private maxLevel: number;
     private baseFolder: string;
 
-    public constructor() {
-        super("image");
+    public constructor(canvas: Canvas) {
+        super("image", canvas);
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {

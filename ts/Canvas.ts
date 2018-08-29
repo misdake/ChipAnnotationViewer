@@ -38,6 +38,9 @@ export class Canvas {
         this.layers = [];
 
         this.canvasElement.onclick = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -45,6 +48,9 @@ export class Canvas {
             }
         };
         this.canvasElement.ondblclick = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -52,6 +58,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onwheel = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -59,6 +68,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onmousedown = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -66,6 +78,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onmouseup = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -73,6 +88,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onmousemove = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -80,6 +98,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onmouseout = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -88,6 +109,9 @@ export class Canvas {
         };
 
         this.canvasElement.onkeydown = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -95,6 +119,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onkeyup = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
@@ -102,6 +129,9 @@ export class Canvas {
             }
         };
         this.canvasElement.onkeypress = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];

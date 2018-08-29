@@ -8,6 +8,7 @@ export class DrawablePolyline extends Drawable {
 
     public closed: boolean;
     public fill: boolean;
+    public stroke: boolean;
     public lineWidth?: LineWidth;
 
     private readonly points: number[][];
@@ -17,12 +18,13 @@ export class DrawablePolyline extends Drawable {
         this.points = points;
         this.closed = closed;
         this.fill = fill;
+        this.stroke = true; //TODO add to parameter
         this.lineWidth = lineWidth;
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera) {
         super.render(canvas, renderer, camera);
-        renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.lineWidth);
+        renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
     }
 
 }

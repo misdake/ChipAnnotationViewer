@@ -30,46 +30,119 @@ export class Canvas {
         })
     }
 
-    public init() {
+    public getCamera(): Camera {
+        return this.camera;
+    }
+
+    public init(): void {
         this.layers = [];
-        let self = this;
 
-        this.canvasElement.onmousewheel = event => {
-            self.camera.action();
-            let point1 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-            self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
-            self.camera.action();
-            let point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-            let dx = point1.x - point2.x;
-            let dy = point1.y - point2.y;
-            self.camera.moveXy(dx, dy);
-            self.requestRender();
+        this.canvasElement.onclick = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onclick(event)) break;
+            }
         };
-
-        let lastX = -1;
-        let lastY = -1;
+        this.canvasElement.ondblclick = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.ondblclick(event)) break;
+            }
+        };
+        this.canvasElement.onwheel = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onwheel(event)) break;
+            }
+        };
         this.canvasElement.onmousedown = event => {
-            lastX = event.offsetX;
-            lastY = event.offsetY;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmousedown(event)) break;
+            }
+        };
+        this.canvasElement.onmouseup = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmouseup(event)) break;
+            }
         };
         this.canvasElement.onmousemove = event => {
-            if (event.buttons > 0) {
-                self.camera.action();
-                let point1 = self.camera.screenXyToCanvas(lastX, lastY);
-                let point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                let dx = point1.x - point2.x;
-                let dy = point1.y - point2.y;
-                self.camera.moveXy(dx, dy);
-                lastX = event.offsetX;
-                lastY = event.offsetY;
-                self.requestRender();
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmousemove(event)) break;
+            }
+        };
+        this.canvasElement.onmouseout = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.mouseListener && layer.mouseListener.onmouseout(event)) break;
+            }
+        };
+
+        this.canvasElement.onkeydown = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) break;
+            }
+        };
+        this.canvasElement.onkeyup = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) break;
+            }
+        };
+        this.canvasElement.onkeypress = event => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let length = this.layers.length;
+            for (let i = length - 1; i >= 0; i--) {
+                let layer = this.layers[i];
+                if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) break;
             }
         };
     }
 
     private layers: Layer[];
 
-    public addLayer(layer: Layer) {
+    public addLayer(layer: Layer): void {
         this.layers.push(layer);
     }
 
@@ -82,7 +155,7 @@ export class Canvas {
     }
 
     private renderNext = false;
-    public requestRender() {
+    public requestRender(): void {
         if (this.renderNext) return;
         this.renderNext = true;
         let self = this;
@@ -92,14 +165,14 @@ export class Canvas {
         })
     }
 
-    public load(content: Content, folder: string) {
+    public load(content: Content, folder: string): void {
         this.camera.load(this, content);
         for (let layer of this.layers) {
             layer.load(this, content, folder);
         }
     }
 
-    public render() {
+    public render(): void {
         this.width = this.canvasElement.clientWidth;
         this.height = this.canvasElement.clientHeight;
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;

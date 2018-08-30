@@ -10,8 +10,7 @@ export class DrawablePolyline extends Drawable {
     public fill: boolean;
     public stroke: boolean;
     public lineWidth?: LineWidth;
-
-    private readonly points: number[][];
+    public points: number[][];
 
     public constructor(points: number[][], closed: boolean, fill: boolean, lineWidth?: LineWidth) {
         super();

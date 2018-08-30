@@ -26,7 +26,7 @@ export class Renderer {
     }
 
     private calculateLineWidth(camera: Camera, lineWidth?: LineWidth): number {
-        if (!lineWidth) return 0;
+        if (!lineWidth) return 1;
         let onScreen = lineWidth.onScreen;
         let onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
         let ofScreenSize = lineWidth.ofScreenSize * Math.min(this.canvasElement.width, this.canvasElement.height);
@@ -94,5 +94,34 @@ export class Renderer {
     }
 
     //image
+    //---------------------------------------------
+
+
+    //---------------------------------------------
+    //circle rect
+
+    public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
+        let position = camera.canvasToScreen(x, y);
+        let size = camera.canvasSizeToScreen(radius);
+        this.drawCircle(position.x, position.y, size, fill, stroke);
+        this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
+    }
+
+    public drawCircle(x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: number) {
+        if (lineWidth) this.context.lineWidth = lineWidth;
+
+        this.context.beginPath();
+        this.context.arc(x, y, radius, 0, Math.PI * 2);
+        this.context.closePath();
+
+        if (fill) {
+            this.context.fill();
+        }
+        if (stroke) {
+            this.context.stroke();
+        }
+    }
+
+    //circle rect
     //---------------------------------------------
 }

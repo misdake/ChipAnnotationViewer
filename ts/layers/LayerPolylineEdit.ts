@@ -11,6 +11,7 @@ import {Position} from "../util/Transform";
 export class LayerPolylineEdit extends Layer {
 
     private content: Content;
+    private polylineNew: DrawablePolyline = null;
     private polylines: DrawablePolyline[] = [];
 
     public constructor(canvas: Canvas) {
@@ -18,15 +19,15 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public load(canvas: Canvas, content: Content, folder: string): void {
-        super.load(canvas, content, folder);
         this.content = content;
     }
 
     public startCreatingPolyline(): DrawablePolyline {
+        if (this.polylineNew) this.finishEditing();
+
         let points: number[][] = [];
-        let polyline = new DrawablePolyline(points, true, true, new LineWidth(2));
-        polyline.color = "rgba(200,200,200,0.4)";
-        this.polylines.push(polyline);
+        this.polylineNew = new DrawablePolyline(points, true, true, new LineWidth(2));
+        this.polylineNew.color = "rgba(200,200,200,0.4)";
 
         //start listening to mouse move events and show default polyline starting from mouse position.
         //after clicking, add such polyline to collection
@@ -73,7 +74,7 @@ export class LayerPolylineEdit extends Layer {
             }
         };
 
-        return polyline;
+        return this.polylineNew;
     }
 
     public startEditingPolyline(polyline: DrawablePolyline): void {
@@ -84,14 +85,33 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public finishEditing(): void {
+        if (this.polylineNew) {
+            if (this.polylineNew.points.length > 2) {
+                this.polylines.push(this.polylineNew); //TODO move it to LayerPolylineView
+            }
+            this.polylineNew = null;
+            this.canvas.requestRender();
+        }
         this._mouseListener = null;
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        super.render(canvas, renderer, camera);
+        if (this.polylineNew) {
+            this.polylineNew.render(canvas, renderer, camera);
+            //draw two points
+            let pointCount = this.polylineNew.points.length;
+            if (pointCount > 0) this.drawPointCircle(camera, this.polylineNew.points[0], renderer);
+            if (pointCount > 1) this.drawPointCircle(camera, this.polylineNew.points[pointCount - 1], renderer);
+        }
         this.polylines.forEach(polyline => {
             polyline.render(canvas, renderer, camera);
-        })
+        });
     }
-
+    private drawPointCircle(camera: Camera, point: number[], renderer: Renderer) {
+        let position = camera.canvasToScreen(point[0], point[1]);
+        renderer.setColor("rgba(255,255,255,1)");
+        renderer.drawCircle(position.x, position.y, 5, false, true, 1);
+        renderer.setColor("rgba(0,0,0,0.5)");
+        renderer.drawCircle(position.x, position.y, 4, true, false);
+    }
 }

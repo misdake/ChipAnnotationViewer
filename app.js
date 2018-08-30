@@ -1,4 +1,4 @@
-define('Renderer',["require", "exports"], function (require, exports) {
+define('util/ScreenRect',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var ScreenRect = /** @class */ (function () {
@@ -11,6 +11,11 @@ define('Renderer',["require", "exports"], function (require, exports) {
         return ScreenRect;
     }());
     exports.ScreenRect = ScreenRect;
+});
+//# sourceMappingURL=ScreenRect.js.map;
+define('Renderer',["require", "exports", "./util/ScreenRect"], function (require, exports, ScreenRect_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Renderer = /** @class */ (function () {
         function Renderer(canvas, canvasElement, context) {
             this.canvas = canvas;
@@ -25,10 +30,20 @@ define('Renderer',["require", "exports"], function (require, exports) {
             this.context.fillStyle = color;
             this.context.strokeStyle = color;
         };
+        Renderer.prototype.calculateLineWidth = function (camera, lineWidth) {
+            if (!lineWidth)
+                return 0;
+            var onScreen = lineWidth.onScreen;
+            var onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
+            var ofScreenSize = lineWidth.ofScreenSize * Math.min(this.canvasElement.width, this.canvasElement.height);
+            return onScreen + onCanvas + ofScreenSize;
+        };
         //---------------------------------------------
         //polyline
-        Renderer.prototype.renderPolyline = function (camera, points, closed, fill, lineWidth) {
-            this.context.lineWidth = lineWidth;
+        Renderer.prototype.renderPolyline = function (camera, points, closed, fill, stroke, lineWidth) {
+            if (points.length == 0)
+                return;
+            this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
             this.context.beginPath();
             var start = camera.canvasToScreen(points[0][0], points[0][1]);
             this.context.moveTo(start.x, start.y);
@@ -37,13 +52,12 @@ define('Renderer',["require", "exports"], function (require, exports) {
                 this.context.lineTo(point.x, point.y);
             }
             if (closed) {
-                this.context.lineTo(start.x, start.y);
+                this.context.closePath();
             }
-            this.context.closePath();
             if (fill) {
                 this.context.fill();
             }
-            else {
+            if (stroke) {
                 this.context.stroke();
             }
         };
@@ -61,7 +75,7 @@ define('Renderer',["require", "exports"], function (require, exports) {
                 return null;
             if (point.x + targetW + range < 0 || point.y + targetH + range < 0)
                 return null;
-            return new ScreenRect(point.x, point.y, targetW, targetH);
+            return new ScreenRect_1.ScreenRect(point.x, point.y, targetW, targetH);
         };
         Renderer.prototype.renderImage = function (camera, image, transform, width, height) {
             var rect = this.testImageVisibility(camera, image, transform, width, height, 0);
@@ -90,31 +104,9 @@ define('util/Transform',["require", "exports"], function (require, exports) {
     exports.Transform = Transform;
     var Position = /** @class */ (function () {
         function Position(x, y) {
-            this._x = 0;
-            this._y = 0;
-            this._x = x;
-            this._y = y;
+            this.x = x;
+            this.y = y;
         }
-        Object.defineProperty(Position.prototype, "x", {
-            get: function () {
-                return this._x;
-            },
-            set: function (x) {
-                this._x = x;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Position.prototype, "y", {
-            get: function () {
-                return this._y;
-            },
-            set: function (y) {
-                this._y = y;
-            },
-            enumerable: true,
-            configurable: true
-        });
         return Position;
     }());
     exports.Position = Position;
@@ -199,7 +191,7 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
         function Canvas(domElement, id) {
             this.renderNext = false;
             this.domElement = domElement;
-            this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
+            this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
             this.canvasElement = document.getElementById(id);
             this.context = this.canvasElement.getContext("2d");
             this.camera = new Camera_1.Camera();
@@ -211,37 +203,120 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera"], function (requ
                 self.requestRender();
             });
         }
+        Canvas.prototype.getCamera = function () {
+            return this.camera;
+        };
         Canvas.prototype.init = function () {
+            var _this = this;
             this.layers = [];
-            var self = this;
-            this.canvasElement.onmousewheel = function (event) {
-                self.camera.action();
-                var point1 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                self.camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
-                self.camera.action();
-                var point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                var dx = point1.x - point2.x;
-                var dy = point1.y - point2.y;
-                self.camera.moveXy(dx, dy);
-                self.requestRender();
+            this.canvasElement.onclick = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onclick(event))
+                        break;
+                }
             };
-            var lastX = -1;
-            var lastY = -1;
+            this.canvasElement.ondblclick = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.ondblclick(event))
+                        break;
+                }
+            };
+            this.canvasElement.onwheel = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onwheel(event))
+                        break;
+                }
+            };
             this.canvasElement.onmousedown = function (event) {
-                lastX = event.offsetX;
-                lastY = event.offsetY;
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onmousedown(event))
+                        break;
+                }
+            };
+            this.canvasElement.onmouseup = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onmouseup(event))
+                        break;
+                }
             };
             this.canvasElement.onmousemove = function (event) {
-                if (event.buttons > 0) {
-                    self.camera.action();
-                    var point1 = self.camera.screenXyToCanvas(lastX, lastY);
-                    var point2 = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    var dx = point1.x - point2.x;
-                    var dy = point1.y - point2.y;
-                    self.camera.moveXy(dx, dy);
-                    lastX = event.offsetX;
-                    lastY = event.offsetY;
-                    self.requestRender();
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onmousemove(event))
+                        break;
+                }
+            };
+            this.canvasElement.onmouseout = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onmouseout(event))
+                        break;
+                }
+            };
+            this.canvasElement.onkeydown = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.keyboardListener && layer.keyboardListener.onkeydown(event))
+                        break;
+                }
+            };
+            this.canvasElement.onkeyup = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.keyboardListener && layer.keyboardListener.onkeyup(event))
+                        break;
+                }
+            };
+            this.canvasElement.onkeypress = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                var length = _this.layers.length;
+                for (var i = length - 1; i >= 0; i--) {
+                    var layer = _this.layers[i];
+                    if (layer.keyboardListener && layer.keyboardListener.onkeypress(event))
+                        break;
                 }
             };
         };
@@ -315,10 +390,27 @@ define('Layer',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Layer = /** @class */ (function () {
-        function Layer(name, renderOrder) {
+        function Layer(name, canvas) {
+            this._mouseListener = null;
+            this._keyboardListener = null;
             this.name = name;
-            this.renderOrder = renderOrder;
+            this.canvas = canvas;
+            this.camera = canvas.getCamera();
         }
+        Object.defineProperty(Layer.prototype, "mouseListener", {
+            get: function () {
+                return this._mouseListener;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Layer.prototype, "keyboardListener", {
+            get: function () {
+                return this._keyboardListener;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Layer.prototype.load = function (canvas, content, folder) {
         };
         Layer.prototype.render = function (canvas, renderer, camera) {
@@ -336,18 +428,8 @@ define('drawable/Drawable',["require", "exports", "../util/Transform"], function
     var Drawable = /** @class */ (function () {
         function Drawable() {
             this.transformation = new Transform_1.Transform();
-            this._color = null;
+            this.color = null;
         }
-        Object.defineProperty(Drawable.prototype, "color", {
-            get: function () {
-                return this._color;
-            },
-            set: function (color) {
-                this._color = color;
-            },
-            enumerable: true,
-            configurable: true
-        });
         Drawable.prototype.render = function (canvas, renderer, camera) {
             if (this.color) {
                 renderer.setColor(this.color);
@@ -414,6 +496,38 @@ define('drawable/DrawableImage',["require", "exports", "./Drawable"], function (
     exports.DrawableImage = DrawableImage;
 });
 //# sourceMappingURL=DrawableImage.js.map;
+define('MouseListener',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var MouseListener = /** @class */ (function () {
+        function MouseListener() {
+        }
+        MouseListener.prototype.onclick = function (event) {
+            return false;
+        };
+        MouseListener.prototype.ondblclick = function (event) {
+            return false;
+        };
+        MouseListener.prototype.onwheel = function (event) {
+            return false;
+        };
+        MouseListener.prototype.onmousedown = function (event) {
+            return false;
+        };
+        MouseListener.prototype.onmouseup = function (event) {
+            return false;
+        };
+        MouseListener.prototype.onmousemove = function (event) {
+            return false;
+        };
+        MouseListener.prototype.onmouseout = function (event) {
+            return false;
+        };
+        return MouseListener;
+    }());
+    exports.MouseListener = MouseListener;
+});
+//# sourceMappingURL=MouseListener.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -427,13 +541,13 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/DrawableImage"], function (require, exports, Layer_1, DrawableImage_1) {
+define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/DrawableImage", "../MouseListener"], function (require, exports, Layer_1, DrawableImage_1, MouseListener_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerImage = /** @class */ (function (_super) {
         __extends(LayerImage, _super);
-        function LayerImage() {
-            return _super.call(this, "image", 0) || this;
+        function LayerImage(canvas) {
+            return _super.call(this, "image", canvas) || this;
         }
         LayerImage.prototype.load = function (canvas, content, folder) {
             _super.prototype.load.call(this, canvas, content, folder);
@@ -441,6 +555,52 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
             this.maxLevel = content.maxLevel;
             this.baseFolder = folder;
             this.currentZoom = -1;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.lastX = -1;
+                    _this.lastY = -1;
+                    return _this;
+                }
+                class_1.prototype.onwheel = function (event) {
+                    var camera = canvas.getCamera();
+                    camera.action();
+                    var point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
+                    camera.action();
+                    var point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    var dx = point1.x - point2.x;
+                    var dy = point1.y - point2.y;
+                    camera.moveXy(dx, dy);
+                    canvas.requestRender();
+                    return true;
+                };
+                class_1.prototype.onmousedown = function (event) {
+                    this.lastX = event.offsetX;
+                    this.lastY = event.offsetY;
+                    return true;
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if (event.buttons > 0) {
+                        var camera = canvas.getCamera();
+                        camera.action();
+                        var point1 = camera.screenXyToCanvas(this.lastX, this.lastY);
+                        var point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var dx = point1.x - point2.x;
+                        var dy = point1.y - point2.y;
+                        camera.moveXy(dx, dy);
+                        this.lastX = event.offsetX;
+                        this.lastY = event.offsetY;
+                        canvas.requestRender();
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
         };
         LayerImage.prototype.prepare = function (camera, canvas) {
             var zoom = camera.getZoom();
@@ -503,18 +663,33 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
             _this.points = points;
             _this.closed = closed;
             _this.fill = fill;
+            _this.stroke = true; //TODO add to parameter
             _this.lineWidth = lineWidth;
             return _this;
         }
         DrawablePolyline.prototype.render = function (canvas, renderer, camera) {
             _super.prototype.render.call(this, canvas, renderer, camera);
-            renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.lineWidth);
+            renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
         };
         return DrawablePolyline;
     }(Drawable_1.Drawable));
     exports.DrawablePolyline = DrawablePolyline;
 });
 //# sourceMappingURL=DrawablePolyline.js.map;
+define('util/LineWidth',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LineWidth = /** @class */ (function () {
+        function LineWidth(onScreen, onCanvas, ofScreenSize) {
+            this.onScreen = onScreen;
+            this.onCanvas = onCanvas ? onCanvas : 0;
+            this.ofScreenSize = ofScreenSize ? ofScreenSize : 0;
+        }
+        return LineWidth;
+    }());
+    exports.LineWidth = LineWidth;
+});
+//# sourceMappingURL=LineWidth.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -528,47 +703,177 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolyline',["require", "exports", "../Layer", "../drawable/DrawablePolyline"], function (require, exports, Layer_1, DrawablePolyline_1) {
+define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/LineWidth"], function (require, exports, Layer_1, DrawablePolyline_1, LineWidth_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var LayerPolyline = /** @class */ (function (_super) {
-        __extends(LayerPolyline, _super);
-        function LayerPolyline() {
-            var _this = _super.call(this, "polyline", 1) || this;
+    var LayerPolylineView = /** @class */ (function (_super) {
+        __extends(LayerPolylineView, _super);
+        function LayerPolylineView(canvas) {
+            var _this = _super.call(this, "polyline_view", canvas) || this;
             _this.polylines = [];
             return _this;
         }
-        LayerPolyline.prototype.load = function (canvas, content, folder) {
+        LayerPolylineView.prepareRect = function (x1, y1, x2, y2) {
+            return [
+                [x1, y1],
+                [x2, y1],
+                [x2, y2],
+                [x1, y2]
+            ];
+        };
+        LayerPolylineView.prototype.load = function (canvas, content, folder) {
             _super.prototype.load.call(this, canvas, content, folder);
             this.content = content;
-            var polyline1 = new DrawablePolyline_1.DrawablePolyline([[0, 1000], [1000, 1000], [1000, 0], [0, 0]], true, false, 5);
+            var polyline1 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new LineWidth_1.LineWidth(0, 10));
             polyline1.color = "#ff0000";
             this.polylines.push(polyline1);
-            var polyline2 = new DrawablePolyline_1.DrawablePolyline([[1000, 1000], [2000, 1000], [2000, 0], [1000, 0]], true, true, 0);
-            polyline2.color = "#0000ff";
+            var polyline2 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth_1.LineWidth(5, 0));
+            polyline2.color = "#00ff00";
             this.polylines.push(polyline2);
+            var polyline3 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true);
+            polyline3.color = "#0000ff";
+            this.polylines.push(polyline3);
+            var polyline4 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth_1.LineWidth(0, 0, 0.002));
+            polyline4.color = "#ffff00";
+            this.polylines.push(polyline4);
+            //TODO listen to mouse click to select polyline
         };
-        LayerPolyline.prototype.render = function (canvas, renderer, camera) {
+        LayerPolylineView.prototype.render = function (canvas, renderer, camera) {
             _super.prototype.render.call(this, canvas, renderer, camera);
             this.polylines.forEach(function (polyline) {
                 polyline.render(canvas, renderer, camera);
             });
         };
-        LayerPolyline.prototype.unload = function () {
+        LayerPolylineView.prototype.unload = function () {
             _super.prototype.unload.call(this);
         };
-        return LayerPolyline;
+        return LayerPolylineView;
     }(Layer_1.Layer));
-    exports.LayerPolyline = LayerPolyline;
+    exports.LayerPolylineView = LayerPolylineView;
 });
-//# sourceMappingURL=LayerPolyline.js.map;
-define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolyline"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolyline_1) {
+//# sourceMappingURL=LayerPolylineView.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/LineWidth", "../MouseListener"], function (require, exports, Layer_1, DrawablePolyline_1, LineWidth_1, MouseListener_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerPolylineEdit = /** @class */ (function (_super) {
+        __extends(LayerPolylineEdit, _super);
+        function LayerPolylineEdit(canvas) {
+            var _this = _super.call(this, "polyline_edit", canvas) || this;
+            _this.polylines = [];
+            return _this;
+        }
+        LayerPolylineEdit.prototype.load = function (canvas, content, folder) {
+            _super.prototype.load.call(this, canvas, content, folder);
+            this.content = content;
+            this.startCreatingPolyline();
+        };
+        LayerPolylineEdit.prototype.startCreatingPolyline = function () {
+            //create polyline with dummy point.
+            var points = [[0, 0]];
+            var polyline = new DrawablePolyline_1.DrawablePolyline(points, true, true, new LineWidth_1.LineWidth(2));
+            polyline.color = "rgba(200,200,200,0.4)";
+            this.polylines.push(polyline);
+            //start listening to mouse move events and show default polyline starting from mouse position.
+            //after clicking, add such polyline to collection
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    return _super !== null && _super.apply(this, arguments) || this;
+                }
+                class_1.prototype.preview = function (position) {
+                    var xy = points[points.length - 1];
+                    xy[0] = position.x;
+                    xy[1] = position.y;
+                };
+                class_1.prototype.onmouseup = function (event) {
+                    if (event.button == 0) { //left button goes up => click => update last point and add dummy point
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        this.preview(position);
+                        points.push([position.x, position.y]);
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if ((event.buttons & 0x1) > 0) { //left button is down => preview
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        this.preview(position);
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
+            return polyline;
+        };
+        LayerPolylineEdit.prototype.startEditingPolyline = function (polyline) {
+            //TODO startEditingPolyline
+            //enable checkboxes for polyline flags (switch ui to polyline-editing mode)
+            //show polyline and its point indicators
+            //start listening to mouse events: drag points, create point, delete point, drag shape
+        };
+        LayerPolylineEdit.prototype.finishEditing = function () {
+            this._mouseListener = null;
+        };
+        LayerPolylineEdit.prototype.render = function (canvas, renderer, camera) {
+            _super.prototype.render.call(this, canvas, renderer, camera);
+            this.polylines.forEach(function (polyline) {
+                polyline.render(canvas, renderer, camera);
+            });
+        };
+        return LayerPolylineEdit;
+    }(Layer_1.Layer));
+    exports.LayerPolylineEdit = LayerPolylineEdit;
+});
+//# sourceMappingURL=LayerPolylineEdit.js.map;
+define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    document.oncontextmenu = function (ev) {
+        return false; //disable context menu
+    };
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
-    canvas.addLayer(new LayerImage_1.LayerImage());
-    canvas.addLayer(new LayerPolyline_1.LayerPolyline());
+    var layerImage = new LayerImage_1.LayerImage(canvas);
+    var layerPolylineView = new LayerPolylineView_1.LayerPolylineView(canvas);
+    var layerPolylineEdit = new LayerPolylineEdit_1.LayerPolylineEdit(canvas);
+    canvas.addLayer(layerImage);
+    canvas.addLayer(layerPolylineView);
+    canvas.addLayer(layerPolylineEdit);
+    var buttonStartEditing = document.createElement("button");
+    document.getElementById("panel").appendChild(buttonStartEditing);
+    buttonStartEditing.classList.add("configButton");
+    buttonStartEditing.innerText = "new polyline";
+    buttonStartEditing.onclick = function () {
+        layerPolylineEdit.startCreatingPolyline();
+    };
+    var buttonFinishEditing = document.createElement("button");
+    document.getElementById("panel").appendChild(buttonFinishEditing);
+    buttonFinishEditing.classList.add("configButton");
+    buttonFinishEditing.innerText = "finish polyline";
+    buttonFinishEditing.onclick = function () {
+        layerPolylineEdit.finishEditing();
+    };
     NetUtil_1.NetUtil.get("data/fiji/content.json", function (text) {
         var content = JSON.parse(text);
         canvas.load(content, "data/fiji");

@@ -15,18 +15,19 @@ export class LayerImage extends Layer {
         super("image", canvas);
     }
 
-    public load(canvas: Canvas, content: Content, folder: string): void {
-        super.load(canvas, content, folder);
+    public load(content: Content, folder: string): void {
+        super.load(content, folder);
         this.content = content;
         this.maxLevel = content.maxLevel;
         this.baseFolder = folder;
         this.currentZoom = -1;
 
+        let self = this;
         this._mouseListener = new class extends MouseListener {
             private lastX = -1;
             private lastY = -1;
             onwheel(event: MouseWheelEvent): boolean {
-                let camera = canvas.getCamera();
+                let camera = self.canvas.getCamera();
                 camera.action();
                 let point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
                 camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
@@ -35,7 +36,7 @@ export class LayerImage extends Layer {
                 let dx = point1.x - point2.x;
                 let dy = point1.y - point2.y;
                 camera.moveXy(dx, dy);
-                canvas.requestRender();
+                self.canvas.requestRender();
                 return true;
             }
             onmousedown(event: MouseEvent): boolean {
@@ -45,7 +46,7 @@ export class LayerImage extends Layer {
             }
             onmousemove(event: MouseEvent): boolean {
                 if (event.buttons > 0) {
-                    let camera = canvas.getCamera();
+                    let camera = self.canvas.getCamera();
                     camera.action();
                     let point1 = camera.screenXyToCanvas(this.lastX, this.lastY);
                     let point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -54,7 +55,7 @@ export class LayerImage extends Layer {
                     camera.moveXy(dx, dy);
                     this.lastX = event.offsetX;
                     this.lastY = event.offsetY;
-                    canvas.requestRender();
+                    self.canvas.requestRender();
                     return true;
                 } else {
                     return false;
@@ -95,15 +96,13 @@ export class LayerImage extends Layer {
         }
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        super.render(canvas, renderer, camera);
-
-        this.prepare(camera, canvas);
+    public render(renderer: Renderer): void {
+        this.prepare(this.camera, this.canvas);
 
         if (this.imageMatrix) {
             for (let i = 0; i < this.xCount; i++) {
                 for (let j = 0; j < this.yCount; j++) {
-                    this.imageMatrix[i][j].render(canvas, renderer, camera);
+                    this.imageMatrix[i][j].render(this.canvas, renderer, this.camera);
                 }
             }
         }

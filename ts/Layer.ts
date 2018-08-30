@@ -27,11 +27,11 @@ export class Layer {
         this.camera = canvas.getCamera();
     }
 
-    public load(canvas: Canvas, content: Content, folder: string): void {
+    public load(content: Content, folder: string): void {
 
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
+    public render(renderer: Renderer): void {
 
     }
 

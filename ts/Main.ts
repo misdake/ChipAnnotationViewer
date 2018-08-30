@@ -12,9 +12,28 @@ document.oncontextmenu = function (ev) {
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
-canvas.addLayer(new LayerImage(canvas));
-canvas.addLayer(new LayerPolylineView(canvas));
-canvas.addLayer(new LayerPolylineEdit(canvas));
+let layerImage = new LayerImage(canvas);
+let layerPolylineView = new LayerPolylineView(canvas);
+let layerPolylineEdit = new LayerPolylineEdit(canvas);
+
+canvas.addLayer(layerImage);
+canvas.addLayer(layerPolylineView);
+canvas.addLayer(layerPolylineEdit);
+
+let buttonStartEditing: HTMLButtonElement = document.createElement("button");
+document.getElementById("panel").appendChild(buttonStartEditing);
+buttonStartEditing.classList.add("configButton");
+buttonStartEditing.innerText = "new polyline";
+buttonStartEditing.onclick = () => {
+    layerPolylineEdit.startCreatingPolyline();
+};
+let buttonFinishEditing: HTMLButtonElement = document.createElement("button");
+document.getElementById("panel").appendChild(buttonFinishEditing);
+buttonFinishEditing.classList.add("configButton");
+buttonFinishEditing.innerText = "finish polyline";
+buttonFinishEditing.onclick = () => {
+    layerPolylineEdit.finishEditing();
+};
 
 NetUtil.get("data/fiji/content.json", text => {
     let content: Content = JSON.parse(text) as Content;

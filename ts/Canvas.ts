@@ -15,7 +15,7 @@ export class Canvas {
 
     public constructor(domElement: HTMLElement, id: string) {
         this.domElement = domElement;
-        this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden;position:absolute'></canvas>";
+        this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
         this.canvasElement = document.getElementById(id) as HTMLCanvasElement;
         this.context = this.canvasElement.getContext("2d");
         this.camera = new Camera();
@@ -168,7 +168,7 @@ export class Canvas {
     public load(content: Content, folder: string): void {
         this.camera.load(this, content);
         for (let layer of this.layers) {
-            layer.load(this, content, folder);
+            layer.load(content, folder);
         }
     }
 
@@ -182,7 +182,7 @@ export class Canvas {
 
         this.renderer.clear();
         for (let layer of this.layers) {
-            layer.render(this, this.renderer, this.camera);
+            layer.render(this.renderer);
         }
     }
 }

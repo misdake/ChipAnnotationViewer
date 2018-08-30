@@ -7,7 +7,6 @@ import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Position} from "../util/Transform";
-import {KeyboardListener} from "../KeyboardListener";
 
 export class LayerPolylineEdit extends Layer {
 
@@ -21,8 +20,6 @@ export class LayerPolylineEdit extends Layer {
     public load(canvas: Canvas, content: Content, folder: string): void {
         super.load(canvas, content, folder);
         this.content = content;
-
-        this.startCreatingPolyline();
     }
 
     public startCreatingPolyline(): DrawablePolyline {
@@ -43,7 +40,7 @@ export class LayerPolylineEdit extends Layer {
             }
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0) { //left button goes up => click => update last point and add dummy point
-                    let position = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     this.preview(position);
                     points.push([position.x, position.y]);
                     self.canvas.requestRender();
@@ -54,7 +51,7 @@ export class LayerPolylineEdit extends Layer {
             }
             onmousemove(event: MouseEvent): boolean {
                 if ((event.buttons & 0x1) > 0) { //left button is down => preview
-                    let position = self.camera.screenXyToCanvas(event.clientX, event.clientY);
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     this.preview(position);
                     self.canvas.requestRender();
                     return true;

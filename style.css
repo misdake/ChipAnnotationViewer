@@ -1,0 +1,19 @@
+* { margin: 0; padding: 0;}
+
+body, html { height:100%; }
+
+#panel {
+    float: left;
+    width: 200px;
+    height: 100%;
+}
+
+#container {
+    position: relative;
+    display: flex;
+    height: 100%;
+}
+
+.configButton {
+    margin:20px;
+}

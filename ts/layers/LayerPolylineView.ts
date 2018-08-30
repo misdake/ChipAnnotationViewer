@@ -1,5 +1,4 @@
 import {Layer} from "../Layer";
-import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
 import {Content} from "../Content";
 import {Renderer} from "../Renderer";
@@ -24,33 +23,33 @@ export class LayerPolylineView extends Layer {
         ];
     }
 
-    public load(canvas: Canvas, content: Content, folder: string): void {
-        super.load(canvas, content, folder);
+    public load(content: Content, folder: string): void {
+        super.load(content, folder);
         this.content = content;
 
         let polyline1 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new LineWidth(0, 10));
-        polyline1.color = "#ff0000";
+        polyline1.fillColor = polyline1.strokeColor = "#ff0000";
         this.polylines.push(polyline1);
 
         let polyline2 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth(5, 0));
-        polyline2.color = "#00ff00";
+        polyline2.fillColor = polyline2.strokeColor = "#00ff00";
         this.polylines.push(polyline2);
 
         let polyline3 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true);
-        polyline3.color = "#0000ff";
+        polyline3.fillColor = polyline3.strokeColor = "#0000ff";
         this.polylines.push(polyline3);
 
         let polyline4 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth(0, 0, 0.002));
-        polyline4.color = "#ffff00";
+        polyline4.fillColor = polyline4.strokeColor = "#ffff00";
         this.polylines.push(polyline4);
 
         //TODO listen to mouse click to select polyline
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        super.render(canvas, renderer, camera);
+    public render(renderer: Renderer): void {
+        super.render(renderer);
         this.polylines.forEach(polyline => {
-            polyline.render(canvas, renderer, camera);
+            polyline.render(this.canvas, renderer, this.camera);
         })
     }
 

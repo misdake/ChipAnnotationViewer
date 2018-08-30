@@ -24,6 +24,13 @@ export class Renderer {
         this.context.fillStyle = color;
         this.context.strokeStyle = color;
     }
+    public setFillColor(color: string) {
+        this.context.fillStyle = color;
+        this.context.strokeStyle = color;
+    }
+    public setStrokeColor(color: string) {
+        this.context.strokeStyle = color;
+    }
 
     private calculateLineWidth(camera: Camera, lineWidth?: LineWidth): number {
         if (!lineWidth) return 1;

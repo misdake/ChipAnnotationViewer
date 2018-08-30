@@ -168,7 +168,7 @@ export class Canvas {
     public load(content: Content, folder: string): void {
         this.camera.load(this, content);
         for (let layer of this.layers) {
-            layer.load(this, content, folder);
+            layer.load(content, folder);
         }
     }
 
@@ -182,7 +182,7 @@ export class Canvas {
 
         this.renderer.clear();
         for (let layer of this.layers) {
-            layer.render(this, this.renderer, this.camera);
+            layer.render(this.renderer);
         }
     }
 }

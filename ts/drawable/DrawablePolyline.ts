@@ -9,6 +9,8 @@ export class DrawablePolyline extends Drawable {
     public closed: boolean;
     public fill: boolean;
     public stroke: boolean;
+    public fillColor: string;
+    public strokeColor: string;
     public lineWidth?: LineWidth;
     public points: number[][];
 
@@ -22,7 +24,8 @@ export class DrawablePolyline extends Drawable {
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera) {
-        super.render(canvas, renderer, camera);
+        if (this.fillColor) renderer.setFillColor(this.fillColor);
+        if (this.strokeColor) renderer.setStrokeColor(this.strokeColor);
         renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
     }
 

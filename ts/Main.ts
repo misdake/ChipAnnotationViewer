@@ -14,7 +14,7 @@ canvas.init();
 
 let layerImage = new LayerImage(canvas);
 let layerPolylineView = new LayerPolylineView(canvas);
-let layerPolylineEdit = new LayerPolylineEdit(canvas);
+let layerPolylineEdit = new LayerPolylineEdit(canvas, layerPolylineView);
 
 canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);

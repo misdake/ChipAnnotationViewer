@@ -46,6 +46,11 @@ export class LayerPolylineView extends Layer {
         //TODO listen to mouse click to select polyline
     }
 
+    public addPolyline(polyline:DrawablePolyline) {
+        this.polylines.push(polyline);
+        this.canvas.requestRender();
+    }
+
     public render(renderer: Renderer): void {
         super.render(renderer);
         this.polylines.forEach(polyline => {

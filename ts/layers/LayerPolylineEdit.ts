@@ -6,15 +6,17 @@ import {LineWidth} from "../util/LineWidth";
 import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {Position} from "../util/Transform";
+import {LayerPolylineView} from "./LayerPolylineView";
 
 export class LayerPolylineEdit extends Layer {
 
     private content: Content;
     private polylineNew: DrawablePolyline = null;
-    private polylines: DrawablePolyline[] = [];
+    private layerPolylineView: LayerPolylineView;
 
-    public constructor(canvas: Canvas) {
+    public constructor(canvas: Canvas, layerPolylineView: LayerPolylineView) {
         super("polyline_edit", canvas);
+        this.layerPolylineView = layerPolylineView;
     }
 
     public load(content: Content, folder: string): void {
@@ -41,7 +43,7 @@ export class LayerPolylineEdit extends Layer {
                 xy[1] = position.y;
             }
             onmousedown(event: MouseEvent): boolean {
-                if (event.button == 0) { //left button down => add point
+                if (event.button == 0 && !this.down) { //left button down => add point
                     this.down = true;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     points.push([position.x, position.y]);
@@ -87,7 +89,7 @@ export class LayerPolylineEdit extends Layer {
     public finishEditing(): void {
         if (this.polylineNew) {
             if (this.polylineNew.points.length > 2) {
-                this.polylines.push(this.polylineNew); //TODO move it to LayerPolylineView
+                this.layerPolylineView.addPolyline(this.polylineNew);
             }
             this.polylineNew = null;
             this.canvas.requestRender();
@@ -102,9 +104,6 @@ export class LayerPolylineEdit extends Layer {
             let pointCount = this.polylineNew.points.length;
             if (pointCount > 0) this.drawPointCircle(this.polylineNew.points[0], renderer);
             if (pointCount > 1) this.drawPointCircle(this.polylineNew.points[pointCount - 1], renderer);
-        }
-        for (const polyline of this.polylines) {
-            polyline.render(this.canvas, renderer, this.camera);
         }
     }
     private drawPointCircle(point: number[], renderer: Renderer) {

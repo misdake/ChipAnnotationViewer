@@ -23,8 +23,7 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public startCreatingPolyline(): DrawablePolyline {
-        //create polyline with dummy point.
-        let points: number[][] = [[0, 0]];
+        let points: number[][] = [];
         let polyline = new DrawablePolyline(points, true, true, new LineWidth(2));
         polyline.color = "rgba(200,200,200,0.4)";
         this.polylines.push(polyline);
@@ -33,15 +32,17 @@ export class LayerPolylineEdit extends Layer {
         //after clicking, add such polyline to collection
         let self = this;
         this._mouseListener = new class extends MouseListener {
-            private preview(position: Position): void { //edit dummy point position to preview shape.
+            private down: boolean = false;
+
+            private preview(position: Position): void {
                 let xy = points[points.length - 1];
                 xy[0] = position.x;
                 xy[1] = position.y;
             }
-            onmouseup(event: MouseEvent): boolean {
-                if (event.button == 0) { //left button goes up => click => update last point and add dummy point
+            onmousedown(event: MouseEvent): boolean {
+                if (event.button == 0) { //left button down => add point
+                    this.down = true;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position);
                     points.push([position.x, position.y]);
                     self.canvas.requestRender();
                     return true;
@@ -49,8 +50,19 @@ export class LayerPolylineEdit extends Layer {
                     return false;
                 }
             }
+            onmouseup(event: MouseEvent): boolean {
+                if (event.button == 0) { //left button up => update last point
+                    this.down = false;
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    this.preview(position);
+                    self.canvas.requestRender();
+                    return true;
+                } else {
+                    return false;
+                }
+            }
             onmousemove(event: MouseEvent): boolean {
-                if ((event.buttons & 0x1) > 0) { //left button is down => preview
+                if (this.down) { //left button is down => preview
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     this.preview(position);
                     self.canvas.requestRender();

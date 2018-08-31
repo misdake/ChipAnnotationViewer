@@ -40,7 +40,7 @@ export class DrawableImage extends Drawable {
         }
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera) {
+    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
         let rect = renderer.testImageVisibility(camera, this.img, this.transformation, this.w, this.h, 100);
         if (rect) {
             this.loadIfNotLoaded();

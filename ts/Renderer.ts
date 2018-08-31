@@ -3,6 +3,7 @@ import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
 import {LineWidth} from "./util/LineWidth";
 import {ScreenRect} from "./util/ScreenRect";
+import {Point} from "./drawable/DrawablePolyline";
 
 export class Renderer {
     private canvas: Canvas;
@@ -44,16 +45,16 @@ export class Renderer {
     //---------------------------------------------
     //polyline
 
-    public renderPolyline(camera: Camera, points: number[][], closed: boolean, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
+    public renderPolyline(camera: Camera, points: Point[], closed: boolean, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
         if (points.length == 0) return;
 
         this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
         this.context.beginPath();
 
-        let start = camera.canvasToScreen(points[0][0], points[0][1]);
+        let start = camera.canvasToScreen(points[0].x, points[0].y);
         this.context.moveTo(start.x, start.y);
         for (let i = 1; i < points.length; i++) {
-            let point = camera.canvasToScreen(points[i][0], points[i][1]);
+            let point = camera.canvasToScreen(points[i].x, points[i].y);
             this.context.lineTo(point.x, point.y);
         }
         if (closed) {

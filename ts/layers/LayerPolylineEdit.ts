@@ -125,10 +125,10 @@ export class LayerPolylineEdit extends Layer {
                 if (event.button == 0) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
-                    //test point
+                    //test points
                     let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (point) { //delete point
-                        if (polyline.points.length > 3) { //so it is at least a triangle
+                        if (polyline.points.length > 3) { //so it will be at least a triangle
                             let index = polyline.points.indexOf(point);
                             if (index !== -1) polyline.points.splice(index, 1);
                             self.canvas.requestRender();

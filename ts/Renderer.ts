@@ -27,7 +27,6 @@ export class Renderer {
     }
     public setFillColor(color: string) {
         this.context.fillStyle = color;
-        this.context.strokeStyle = color;
     }
     public setStrokeColor(color: string) {
         this.context.strokeStyle = color;
@@ -106,7 +105,7 @@ export class Renderer {
 
 
     //---------------------------------------------
-    //circle rect
+    //circle
 
     public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
         let position = camera.canvasToScreen(x, y);
@@ -130,6 +129,6 @@ export class Renderer {
         }
     }
 
-    //circle rect
+    //circle
     //---------------------------------------------
 }

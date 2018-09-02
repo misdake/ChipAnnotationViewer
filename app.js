@@ -32,7 +32,6 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
         };
         Renderer.prototype.setFillColor = function (color) {
             this.context.fillStyle = color;
-            this.context.strokeStyle = color;
         };
         Renderer.prototype.setStrokeColor = function (color) {
             this.context.strokeStyle = color;
@@ -97,7 +96,7 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
         //image
         //---------------------------------------------
         //---------------------------------------------
-        //circle rect
+        //circle
         Renderer.prototype.renderCircle = function (camera, x, y, radius, fill, stroke, lineWidth) {
             var position = camera.canvasToScreen(x, y);
             var size = camera.canvasSizeToScreen(radius);
@@ -1051,10 +1050,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 class_2.prototype.ondblclick = function (event) {
                     if (event.button == 0) {
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        //test point
+                        //test points
                         var point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                         if (point) { //delete point
-                            if (polyline.points.length > 3) { //so it is at least a triangle
+                            if (polyline.points.length > 3) { //so it will be at least a triangle
                                 var index = polyline.points.indexOf(point);
                                 if (index !== -1)
                                     polyline.points.splice(index, 1);

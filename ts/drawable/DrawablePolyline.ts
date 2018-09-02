@@ -31,8 +31,8 @@ export class DrawablePolyline extends Drawable {
     public closed: boolean;
     public fill: boolean;
     public stroke: boolean;
-    public fillColor: string;
-    public strokeColor: string;
+    public fillColor?: string;
+    public strokeColor?: string;
     public lineWidth?: LineWidth;
     public points: Point[];
 

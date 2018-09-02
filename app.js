@@ -691,8 +691,8 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
     }());
     exports.Point = Point;
     var PointSegmentResult = /** @class */ (function () {
-        function PointSegmentResult(result, p1Index, p2Index, distance) {
-            this.result = result;
+        function PointSegmentResult(position, p1Index, p2Index, distance) {
+            this.position = position;
             this.p1Index = p1Index;
             this.p2Index = p2Index;
             this.distance = distance;
@@ -971,9 +971,6 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     xy.x = position.x;
                     xy.y = position.y;
                 };
-                class_1.prototype.onclick = function (event) {
-                    return true;
-                };
                 class_1.prototype.onmousedown = function (event) {
                     if (event.button == 0 && !this.down) { //left button down => add point
                         this.down = true;
@@ -1015,11 +1012,81 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         };
         LayerPolylineEdit.prototype.startEditingPolyline = function (polyline) {
             this.finishEditing();
-            this.polylineEdit = polyline;
-            //TODO startEditingPolyline
-            //enable checkboxes for polyline flags (switch ui to polyline-editing mode)
             //show polyline and its point indicators
-            //start listening to mouse events: drag points, create point, delete point, drag shape
+            this.polylineEdit = polyline;
+            //TODO enable checkboxes for polyline flags (switch ui to polyline-editing mode)
+            //start listening to mouse events: drag point, remove point on double click, add point on double click
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_2, _super);
+                function class_2() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.down = false;
+                    _this.dragPoint = null;
+                    return _this;
+                }
+                class_2.prototype.onmousedown = function (event) {
+                    this.dragPoint = null;
+                    if (event.button == 0) { //left button down => test drag point
+                        this.down = true;
+                        //test point
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (point) { //start dragging this point
+                            this.dragPoint = point;
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                class_2.prototype.onmouseup = function (event) {
+                    var passEvent = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
+                    this.dragPoint = null;
+                    if (event.button == 0) { //left button up => nothing
+                        this.down = false;
+                        return !passEvent;
+                    }
+                    return false;
+                };
+                class_2.prototype.ondblclick = function (event) {
+                    if (event.button == 0) {
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        //test point
+                        var point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (point) { //delete point
+                            if (polyline.points.length > 3) { //so it is at least a triangle
+                                var index = polyline.points.indexOf(point);
+                                if (index !== -1)
+                                    polyline.points.splice(index, 1);
+                                self.canvas.requestRender();
+                            }
+                            return true;
+                        }
+                        //test segments
+                        var segment = polyline.pickLine(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (segment) { //add point
+                            var newIndex = segment.p1Index; //insert point after p1
+                            polyline.points.splice(newIndex, 0, segment.position);
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                class_2.prototype.onmousemove = function (event) {
+                    if (this.down) { //left button is down => drag point
+                        if (this.dragPoint) {
+                            var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                            this.dragPoint.x = position.x;
+                            this.dragPoint.y = position.y;
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                return class_2;
+            }(MouseListener_1.MouseListener));
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {

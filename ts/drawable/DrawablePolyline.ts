@@ -14,13 +14,13 @@ export class Point {
 }
 
 export class PointSegmentResult {
-    constructor(result: Point, p1Index: number, p2Index: number, distance: number) {
-        this.result = result;
+    constructor(position: Point, p1Index: number, p2Index: number, distance: number) {
+        this.position = position;
         this.p1Index = p1Index;
         this.p2Index = p2Index;
         this.distance = distance;
     }
-    result: Point;
+    position: Point;
     p1Index: number;
     p2Index: number;
     distance: number;

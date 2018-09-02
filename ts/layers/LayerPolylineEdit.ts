@@ -44,9 +44,6 @@ export class LayerPolylineEdit extends Layer {
                 xy.x = position.x;
                 xy.y = position.y;
             }
-            onclick(event: MouseEvent): boolean {
-                return true;
-            }
             onmousedown(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.down) { //left button down => add point
                     this.down = true;
@@ -87,11 +84,83 @@ export class LayerPolylineEdit extends Layer {
     public startEditingPolyline(polyline: DrawablePolyline): void {
         this.finishEditing();
 
-        this.polylineEdit = polyline;
-        //TODO startEditingPolyline
-        //enable checkboxes for polyline flags (switch ui to polyline-editing mode)
         //show polyline and its point indicators
-        //start listening to mouse events: drag points, create point, delete point, drag shape
+        this.polylineEdit = polyline;
+
+        //TODO enable checkboxes for polyline flags (switch ui to polyline-editing mode)
+
+        //start listening to mouse events: drag point, remove point on double click, add point on double click
+        let self = this;
+        this._mouseListener = new class extends MouseListener {
+            private down: boolean = false;
+            private dragPoint: Point = null;
+
+            onmousedown(event: MouseEvent): boolean {
+                this.dragPoint = null;
+
+                if (event.button == 0) { //left button down => test drag point
+                    this.down = true;
+
+                    //test point
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                    if (point) { //start dragging this point
+                        this.dragPoint = point;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            onmouseup(event: MouseEvent): boolean {
+                let passEvent: boolean = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
+                this.dragPoint = null;
+
+                if (event.button == 0) { //left button up => nothing
+                    this.down = false;
+                    return !passEvent;
+                }
+                return false;
+            }
+            ondblclick(event: MouseEvent): boolean { //double click => remove point on selection or add point on segment
+                if (event.button == 0) {
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+
+                    //test point
+                    let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                    if (point) { //delete point
+                        if (polyline.points.length > 3) { //so it is at least a triangle
+                            let index = polyline.points.indexOf(point);
+                            if (index !== -1) polyline.points.splice(index, 1);
+                            self.canvas.requestRender();
+                        }
+                        return true;
+                    }
+
+                    //test segments
+                    let segment = polyline.pickLine(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                    if (segment) { //add point
+                        let newIndex = segment.p1Index; //insert point after p1
+                        polyline.points.splice(newIndex, 0, segment.position);
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            onmousemove(event: MouseEvent): boolean {
+                if (this.down) { //left button is down => drag point
+                    if (this.dragPoint) {
+                        let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        this.dragPoint.x = position.x;
+                        this.dragPoint.y = position.y;
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
 
         this.canvas.requestRender();
     }

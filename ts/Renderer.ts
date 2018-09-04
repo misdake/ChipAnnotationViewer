@@ -1,7 +1,7 @@
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
-import {LineWidth} from "./util/LineWidth";
+import {Size} from "./util/Size";
 import {ScreenRect} from "./util/ScreenRect";
 import {Point} from "./drawable/DrawablePolyline";
 
@@ -32,7 +32,7 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
-    private calculateLineWidth(camera: Camera, lineWidth?: LineWidth): number {
+    private calculateLineWidth(camera: Camera, lineWidth?: Size): number {
         if (!lineWidth) return 1;
         let onScreen = lineWidth.onScreen;
         let onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
@@ -44,7 +44,7 @@ export class Renderer {
     //---------------------------------------------
     //polyline
 
-    public renderPolyline(camera: Camera, points: Point[], closed: boolean, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
+    public renderPolyline(camera: Camera, points: Point[], closed: boolean, fill: boolean, stroke: boolean, lineWidth?: Size) {
         if (points.length == 0) return;
 
         this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
@@ -107,7 +107,7 @@ export class Renderer {
     //---------------------------------------------
     //circle
 
-    public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: LineWidth) {
+    public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: Size) {
         let position = camera.canvasToScreen(x, y);
         let size = camera.canvasSizeToScreen(radius);
         this.drawCircle(position.x, position.y, size, fill, stroke);
@@ -130,5 +130,25 @@ export class Renderer {
     }
 
     //circle
+    //---------------------------------------------
+
+
+    //---------------------------------------------
+    //text
+
+    public renderText(camera: Camera, text:string, fontSize:Size, x:number, y:number, anchorX:string, anchorY:string) {
+        let position = camera.canvasToScreen(x, y);
+        let size = this.calculateLineWidth(camera, fontSize);
+        this.drawText(text, size, position.x, position.y, anchorX, anchorY);
+    }
+
+    public drawText(text: string, fontSize: number, x: number, y: number, anchorX: string, anchorY: string) {
+        this.context.textAlign = anchorX;
+        this.context.textBaseline = anchorY;
+        this.context.font = fontSize + "px Arial";
+        this.context.fillText(text, x, y);
+    }
+
+    //text
     //---------------------------------------------
 }

@@ -1,4 +1,4 @@
-export class LineWidth {
+export class Size {
     onScreen: number;
     onCanvas: number;
     ofScreenSize: number;

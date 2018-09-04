@@ -116,6 +116,21 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
                 this.context.stroke();
             }
         };
+        //circle
+        //---------------------------------------------
+        //---------------------------------------------
+        //text
+        Renderer.prototype.renderText = function (camera, text, fontSize, x, y, anchorX, anchorY) {
+            var position = camera.canvasToScreen(x, y);
+            var size = this.calculateLineWidth(camera, fontSize);
+            this.drawText(text, size, position.x, position.y, anchorX, anchorY);
+        };
+        Renderer.prototype.drawText = function (text, fontSize, x, y, anchorX, anchorY) {
+            this.context.textAlign = anchorX;
+            this.context.textBaseline = anchorY;
+            this.context.font = fontSize + "px Arial";
+            this.context.fillText(text, x, y);
+        };
         return Renderer;
     }());
     exports.Renderer = Renderer;
@@ -781,20 +796,20 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
     exports.DrawablePolyline = DrawablePolyline;
 });
 //# sourceMappingURL=DrawablePolyline.js.map;
-define('util/LineWidth',["require", "exports"], function (require, exports) {
+define('util/Size',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var LineWidth = /** @class */ (function () {
-        function LineWidth(onScreen, onCanvas, ofScreenSize) {
+    var Size = /** @class */ (function () {
+        function Size(onScreen, onCanvas, ofScreenSize) {
             this.onScreen = onScreen;
             this.onCanvas = onCanvas ? onCanvas : 0;
             this.ofScreenSize = ofScreenSize ? ofScreenSize : 0;
         }
-        return LineWidth;
+        return Size;
     }());
-    exports.LineWidth = LineWidth;
+    exports.Size = Size;
 });
-//# sourceMappingURL=LineWidth.js.map;
+//# sourceMappingURL=Size.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -808,7 +823,58 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/LineWidth", "../MouseListener"], function (require, exports, Layer_1, DrawablePolyline_1, LineWidth_1, MouseListener_1) {
+define('drawable/DrawableText',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var AnchorX;
+    (function (AnchorX) {
+        AnchorX["LEFT"] = "left";
+        AnchorX["MIDDLE"] = "center";
+        AnchorX["RIGHT"] = "right";
+    })(AnchorX = exports.AnchorX || (exports.AnchorX = {}));
+    var AnchorY;
+    (function (AnchorY) {
+        AnchorY["TOP"] = "top";
+        AnchorY["MIDDLE"] = "middle";
+        AnchorY["BOTTOM"] = "bottom";
+    })(AnchorY = exports.AnchorY || (exports.AnchorY = {}));
+    var DrawableText = /** @class */ (function (_super) {
+        __extends(DrawableText, _super);
+        function DrawableText(text, color, anchorX, anchorY, fontSize, x, y) {
+            var _this = _super.call(this) || this;
+            _this.text = "";
+            _this.text = text;
+            _this.color = color;
+            _this.anchorX = anchorX;
+            _this.anchorY = anchorY;
+            _this.fontSize = fontSize;
+            _this.x = x;
+            _this.y = y;
+            return _this;
+        }
+        DrawableText.prototype.render = function (canvas, renderer, camera) {
+            renderer.setColor(this.color);
+            renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, this.anchorX, this.anchorY);
+        };
+        return DrawableText;
+    }(Drawable_1.Drawable));
+    exports.DrawableText = DrawableText;
+});
+//# sourceMappingURL=DrawableText.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "../drawable/DrawableText"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, DrawableText_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerPolylineView = /** @class */ (function (_super) {
@@ -816,6 +882,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         function LayerPolylineView(canvas) {
             var _this = _super.call(this, "polyline_view", canvas) || this;
             _this.polylines = [];
+            _this.texts = [];
             return _this;
         }
         LayerPolylineView.prototype.setLayer = function (layerPolylineEdit) {
@@ -832,18 +899,18 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         LayerPolylineView.prototype.load = function (content, folder) {
             _super.prototype.load.call(this, content, folder);
             this.content = content;
-            var polyline1 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new LineWidth_1.LineWidth(0, 10));
+            var polyline1 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new Size_1.Size(0, 10));
             polyline1.fillColor = polyline1.strokeColor = "#ff0000";
             this.polylines.push(polyline1);
-            var polyline2 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 1100, 900, 1900), true, false, new LineWidth_1.LineWidth(5, 0));
+            var polyline2 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, false, new Size_1.Size(5, 0));
             polyline2.fillColor = polyline2.strokeColor = "#00ff00";
             this.polylines.push(polyline2);
-            var polyline3 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true);
+            var polyline3 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(2100, 100, 2900, 900), true, false, new Size_1.Size(0, 0, 0.004));
             polyline3.fillColor = polyline3.strokeColor = "#0000ff";
             this.polylines.push(polyline3);
-            var polyline4 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 1100, 1900, 1900), true, false, new LineWidth_1.LineWidth(0, 0, 0.002));
-            polyline4.fillColor = polyline4.strokeColor = "#ffff00";
-            this.polylines.push(polyline4);
+            this.texts.push(new DrawableText_1.DrawableText("a", "#ff0000", DrawableText_1.AnchorX.MIDDLE, DrawableText_1.AnchorY.MIDDLE, new Size_1.Size(0, 100), 500, 500));
+            this.texts.push(new DrawableText_1.DrawableText("b", "#00ff00", DrawableText_1.AnchorX.MIDDLE, DrawableText_1.AnchorY.MIDDLE, new Size_1.Size(50, 0), 1500, 500));
+            this.texts.push(new DrawableText_1.DrawableText("c", "#0000ff", DrawableText_1.AnchorX.MIDDLE, DrawableText_1.AnchorY.MIDDLE, new Size_1.Size(0, 0, 0.04), 2500, 500));
             //listen to mouse click to select polyline
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -907,11 +974,15 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
             }
         };
         LayerPolylineView.prototype.render = function (renderer) {
-            var _this = this;
             _super.prototype.render.call(this, renderer);
-            this.polylines.forEach(function (polyline) {
-                polyline.render(_this.canvas, renderer, _this.camera);
-            });
+            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
+                var polyline = _a[_i];
+                polyline.render(this.canvas, renderer, this.camera);
+            }
+            for (var _b = 0, _c = this.texts; _b < _c.length; _b++) {
+                var text = _c[_b];
+                text.render(this.canvas, renderer, this.camera);
+            }
         };
         LayerPolylineView.prototype.unload = function () {
             _super.prototype.unload.call(this);
@@ -934,7 +1005,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/LineWidth", "../MouseListener"], function (require, exports, Layer_1, DrawablePolyline_1, LineWidth_1, MouseListener_1) {
+define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerPolylineEdit = /** @class */ (function (_super) {
@@ -954,7 +1025,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         LayerPolylineEdit.prototype.startCreatingPolyline = function () {
             this.finishEditing();
             var points = [];
-            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(points, true, true, new LineWidth_1.LineWidth(2));
+            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(points, true, true, new Size_1.Size(2));
             this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
             this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
             var self = this;

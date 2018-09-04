@@ -2,7 +2,7 @@ import {Layer} from "../Layer";
 import {Content} from "../Content";
 import {DrawablePolyline, Point} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
-import {LineWidth} from "../util/LineWidth";
+import {Size} from "../util/Size";
 import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {Position} from "../util/Transform";
@@ -31,7 +31,7 @@ export class LayerPolylineEdit extends Layer {
         this.finishEditing();
 
         let points: Point[] = [];
-        this.polylineNew = new DrawablePolyline(points, true, true, new LineWidth(2));
+        this.polylineNew = new DrawablePolyline(points, true, true, new Size(2));
         this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
         this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
 

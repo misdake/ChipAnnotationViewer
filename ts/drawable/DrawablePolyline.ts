@@ -2,7 +2,7 @@ import {Drawable} from "./Drawable";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
-import {LineWidth} from "../util/LineWidth";
+import {Size} from "../util/Size";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -31,12 +31,12 @@ export class DrawablePolyline extends Drawable {
     public closed: boolean;
     public fill: boolean;
     public stroke: boolean;
-    public fillColor: string;
-    public strokeColor: string;
-    public lineWidth?: LineWidth;
+    public fillColor?: string;
+    public strokeColor?: string;
+    public lineWidth?: Size;
     public points: Point[];
 
-    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: LineWidth) {
+    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: Size) {
         super();
         this.points = points;
         this.closed = closed;

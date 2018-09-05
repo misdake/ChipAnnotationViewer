@@ -2,11 +2,12 @@ import {Layer} from "../Layer";
 import {Content} from "../Content";
 import {DrawablePolyline, Point} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
-import {LineWidth} from "../util/LineWidth";
+import {Size} from "../util/Size";
 import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
+import {Ui} from "../util/Ui";
 
 export class LayerPolylineEdit extends Layer {
 
@@ -25,17 +26,25 @@ export class LayerPolylineEdit extends Layer {
 
     public load(content: Content, folder: string): void {
         this.content = content;
+
+        let self = this;
+        Ui.bindButtonOnClick("buttonStartEditing", () => self.startCreatingPolyline());
+        Ui.bindButtonOnClick("buttonFinishEditing", () => self.finishEditing());
+        Ui.bindButtonOnClick("buttonDeleteSelected", () => self.deleteEditing());
+
+        Ui.setVisibility("panelSelected", false);
     }
 
     public startCreatingPolyline(): DrawablePolyline {
         this.finishEditing();
+        let self = this;
 
         let points: Point[] = [];
-        this.polylineNew = new DrawablePolyline(points, true, true, new LineWidth(2));
+        this.polylineNew = new DrawablePolyline(points, true, true, new Size(2));
         this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
         this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
+        this.bindPolyline(this.polylineNew);
 
-        let self = this;
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
 
@@ -86,8 +95,7 @@ export class LayerPolylineEdit extends Layer {
 
         //show polyline and its point indicators
         this.polylineEdit = polyline;
-
-        //TODO enable checkboxes for polyline flags (switch ui to polyline-editing mode)
+        this.bindPolyline(this.polylineEdit);
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
@@ -125,10 +133,10 @@ export class LayerPolylineEdit extends Layer {
                 if (event.button == 0) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
-                    //test point
+                    //test points
                     let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (point) { //delete point
-                        if (polyline.points.length > 3) { //so it is at least a triangle
+                        if (polyline.points.length > 3) { //so it will be at least a triangle
                             let index = polyline.points.indexOf(point);
                             if (index !== -1) polyline.points.splice(index, 1);
                             self.canvas.requestRender();
@@ -166,6 +174,8 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public finishEditing(): void {
+        Ui.setVisibility("panelSelected", false);
+
         if (this.polylineNew) {
             if (this.polylineNew.points.length > 2) {
                 this.layerPolylineView.addPolyline(this.polylineNew);
@@ -195,6 +205,7 @@ export class LayerPolylineEdit extends Layer {
             }
         }
     }
+
     private drawPointCircle(point: Point, renderer: Renderer) {
         let position = this.camera.canvasToScreen(point.x, point.y);
         renderer.setColor("rgba(255,255,255,1)");
@@ -208,5 +219,37 @@ export class LayerPolylineEdit extends Layer {
             this.layerPolylineView.deletePolyline(this.polylineEdit);
             this.finishEditing();
         }
+    }
+
+    private bindPolyline(polyline: DrawablePolyline) {
+        Ui.setVisibility("panelSelected", true);
+        Ui.bindCheckbox("checkboxClosed", polyline.closed, newValue => {
+            polyline.closed = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindCheckbox("checkboxFill", polyline.fill, newValue => {
+            polyline.fill = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindValue("colorStroke", polyline.strokeColor, newValue => {
+            polyline.strokeColor = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindValue("colorFill", polyline.fillColor, newValue => {
+            polyline.fillColor = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, newValue => {
+            polyline.lineWidth.onScreen = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindNumber("textSizeOnCanvas", polyline.lineWidth.onCanvas, newValue => {
+            polyline.lineWidth.onCanvas = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen, newValue => {
+            polyline.lineWidth.ofScreen = newValue;
+            this.canvas.requestRender();
+        });
     }
 }

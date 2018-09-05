@@ -16,7 +16,20 @@
     </script>
 </head>
 <body>
-<div id="panel"></div>
+<div id="panel">
+    <button id="buttonStartEditing" class="configButton">new polyline</button><br>
+    <button id="buttonFinishEditing" class="configButton">finish polyline</button><br>
+    <button id="buttonDeleteSelected" class="configButton">delete selected</button><br>
+    <div id="panelSelected" style="visibility: hidden;">
+        <input class="configCheckbox" type="checkbox" id="checkboxFill"><label for="checkboxFill">fill</label><br>
+        <input class="configCheckbox" type="checkbox" id="checkboxClosed"><label for="checkboxClosed">closed</label><br>
+        <input class="configColor" type="color" id="colorStroke"><label for="colorStroke">strokeColor</label><br>
+        <input class="configColor" type="color" id="colorFill"><label for="colorFill">fillColor</label><br>
+        <input class="configText" type="number" min=0 id="textSizeOnScreen" style="width:5em"><label for="textSizeOnScreen">onScreen</label><br>
+        <input class="configText" type="number" min=0 id="textSizeOnCanvas" style="width:5em"><label for="textSizeOnCanvas">onCanvas</label><br>
+        <input class="configText" type="number" min=0 id="textSizeOfScreen" style="width:5em"><label for="textSizeOfScreen">ofScreen</label><br>
+    </div>
+</div>
 <div id='container'></div>
 </body>
 </html>

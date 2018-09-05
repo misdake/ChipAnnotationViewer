@@ -23,31 +23,6 @@ canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);
 canvas.addLayer(layerPolylineEdit);
 
-let buttonStartEditing: HTMLButtonElement = document.createElement("button");
-buttonStartEditing.id = "buttonStartEditing";
-document.getElementById("panel").appendChild(buttonStartEditing);
-buttonStartEditing.classList.add("configButton");
-buttonStartEditing.innerText = "new polyline";
-buttonStartEditing.onclick = () => {
-    layerPolylineEdit.startCreatingPolyline();
-};
-let buttonFinishEditing: HTMLButtonElement = document.createElement("button");
-document.getElementById("panel").appendChild(buttonFinishEditing);
-buttonFinishEditing.id = "buttonFinishEditing";
-buttonFinishEditing.classList.add("configButton");
-buttonFinishEditing.innerText = "finish polyline";
-buttonFinishEditing.onclick = () => {
-    layerPolylineEdit.finishEditing();
-};
-let buttonDeleteSelected: HTMLButtonElement = document.createElement("button");
-document.getElementById("panel").appendChild(buttonDeleteSelected);
-buttonDeleteSelected.id = "buttonDeleteSelected";
-buttonDeleteSelected.classList.add("configButton");
-buttonDeleteSelected.innerText = "delete selected";
-buttonDeleteSelected.onclick = () => {
-    layerPolylineEdit.deleteEditing();
-};
-
 NetUtil.get("data/fiji/content.json", text => {
     let content: Content = JSON.parse(text) as Content;
     canvas.load(content, "data/fiji");

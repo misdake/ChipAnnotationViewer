@@ -15,5 +15,13 @@ body, html { height:100%; }
 }
 
 .configButton {
-    margin:20px;
+    /*margin:20px 5px;*/
+}
+
+.configCheckbox {
+    /*margin:20px 5px;*/
+}
+
+.configText {
+    /*margin:20px 5px;*/
 }

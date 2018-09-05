@@ -41,7 +41,7 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
                 return 1;
             var onScreen = lineWidth.onScreen;
             var onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
-            var ofScreenSize = lineWidth.ofScreenSize * Math.min(this.canvasElement.width, this.canvasElement.height);
+            var ofScreenSize = lineWidth.ofScreen * Math.min(this.canvasElement.width, this.canvasElement.height);
             return onScreen + onCanvas + ofScreenSize;
         };
         //---------------------------------------------
@@ -800,10 +800,10 @@ define('util/Size',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Size = /** @class */ (function () {
-        function Size(onScreen, onCanvas, ofScreenSize) {
+        function Size(onScreen, onCanvas, ofScreen) {
             this.onScreen = onScreen;
             this.onCanvas = onCanvas ? onCanvas : 0;
-            this.ofScreenSize = ofScreenSize ? ofScreenSize : 0;
+            this.ofScreen = ofScreen ? ofScreen : 0;
         }
         return Size;
     }());
@@ -900,13 +900,16 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
             _super.prototype.load.call(this, content, folder);
             this.content = content;
             var polyline1 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new Size_1.Size(0, 10));
-            polyline1.fillColor = polyline1.strokeColor = "#ff0000";
+            polyline1.fillColor = "#00ff00";
+            polyline1.strokeColor = "#ff0000";
             this.polylines.push(polyline1);
-            var polyline2 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, false, new Size_1.Size(5, 0));
-            polyline2.fillColor = polyline2.strokeColor = "#00ff00";
+            var polyline2 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true, new Size_1.Size(5, 0));
+            polyline2.fillColor = "#0000ff";
+            polyline2.strokeColor = "#00ff00";
             this.polylines.push(polyline2);
-            var polyline3 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(2100, 100, 2900, 900), true, false, new Size_1.Size(0, 0, 0.004));
-            polyline3.fillColor = polyline3.strokeColor = "#0000ff";
+            var polyline3 = new DrawablePolyline_1.DrawablePolyline(LayerPolylineView.prepareRect(2100, 100, 2900, 900), false, false, new Size_1.Size(0, 0, 0.004));
+            polyline3.fillColor = "#ff0000";
+            polyline3.strokeColor = "#0000ff";
             this.polylines.push(polyline3);
             this.texts.push(new DrawableText_1.DrawableText("a", "#ff0000", DrawableText_1.AnchorX.MIDDLE, DrawableText_1.AnchorY.MIDDLE, new Size_1.Size(0, 100), 500, 500));
             this.texts.push(new DrawableText_1.DrawableText("b", "#00ff00", DrawableText_1.AnchorX.MIDDLE, DrawableText_1.AnchorY.MIDDLE, new Size_1.Size(50, 0), 1500, 500));
@@ -934,12 +937,6 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
                             var pickPoint = polyline.pickPoint(x, y, radius);
                             var pickLine = polyline.pickLine(x, y, radius);
                             var pickShape = polyline.pickShape(x, y);
-                            if (pickPoint)
-                                console.log("pickPoint: " + JSON.stringify(pickPoint));
-                            if (pickLine)
-                                console.log("pickLine: " + JSON.stringify(pickLine));
-                            if (pickShape)
-                                console.log("pickShape: " + JSON.stringify(pickShape));
                             if (pickPoint || pickLine || pickShape) {
                                 self.layerPolylineEdit.startEditingPolyline(polyline);
                                 return true;
@@ -992,6 +989,53 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
     exports.LayerPolylineView = LayerPolylineView;
 });
 //# sourceMappingURL=LayerPolylineView.js.map;
+define('util/Ui',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Ui = /** @class */ (function () {
+        function Ui() {
+        }
+        Ui.bindButtonOnClick = function (id, onclick) {
+            var button = document.getElementById(id);
+            button.onclick = onclick;
+        };
+        Ui.setVisibility = function (id, visible) {
+            var element = document.getElementById(id);
+            element.style.visibility = visible ? "visible" : "hidden";
+        };
+        Ui.bindCheckbox = function (id, initialValue, onchange) {
+            var checkbox = document.getElementById(id);
+            checkbox.checked = initialValue;
+            checkbox.onchange = function (ev) {
+                onchange(checkbox.checked);
+            };
+        };
+        Ui.bindValue = function (id, initialValue, onchange) {
+            var colorPicker = document.getElementById(id);
+            colorPicker.value = initialValue;
+            colorPicker.onchange = function (ev) {
+                onchange(colorPicker.value);
+            };
+        };
+        Ui.bindNumber = function (id, initialValue, onchange) {
+            var input = document.getElementById(id);
+            input.value = initialValue.toString();
+            input.onchange = function (ev) {
+                var result = parseFloat(input.value);
+                if (result >= 0) {
+                    onchange(result);
+                }
+                else {
+                    input.value = "0";
+                    onchange(0);
+                }
+            };
+        };
+        return Ui;
+    }());
+    exports.Ui = Ui;
+});
+//# sourceMappingURL=Ui.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -1005,7 +1049,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1) {
+define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "../util/Ui"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, Ui_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerPolylineEdit = /** @class */ (function (_super) {
@@ -1021,14 +1065,20 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         };
         LayerPolylineEdit.prototype.load = function (content, folder) {
             this.content = content;
+            var self = this;
+            Ui_1.Ui.bindButtonOnClick("buttonStartEditing", function () { return self.startCreatingPolyline(); });
+            Ui_1.Ui.bindButtonOnClick("buttonFinishEditing", function () { return self.finishEditing(); });
+            Ui_1.Ui.bindButtonOnClick("buttonDeleteSelected", function () { return self.deleteEditing(); });
+            Ui_1.Ui.setVisibility("panelSelected", false);
         };
         LayerPolylineEdit.prototype.startCreatingPolyline = function () {
             this.finishEditing();
+            var self = this;
             var points = [];
             this.polylineNew = new DrawablePolyline_1.DrawablePolyline(points, true, true, new Size_1.Size(2));
             this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
             this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
-            var self = this;
+            this.bindPolyline(this.polylineNew);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
                 function class_1() {
@@ -1084,7 +1134,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.finishEditing();
             //show polyline and its point indicators
             this.polylineEdit = polyline;
-            //TODO enable checkboxes for polyline flags (switch ui to polyline-editing mode)
+            this.bindPolyline(this.polylineEdit);
             //start listening to mouse events: drag point, remove point on double click, add point on double click
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -1160,6 +1210,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
+            Ui_1.Ui.setVisibility("panelSelected", false);
             if (this.polylineNew) {
                 if (this.polylineNew.points.length > 2) {
                     this.layerPolylineView.addPolyline(this.polylineNew);
@@ -1204,6 +1255,38 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 this.finishEditing();
             }
         };
+        LayerPolylineEdit.prototype.bindPolyline = function (polyline) {
+            var _this = this;
+            Ui_1.Ui.setVisibility("panelSelected", true);
+            Ui_1.Ui.bindCheckbox("checkboxClosed", polyline.closed, function (newValue) {
+                polyline.closed = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindCheckbox("checkboxFill", polyline.fill, function (newValue) {
+                polyline.fill = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindValue("colorStroke", polyline.strokeColor, function (newValue) {
+                polyline.strokeColor = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindValue("colorFill", polyline.fillColor, function (newValue) {
+                polyline.fillColor = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
+                polyline.lineWidth.onScreen = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textSizeOnCanvas", polyline.lineWidth.onCanvas, function (newValue) {
+                polyline.lineWidth.onCanvas = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen, function (newValue) {
+                polyline.lineWidth.ofScreen = newValue;
+                _this.canvas.requestRender();
+            });
+        };
         return LayerPolylineEdit;
     }(Layer_1.Layer));
     exports.LayerPolylineEdit = LayerPolylineEdit;
@@ -1225,30 +1308,6 @@ define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Lay
     canvas.addLayer(layerImage);
     canvas.addLayer(layerPolylineView);
     canvas.addLayer(layerPolylineEdit);
-    var buttonStartEditing = document.createElement("button");
-    buttonStartEditing.id = "buttonStartEditing";
-    document.getElementById("panel").appendChild(buttonStartEditing);
-    buttonStartEditing.classList.add("configButton");
-    buttonStartEditing.innerText = "new polyline";
-    buttonStartEditing.onclick = function () {
-        layerPolylineEdit.startCreatingPolyline();
-    };
-    var buttonFinishEditing = document.createElement("button");
-    document.getElementById("panel").appendChild(buttonFinishEditing);
-    buttonFinishEditing.id = "buttonFinishEditing";
-    buttonFinishEditing.classList.add("configButton");
-    buttonFinishEditing.innerText = "finish polyline";
-    buttonFinishEditing.onclick = function () {
-        layerPolylineEdit.finishEditing();
-    };
-    var buttonDeleteSelected = document.createElement("button");
-    document.getElementById("panel").appendChild(buttonDeleteSelected);
-    buttonDeleteSelected.id = "buttonDeleteSelected";
-    buttonDeleteSelected.classList.add("configButton");
-    buttonDeleteSelected.innerText = "delete selected";
-    buttonDeleteSelected.onclick = function () {
-        layerPolylineEdit.deleteEditing();
-    };
     NetUtil_1.NetUtil.get("data/fiji/content.json", function (text) {
         var content = JSON.parse(text);
         canvas.load(content, "data/fiji");

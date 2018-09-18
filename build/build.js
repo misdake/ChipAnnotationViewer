@@ -1,9 +1,9 @@
 ({
     baseUrl: "../js",
     paths: {
-        'Main': 'Main'
+        'App': 'App'
     },
     optimize: "none",
-    name: "Main",
+    name: "App",
     out: "../app.js"
 })

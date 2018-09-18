@@ -85,7 +85,9 @@ export class LayerPolylineView extends Layer {
                 }
             }
             onmousemove(event: MouseEvent): boolean {
-                this.moved = true;
+                if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                    this.moved = true;
+                }
                 return false;
             }
         };

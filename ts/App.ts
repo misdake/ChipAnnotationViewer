@@ -4,6 +4,7 @@ import {Content} from "./Content";
 import {LayerImage} from "./layers/LayerImage";
 import {LayerPolylineView} from "./layers/LayerPolylineView";
 import {LayerPolylineEdit} from "./layers/LayerPolylineEdit";
+import {LZString} from "./util/LZString";
 
 document.oncontextmenu = function (ev) {
     return false; //disable context menu
@@ -23,8 +24,24 @@ canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);
 canvas.addLayer(layerPolylineEdit);
 
-NetUtil.get("data/fiji/content.json", text => {
-    let content: Content = JSON.parse(text) as Content;
-    canvas.load(content, "data/fiji");
-    canvas.requestRender();
-});
+function load(map: string, config: string) {
+    NetUtil.get("data/" + map + "/content.json", text => {
+        let content: Content = JSON.parse(text) as Content;
+        canvas.load(content, "data/" + map);
+        canvas.requestRender();
+        // console.log(LZString.compressToEncodedURIComponent(text));
+    });
+}
+
+let url_string = window.location.href;
+let url = new URL(url_string);
+let map = url.searchParams.get("map");
+// let config = url.searchParams.get("config");
+
+if (!map) {
+    map = "fiji";
+}
+// if (config) {
+//     console.log("decompressed: " + LZString.decompressFromEncodedURIComponent(config));
+// }
+load(map, "");

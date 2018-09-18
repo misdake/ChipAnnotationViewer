@@ -950,7 +950,9 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
                     }
                 };
                 class_1.prototype.onmousemove = function (event) {
-                    this.moved = true;
+                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                        this.moved = true;
+                    }
                     return false;
                 };
                 return class_1;
@@ -1292,7 +1294,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
-define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1) {
+define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     document.oncontextmenu = function (ev) {
@@ -1308,10 +1310,24 @@ define('Main',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Lay
     canvas.addLayer(layerImage);
     canvas.addLayer(layerPolylineView);
     canvas.addLayer(layerPolylineEdit);
-    NetUtil_1.NetUtil.get("data/fiji/content.json", function (text) {
-        var content = JSON.parse(text);
-        canvas.load(content, "data/fiji");
-        canvas.requestRender();
-    });
+    function load(map, config) {
+        NetUtil_1.NetUtil.get("data/" + map + "/content.json", function (text) {
+            var content = JSON.parse(text);
+            canvas.load(content, "data/" + map);
+            canvas.requestRender();
+            // console.log(LZString.compressToEncodedURIComponent(text));
+        });
+    }
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var map = url.searchParams.get("map");
+    // let config = url.searchParams.get("config");
+    if (!map) {
+        map = "fiji";
+    }
+    // if (config) {
+    //     console.log("decompressed: " + LZString.decompressFromEncodedURIComponent(config));
+    // }
+    load(map, "");
 });
-//# sourceMappingURL=Main.js.map;
+//# sourceMappingURL=App.js.map;

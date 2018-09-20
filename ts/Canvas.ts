@@ -1,7 +1,8 @@
 import {Layer} from "./Layer";
-import {Content} from "./Content";
+import {Map} from "./data/Map";
 import {Renderer} from "./Renderer";
 import {Camera} from "./Camera";
+import {Data} from "./data/Data";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -165,11 +166,19 @@ export class Canvas {
         })
     }
 
-    public load(content: Content, folder: string): void {
-        this.camera.load(this, content);
+    public load(map: Map, data: Data, folder: string): void {
+        this.camera.load(this, map);
         for (let layer of this.layers) {
-            layer.load(content, folder);
+            layer.load(map, data, folder);
         }
+    }
+
+    public save(): Data {
+        let data = new Data();
+        for (let layer of this.layers) {
+            layer.save(data);
+        }
+        return data;
     }
 
     public render(): void {

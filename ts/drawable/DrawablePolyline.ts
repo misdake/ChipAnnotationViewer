@@ -26,6 +26,23 @@ export class PointSegmentResult {
     distance: number;
 }
 
+export class DrawablePolylinePack {
+    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: Size) {
+        this.points = points;
+        this.closed = closed;
+        this.fill = fill;
+        this.stroke = true; //TODO add to parameter
+        this.lineWidth = lineWidth;
+    }
+    closed: boolean;
+    fill: boolean;
+    stroke: boolean;
+    fillColor?: string;
+    strokeColor?: string;
+    lineWidth?: Size;
+    points: Point[];
+}
+
 export class DrawablePolyline extends Drawable {
 
     public closed: boolean;
@@ -36,13 +53,16 @@ export class DrawablePolyline extends Drawable {
     public lineWidth?: Size;
     public points: Point[];
 
-    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: Size) {
+    public constructor(pack: DrawablePolylinePack) {
         super();
-        this.points = points;
-        this.closed = closed;
-        this.fill = fill;
-        this.stroke = true; //TODO add to parameter
-        this.lineWidth = lineWidth;
+        //TODO for each field, copy
+        this.closed = pack.closed;
+        this.fill = pack.fill;
+        this.stroke = pack.stroke;
+        this.fillColor = pack.fillColor;
+        this.strokeColor = pack.strokeColor;
+        this.lineWidth = pack.lineWidth;
+        this.points = pack.points;
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {

@@ -1,6 +1,6 @@
 import {Layer} from "../Layer";
-import {Content} from "../Content";
-import {DrawablePolyline, Point} from "../drawable/DrawablePolyline";
+import {Map} from "../data/Map";
+import {DrawablePolyline, DrawablePolylinePack, Point} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
 import {MouseListener} from "../MouseListener";
@@ -8,10 +8,11 @@ import {Renderer} from "../Renderer";
 import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
+import {Data} from "../data/Data";
 
 export class LayerPolylineEdit extends Layer {
 
-    private content: Content;
+    private map: Map;
     private polylineNew: DrawablePolyline = null;
     private polylineEdit: DrawablePolyline = null;
     private layerPolylineView: LayerPolylineView;
@@ -24,8 +25,8 @@ export class LayerPolylineEdit extends Layer {
         this.layerPolylineView = layerPolylineView;
     }
 
-    public load(content: Content, folder: string): void {
-        this.content = content;
+    public load(map: Map, data: Data, folder: string): void {
+        this.map = map;
 
         let self = this;
         Ui.bindButtonOnClick("buttonStartEditing", () => self.startCreatingPolyline());
@@ -40,7 +41,7 @@ export class LayerPolylineEdit extends Layer {
         let self = this;
 
         let points: Point[] = [];
-        this.polylineNew = new DrawablePolyline(points, true, true, new Size(2));
+        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(points, true, true, new Size(2)));
         this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
         this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
         this.bindPolyline(this.polylineNew);

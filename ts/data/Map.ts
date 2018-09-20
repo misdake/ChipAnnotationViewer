@@ -1,10 +1,10 @@
-export interface TileLevel {
+export class TileLevel {
     level: number;
     xMax: number;
     yMax: number;
 }
 
-export interface Content {
+export class Map {
     tileSize: number;
     width: number;
     height: number;

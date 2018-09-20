@@ -1,4 +1,4 @@
-import {Content} from "./Content";
+import {Map} from "./data/Map";
 import {Canvas} from "./Canvas";
 import {Position} from "./util/Transform";
 
@@ -19,19 +19,19 @@ export class Camera {
     public constructor() {
     }
 
-    public load(canvas: Canvas, content: Content) {
+    public load(canvas: Canvas, map: Map) {
         this.canvas = canvas;
         this.zoomMin = 0;
-        this.zoomMax = content.maxLevel;
-        this.zoom = content.maxLevel;
+        this.zoomMax = map.maxLevel;
+        this.zoom = map.maxLevel;
         this.checkZoom();
 
-        this.position.x = content.width / 2;
-        this.position.y = content.height / 2;
+        this.position.x = map.width / 2;
+        this.position.y = map.height / 2;
         this.xMin = 0;
-        this.xMax = content.width;
+        this.xMax = map.width;
         this.yMin = 0;
-        this.yMax = content.height;
+        this.yMax = map.height;
     }
     public moveXy(dx: number, dy: number) {
         this.position.x += dx;

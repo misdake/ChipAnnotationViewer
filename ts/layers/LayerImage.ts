@@ -1,13 +1,14 @@
 import {Layer} from "../Layer";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
-import {Content} from "../Content";
+import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawableImage} from "../drawable/DrawableImage";
 import {MouseListener} from "../MouseListener";
+import {Data} from "../data/Data";
 
 export class LayerImage extends Layer {
-    private content: Content;
+    private map: Map;
     private maxLevel: number;
     private baseFolder: string;
 
@@ -15,10 +16,9 @@ export class LayerImage extends Layer {
         super("image", canvas);
     }
 
-    public load(content: Content, folder: string): void {
-        super.load(content, folder);
-        this.content = content;
-        this.maxLevel = content.maxLevel;
+    public load(map: Map, data: Data, folder: string): void {
+        this.map = map;
+        this.maxLevel = map.maxLevel;
         this.baseFolder = folder;
         this.currentZoom = -1;
 
@@ -75,9 +75,9 @@ export class LayerImage extends Layer {
         if (this.currentZoom === zoom) return;
         this.currentZoom = zoom;
 
-        let targetSize = this.content.tileSize << zoom;
+        let targetSize = this.map.tileSize << zoom;
 
-        let levelData = this.content.levels[zoom];
+        let levelData = this.map.levels[zoom];
         this.xCount = levelData.xMax;
         this.yCount = levelData.yMax;
         this.imageMatrix = [];

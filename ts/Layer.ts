@@ -1,9 +1,10 @@
-import {Content} from "./Content";
+import {Map} from "./data/Map";
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Renderer} from "./Renderer";
 import {MouseListener} from "./MouseListener";
 import {KeyboardListener} from "./KeyboardListener";
+import {Data} from "./data/Data";
 
 export class Layer {
 
@@ -27,7 +28,11 @@ export class Layer {
         this.camera = canvas.getCamera();
     }
 
-    public load(content: Content, folder: string): void {
+    public load(map: Map, data: Data, folder: string): void {
+
+    }
+
+    public save(data: Data): void {
 
     }
 

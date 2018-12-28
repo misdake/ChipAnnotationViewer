@@ -8,10 +8,6 @@ import {Data} from "./data/Data";
 import {Ui} from "./util/Ui";
 import {LZString} from "./util/LZString";
 
-document.oncontextmenu = function (ev) {
-    return false; //disable context menu
-};
-
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 

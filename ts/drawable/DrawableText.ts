@@ -4,20 +4,8 @@ import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
 
-export enum AnchorX {
-    LEFT = "left",
-    MIDDLE = "center",
-    RIGHT = "right",
-}
-
-export enum AnchorY {
-    TOP = "top",
-    MIDDLE = "middle",
-    BOTTOM = "bottom",
-}
-
 export class DrawableTextPack {
-    public constructor(text: string, color: string, anchorX: AnchorX, anchorY: AnchorY, fontSize: Size, x: number, y: number) {
+    public constructor(text: string, color: string, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline, fontSize: Size, x: number, y: number) {
         this.text = text;
         this.color = color;
         this.anchorX = anchorX;
@@ -28,8 +16,8 @@ export class DrawableTextPack {
     }
     text: string = "";
     color: string;
-    anchorX: AnchorX;
-    anchorY: AnchorY;
+    anchorX: CanvasTextAlign;
+    anchorY: CanvasTextBaseline;
     fontSize: Size;
     x: number;
     y: number;
@@ -39,8 +27,8 @@ export class DrawableText extends Drawable {
 
     public text: string = "";
     public color: string;
-    public anchorX: AnchorX;
-    public anchorY: AnchorY;
+    public anchorX: CanvasTextAlign;
+    public anchorY: CanvasTextBaseline;
     public fontSize: Size;
     public x: number;
     public y: number;

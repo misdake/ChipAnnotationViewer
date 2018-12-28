@@ -247,6 +247,9 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera", "./data/Data"],
             this.renderNext = false;
             this.domElement = domElement;
             this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
+            this.domElement.oncontextmenu = function (ev) {
+                return false; //disable context menu
+            };
             this.canvasElement = document.getElementById(id);
             this.context = this.canvasElement.getContext("2d");
             this.camera = new Camera_1.Camera();
@@ -507,7 +510,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -595,7 +598,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -706,7 +709,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -836,7 +839,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -846,18 +849,6 @@ var __extends = (this && this.__extends) || (function () {
 define('drawable/DrawableText',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var AnchorX;
-    (function (AnchorX) {
-        AnchorX["LEFT"] = "left";
-        AnchorX["MIDDLE"] = "center";
-        AnchorX["RIGHT"] = "right";
-    })(AnchorX = exports.AnchorX || (exports.AnchorX = {}));
-    var AnchorY;
-    (function (AnchorY) {
-        AnchorY["TOP"] = "top";
-        AnchorY["MIDDLE"] = "middle";
-        AnchorY["BOTTOM"] = "bottom";
-    })(AnchorY = exports.AnchorY || (exports.AnchorY = {}));
     var DrawableTextPack = /** @class */ (function () {
         function DrawableTextPack(text, color, anchorX, anchorY, fontSize, x, y) {
             this.text = "";
@@ -901,7 +892,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -1110,7 +1101,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -1350,8 +1341,8 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 polyline.lineWidth.onCanvas = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen, function (newValue) {
-                polyline.lineWidth.ofScreen = newValue;
+            Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
+                polyline.lineWidth.ofScreen = newValue * 0.001;
                 _this.canvas.requestRender();
             });
         };
@@ -1845,9 +1836,6 @@ define('util/LZString',["require", "exports"], function (require, exports) {
 define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    document.oncontextmenu = function (ev) {
-        return false; //disable context menu
-    };
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
     var layerImage = new LayerImage_1.LayerImage(canvas);

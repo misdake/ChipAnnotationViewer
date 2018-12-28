@@ -136,13 +136,13 @@ export class Renderer {
     //---------------------------------------------
     //text
 
-    public renderText(camera: Camera, text:string, fontSize:Size, x:number, y:number, anchorX:string, anchorY:string) {
+    public renderText(camera: Camera, text: string, fontSize: Size, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
         let position = camera.canvasToScreen(x, y);
         let size = this.calculateLineWidth(camera, fontSize);
         this.drawText(text, size, position.x, position.y, anchorX, anchorY);
     }
 
-    public drawText(text: string, fontSize: number, x: number, y: number, anchorX: string, anchorY: string) {
+    public drawText(text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
         this.context.textAlign = anchorX;
         this.context.textBaseline = anchorY;
         this.context.font = fontSize + "px Arial";

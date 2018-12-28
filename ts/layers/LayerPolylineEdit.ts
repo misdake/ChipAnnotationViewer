@@ -248,8 +248,8 @@ export class LayerPolylineEdit extends Layer {
             polyline.lineWidth.onCanvas = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen, newValue => {
-            polyline.lineWidth.ofScreen = newValue;
+        Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, newValue => {
+            polyline.lineWidth.ofScreen = newValue * 0.001;
             this.canvas.requestRender();
         });
     }

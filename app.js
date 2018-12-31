@@ -935,24 +935,6 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
                     this.texts.push(new DrawableText_1.DrawableText(pack));
                 }
             }
-            // let polyline1 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new Size(0, 10));
-            // polyline1.fillColor = "#00ff00";
-            // polyline1.strokeColor = "#ff0000";
-            // this.polylines.push(polyline1);
-            //
-            // let polyline2 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true, new Size(5, 0));
-            // polyline2.fillColor = "#0000ff";
-            // polyline2.strokeColor = "#00ff00";
-            // this.polylines.push(polyline2);
-            //
-            // let polyline3 = new DrawablePolyline(LayerPolylineView.prepareRect(2100, 100, 2900, 900), false, false, new Size(0, 0, 0.004));
-            // polyline3.fillColor = "#ff0000";
-            // polyline3.strokeColor = "#0000ff";
-            // this.polylines.push(polyline3);
-            //
-            // this.texts.push(new DrawableText("a", "#ff0000", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(0, 100), 500, 500));
-            // this.texts.push(new DrawableText("b", "#00ff00", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(50, 0), 1500, 500));
-            // this.texts.push(new DrawableText("c", "#0000ff", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(0, 0, 0.04), 2500, 500));
             //listen to mouse click to select polyline
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -1051,6 +1033,23 @@ define('util/Size',["require", "exports"], function (require, exports) {
 define('util/Ui',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var ColorEntry = /** @class */ (function () {
+        function ColorEntry(name, r, g, b) {
+            this.name = name;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+        return ColorEntry;
+    }());
+    var AlphaEntry = /** @class */ (function () {
+        function AlphaEntry(name, buttonColor, value) {
+            this.name = name;
+            this.buttonColor = buttonColor;
+            this.value = value;
+        }
+        return AlphaEntry;
+    }());
     var Ui = /** @class */ (function () {
         function Ui() {
         }
@@ -1076,6 +1075,64 @@ define('util/Ui',["require", "exports"], function (require, exports) {
                 onchange(colorPicker.value);
             };
         };
+        Ui.bindColor = function (colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
+            var colorContainer = document.getElementById(colorContainerId);
+            var alphaContainer = document.getElementById(alphaContainerId);
+            colorContainer.innerHTML = "";
+            alphaContainer.innerHTML = "";
+            var thisColor = this.colorValues[0];
+            var thisAlpha = this.alphaValues[0];
+            for (var _i = 0, _a = Ui.colorValues; _i < _a.length; _i++) {
+                var colorValue = _a[_i];
+                if (initialColor == colorValue.name) {
+                    thisColor = colorValue;
+                }
+            }
+            for (var _b = 0, _c = Ui.alphaValues; _b < _c.length; _b++) {
+                var alphaValue = _c[_b];
+                if (initialAlpha == alphaValue.name) {
+                    thisAlpha = alphaValue;
+                }
+            }
+            for (var _d = 0, _e = Ui.colorValues; _d < _e.length; _d++) {
+                var colorValue = _e[_d];
+                var id = colorContainerId + "_" + colorValue.name;
+                var style = "background:" + colorValue.name;
+                colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
+            }
+            for (var _f = 0, _g = Ui.alphaValues; _f < _g.length; _f++) {
+                var alphaValue = _g[_f];
+                var id = alphaContainerId + "_" + alphaValue.name;
+                var style = "background:" + alphaValue.buttonColor;
+                alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
+            }
+            var _loop_1 = function (colorValue) {
+                var id = colorContainerId + "_" + colorValue.name;
+                var button = document.getElementById(id);
+                button.onclick = function (ev) {
+                    thisColor = colorValue;
+                    var colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
+                    onchange(thisColor.name, thisAlpha.name, colorString);
+                };
+            };
+            for (var _h = 0, _j = Ui.colorValues; _h < _j.length; _h++) {
+                var colorValue = _j[_h];
+                _loop_1(colorValue);
+            }
+            var _loop_2 = function (alphaValue) {
+                var id = alphaContainerId + "_" + alphaValue.name;
+                var button = document.getElementById(id);
+                button.onclick = function (ev) {
+                    thisAlpha = alphaValue;
+                    var colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
+                    onchange(thisColor.name, thisAlpha.name, colorString);
+                };
+            };
+            for (var _k = 0, _l = Ui.alphaValues; _k < _l.length; _k++) {
+                var alphaValue = _l[_k];
+                _loop_2(alphaValue);
+            }
+        };
         Ui.bindNumber = function (id, initialValue, onchange) {
             var input = document.getElementById(id);
             input.value = initialValue.toString();
@@ -1090,6 +1147,22 @@ define('util/Ui',["require", "exports"], function (require, exports) {
                 }
             };
         };
+        Ui.colorValues = [
+            new ColorEntry("gray", 127, 127, 127),
+            new ColorEntry("white", 255, 255, 255),
+            new ColorEntry("red", 255, 0, 0),
+            new ColorEntry("green", 0, 255, 0),
+            new ColorEntry("blue", 0, 0, 255),
+            new ColorEntry("cyan", 0, 255, 255),
+            new ColorEntry("purple", 255, 0, 255),
+            new ColorEntry("yellow", 255, 255, 0),
+        ];
+        Ui.alphaValues = [
+            new AlphaEntry("25", "rgb(255,255,255)", 0.25),
+            new AlphaEntry("50", "rgb(191,191,191)", 0.50),
+            new AlphaEntry("75", "rgb(127,127,127)", 0.75),
+            new AlphaEntry("100", "rgb(63,63,63)", 1.00),
+        ];
         return Ui;
     }());
     exports.Ui = Ui;
@@ -1136,7 +1209,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             var points = [];
             this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, true, new Size_1.Size(2)));
             this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
-            this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
+            this.polylineNew.fillColor = "rgba(255,255,255,0.25)";
             this.bindPolyline(this.polylineNew);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
@@ -1325,14 +1398,6 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 polyline.fill = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindValue("colorStroke", polyline.strokeColor, function (newValue) {
-                polyline.strokeColor = newValue;
-                _this.canvas.requestRender();
-            });
-            Ui_1.Ui.bindValue("colorFill", polyline.fillColor, function (newValue) {
-                polyline.fillColor = newValue;
-                _this.canvas.requestRender();
-            });
             Ui_1.Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
                 polyline.lineWidth.onScreen = newValue;
                 _this.canvas.requestRender();
@@ -1343,6 +1408,15 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             });
             Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
                 polyline.lineWidth.ofScreen = newValue * 0.001;
+                _this.canvas.requestRender();
+            });
+            //TODO white,25,50 save in polyline
+            Ui_1.Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", "white", "50", function (newColor, newAlpha, colorString) {
+                polyline.strokeColor = colorString;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindColor("fillColorContainer", "fillAlphaContainer", "white", "25", function (newColor, newAlpha, colorString) {
+                polyline.fillColor = colorString;
                 _this.canvas.requestRender();
             });
         };

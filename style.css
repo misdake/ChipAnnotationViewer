@@ -1,6 +1,11 @@
-* { margin: 0; padding: 0;}
+* {
+    margin: 0;
+    padding: 0;
+}
 
-body, html { height:100%; }
+body, html {
+    height: 100%;
+}
 
 #panel {
     float: left;
@@ -16,6 +21,25 @@ body, html { height:100%; }
 
 .configButton {
     /*margin:20px 5px;*/
+}
+
+.configColorContainer {
+    margin: 5px;
+}
+
+.configColorButton {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    border: 1px black solid;
+    margin: 2px 0;
+}
+
+.configAlphaButton {
+    width: 10px;
+    height: 20px;
+    border: 1px black solid;
+    margin: 2px 0;
 }
 
 .configCheckbox {

@@ -43,7 +43,7 @@ export class LayerPolylineEdit extends Layer {
         let points: Point[] = [];
         this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(points, true, true, new Size(2)));
         this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
-        this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
+        this.polylineNew.fillColor = "rgba(255,255,255,0.25)";
         this.bindPolyline(this.polylineNew);
 
         this._mouseListener = new class extends MouseListener {
@@ -232,14 +232,6 @@ export class LayerPolylineEdit extends Layer {
             polyline.fill = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindValue("colorStroke", polyline.strokeColor, newValue => {
-            polyline.strokeColor = newValue;
-            this.canvas.requestRender();
-        });
-        Ui.bindValue("colorFill", polyline.fillColor, newValue => {
-            polyline.fillColor = newValue;
-            this.canvas.requestRender();
-        });
         Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, newValue => {
             polyline.lineWidth.onScreen = newValue;
             this.canvas.requestRender();
@@ -250,6 +242,16 @@ export class LayerPolylineEdit extends Layer {
         });
         Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, newValue => {
             polyline.lineWidth.ofScreen = newValue * 0.001;
+            this.canvas.requestRender();
+        });
+
+        //TODO white,25,50 save in polyline
+        Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", "white", "50", (newColor, newAlpha, colorString) => {
+            polyline.strokeColor = colorString;
+            this.canvas.requestRender();
+        });
+        Ui.bindColor("fillColorContainer", "fillAlphaContainer", "white", "25", (newColor, newAlpha, colorString) => {
+            polyline.fillColor = colorString;
             this.canvas.requestRender();
         });
     }

@@ -8,19 +8,12 @@ import {Data} from "./data/Data";
 import {Ui} from "./util/Ui";
 import {LZString} from "./util/LZString";
 
-document.oncontextmenu = function (ev) {
-    return false; //disable context menu
-};
-
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
 let layerImage = new LayerImage(canvas);
 let layerPolylineView = new LayerPolylineView(canvas);
 let layerPolylineEdit = new LayerPolylineEdit(canvas);
-
-layerPolylineView.setLayer(layerPolylineEdit);
-layerPolylineEdit.setLayer(layerPolylineView);
 
 canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);

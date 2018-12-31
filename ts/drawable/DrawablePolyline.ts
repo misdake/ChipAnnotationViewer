@@ -3,6 +3,7 @@ import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
+import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -27,47 +28,88 @@ export class PointSegmentResult {
 }
 
 export class DrawablePolylinePack {
-    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: Size) {
+    public constructor(points: Point[], closed: boolean, lineWidth: Size,
+                       fill: boolean, fillColorName: string, fillAlphaName: string,
+                       stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
         this.points = points;
         this.closed = closed;
-        this.fill = fill;
-        this.stroke = true; //TODO add to parameter
         this.lineWidth = lineWidth;
+
+        this.fill = fill;
+        this.fillColorName = fillColorName;
+        this.fillAlphaName = fillAlphaName;
+
+        this.stroke = stroke;
+        this.strokeColorName = strokeColorName;
+        this.strokeAlphaName = strokeAlphaName;
     }
-    closed: boolean;
-    fill: boolean;
-    stroke: boolean;
-    fillColor?: string;
-    strokeColor?: string;
-    lineWidth?: Size;
+
     points: Point[];
+    closed: boolean;
+    lineWidth: Size;
+
+    fill: boolean;
+    fillColorName: string;
+    fillAlphaName: string;
+
+    stroke: boolean;
+    strokeColorName: string;
+    strokeAlphaName: string;
 }
 
 export class DrawablePolyline extends Drawable {
 
-    public closed: boolean;
-    public fill: boolean;
-    public stroke: boolean;
-    public fillColor?: string;
-    public strokeColor?: string;
-    public lineWidth?: Size;
     public points: Point[];
+    public closed: boolean;
+    public lineWidth?: Size;
+
+    public fill: boolean;
+    public fillColor: ColorEntry;
+    public fillAlpha: AlphaEntry;
+    public fillString: string;
+
+    public stroke: boolean;
+    public strokeColor: ColorEntry;
+    public strokeAlpha: AlphaEntry;
+    public strokeString: string;
+
 
     public constructor(pack: DrawablePolylinePack) {
         super();
-        //TODO for each field, copy
-        this.closed = pack.closed;
-        this.fill = pack.fill;
-        this.stroke = pack.stroke;
-        this.fillColor = pack.fillColor;
-        this.strokeColor = pack.strokeColor;
-        this.lineWidth = pack.lineWidth;
         this.points = pack.points;
+        this.closed = pack.closed;
+        this.lineWidth = pack.lineWidth;
+
+        this.fill = pack.fill;
+        this.fillColor = ColorEntry.findByName(pack.fillColorName);
+        this.fillAlpha = AlphaEntry.findByName(pack.fillAlphaName);
+        this.fillString = combineColorAlpha(this.fillColor, this.fillAlpha);
+
+        this.stroke = pack.stroke;
+        this.strokeColor = ColorEntry.findByName(pack.strokeColorName);
+        this.strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
+        this.strokeString = combineColorAlpha(this.strokeColor, this.strokeAlpha);
+    }
+
+    public pack(): DrawablePolylinePack {
+        return new DrawablePolylinePack(
+            this.points,
+            this.closed,
+            this.lineWidth,
+
+            this.fill,
+            this.fillColor.name,
+            this.fillAlpha.name,
+
+            this.stroke,
+            this.strokeColor.name,
+            this.strokeAlpha.name,
+        )
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        if (this.fillColor) renderer.setFillColor(this.fillColor);
-        if (this.strokeColor) renderer.setStrokeColor(this.strokeColor);
+        renderer.setFillColor(this.fillString);
+        renderer.setStrokeColor(this.strokeString);
         renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
     }
 

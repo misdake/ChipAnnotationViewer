@@ -8,7 +8,7 @@ import {Data} from "./data/Data";
 
 export class Layer {
 
-    private name: string;
+    public readonly name: string;
 
     protected readonly canvas: Canvas;
     protected readonly camera: Camera;

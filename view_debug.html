@@ -9,29 +9,41 @@
         requirejs.config({
             baseUrl: 'js',
             paths: {
-                'App': 'App',
+                'App': 'app',
             }
         });
-
-        require(["App"]);
-
+        require(['App']);
     </script>
 </head>
 <body>
 <div id="panel">
+
     <button id="buttonSave" class="configButton">save to url</button><br>
     <button id="buttonStartEditing" class="configButton">new polyline</button><br>
     <button id="buttonFinishEditing" class="configButton">finish polyline</button><br>
     <button id="buttonDeleteSelected" class="configButton">delete selected</button><br>
+
     <div id="panelSelected" style="visibility: hidden;">
         <input class="configCheckbox" type="checkbox" id="checkboxFill"><label for="checkboxFill">fill</label><br>
+        <input class="configCheckbox" type="checkbox" id="checkboxStroke"><label for="checkboxStroke">stroke</label><br>
         <input class="configCheckbox" type="checkbox" id="checkboxClosed"><label for="checkboxClosed">closed</label><br>
-        <input class="configColor" type="color" id="colorStroke"><label for="colorStroke">strokeColor</label><br>
-        <input class="configColor" type="color" id="colorFill"><label for="colorFill">fillColor</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOnScreen" style="width:5em"><label for="textSizeOnScreen">onScreen</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOnCanvas" style="width:5em"><label for="textSizeOnCanvas">onCanvas</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOfScreen" style="width:5em"><label for="textSizeOfScreen">ofScreen</label><br>
+
+        <div>strokeColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="strokeColorContainer"></span><span class="configColorAlphaSplit"></span>
+            <span class="configAlphaContainer" id="strokeAlphaContainer"></span><br>
+        </div>
+        <div>fillColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="fillColorContainer"></span><span class="configColorAlphaSplit"></span>
+            <span class="configAlphaContainer" id="fillAlphaContainer"></span><br>
+        </div>
+
+        <input class="configText" type="number" min=0 id="textSizeOnScreen" style="width:5em"><label for="textSizeOnScreen">pixel onScreen</label><br>
+        <input class="configText" type="number" min=0 id="textSizeOnCanvas" style="width:5em"><label for="textSizeOnCanvas">pixel onCanvas</label><br>
+        <input class="configText" type="number" min=0 id="textSizeOfScreen" style="width:5em"><label for="textSizeOfScreen">‰ ofScreen</label><br>
     </div>
+
 </div>
 <div id='container'></div>
 </body>

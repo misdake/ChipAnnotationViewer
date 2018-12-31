@@ -9,6 +9,7 @@ import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
 
 export class LayerPolylineView extends Layer {
+    public static readonly layerName = "polyline_view";
 
     private map: Map;
     private polylines: DrawablePolyline[] = [];
@@ -17,11 +18,7 @@ export class LayerPolylineView extends Layer {
     private texts: DrawableText[] = [];
 
     public constructor(canvas: Canvas) {
-        super("polyline_view", canvas);
-    }
-
-    public setLayer(layerPolylineEdit: LayerPolylineEdit) {
-        this.layerPolylineEdit = layerPolylineEdit;
+        super(LayerPolylineView.layerName, canvas);
     }
 
     private static prepareRect(x1: number, y1: number, x2: number, y2: number): Point[] {
@@ -34,6 +31,8 @@ export class LayerPolylineView extends Layer {
     }
 
     public load(map: Map, data: Data, folder: string): void {
+        this.layerPolylineEdit = this.canvas.findLayer(LayerPolylineEdit.layerName) as LayerPolylineEdit;
+
         this.map = map;
 
         if (data.polylines) {
@@ -46,24 +45,6 @@ export class LayerPolylineView extends Layer {
                 this.texts.push(new DrawableText(pack))
             }
         }
-        // let polyline1 = new DrawablePolyline(LayerPolylineView.prepareRect(100, 100, 900, 900), true, false, new Size(0, 10));
-        // polyline1.fillColor = "#00ff00";
-        // polyline1.strokeColor = "#ff0000";
-        // this.polylines.push(polyline1);
-        //
-        // let polyline2 = new DrawablePolyline(LayerPolylineView.prepareRect(1100, 100, 1900, 900), true, true, new Size(5, 0));
-        // polyline2.fillColor = "#0000ff";
-        // polyline2.strokeColor = "#00ff00";
-        // this.polylines.push(polyline2);
-        //
-        // let polyline3 = new DrawablePolyline(LayerPolylineView.prepareRect(2100, 100, 2900, 900), false, false, new Size(0, 0, 0.004));
-        // polyline3.fillColor = "#ff0000";
-        // polyline3.strokeColor = "#0000ff";
-        // this.polylines.push(polyline3);
-        //
-        // this.texts.push(new DrawableText("a", "#ff0000", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(0, 100), 500, 500));
-        // this.texts.push(new DrawableText("b", "#00ff00", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(50, 0), 1500, 500));
-        // this.texts.push(new DrawableText("c", "#0000ff", AnchorX.MIDDLE, AnchorY.MIDDLE, new Size(0, 0, 0.04), 2500, 500));
 
         //listen to mouse click to select polyline
         let self = this;
@@ -117,7 +98,10 @@ export class LayerPolylineView extends Layer {
     }
 
     public save(data: Data): void {
-        data.polylines = this.polylines;
+        data.polylines = [];
+        for (const polyline of this.polylines) {
+            data.polylines.push(polyline.pack());
+        }
         data.texts = this.texts;
     }
 
@@ -134,4 +118,5 @@ export class LayerPolylineView extends Layer {
     public unload(): void {
         super.unload();
     }
+
 }

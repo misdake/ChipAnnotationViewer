@@ -152,6 +152,15 @@ export class Canvas {
         this.layers.push(layer);
     }
 
+    public findLayer(name: string): Layer {
+        for (const layer of this.layers) {
+            if (layer.name == name) {
+                return layer;
+            }
+        }
+        return null;
+    }
+
     public getWidth(): number {
         return this.width;
     }

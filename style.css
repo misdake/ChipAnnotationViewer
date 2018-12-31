@@ -23,22 +23,27 @@ body, html {
     /*margin:20px 5px;*/
 }
 
-.configColorContainer {
+.configColorAlphaContainer {
     margin: 5px;
 }
 
+.configColorAlphaSplit {
+    width: 40px;
+    display: inline-block;
+}
+
 .configColorButton {
-    width: 20px;
-    height: 20px;
-    border-radius: 10px;
-    border: 1px black solid;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    border: 2px black solid;
     margin: 2px 0;
 }
 
 .configAlphaButton {
-    width: 10px;
-    height: 20px;
-    border: 1px black solid;
+    width: 12px;
+    height: 24px;
+    border: 2px black solid;
     margin: 2px 0;
 }
 

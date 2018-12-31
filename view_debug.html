@@ -25,17 +25,18 @@
 
     <div id="panelSelected" style="visibility: hidden;">
         <input class="configCheckbox" type="checkbox" id="checkboxFill"><label for="checkboxFill">fill</label><br>
+        <input class="configCheckbox" type="checkbox" id="checkboxStroke"><label for="checkboxStroke">stroke</label><br>
         <input class="configCheckbox" type="checkbox" id="checkboxClosed"><label for="checkboxClosed">closed</label><br>
 
-        <div>
-            <span>strokeColor</span><br>
-            <span class="configColorContainer" id="strokeAlphaContainer"></span><br>
-            <span class="configColorContainer" id="strokeColorContainer"></span><br>
+        <div>strokeColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="strokeColorContainer"></span><span class="configColorAlphaSplit"></span>
+            <span class="configAlphaContainer" id="strokeAlphaContainer"></span><br>
         </div>
-        <div>
-            <span>fillColor</span><br>
-            <span class="configColorContainer" id="fillAlphaContainer"></span><br>
-            <span class="configColorContainer" id="fillColorContainer"></span><br>
+        <div>fillColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="fillColorContainer"></span><span class="configColorAlphaSplit"></span>
+            <span class="configAlphaContainer" id="fillAlphaContainer"></span><br>
         </div>
 
         <input class="configText" type="number" min=0 id="textSizeOnScreen" style="width:5em"><label for="textSizeOnScreen">pixel onScreen</label><br>

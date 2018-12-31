@@ -381,6 +381,15 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera", "./data/Data"],
         Canvas.prototype.addLayer = function (layer) {
             this.layers.push(layer);
         };
+        Canvas.prototype.findLayer = function (name) {
+            for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
+                var layer = _a[_i];
+                if (layer.name == name) {
+                    return layer;
+                }
+            }
+            return null;
+        };
         Canvas.prototype.getWidth = function () {
             return this.width;
         };
@@ -703,6 +712,77 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
     exports.LayerImage = LayerImage;
 });
 //# sourceMappingURL=LayerImage.js.map;
+define('util/Color',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var ColorEntry = /** @class */ (function () {
+        function ColorEntry(name, r, g, b) {
+            this.name = name;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+        ColorEntry.findByName = function (name) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var colorValue = _a[_i];
+                if (name == colorValue.name) {
+                    return colorValue;
+                }
+            }
+            return this.list[0];
+        };
+        ColorEntry.list = [
+            new ColorEntry("red", 255, 0, 0),
+            new ColorEntry("green", 0, 255, 0),
+            new ColorEntry("blue", 0, 0, 255),
+            new ColorEntry("cyan", 0, 255, 255),
+            new ColorEntry("purple", 255, 0, 255),
+            new ColorEntry("yellow", 255, 255, 0),
+            new ColorEntry("gray", 127, 127, 127),
+            new ColorEntry("white", 255, 255, 255),
+        ];
+        return ColorEntry;
+    }());
+    exports.ColorEntry = ColorEntry;
+    var AlphaEntry = /** @class */ (function () {
+        function AlphaEntry(name, buttonColor, value) {
+            this.name = name;
+            this.buttonColor = buttonColor;
+            this.value = value;
+        }
+        AlphaEntry.findByName = function (name) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var alphaValue = _a[_i];
+                if (name == alphaValue.name) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        };
+        AlphaEntry.findByValue = function (value) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var alphaValue = _a[_i];
+                if (value == alphaValue.value) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        };
+        AlphaEntry.list = [
+            new AlphaEntry("25", "rgb(191,191,191)", 0.25),
+            new AlphaEntry("50", "rgb(127,127,127)", 0.50),
+            new AlphaEntry("75", "rgb(63,63,63)", 0.75),
+            new AlphaEntry("100", "rgb(0,0,0)", 1.00),
+        ];
+        return AlphaEntry;
+    }());
+    exports.AlphaEntry = AlphaEntry;
+    function combineColorAlpha(color, alpha) {
+        return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
+    }
+    exports.combineColorAlpha = combineColorAlpha;
+});
+//# sourceMappingURL=Color.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -716,7 +796,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util/Color"], function (require, exports, Drawable_1, Color_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Point = /** @class */ (function () {
@@ -738,12 +818,16 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
     }());
     exports.PointSegmentResult = PointSegmentResult;
     var DrawablePolylinePack = /** @class */ (function () {
-        function DrawablePolylinePack(points, closed, fill, lineWidth) {
+        function DrawablePolylinePack(points, closed, lineWidth, fill, fillColorName, fillAlphaName, stroke, strokeColorName, strokeAlphaName) {
             this.points = points;
             this.closed = closed;
-            this.fill = fill;
-            this.stroke = true; //TODO add to parameter
             this.lineWidth = lineWidth;
+            this.fill = fill;
+            this.fillColorName = fillColorName;
+            this.fillAlphaName = fillAlphaName;
+            this.stroke = stroke;
+            this.strokeColorName = strokeColorName;
+            this.strokeAlphaName = strokeAlphaName;
         }
         return DrawablePolylinePack;
     }());
@@ -752,21 +836,25 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
         __extends(DrawablePolyline, _super);
         function DrawablePolyline(pack) {
             var _this = _super.call(this) || this;
-            //TODO for each field, copy
-            _this.closed = pack.closed;
-            _this.fill = pack.fill;
-            _this.stroke = pack.stroke;
-            _this.fillColor = pack.fillColor;
-            _this.strokeColor = pack.strokeColor;
-            _this.lineWidth = pack.lineWidth;
             _this.points = pack.points;
+            _this.closed = pack.closed;
+            _this.lineWidth = pack.lineWidth;
+            _this.fill = pack.fill;
+            _this.fillColor = Color_1.ColorEntry.findByName(pack.fillColorName);
+            _this.fillAlpha = Color_1.AlphaEntry.findByName(pack.fillAlphaName);
+            _this.fillString = Color_1.combineColorAlpha(_this.fillColor, _this.fillAlpha);
+            _this.stroke = pack.stroke;
+            _this.strokeColor = Color_1.ColorEntry.findByName(pack.strokeColorName);
+            _this.strokeAlpha = Color_1.AlphaEntry.findByName(pack.strokeAlphaName);
+            _this.strokeString = Color_1.combineColorAlpha(_this.strokeColor, _this.strokeAlpha);
             return _this;
         }
+        DrawablePolyline.prototype.pack = function () {
+            return new DrawablePolylinePack(this.points, this.closed, this.lineWidth, this.fill, this.fillColor.name, this.fillAlpha.name, this.stroke, this.strokeColor.name, this.strokeAlpha.name);
+        };
         DrawablePolyline.prototype.render = function (canvas, renderer, camera) {
-            if (this.fillColor)
-                renderer.setFillColor(this.fillColor);
-            if (this.strokeColor)
-                renderer.setStrokeColor(this.strokeColor);
+            renderer.setFillColor(this.fillString);
+            renderer.setStrokeColor(this.strokeString);
             renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
         };
         DrawablePolyline.sqr = function (dx, dy) {
@@ -833,189 +921,6 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable"], functio
     exports.DrawablePolyline = DrawablePolyline;
 });
 //# sourceMappingURL=DrawablePolyline.js.map;
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-define('drawable/DrawableText',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var DrawableTextPack = /** @class */ (function () {
-        function DrawableTextPack(text, color, anchorX, anchorY, fontSize, x, y) {
-            this.text = "";
-            this.text = text;
-            this.color = color;
-            this.anchorX = anchorX;
-            this.anchorY = anchorY;
-            this.fontSize = fontSize;
-            this.x = x;
-            this.y = y;
-        }
-        return DrawableTextPack;
-    }());
-    exports.DrawableTextPack = DrawableTextPack;
-    var DrawableText = /** @class */ (function (_super) {
-        __extends(DrawableText, _super);
-        function DrawableText(pack) {
-            var _this = _super.call(this) || this;
-            _this.text = "";
-            _this.text = pack.text;
-            _this.color = pack.color;
-            _this.anchorX = pack.anchorX;
-            _this.anchorY = pack.anchorY;
-            _this.fontSize = pack.fontSize;
-            _this.x = pack.x;
-            _this.y = pack.y;
-            return _this;
-        }
-        DrawableText.prototype.render = function (canvas, renderer, camera) {
-            renderer.setColor(this.color);
-            renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, this.anchorX, this.anchorY);
-        };
-        return DrawableText;
-    }(Drawable_1.Drawable));
-    exports.DrawableText = DrawableText;
-});
-//# sourceMappingURL=DrawableText.js.map;
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../MouseListener", "../drawable/DrawableText"], function (require, exports, Layer_1, DrawablePolyline_1, MouseListener_1, DrawableText_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var LayerPolylineView = /** @class */ (function (_super) {
-        __extends(LayerPolylineView, _super);
-        function LayerPolylineView(canvas) {
-            var _this = _super.call(this, "polyline_view", canvas) || this;
-            _this.polylines = [];
-            _this.texts = [];
-            return _this;
-        }
-        LayerPolylineView.prototype.setLayer = function (layerPolylineEdit) {
-            this.layerPolylineEdit = layerPolylineEdit;
-        };
-        LayerPolylineView.prepareRect = function (x1, y1, x2, y2) {
-            return [
-                new DrawablePolyline_1.Point(x1, y1),
-                new DrawablePolyline_1.Point(x2, y1),
-                new DrawablePolyline_1.Point(x2, y2),
-                new DrawablePolyline_1.Point(x1, y2)
-            ];
-        };
-        LayerPolylineView.prototype.load = function (map, data, folder) {
-            this.map = map;
-            if (data.polylines) {
-                for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
-                    var pack = _a[_i];
-                    this.polylines.push(new DrawablePolyline_1.DrawablePolyline(pack));
-                }
-            }
-            if (data.texts) {
-                for (var _b = 0, _c = data.texts; _b < _c.length; _b++) {
-                    var pack = _c[_b];
-                    this.texts.push(new DrawableText_1.DrawableText(pack));
-                }
-            }
-            //listen to mouse click to select polyline
-            var self = this;
-            this._mouseListener = new /** @class */ (function (_super) {
-                __extends(class_1, _super);
-                function class_1() {
-                    var _this = _super !== null && _super.apply(this, arguments) || this;
-                    _this.moved = false;
-                    return _this;
-                }
-                class_1.prototype.onmousedown = function (event) {
-                    this.moved = false;
-                    return false;
-                };
-                class_1.prototype.onmouseup = function (event) {
-                    if (event.button == 0 && !this.moved) {
-                        var radius = self.camera.screenSizeToCanvas(5);
-                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        var x = canvasXY.x, y = canvasXY.y;
-                        for (var _i = 0, _a = self.polylines; _i < _a.length; _i++) {
-                            var polyline = _a[_i];
-                            var pickPoint = polyline.pickPoint(x, y, radius);
-                            var pickLine = polyline.pickLine(x, y, radius);
-                            var pickShape = polyline.pickShape(x, y);
-                            if (pickPoint || pickLine || pickShape) {
-                                self.layerPolylineEdit.startEditingPolyline(polyline);
-                                return true;
-                            }
-                        }
-                        self.layerPolylineEdit.finishEditing();
-                        return false;
-                    }
-                    else {
-                        return false;
-                    }
-                };
-                class_1.prototype.onmousemove = function (event) {
-                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
-                        this.moved = true;
-                    }
-                    return false;
-                };
-                return class_1;
-            }(MouseListener_1.MouseListener));
-        };
-        LayerPolylineView.prototype.addPolyline = function (polyline) {
-            this.polylines.push(polyline);
-            this.canvas.requestRender();
-        };
-        LayerPolylineView.prototype.deletePolyline = function (polyline) {
-            var index = this.polylines.indexOf(polyline);
-            if (index !== -1) {
-                this.polylines.splice(index, 1);
-                return true;
-            }
-            else {
-                return false;
-            }
-        };
-        LayerPolylineView.prototype.save = function (data) {
-            data.polylines = this.polylines;
-            data.texts = this.texts;
-        };
-        LayerPolylineView.prototype.render = function (renderer) {
-            _super.prototype.render.call(this, renderer);
-            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
-                var polyline = _a[_i];
-                polyline.render(this.canvas, renderer, this.camera);
-            }
-            for (var _b = 0, _c = this.texts; _b < _c.length; _b++) {
-                var text = _c[_b];
-                text.render(this.canvas, renderer, this.camera);
-            }
-        };
-        LayerPolylineView.prototype.unload = function () {
-            _super.prototype.unload.call(this);
-        };
-        return LayerPolylineView;
-    }(Layer_1.Layer));
-    exports.LayerPolylineView = LayerPolylineView;
-});
-//# sourceMappingURL=LayerPolylineView.js.map;
 define('util/Size',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1030,26 +935,9 @@ define('util/Size',["require", "exports"], function (require, exports) {
     exports.Size = Size;
 });
 //# sourceMappingURL=Size.js.map;
-define('util/Ui',["require", "exports"], function (require, exports) {
+define('util/Ui',["require", "exports", "./Color"], function (require, exports, Color_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var ColorEntry = /** @class */ (function () {
-        function ColorEntry(name, r, g, b) {
-            this.name = name;
-            this.r = r;
-            this.g = g;
-            this.b = b;
-        }
-        return ColorEntry;
-    }());
-    var AlphaEntry = /** @class */ (function () {
-        function AlphaEntry(name, buttonColor, value) {
-            this.name = name;
-            this.buttonColor = buttonColor;
-            this.value = value;
-        }
-        return AlphaEntry;
-    }());
     var Ui = /** @class */ (function () {
         function Ui() {
         }
@@ -1080,28 +968,16 @@ define('util/Ui',["require", "exports"], function (require, exports) {
             var alphaContainer = document.getElementById(alphaContainerId);
             colorContainer.innerHTML = "";
             alphaContainer.innerHTML = "";
-            var thisColor = this.colorValues[0];
-            var thisAlpha = this.alphaValues[0];
-            for (var _i = 0, _a = Ui.colorValues; _i < _a.length; _i++) {
+            var thisColor = initialColor;
+            var thisAlpha = initialAlpha;
+            for (var _i = 0, _a = Color_1.ColorEntry.list; _i < _a.length; _i++) {
                 var colorValue = _a[_i];
-                if (initialColor == colorValue.name) {
-                    thisColor = colorValue;
-                }
-            }
-            for (var _b = 0, _c = Ui.alphaValues; _b < _c.length; _b++) {
-                var alphaValue = _c[_b];
-                if (initialAlpha == alphaValue.name) {
-                    thisAlpha = alphaValue;
-                }
-            }
-            for (var _d = 0, _e = Ui.colorValues; _d < _e.length; _d++) {
-                var colorValue = _e[_d];
                 var id = colorContainerId + "_" + colorValue.name;
                 var style = "background:" + colorValue.name;
                 colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
             }
-            for (var _f = 0, _g = Ui.alphaValues; _f < _g.length; _f++) {
-                var alphaValue = _g[_f];
+            for (var _b = 0, _c = Color_1.AlphaEntry.list; _b < _c.length; _b++) {
+                var alphaValue = _c[_b];
                 var id = alphaContainerId + "_" + alphaValue.name;
                 var style = "background:" + alphaValue.buttonColor;
                 alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
@@ -1111,12 +987,11 @@ define('util/Ui',["require", "exports"], function (require, exports) {
                 var button = document.getElementById(id);
                 button.onclick = function (ev) {
                     thisColor = colorValue;
-                    var colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
-                    onchange(thisColor.name, thisAlpha.name, colorString);
+                    onchange(thisColor, thisAlpha);
                 };
             };
-            for (var _h = 0, _j = Ui.colorValues; _h < _j.length; _h++) {
-                var colorValue = _j[_h];
+            for (var _d = 0, _e = Color_1.ColorEntry.list; _d < _e.length; _d++) {
+                var colorValue = _e[_d];
                 _loop_1(colorValue);
             }
             var _loop_2 = function (alphaValue) {
@@ -1124,12 +999,11 @@ define('util/Ui',["require", "exports"], function (require, exports) {
                 var button = document.getElementById(id);
                 button.onclick = function (ev) {
                     thisAlpha = alphaValue;
-                    var colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
-                    onchange(thisColor.name, thisAlpha.name, colorString);
+                    onchange(thisColor, thisAlpha);
                 };
             };
-            for (var _k = 0, _l = Ui.alphaValues; _k < _l.length; _k++) {
-                var alphaValue = _l[_k];
+            for (var _f = 0, _g = Color_1.AlphaEntry.list; _f < _g.length; _f++) {
+                var alphaValue = _g[_f];
                 _loop_2(alphaValue);
             }
         };
@@ -1147,22 +1021,6 @@ define('util/Ui',["require", "exports"], function (require, exports) {
                 }
             };
         };
-        Ui.colorValues = [
-            new ColorEntry("gray", 127, 127, 127),
-            new ColorEntry("white", 255, 255, 255),
-            new ColorEntry("red", 255, 0, 0),
-            new ColorEntry("green", 0, 255, 0),
-            new ColorEntry("blue", 0, 0, 255),
-            new ColorEntry("cyan", 0, 255, 255),
-            new ColorEntry("purple", 255, 0, 255),
-            new ColorEntry("yellow", 255, 255, 0),
-        ];
-        Ui.alphaValues = [
-            new AlphaEntry("25", "rgb(255,255,255)", 0.25),
-            new AlphaEntry("50", "rgb(191,191,191)", 0.50),
-            new AlphaEntry("75", "rgb(127,127,127)", 0.75),
-            new AlphaEntry("100", "rgb(63,63,63)", 1.00),
-        ];
         return Ui;
     }());
     exports.Ui = Ui;
@@ -1181,21 +1039,19 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "../util/Ui"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, Ui_1) {
+define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "./LayerPolylineView", "../util/Ui", "../util/Color"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, LayerPolylineView_1, Ui_1, Color_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerPolylineEdit = /** @class */ (function (_super) {
         __extends(LayerPolylineEdit, _super);
         function LayerPolylineEdit(canvas) {
-            var _this = _super.call(this, "polyline_edit", canvas) || this;
+            var _this = _super.call(this, LayerPolylineEdit.layerName, canvas) || this;
             _this.polylineNew = null;
             _this.polylineEdit = null;
             return _this;
         }
-        LayerPolylineEdit.prototype.setLayer = function (layerPolylineView) {
-            this.layerPolylineView = layerPolylineView;
-        };
         LayerPolylineEdit.prototype.load = function (map, data, folder) {
+            this.layerPolylineView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
             this.map = map;
             var self = this;
             Ui_1.Ui.bindButtonOnClick("buttonStartEditing", function () { return self.startCreatingPolyline(); });
@@ -1207,9 +1063,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.finishEditing();
             var self = this;
             var points = [];
-            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, true, new Size_1.Size(2)));
-            this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
-            this.polylineNew.fillColor = "rgba(255,255,255,0.25)";
+            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, new Size_1.Size(2), true, "white", "50", true, "white", "25"));
             this.bindPolyline(this.polylineNew);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
@@ -1390,12 +1244,16 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         LayerPolylineEdit.prototype.bindPolyline = function (polyline) {
             var _this = this;
             Ui_1.Ui.setVisibility("panelSelected", true);
-            Ui_1.Ui.bindCheckbox("checkboxClosed", polyline.closed, function (newValue) {
-                polyline.closed = newValue;
-                _this.canvas.requestRender();
-            });
             Ui_1.Ui.bindCheckbox("checkboxFill", polyline.fill, function (newValue) {
                 polyline.fill = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindCheckbox("checkboxStroke", polyline.stroke, function (newValue) {
+                polyline.stroke = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindCheckbox("checkboxClosed", polyline.closed, function (newValue) {
+                polyline.closed = newValue;
                 _this.canvas.requestRender();
             });
             Ui_1.Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
@@ -1410,21 +1268,211 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 polyline.lineWidth.ofScreen = newValue * 0.001;
                 _this.canvas.requestRender();
             });
-            //TODO white,25,50 save in polyline
-            Ui_1.Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", "white", "50", function (newColor, newAlpha, colorString) {
-                polyline.strokeColor = colorString;
+            Ui_1.Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", polyline.strokeColor, polyline.strokeAlpha, function (newColor, newAlpha) {
+                polyline.strokeColor = newColor;
+                polyline.strokeAlpha = newAlpha;
+                polyline.strokeString = Color_1.combineColorAlpha(polyline.strokeColor, polyline.strokeAlpha);
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindColor("fillColorContainer", "fillAlphaContainer", "white", "25", function (newColor, newAlpha, colorString) {
-                polyline.fillColor = colorString;
+            Ui_1.Ui.bindColor("fillColorContainer", "fillAlphaContainer", polyline.fillColor, polyline.fillAlpha, function (newColor, newAlpha) {
+                polyline.fillColor = newColor;
+                polyline.fillAlpha = newAlpha;
+                polyline.fillString = Color_1.combineColorAlpha(polyline.fillColor, polyline.fillAlpha);
                 _this.canvas.requestRender();
             });
         };
+        LayerPolylineEdit.layerName = "polyline_edit";
         return LayerPolylineEdit;
     }(Layer_1.Layer));
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('drawable/DrawableText',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var DrawableTextPack = /** @class */ (function () {
+        function DrawableTextPack(text, color, anchorX, anchorY, fontSize, x, y) {
+            this.text = "";
+            this.text = text;
+            this.color = color;
+            this.anchorX = anchorX;
+            this.anchorY = anchorY;
+            this.fontSize = fontSize;
+            this.x = x;
+            this.y = y;
+        }
+        return DrawableTextPack;
+    }());
+    exports.DrawableTextPack = DrawableTextPack;
+    var DrawableText = /** @class */ (function (_super) {
+        __extends(DrawableText, _super);
+        function DrawableText(pack) {
+            var _this = _super.call(this) || this;
+            _this.text = "";
+            _this.text = pack.text;
+            _this.color = pack.color;
+            _this.anchorX = pack.anchorX;
+            _this.anchorY = pack.anchorY;
+            _this.fontSize = pack.fontSize;
+            _this.x = pack.x;
+            _this.y = pack.y;
+            return _this;
+        }
+        DrawableText.prototype.render = function (canvas, renderer, camera) {
+            renderer.setColor(this.color);
+            renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, this.anchorX, this.anchorY);
+        };
+        return DrawableText;
+    }(Drawable_1.Drawable));
+    exports.DrawableText = DrawableText;
+});
+//# sourceMappingURL=DrawableText.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../MouseListener", "./LayerPolylineEdit", "../drawable/DrawableText"], function (require, exports, Layer_1, DrawablePolyline_1, MouseListener_1, LayerPolylineEdit_1, DrawableText_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerPolylineView = /** @class */ (function (_super) {
+        __extends(LayerPolylineView, _super);
+        function LayerPolylineView(canvas) {
+            var _this = _super.call(this, LayerPolylineView.layerName, canvas) || this;
+            _this.polylines = [];
+            _this.texts = [];
+            return _this;
+        }
+        LayerPolylineView.prepareRect = function (x1, y1, x2, y2) {
+            return [
+                new DrawablePolyline_1.Point(x1, y1),
+                new DrawablePolyline_1.Point(x2, y1),
+                new DrawablePolyline_1.Point(x2, y2),
+                new DrawablePolyline_1.Point(x1, y2)
+            ];
+        };
+        LayerPolylineView.prototype.load = function (map, data, folder) {
+            this.layerPolylineEdit = this.canvas.findLayer(LayerPolylineEdit_1.LayerPolylineEdit.layerName);
+            this.map = map;
+            if (data.polylines) {
+                for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
+                    var pack = _a[_i];
+                    this.polylines.push(new DrawablePolyline_1.DrawablePolyline(pack));
+                }
+            }
+            if (data.texts) {
+                for (var _b = 0, _c = data.texts; _b < _c.length; _b++) {
+                    var pack = _c[_b];
+                    this.texts.push(new DrawableText_1.DrawableText(pack));
+                }
+            }
+            //listen to mouse click to select polyline
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.moved = false;
+                    return _this;
+                }
+                class_1.prototype.onmousedown = function (event) {
+                    this.moved = false;
+                    return false;
+                };
+                class_1.prototype.onmouseup = function (event) {
+                    if (event.button == 0 && !this.moved) {
+                        var radius = self.camera.screenSizeToCanvas(5);
+                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var x = canvasXY.x, y = canvasXY.y;
+                        for (var _i = 0, _a = self.polylines; _i < _a.length; _i++) {
+                            var polyline = _a[_i];
+                            var pickPoint = polyline.pickPoint(x, y, radius);
+                            var pickLine = polyline.pickLine(x, y, radius);
+                            var pickShape = polyline.pickShape(x, y);
+                            if (pickPoint || pickLine || pickShape) {
+                                self.layerPolylineEdit.startEditingPolyline(polyline);
+                                return true;
+                            }
+                        }
+                        self.layerPolylineEdit.finishEditing();
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                        this.moved = true;
+                    }
+                    return false;
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
+        };
+        LayerPolylineView.prototype.addPolyline = function (polyline) {
+            this.polylines.push(polyline);
+            this.canvas.requestRender();
+        };
+        LayerPolylineView.prototype.deletePolyline = function (polyline) {
+            var index = this.polylines.indexOf(polyline);
+            if (index !== -1) {
+                this.polylines.splice(index, 1);
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        LayerPolylineView.prototype.save = function (data) {
+            data.polylines = [];
+            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
+                var polyline = _a[_i];
+                data.polylines.push(polyline.pack());
+            }
+            data.texts = this.texts;
+        };
+        LayerPolylineView.prototype.render = function (renderer) {
+            _super.prototype.render.call(this, renderer);
+            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
+                var polyline = _a[_i];
+                polyline.render(this.canvas, renderer, this.camera);
+            }
+            for (var _b = 0, _c = this.texts; _b < _c.length; _b++) {
+                var text = _c[_b];
+                text.render(this.canvas, renderer, this.camera);
+            }
+        };
+        LayerPolylineView.prototype.unload = function () {
+            _super.prototype.unload.call(this);
+        };
+        LayerPolylineView.layerName = "polyline_view";
+        return LayerPolylineView;
+    }(Layer_1.Layer));
+    exports.LayerPolylineView = LayerPolylineView;
+});
+//# sourceMappingURL=LayerPolylineView.js.map;
 define('util/LZString',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1915,8 +1963,6 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
     var layerImage = new LayerImage_1.LayerImage(canvas);
     var layerPolylineView = new LayerPolylineView_1.LayerPolylineView(canvas);
     var layerPolylineEdit = new LayerPolylineEdit_1.LayerPolylineEdit(canvas);
-    layerPolylineView.setLayer(layerPolylineEdit);
-    layerPolylineEdit.setLayer(layerPolylineView);
     canvas.addLayer(layerImage);
     canvas.addLayer(layerPolylineView);
     canvas.addLayer(layerPolylineEdit);

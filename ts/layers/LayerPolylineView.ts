@@ -9,6 +9,7 @@ import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
 
 export class LayerPolylineView extends Layer {
+    public static readonly layerName = "polyline_view";
 
     private map: Map;
     private polylines: DrawablePolyline[] = [];
@@ -17,11 +18,7 @@ export class LayerPolylineView extends Layer {
     private texts: DrawableText[] = [];
 
     public constructor(canvas: Canvas) {
-        super("polyline_view", canvas);
-    }
-
-    public setLayer(layerPolylineEdit: LayerPolylineEdit) {
-        this.layerPolylineEdit = layerPolylineEdit;
+        super(LayerPolylineView.layerName, canvas);
     }
 
     private static prepareRect(x1: number, y1: number, x2: number, y2: number): Point[] {
@@ -34,6 +31,8 @@ export class LayerPolylineView extends Layer {
     }
 
     public load(map: Map, data: Data, folder: string): void {
+        this.layerPolylineEdit = this.canvas.findLayer(LayerPolylineEdit.layerName) as LayerPolylineEdit;
+
         this.map = map;
 
         if (data.polylines) {
@@ -99,7 +98,10 @@ export class LayerPolylineView extends Layer {
     }
 
     public save(data: Data): void {
-        data.polylines = this.polylines;
+        data.polylines = [];
+        for (const polyline of this.polylines) {
+            data.polylines.push(polyline.pack());
+        }
         data.texts = this.texts;
     }
 

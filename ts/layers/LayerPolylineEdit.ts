@@ -9,23 +9,24 @@ import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
+import {combineColorAlpha} from "../util/Color";
 
 export class LayerPolylineEdit extends Layer {
+    public static readonly layerName = "polyline_edit";
 
     private map: Map;
     private polylineNew: DrawablePolyline = null;
     private polylineEdit: DrawablePolyline = null;
     private layerPolylineView: LayerPolylineView;
 
-    public constructor(canvas: Canvas) {
-        super("polyline_edit", canvas);
-    }
 
-    public setLayer(layerPolylineView: LayerPolylineView) {
-        this.layerPolylineView = layerPolylineView;
+    public constructor(canvas: Canvas) {
+        super(LayerPolylineEdit.layerName, canvas);
     }
 
     public load(map: Map, data: Data, folder: string): void {
+        this.layerPolylineView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
+
         this.map = map;
 
         let self = this;
@@ -41,9 +42,11 @@ export class LayerPolylineEdit extends Layer {
         let self = this;
 
         let points: Point[] = [];
-        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(points, true, true, new Size(2)));
-        this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
-        this.polylineNew.fillColor = "rgba(255,255,255,0.25)";
+        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(
+            points, true, new Size(2),
+            true, "white", "50",
+            true, "white", "25",
+        ));
         this.bindPolyline(this.polylineNew);
 
         this._mouseListener = new class extends MouseListener {
@@ -224,14 +227,20 @@ export class LayerPolylineEdit extends Layer {
 
     private bindPolyline(polyline: DrawablePolyline) {
         Ui.setVisibility("panelSelected", true);
-        Ui.bindCheckbox("checkboxClosed", polyline.closed, newValue => {
-            polyline.closed = newValue;
-            this.canvas.requestRender();
-        });
+
         Ui.bindCheckbox("checkboxFill", polyline.fill, newValue => {
             polyline.fill = newValue;
             this.canvas.requestRender();
         });
+        Ui.bindCheckbox("checkboxStroke", polyline.stroke, newValue => {
+            polyline.stroke = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindCheckbox("checkboxClosed", polyline.closed, newValue => {
+            polyline.closed = newValue;
+            this.canvas.requestRender();
+        });
+
         Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, newValue => {
             polyline.lineWidth.onScreen = newValue;
             this.canvas.requestRender();
@@ -245,13 +254,16 @@ export class LayerPolylineEdit extends Layer {
             this.canvas.requestRender();
         });
 
-        //TODO white,25,50 save in polyline
-        Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", "white", "50", (newColor, newAlpha, colorString) => {
-            polyline.strokeColor = colorString;
+        Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", polyline.strokeColor, polyline.strokeAlpha, (newColor, newAlpha) => {
+            polyline.strokeColor = newColor;
+            polyline.strokeAlpha = newAlpha;
+            polyline.strokeString = combineColorAlpha(polyline.strokeColor, polyline.strokeAlpha);
             this.canvas.requestRender();
         });
-        Ui.bindColor("fillColorContainer", "fillAlphaContainer", "white", "25", (newColor, newAlpha, colorString) => {
-            polyline.fillColor = colorString;
+        Ui.bindColor("fillColorContainer", "fillAlphaContainer", polyline.fillColor, polyline.fillAlpha, (newColor, newAlpha) => {
+            polyline.fillColor = newColor;
+            polyline.fillAlpha = newAlpha;
+            polyline.fillString = combineColorAlpha(polyline.fillColor, polyline.fillAlpha);
             this.canvas.requestRender();
         });
     }

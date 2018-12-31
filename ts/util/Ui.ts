@@ -1,12 +1,4 @@
-class ColorEntry {
-    public constructor(public name: string, public r: number, public g: number, public b: number) {
-    }
-}
-
-class AlphaEntry {
-    public constructor(public name: string, public buttonColor: string, public value: number) {
-    }
-}
+import {AlphaEntry, ColorEntry} from "./Color";
 
 export class Ui {
 
@@ -36,70 +28,40 @@ export class Ui {
         };
     }
 
-    private static colorValues = [
-        new ColorEntry("gray", 127, 127, 127),
-        new ColorEntry("white", 255, 255, 255),
-        new ColorEntry("red", 255, 0, 0),
-        new ColorEntry("green", 0, 255, 0),
-        new ColorEntry("blue", 0, 0, 255),
-        new ColorEntry("cyan", 0, 255, 255),
-        new ColorEntry("purple", 255, 0, 255),
-        new ColorEntry("yellow", 255, 255, 0),
-    ];
-    private static alphaValues = [
-        new AlphaEntry("25", "rgb(255,255,255)", 0.25),
-        new AlphaEntry("50", "rgb(191,191,191)", 0.50),
-        new AlphaEntry("75", "rgb(127,127,127)", 0.75),
-        new AlphaEntry("100", "rgb(63,63,63)", 1.00),
-    ];
-
-    static bindColor(colorContainerId: string, alphaContainerId: string, initialColor: string, initialAlpha: string, onchange: (newColor: string, newAlpha: string, colorString: string) => void) {
+    static bindColor(colorContainerId: string, alphaContainerId: string, initialColor: ColorEntry, initialAlpha: AlphaEntry, onchange: (newColor: ColorEntry, newAlpha: AlphaEntry) => void) {
         let colorContainer = <HTMLInputElement>document.getElementById(colorContainerId);
         let alphaContainer = <HTMLInputElement>document.getElementById(alphaContainerId);
         colorContainer.innerHTML = "";
         alphaContainer.innerHTML = "";
 
-        let thisColor = this.colorValues[0];
-        let thisAlpha = this.alphaValues[0];
+        let thisColor = initialColor;
+        let thisAlpha = initialAlpha;
 
-        for (const colorValue of Ui.colorValues) {
-            if (initialColor == colorValue.name) {
-                thisColor = colorValue;
-            }
-        }
-        for (const alphaValue of Ui.alphaValues) {
-            if (initialAlpha == alphaValue.name) {
-                thisAlpha = alphaValue;
-            }
-        }
-
-        for (const colorValue of Ui.colorValues) {
+        for (const colorValue of ColorEntry.list) {
             let id = colorContainerId + "_" + colorValue.name;
             let style = "background:" + colorValue.name;
             colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
         }
-        for (const alphaValue of Ui.alphaValues) {
+        for (const alphaValue of AlphaEntry.list) {
             let id = alphaContainerId + "_" + alphaValue.name;
             let style = "background:" + alphaValue.buttonColor;
             alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
         }
 
-        for (const colorValue of Ui.colorValues) {
+        for (const colorValue of ColorEntry.list) {
             let id = colorContainerId + "_" + colorValue.name;
             let button: HTMLButtonElement = <HTMLButtonElement>document.getElementById(id);
             button.onclick = ev => {
                 thisColor = colorValue;
-                let colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
-                onchange(thisColor.name, thisAlpha.name, colorString);
+                onchange(thisColor, thisAlpha);
             };
         }
-        for (const alphaValue of Ui.alphaValues) {
+        for (const alphaValue of AlphaEntry.list) {
             let id = alphaContainerId + "_" + alphaValue.name;
             let button: HTMLButtonElement = <HTMLButtonElement>document.getElementById(id);
             button.onclick = ev => {
                 thisAlpha = alphaValue;
-                let colorString = "rgba(" + thisColor.r + "," + thisColor.g + "," + thisColor.b + "," + thisAlpha.value + ")";
-                onchange(thisColor.name, thisAlpha.name, colorString);
+                onchange(thisColor, thisAlpha);
             };
         }
     }

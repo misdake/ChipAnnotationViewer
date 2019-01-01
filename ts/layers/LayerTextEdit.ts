@@ -9,7 +9,8 @@ import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {combineColorAlpha} from "../util/Color";
-import {Selection} from "../util/Selection";
+import {Selection} from "./Selection";
+import {Drawable} from "../drawable/Drawable";
 
 export class LayerTextEdit extends Layer {
     public static readonly layerName = "text edit";
@@ -18,20 +19,19 @@ export class LayerTextEdit extends Layer {
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
 
-
     public constructor(canvas: Canvas) {
         super(LayerTextEdit.layerName, canvas);
         let self = this;
-        Selection.register(() => {
+        Selection.register(DrawableText.typeName, (item: Drawable) => {
+            self.startEditingText(item as DrawableText);
+        }, () => {
             self.finishEditing();
         });
     }
 
     public load(map: Map, data: Data, folder: string): void {
         this.layerView = this.canvas.findLayer(LayerTextView.layerName) as LayerTextView;
-
         this.map = map;
-
         Ui.setVisibility("panelTextSelected", false);
     }
 
@@ -56,9 +56,10 @@ export class LayerTextEdit extends Layer {
                     let text = new DrawableText(new DrawableTextPack(
                         "text",
                         "white", "100", new Size(20, 50),
-                        position.x, position.y));
+                        position.x, position.y, false)
+                    );
                     self.layerView.addText(text);
-                    self.startEditingText(text);
+                    Selection.select(DrawableText.typeName, text);
                     self.canvas.requestRender();
                     return true;
                 } else {
@@ -120,8 +121,10 @@ export class LayerTextEdit extends Layer {
                 if (this.down) { //left button is down => drag point
                     if (this.drag) {
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        self.textEdit.x += position.x - this.dragX;
-                        self.textEdit.y += position.y - this.dragY;
+                        if (!self.textEdit.lockPosition) {
+                            self.textEdit.x += position.x - this.dragX;
+                            self.textEdit.y += position.y - this.dragY;
+                        }
                         this.dragX = position.x;
                         this.dragY = position.y;
                         self.canvas.requestRender();
@@ -173,6 +176,10 @@ export class LayerTextEdit extends Layer {
 
         Ui.bindValue("textTextContent", text.text, newValue => {
             text.text = newValue;
+            this.canvas.requestRender();
+        });
+        Ui.bindCheckbox("textCheckboxLockPosition", text.lockPosition, newValue => {
+            text.lockPosition = newValue;
             this.canvas.requestRender();
         });
 

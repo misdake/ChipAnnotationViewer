@@ -5,23 +5,19 @@ import {Renderer} from "../Renderer";
 import {MouseListener} from "../MouseListener";
 import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
-import {LayerTextEdit} from "./LayerTextEdit";
-import {Selection} from "../util/Selection";
+import {Selection} from "./Selection";
 
 export class LayerTextView extends Layer {
     public static readonly layerName = "text view";
 
     private map: Map;
     private texts: DrawableText[] = [];
-    private layerEdit: LayerTextEdit;
 
     public constructor(canvas: Canvas) {
         super(LayerTextView.layerName, canvas);
     }
 
     public load(map: Map, data: Data, folder: string): void {
-        this.layerEdit = this.canvas.findLayer(LayerTextEdit.layerName) as LayerTextEdit;
-
         this.map = map;
 
         if (data.texts) {
@@ -45,12 +41,11 @@ export class LayerTextView extends Layer {
                     for (let text of self.texts) {
                         let pick = text.pick(x, y, self.camera.screenSizeToCanvas(5));
                         if (pick) {
-                            Selection.deselectAll();
-                            self.layerEdit.startEditingText(text);
+                            Selection.select(DrawableText.typeName, text);
                             return true;
                         }
                     }
-                    self.layerEdit.finishEditing();
+                    Selection.deselect(DrawableText.typeName);
                     return false;
                 } else {
                     return false;

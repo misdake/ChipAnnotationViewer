@@ -6,22 +6,19 @@ import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {MouseListener} from "../MouseListener";
 import {LayerPolylineEdit} from "./LayerPolylineEdit";
 import {Data} from "../data/Data";
-import {Selection} from "../util/Selection";
+import {Selection} from "./Selection";
 
 export class LayerPolylineView extends Layer {
     public static readonly layerName = "polyline view";
 
     private map: Map;
     private polylines: DrawablePolyline[] = [];
-    private layerEdit: LayerPolylineEdit;
 
     public constructor(canvas: Canvas) {
         super(LayerPolylineView.layerName, canvas);
     }
 
     public load(map: Map, data: Data, folder: string): void {
-        this.layerEdit = this.canvas.findLayer(LayerPolylineEdit.layerName) as LayerPolylineEdit;
-
         this.map = map;
 
         if (data.polylines) {
@@ -48,12 +45,11 @@ export class LayerPolylineView extends Layer {
                         let pickLine = polyline.pickLine(x, y, radius);
                         let pickShape = polyline.pickShape(x, y);
                         if (pickPoint || pickLine || pickShape) {
-                            Selection.deselectAll();
-                            self.layerEdit.startEditingPolyline(polyline);
+                            Selection.select(DrawablePolyline.typeName, polyline);
                             return true;
                         }
                     }
-                    self.layerEdit.finishEditing();
+                    Selection.deselect(DrawablePolyline.typeName);
                     return false;
                 } else {
                     return false;

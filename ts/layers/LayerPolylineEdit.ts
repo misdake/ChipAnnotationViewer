@@ -10,7 +10,8 @@ import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {combineColorAlpha} from "../util/Color";
-import {Selection} from "../util/Selection";
+import {Selection} from "./Selection";
+import {Drawable} from "../drawable/Drawable";
 
 export class LayerPolylineEdit extends Layer {
     public static readonly layerName = "polyline edit";
@@ -20,21 +21,19 @@ export class LayerPolylineEdit extends Layer {
     private polylineEdit: DrawablePolyline = null;
     private layerView: LayerPolylineView;
 
-
     public constructor(canvas: Canvas) {
         super(LayerPolylineEdit.layerName, canvas);
         let self = this;
-        Selection.register(() => {
+        Selection.register(DrawablePolyline.typeName, (item: Drawable) => {
+            this.startEditingPolyline(item as DrawablePolyline);
+        }, () => {
             self.finishEditing();
         });
     }
 
     public load(map: Map, data: Data, folder: string): void {
         this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
-
         this.map = map;
-
-
         Ui.setVisibility("panelPolylineSelected", false);
     }
 

@@ -58,6 +58,7 @@ export class DrawablePolylinePack {
 }
 
 export class DrawablePolyline extends Drawable {
+    public static readonly typeName = "DrawablePolyline";
 
     public points: Point[];
     public closed: boolean;

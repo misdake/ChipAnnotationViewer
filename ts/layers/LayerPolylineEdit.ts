@@ -219,7 +219,7 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public deleteEditing() {
-        if(this.polylineEdit) {
+        if (this.polylineEdit) {
             this.layerView.deletePolyline(this.polylineEdit);
             this.finishEditing();
         }

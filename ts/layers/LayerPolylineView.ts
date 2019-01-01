@@ -4,7 +4,6 @@ import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {MouseListener} from "../MouseListener";
-import {LayerPolylineEdit} from "./LayerPolylineEdit";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 
@@ -64,7 +63,7 @@ export class LayerPolylineView extends Layer {
         };
     }
 
-    public addPolyline(polyline:DrawablePolyline) {
+    public addPolyline(polyline: DrawablePolyline) {
         this.polylines.push(polyline);
         this.canvas.requestRender();
     }

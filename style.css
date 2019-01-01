@@ -27,7 +27,7 @@ body, html {
     margin: 5px;
 }
 
-.configColorAlphaSplit {
+.polylineContainerSplit {
     width: 40px;
     display: inline-block;
 }

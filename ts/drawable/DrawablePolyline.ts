@@ -58,6 +58,7 @@ export class DrawablePolylinePack {
 }
 
 export class DrawablePolyline extends Drawable {
+    public static readonly typeName = "DrawablePolyline";
 
     public points: Point[];
     public closed: boolean;
@@ -171,7 +172,24 @@ export class DrawablePolyline extends Drawable {
         return minResult;
     }
     public pickShape(canvasX: number, canvasY: number): boolean {
-        return DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
+        return this.fill && DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
+    }
+
+    public centroid(): Point {
+        let area2 = 0;
+        let accX = 0;
+        let accY = 0;
+        for (let i = 0; i < this.points.length; i++) {
+            let p1 = this.points[i];
+            let p2 = this.points[(i + 1) % this.points.length];
+            let c = p1.x * p2.y - p2.x * p1.y;
+            area2 += c;
+            accX += (p1.x + p2.x) * c;
+            accY += (p1.y + p2.y) * c;
+        }
+        let x = accX / 6 / (area2 / 2);
+        let y = accY / 6 / (area2 / 2);
+        return new Point(x, y);
     }
 
 }

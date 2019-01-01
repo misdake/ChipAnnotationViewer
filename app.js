@@ -96,7 +96,7 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
         //image
         //---------------------------------------------
         //---------------------------------------------
-        //circle
+        //shape
         Renderer.prototype.renderCircle = function (camera, x, y, radius, fill, stroke, lineWidth) {
             var position = camera.canvasToScreen(x, y);
             var size = camera.canvasSizeToScreen(radius);
@@ -116,7 +116,23 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
                 this.context.stroke();
             }
         };
-        //circle
+        Renderer.prototype.drawRect = function (x1, y1, x2, y2, fill, stroke, lineWidth) {
+            if (lineWidth)
+                this.context.lineWidth = lineWidth;
+            this.context.beginPath();
+            this.context.moveTo(x1, y1);
+            this.context.lineTo(x1, y2);
+            this.context.lineTo(x2, y2);
+            this.context.lineTo(x2, y1);
+            this.context.closePath();
+            if (fill) {
+                this.context.fill();
+            }
+            if (stroke) {
+                this.context.stroke();
+            }
+        };
+        //shape
         //---------------------------------------------
         //---------------------------------------------
         //text
@@ -124,6 +140,7 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
             var position = camera.canvasToScreen(x, y);
             var size = this.calculateLineWidth(camera, fontSize);
             this.drawText(text, size, position.x, position.y, anchorX, anchorY);
+            return [this.context.measureText(text).width, size];
         };
         Renderer.prototype.drawText = function (text, fontSize, x, y, anchorX, anchorY) {
             this.context.textAlign = anchorX;
@@ -914,13 +931,184 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             return minResult;
         };
         DrawablePolyline.prototype.pickShape = function (canvasX, canvasY) {
-            return DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
+            return this.fill && DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
         };
+        DrawablePolyline.prototype.centroid = function () {
+            var area2 = 0;
+            var accX = 0;
+            var accY = 0;
+            for (var i = 0; i < this.points.length; i++) {
+                var p1 = this.points[i];
+                var p2 = this.points[(i + 1) % this.points.length];
+                var c = p1.x * p2.y - p2.x * p1.y;
+                area2 += c;
+                accX += (p1.x + p2.x) * c;
+                accY += (p1.y + p2.y) * c;
+            }
+            var x = accX / 6 / (area2 / 2);
+            var y = accY / 6 / (area2 / 2);
+            return new Point(x, y);
+        };
+        DrawablePolyline.typeName = "DrawablePolyline";
         return DrawablePolyline;
     }(Drawable_1.Drawable));
     exports.DrawablePolyline = DrawablePolyline;
 });
 //# sourceMappingURL=DrawablePolyline.js.map;
+define('layers/Selection',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Selection = /** @class */ (function () {
+        function Selection() {
+        }
+        Selection.register = function (typeName, onselect, ondeselect) {
+            if (typeName) {
+                if (onselect)
+                    this.mapSelect[typeName] = onselect;
+                if (ondeselect)
+                    this.mapDeselect[typeName] = ondeselect;
+            }
+            this.listDeselect.push(ondeselect);
+        };
+        Selection.deselectAll = function () {
+            for (var _i = 0, _a = this.listDeselect; _i < _a.length; _i++) {
+                var ondeselect = _a[_i];
+                ondeselect();
+            }
+        };
+        Selection.deselect = function (typeName) {
+            var ondeselect = this.mapDeselect[typeName];
+            if (ondeselect) {
+                ondeselect();
+            }
+        };
+        Selection.select = function (typeName, item) {
+            this.deselectAll();
+            var onselect = this.mapSelect[typeName];
+            if (onselect) {
+                onselect(item);
+            }
+        };
+        Selection.listDeselect = [];
+        Selection.mapSelect = {};
+        Selection.mapDeselect = {};
+        return Selection;
+    }());
+    exports.Selection = Selection;
+});
+//# sourceMappingURL=Selection.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../MouseListener", "./Selection"], function (require, exports, Layer_1, DrawablePolyline_1, MouseListener_1, Selection_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerPolylineView = /** @class */ (function (_super) {
+        __extends(LayerPolylineView, _super);
+        function LayerPolylineView(canvas) {
+            var _this = _super.call(this, LayerPolylineView.layerName, canvas) || this;
+            _this.polylines = [];
+            return _this;
+        }
+        LayerPolylineView.prototype.load = function (map, data, folder) {
+            this.map = map;
+            if (data.polylines) {
+                for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
+                    var pack = _a[_i];
+                    this.polylines.push(new DrawablePolyline_1.DrawablePolyline(pack));
+                }
+            }
+            //listen to mouse click to select polyline
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.moved = false;
+                    return _this;
+                }
+                class_1.prototype.onmousedown = function (event) {
+                    this.moved = false;
+                    return false;
+                };
+                class_1.prototype.onmouseup = function (event) {
+                    if (event.button == 0 && !this.moved) {
+                        var radius = self.camera.screenSizeToCanvas(5);
+                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var x = canvasXY.x, y = canvasXY.y;
+                        for (var _i = 0, _a = self.polylines; _i < _a.length; _i++) {
+                            var polyline = _a[_i];
+                            var pickPoint = polyline.pickPoint(x, y, radius);
+                            var pickLine = polyline.pickLine(x, y, radius);
+                            var pickShape = polyline.pickShape(x, y);
+                            if (pickPoint || pickLine || pickShape) {
+                                Selection_1.Selection.select(DrawablePolyline_1.DrawablePolyline.typeName, polyline);
+                                return true;
+                            }
+                        }
+                        Selection_1.Selection.deselect(DrawablePolyline_1.DrawablePolyline.typeName);
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                        this.moved = true;
+                    }
+                    return false;
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
+        };
+        LayerPolylineView.prototype.addPolyline = function (polyline) {
+            this.polylines.push(polyline);
+            this.canvas.requestRender();
+        };
+        LayerPolylineView.prototype.deletePolyline = function (polyline) {
+            var index = this.polylines.indexOf(polyline);
+            if (index !== -1) {
+                this.polylines.splice(index, 1);
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        LayerPolylineView.prototype.save = function (data) {
+            data.polylines = [];
+            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
+                var polyline = _a[_i];
+                data.polylines.push(polyline.pack());
+            }
+        };
+        LayerPolylineView.prototype.render = function (renderer) {
+            _super.prototype.render.call(this, renderer);
+            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
+                var polyline = _a[_i];
+                polyline.render(this.canvas, renderer, this.camera);
+            }
+        };
+        LayerPolylineView.prototype.unload = function () {
+            _super.prototype.unload.call(this);
+        };
+        LayerPolylineView.layerName = "polyline view";
+        return LayerPolylineView;
+    }(Layer_1.Layer));
+    exports.LayerPolylineView = LayerPolylineView;
+});
+//# sourceMappingURL=LayerPolylineView.js.map;
 define('util/Size',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -947,7 +1135,7 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
         };
         Ui.setVisibility = function (id, visible) {
             var element = document.getElementById(id);
-            element.style.visibility = visible ? "visible" : "hidden";
+            element.style.display = visible ? "block" : "none";
         };
         Ui.bindCheckbox = function (id, initialValue, onchange) {
             var checkbox = document.getElementById(id);
@@ -957,10 +1145,10 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
             };
         };
         Ui.bindValue = function (id, initialValue, onchange) {
-            var colorPicker = document.getElementById(id);
-            colorPicker.value = initialValue;
-            colorPicker.onchange = function (ev) {
-                onchange(colorPicker.value);
+            var element = document.getElementById(id);
+            element.value = initialValue;
+            element.oninput = element.onchange = function (ev) {
+                onchange(element.value);
             };
         };
         Ui.bindColor = function (colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
@@ -1010,7 +1198,7 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
         Ui.bindNumber = function (id, initialValue, onchange) {
             var input = document.getElementById(id);
             input.value = initialValue.toString();
-            input.onchange = function (ev) {
+            input.oninput = input.onchange = function (ev) {
                 var result = parseFloat(input.value);
                 if (result >= 0) {
                     onchange(result);
@@ -1039,7 +1227,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "./LayerPolylineView", "../util/Ui", "../util/Color"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, LayerPolylineView_1, Ui_1, Color_1) {
+define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "./LayerPolylineView", "../util/Ui", "../util/Color", "./Selection"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, LayerPolylineView_1, Ui_1, Color_1, Selection_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var LayerPolylineEdit = /** @class */ (function (_super) {
@@ -1048,23 +1236,25 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             var _this = _super.call(this, LayerPolylineEdit.layerName, canvas) || this;
             _this.polylineNew = null;
             _this.polylineEdit = null;
+            var self = _this;
+            Selection_1.Selection.register(DrawablePolyline_1.DrawablePolyline.typeName, function (item) {
+                _this.startEditingPolyline(item);
+            }, function () {
+                self.finishEditing();
+            });
             return _this;
         }
         LayerPolylineEdit.prototype.load = function (map, data, folder) {
-            this.layerPolylineView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
+            this.layerView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
             this.map = map;
-            var self = this;
-            Ui_1.Ui.bindButtonOnClick("buttonStartEditing", function () { return self.startCreatingPolyline(); });
-            Ui_1.Ui.bindButtonOnClick("buttonFinishEditing", function () { return self.finishEditing(); });
-            Ui_1.Ui.bindButtonOnClick("buttonDeleteSelected", function () { return self.deleteEditing(); });
-            Ui_1.Ui.setVisibility("panelSelected", false);
+            Ui_1.Ui.setVisibility("panelPolylineSelected", false);
         };
         LayerPolylineEdit.prototype.startCreatingPolyline = function () {
             this.finishEditing();
             var self = this;
             var points = [];
-            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, new Size_1.Size(2), true, "white", "50", true, "white", "25"));
-            this.bindPolyline(this.polylineNew);
+            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, new Size_1.Size(2), true, "white", "25", true, "white", "75"));
+            this.bindPolylineConfigUi(this.polylineNew);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
                 function class_1() {
@@ -1120,7 +1310,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.finishEditing();
             //show polyline and its point indicators
             this.polylineEdit = polyline;
-            this.bindPolyline(this.polylineEdit);
+            this.bindPolylineConfigUi(this.polylineEdit);
             //start listening to mouse events: drag point, remove point on double click, add point on double click
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -1196,10 +1386,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
-            Ui_1.Ui.setVisibility("panelSelected", false);
+            Ui_1.Ui.setVisibility("panelPolylineSelected", false);
             if (this.polylineNew) {
                 if (this.polylineNew.points.length > 2) {
-                    this.layerPolylineView.addPolyline(this.polylineNew);
+                    this.layerView.addPolyline(this.polylineNew);
                 }
                 this.polylineNew = null;
                 this.canvas.requestRender();
@@ -1237,242 +1427,56 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         };
         LayerPolylineEdit.prototype.deleteEditing = function () {
             if (this.polylineEdit) {
-                this.layerPolylineView.deletePolyline(this.polylineEdit);
+                this.layerView.deletePolyline(this.polylineEdit);
                 this.finishEditing();
             }
         };
-        LayerPolylineEdit.prototype.bindPolyline = function (polyline) {
+        LayerPolylineEdit.prototype.bindPolylineConfigUi = function (polyline) {
             var _this = this;
-            Ui_1.Ui.setVisibility("panelSelected", true);
-            Ui_1.Ui.bindCheckbox("checkboxFill", polyline.fill, function (newValue) {
+            Ui_1.Ui.setVisibility("panelPolylineSelected", true);
+            Ui_1.Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, function (newValue) {
                 polyline.fill = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindCheckbox("checkboxStroke", polyline.stroke, function (newValue) {
+            Ui_1.Ui.bindCheckbox("polylineCheckboxStroke", polyline.stroke, function (newValue) {
                 polyline.stroke = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindCheckbox("checkboxClosed", polyline.closed, function (newValue) {
+            Ui_1.Ui.bindCheckbox("polylineCheckboxClosed", polyline.closed, function (newValue) {
                 polyline.closed = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
                 polyline.lineWidth.onScreen = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOnCanvas", polyline.lineWidth.onCanvas, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOnCanvas", polyline.lineWidth.onCanvas, function (newValue) {
                 polyline.lineWidth.onCanvas = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
                 polyline.lineWidth.ofScreen = newValue * 0.001;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", polyline.strokeColor, polyline.strokeAlpha, function (newColor, newAlpha) {
+            Ui_1.Ui.bindColor("polylineContainerStrokeColor", "polylineContainerStrokeAlpha", polyline.strokeColor, polyline.strokeAlpha, function (newColor, newAlpha) {
                 polyline.strokeColor = newColor;
                 polyline.strokeAlpha = newAlpha;
                 polyline.strokeString = Color_1.combineColorAlpha(polyline.strokeColor, polyline.strokeAlpha);
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindColor("fillColorContainer", "fillAlphaContainer", polyline.fillColor, polyline.fillAlpha, function (newColor, newAlpha) {
+            Ui_1.Ui.bindColor("polylineContainerFillColor", "polylineContainerFillAlpha", polyline.fillColor, polyline.fillAlpha, function (newColor, newAlpha) {
                 polyline.fillColor = newColor;
                 polyline.fillAlpha = newAlpha;
                 polyline.fillString = Color_1.combineColorAlpha(polyline.fillColor, polyline.fillAlpha);
                 _this.canvas.requestRender();
             });
         };
-        LayerPolylineEdit.layerName = "polyline_edit";
+        LayerPolylineEdit.layerName = "polyline edit";
         return LayerPolylineEdit;
     }(Layer_1.Layer));
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-define('drawable/DrawableText',["require", "exports", "./Drawable"], function (require, exports, Drawable_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var DrawableTextPack = /** @class */ (function () {
-        function DrawableTextPack(text, color, anchorX, anchorY, fontSize, x, y) {
-            this.text = "";
-            this.text = text;
-            this.color = color;
-            this.anchorX = anchorX;
-            this.anchorY = anchorY;
-            this.fontSize = fontSize;
-            this.x = x;
-            this.y = y;
-        }
-        return DrawableTextPack;
-    }());
-    exports.DrawableTextPack = DrawableTextPack;
-    var DrawableText = /** @class */ (function (_super) {
-        __extends(DrawableText, _super);
-        function DrawableText(pack) {
-            var _this = _super.call(this) || this;
-            _this.text = "";
-            _this.text = pack.text;
-            _this.color = pack.color;
-            _this.anchorX = pack.anchorX;
-            _this.anchorY = pack.anchorY;
-            _this.fontSize = pack.fontSize;
-            _this.x = pack.x;
-            _this.y = pack.y;
-            return _this;
-        }
-        DrawableText.prototype.render = function (canvas, renderer, camera) {
-            renderer.setColor(this.color);
-            renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, this.anchorX, this.anchorY);
-        };
-        return DrawableText;
-    }(Drawable_1.Drawable));
-    exports.DrawableText = DrawableText;
-});
-//# sourceMappingURL=DrawableText.js.map;
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../MouseListener", "./LayerPolylineEdit", "../drawable/DrawableText"], function (require, exports, Layer_1, DrawablePolyline_1, MouseListener_1, LayerPolylineEdit_1, DrawableText_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var LayerPolylineView = /** @class */ (function (_super) {
-        __extends(LayerPolylineView, _super);
-        function LayerPolylineView(canvas) {
-            var _this = _super.call(this, LayerPolylineView.layerName, canvas) || this;
-            _this.polylines = [];
-            _this.texts = [];
-            return _this;
-        }
-        LayerPolylineView.prepareRect = function (x1, y1, x2, y2) {
-            return [
-                new DrawablePolyline_1.Point(x1, y1),
-                new DrawablePolyline_1.Point(x2, y1),
-                new DrawablePolyline_1.Point(x2, y2),
-                new DrawablePolyline_1.Point(x1, y2)
-            ];
-        };
-        LayerPolylineView.prototype.load = function (map, data, folder) {
-            this.layerPolylineEdit = this.canvas.findLayer(LayerPolylineEdit_1.LayerPolylineEdit.layerName);
-            this.map = map;
-            if (data.polylines) {
-                for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
-                    var pack = _a[_i];
-                    this.polylines.push(new DrawablePolyline_1.DrawablePolyline(pack));
-                }
-            }
-            if (data.texts) {
-                for (var _b = 0, _c = data.texts; _b < _c.length; _b++) {
-                    var pack = _c[_b];
-                    this.texts.push(new DrawableText_1.DrawableText(pack));
-                }
-            }
-            //listen to mouse click to select polyline
-            var self = this;
-            this._mouseListener = new /** @class */ (function (_super) {
-                __extends(class_1, _super);
-                function class_1() {
-                    var _this = _super !== null && _super.apply(this, arguments) || this;
-                    _this.moved = false;
-                    return _this;
-                }
-                class_1.prototype.onmousedown = function (event) {
-                    this.moved = false;
-                    return false;
-                };
-                class_1.prototype.onmouseup = function (event) {
-                    if (event.button == 0 && !this.moved) {
-                        var radius = self.camera.screenSizeToCanvas(5);
-                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        var x = canvasXY.x, y = canvasXY.y;
-                        for (var _i = 0, _a = self.polylines; _i < _a.length; _i++) {
-                            var polyline = _a[_i];
-                            var pickPoint = polyline.pickPoint(x, y, radius);
-                            var pickLine = polyline.pickLine(x, y, radius);
-                            var pickShape = polyline.pickShape(x, y);
-                            if (pickPoint || pickLine || pickShape) {
-                                self.layerPolylineEdit.startEditingPolyline(polyline);
-                                return true;
-                            }
-                        }
-                        self.layerPolylineEdit.finishEditing();
-                        return false;
-                    }
-                    else {
-                        return false;
-                    }
-                };
-                class_1.prototype.onmousemove = function (event) {
-                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
-                        this.moved = true;
-                    }
-                    return false;
-                };
-                return class_1;
-            }(MouseListener_1.MouseListener));
-        };
-        LayerPolylineView.prototype.addPolyline = function (polyline) {
-            this.polylines.push(polyline);
-            this.canvas.requestRender();
-        };
-        LayerPolylineView.prototype.deletePolyline = function (polyline) {
-            var index = this.polylines.indexOf(polyline);
-            if (index !== -1) {
-                this.polylines.splice(index, 1);
-                return true;
-            }
-            else {
-                return false;
-            }
-        };
-        LayerPolylineView.prototype.save = function (data) {
-            data.polylines = [];
-            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
-                var polyline = _a[_i];
-                data.polylines.push(polyline.pack());
-            }
-            data.texts = this.texts;
-        };
-        LayerPolylineView.prototype.render = function (renderer) {
-            _super.prototype.render.call(this, renderer);
-            for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
-                var polyline = _a[_i];
-                polyline.render(this.canvas, renderer, this.camera);
-            }
-            for (var _b = 0, _c = this.texts; _b < _c.length; _b++) {
-                var text = _c[_b];
-                text.render(this.canvas, renderer, this.camera);
-            }
-        };
-        LayerPolylineView.prototype.unload = function () {
-            _super.prototype.unload.call(this);
-        };
-        LayerPolylineView.layerName = "polyline_view";
-        return LayerPolylineView;
-    }(Layer_1.Layer));
-    exports.LayerPolylineView = LayerPolylineView;
-});
-//# sourceMappingURL=LayerPolylineView.js.map;
 define('util/LZString',["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1955,7 +1959,390 @@ define('util/LZString',["require", "exports"], function (require, exports) {
     exports.LZString = LZString;
 });
 //# sourceMappingURL=LZString.js.map;
-define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1) {
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Color"], function (require, exports, Drawable_1, Color_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var DrawableTextPack = /** @class */ (function () {
+        function DrawableTextPack(text, colorName, alphaName, 
+        // anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline,
+        fontSize, x, y, lockPosition) {
+            this.text = "";
+            this.text = text;
+            this.colorName = colorName;
+            this.alphaName = alphaName;
+            // this.anchorX = anchorX;
+            // this.anchorY = anchorY;
+            this.fontSize = fontSize;
+            this.x = x;
+            this.y = y;
+            this.lockPosition = lockPosition;
+        }
+        return DrawableTextPack;
+    }());
+    exports.DrawableTextPack = DrawableTextPack;
+    var DrawableText = /** @class */ (function (_super) {
+        __extends(DrawableText, _super);
+        function DrawableText(pack) {
+            var _this = _super.call(this) || this;
+            _this.text = "";
+            _this.canvasWidth = 0;
+            _this.canvasHeight = 0;
+            _this.text = pack.text;
+            _this.color = Color_1.ColorEntry.findByName(pack.colorName);
+            _this.alpha = Color_1.AlphaEntry.findByName(pack.alphaName);
+            _this.colorString = Color_1.combineColorAlpha(_this.color, _this.alpha);
+            // this.anchorX = pack.anchorX;
+            // this.anchorY = pack.anchorY;
+            _this.fontSize = pack.fontSize;
+            _this.x = pack.x;
+            _this.y = pack.y;
+            return _this;
+        }
+        DrawableText.prototype.pack = function () {
+            return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
+            // this.anchorX,
+            // this.anchorY,
+            this.fontSize, this.x, this.y, this.lockPosition);
+        };
+        DrawableText.prototype.render = function (canvas, renderer, camera) {
+            renderer.setColor(this.colorString);
+            var wh = renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, "center", "middle");
+            var ratio = camera.screenSizeToCanvas(1);
+            this.canvasWidth = wh[0] * ratio / 2;
+            this.canvasHeight = wh[1] * ratio / 2;
+        };
+        DrawableText.prototype.pick = function (x, y, radius) {
+            var h = (this.x - this.canvasWidth - radius <= x) && (x <= this.x + this.canvasWidth + radius);
+            var v = (this.y - this.canvasHeight - radius <= y) && (y <= this.y + this.canvasHeight + radius);
+            return h && v;
+        };
+        DrawableText.typeName = "DrawableText";
+        return DrawableText;
+    }(Drawable_1.Drawable));
+    exports.DrawableText = DrawableText;
+});
+//# sourceMappingURL=DrawableText.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerTextView',["require", "exports", "../Layer", "../MouseListener", "../drawable/DrawableText", "./Selection"], function (require, exports, Layer_1, MouseListener_1, DrawableText_1, Selection_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerTextView = /** @class */ (function (_super) {
+        __extends(LayerTextView, _super);
+        function LayerTextView(canvas) {
+            var _this = _super.call(this, LayerTextView.layerName, canvas) || this;
+            _this.texts = [];
+            return _this;
+        }
+        LayerTextView.prototype.load = function (map, data, folder) {
+            this.map = map;
+            if (data.texts) {
+                for (var _i = 0, _a = data.texts; _i < _a.length; _i++) {
+                    var pack = _a[_i];
+                    this.texts.push(new DrawableText_1.DrawableText(pack));
+                }
+            }
+            //listen to mouse click to select text
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.moved = false;
+                    return _this;
+                }
+                class_1.prototype.onmousedown = function (event) {
+                    this.moved = false;
+                    return false;
+                };
+                class_1.prototype.onmouseup = function (event) {
+                    if (event.button == 0 && !this.moved) {
+                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var x = canvasXY.x, y = canvasXY.y;
+                        for (var _i = 0, _a = self.texts; _i < _a.length; _i++) {
+                            var text = _a[_i];
+                            var pick = text.pick(x, y, self.camera.screenSizeToCanvas(5));
+                            if (pick) {
+                                Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, text);
+                                return true;
+                            }
+                        }
+                        Selection_1.Selection.deselect(DrawableText_1.DrawableText.typeName);
+                        return false;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                        this.moved = true;
+                    }
+                    return false;
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
+        };
+        LayerTextView.prototype.addText = function (text) {
+            this.texts.push(text);
+            this.canvas.requestRender();
+        };
+        LayerTextView.prototype.deleteText = function (text) {
+            var index = this.texts.indexOf(text);
+            if (index !== -1) {
+                this.texts.splice(index, 1);
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
+        LayerTextView.prototype.save = function (data) {
+            data.texts = [];
+            for (var _i = 0, _a = this.texts; _i < _a.length; _i++) {
+                var text = _a[_i];
+                data.texts.push(text.pack());
+            }
+        };
+        LayerTextView.prototype.render = function (renderer) {
+            _super.prototype.render.call(this, renderer);
+            for (var _i = 0, _a = this.texts; _i < _a.length; _i++) {
+                var text = _a[_i];
+                text.render(this.canvas, renderer, this.camera);
+            }
+        };
+        LayerTextView.prototype.unload = function () {
+            _super.prototype.unload.call(this);
+        };
+        LayerTextView.layerName = "text view";
+        return LayerTextView;
+    }(Layer_1.Layer));
+    exports.LayerTextView = LayerTextView;
+});
+//# sourceMappingURL=LayerTextView.js.map;
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/DrawableText", "../util/Size", "../MouseListener", "./LayerTextView", "../util/Ui", "../util/Color", "./Selection"], function (require, exports, Layer_1, DrawableText_1, Size_1, MouseListener_1, LayerTextView_1, Ui_1, Color_1, Selection_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LayerTextEdit = /** @class */ (function (_super) {
+        __extends(LayerTextEdit, _super);
+        function LayerTextEdit(canvas) {
+            var _this = _super.call(this, LayerTextEdit.layerName, canvas) || this;
+            _this.textEdit = null;
+            var self = _this;
+            Selection_1.Selection.register(DrawableText_1.DrawableText.typeName, function (item) {
+                self.startEditingText(item);
+            }, function () {
+                self.finishEditing();
+            });
+            return _this;
+        }
+        LayerTextEdit.prototype.load = function (map, data, folder) {
+            this.layerView = this.canvas.findLayer(LayerTextView_1.LayerTextView.layerName);
+            this.map = map;
+            Ui_1.Ui.setVisibility("panelTextSelected", false);
+        };
+        LayerTextEdit.prototype.startCreatingText = function () {
+            this.finishEditing();
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.down = false;
+                    return _this;
+                }
+                class_1.prototype.onmousedown = function (event) {
+                    if (event.button == 0) {
+                        this.down = true;
+                        return true;
+                    }
+                    return false;
+                };
+                class_1.prototype.onmouseup = function (event) {
+                    if (event.button == 0) { //left button up => update last point
+                        this.down = false;
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var text = new DrawableText_1.DrawableText(new DrawableText_1.DrawableTextPack("text", "white", "100", new Size_1.Size(20, 50), position.x, position.y, false));
+                        self.layerView.addText(text);
+                        Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, text);
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                };
+                class_1.prototype.onmousemove = function (event) {
+                    if ((event.buttons & 1) && this.down) {
+                        return true;
+                    }
+                    return false;
+                };
+                return class_1;
+            }(MouseListener_1.MouseListener));
+        };
+        LayerTextEdit.prototype.startEditingText = function (text) {
+            this.finishEditing();
+            //show text and its point indicators
+            this.textEdit = text;
+            this.bindTextConfigUi(this.textEdit);
+            //start listening to mouse events: drag point, remove point on double click, add point on double click
+            var self = this;
+            this._mouseListener = new /** @class */ (function (_super) {
+                __extends(class_2, _super);
+                function class_2() {
+                    var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.down = false;
+                    _this.drag = false;
+                    _this.dragX = 0;
+                    _this.dragY = 0;
+                    return _this;
+                }
+                class_2.prototype.onmousedown = function (event) {
+                    if (event.button == 0) { //left button down => test drag point
+                        this.down = true;
+                        this.drag = false;
+                        //test
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (pick) { //start dragging
+                            this.drag = true;
+                            this.dragX = position.x;
+                            this.dragY = position.y;
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                class_2.prototype.onmouseup = function (event) {
+                    var passEvent = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
+                    this.drag = false;
+                    if (event.button == 0) { //left button up => nothing
+                        this.down = false;
+                        return !passEvent;
+                    }
+                    return false;
+                };
+                class_2.prototype.onmousemove = function (event) {
+                    if (this.down) { //left button is down => drag point
+                        if (this.drag) {
+                            var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                            if (!self.textEdit.lockPosition) {
+                                self.textEdit.x += position.x - this.dragX;
+                                self.textEdit.y += position.y - this.dragY;
+                            }
+                            this.dragX = position.x;
+                            this.dragY = position.y;
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                return class_2;
+            }(MouseListener_1.MouseListener));
+            this.canvas.requestRender();
+        };
+        LayerTextEdit.prototype.finishEditing = function () {
+            Ui_1.Ui.setVisibility("panelTextSelected", false);
+            if (this.textEdit) {
+                if (this.textEdit.text.length == 0) {
+                    this.layerView.deleteText(this.textEdit);
+                }
+                this.textEdit = null;
+                this.canvas.requestRender();
+            }
+            this._mouseListener = null;
+        };
+        LayerTextEdit.prototype.render = function (renderer) {
+            if (this.textEdit) {
+                //draw rect
+                renderer.setColor(this.textEdit.colorString);
+                var p1 = this.camera.canvasToScreen(this.textEdit.x - this.textEdit.canvasWidth, this.textEdit.y - this.textEdit.canvasHeight);
+                var p2 = this.camera.canvasToScreen(this.textEdit.x + this.textEdit.canvasWidth, this.textEdit.y + this.textEdit.canvasHeight);
+                renderer.drawRect(p1.x - 5, p1.y - 5, p2.x + 5, p2.y + 5, false, true, 2);
+            }
+        };
+        LayerTextEdit.prototype.deleteEditing = function () {
+            if (this.textEdit) {
+                this.layerView.deleteText(this.textEdit);
+                this.finishEditing();
+            }
+        };
+        LayerTextEdit.prototype.bindTextConfigUi = function (text) {
+            var _this = this;
+            Ui_1.Ui.setVisibility("panelTextSelected", true);
+            Ui_1.Ui.bindValue("textTextContent", text.text, function (newValue) {
+                text.text = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindCheckbox("textCheckboxLockPosition", text.lockPosition, function (newValue) {
+                text.lockPosition = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textTextSizeOnScreen", text.fontSize.onScreen, function (newValue) {
+                text.fontSize.onScreen = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textTextSizeOnCanvas", text.fontSize.onCanvas, function (newValue) {
+                text.fontSize.onCanvas = newValue;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindNumber("textTextSizeOfScreen", text.fontSize.ofScreen * 1000, function (newValue) {
+                text.fontSize.ofScreen = newValue * 0.001;
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindColor("textContainerColor", "textContainerAlpha", text.color, text.alpha, function (newColor, newAlpha) {
+                text.color = newColor;
+                text.alpha = newAlpha;
+                text.colorString = Color_1.combineColorAlpha(text.color, text.alpha);
+                _this.canvas.requestRender();
+            });
+        };
+        LayerTextEdit.layerName = "text edit";
+        return LayerTextEdit;
+    }(Layer_1.Layer));
+    exports.LayerTextEdit = LayerTextEdit;
+});
+//# sourceMappingURL=LayerTextEdit.js.map;
+define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString", "./layers/LayerTextEdit", "./layers/LayerTextView"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1, LayerTextEdit_1, LayerTextView_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
@@ -1963,9 +2350,32 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
     var layerImage = new LayerImage_1.LayerImage(canvas);
     var layerPolylineView = new LayerPolylineView_1.LayerPolylineView(canvas);
     var layerPolylineEdit = new LayerPolylineEdit_1.LayerPolylineEdit(canvas);
+    var layerTextView = new LayerTextView_1.LayerTextView(canvas);
+    var layerTextEdit = new LayerTextEdit_1.LayerTextEdit(canvas);
     canvas.addLayer(layerImage);
     canvas.addLayer(layerPolylineView);
     canvas.addLayer(layerPolylineEdit);
+    canvas.addLayer(layerTextView);
+    canvas.addLayer(layerTextEdit);
+    Ui_1.Ui.bindButtonOnClick("buttonNewPolyline", function () {
+        layerTextEdit.finishEditing();
+        layerPolylineEdit.startCreatingPolyline();
+    });
+    Ui_1.Ui.bindButtonOnClick("buttonFinishPolyline", function () { return layerPolylineEdit.finishEditing(); });
+    Ui_1.Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", function () {
+        layerPolylineEdit.deleteEditing();
+        layerTextEdit.finishEditing();
+        layerPolylineEdit.finishEditing();
+    });
+    Ui_1.Ui.bindButtonOnClick("buttonNewText", function () {
+        layerPolylineEdit.finishEditing();
+        layerTextEdit.startCreatingText();
+    });
+    Ui_1.Ui.bindButtonOnClick("buttonDeleteSelectedText", function () {
+        layerTextEdit.deleteEditing();
+        layerTextEdit.finishEditing();
+        layerPolylineEdit.finishEditing();
+    });
     function load(mapString, dataString) {
         Ui_1.Ui.bindButtonOnClick("buttonSave", function () {
             var data = canvas.save();

@@ -3,50 +3,88 @@ import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
+import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 
 export class DrawableTextPack {
-    public constructor(text: string, color: string, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline, fontSize: Size, x: number, y: number) {
+    public constructor(text: string, colorName: string, alphaName: string,
+                       // anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline,
+                       fontSize: Size, x: number, y: number, lockPosition: boolean) {
         this.text = text;
-        this.color = color;
-        this.anchorX = anchorX;
-        this.anchorY = anchorY;
+        this.colorName = colorName;
+        this.alphaName = alphaName;
+        // this.anchorX = anchorX;
+        // this.anchorY = anchorY;
         this.fontSize = fontSize;
         this.x = x;
         this.y = y;
+        this.lockPosition = lockPosition;
     }
     text: string = "";
-    color: string;
-    anchorX: CanvasTextAlign;
-    anchorY: CanvasTextBaseline;
+    colorName: string;
+    alphaName: string;
+    // anchorX: CanvasTextAlign;
+    // anchorY: CanvasTextBaseline;
     fontSize: Size;
     x: number;
     y: number;
+    lockPosition: boolean;
 }
 
 export class DrawableText extends Drawable {
+    public static readonly typeName = "DrawableText";
 
     public text: string = "";
-    public color: string;
-    public anchorX: CanvasTextAlign;
-    public anchorY: CanvasTextBaseline;
+    public color: ColorEntry;
+    public alpha: AlphaEntry;
+    public colorString: string;
+    // public anchorX: CanvasTextAlign;
+    // public anchorY: CanvasTextBaseline;
     public fontSize: Size;
     public x: number;
     public y: number;
+    public lockPosition: boolean;
+
+    public canvasWidth: number = 0;
+    public canvasHeight: number = 0;
 
     public constructor(pack: DrawableTextPack) {
         super();
         this.text = pack.text;
-        this.color = pack.color;
-        this.anchorX = pack.anchorX;
-        this.anchorY = pack.anchorY;
+        this.color = ColorEntry.findByName(pack.colorName);
+        this.alpha = AlphaEntry.findByName(pack.alphaName);
+        this.colorString = combineColorAlpha(this.color, this.alpha);
+        // this.anchorX = pack.anchorX;
+        // this.anchorY = pack.anchorY;
         this.fontSize = pack.fontSize;
         this.x = pack.x;
         this.y = pack.y;
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        renderer.setColor(this.color);
-        renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, this.anchorX, this.anchorY);
+    public pack(): DrawableTextPack {
+        return new DrawableTextPack(
+            this.text,
+            this.color.name,
+            this.alpha.name,
+            // this.anchorX,
+            // this.anchorY,
+            this.fontSize,
+            this.x,
+            this.y,
+            this.lockPosition,
+        )
     }
 
+    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
+        renderer.setColor(this.colorString);
+        let wh = renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, "center", "middle");
+        let ratio = camera.screenSizeToCanvas(1);
+        this.canvasWidth = wh[0] * ratio / 2;
+        this.canvasHeight = wh[1] * ratio / 2;
+    }
+
+    public pick(x: number, y: number, radius: number) {
+        let h = (this.x - this.canvasWidth - radius <= x) && (x <= this.x + this.canvasWidth + radius);
+        let v = (this.y - this.canvasHeight - radius <= y) && (y <= this.y + this.canvasHeight + radius);
+        return h && v;
+    }
 }

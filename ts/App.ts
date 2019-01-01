@@ -7,6 +7,8 @@ import {LayerPolylineEdit} from "./layers/LayerPolylineEdit";
 import {Data} from "./data/Data";
 import {Ui} from "./util/Ui";
 import {LZString} from "./util/LZString";
+import {LayerTextEdit} from "./layers/LayerTextEdit";
+import {LayerTextView} from "./layers/LayerTextView";
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -14,10 +16,34 @@ canvas.init();
 let layerImage = new LayerImage(canvas);
 let layerPolylineView = new LayerPolylineView(canvas);
 let layerPolylineEdit = new LayerPolylineEdit(canvas);
+let layerTextView = new LayerTextView(canvas);
+let layerTextEdit = new LayerTextEdit(canvas);
 
 canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);
 canvas.addLayer(layerPolylineEdit);
+canvas.addLayer(layerTextView);
+canvas.addLayer(layerTextEdit);
+
+Ui.bindButtonOnClick("buttonNewPolyline", () => {
+    layerTextEdit.finishEditing();
+    layerPolylineEdit.startCreatingPolyline();
+});
+Ui.bindButtonOnClick("buttonFinishPolyline", () => layerPolylineEdit.finishEditing());
+Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", () => {
+    layerPolylineEdit.deleteEditing();
+    layerTextEdit.finishEditing();
+    layerPolylineEdit.finishEditing();
+});
+Ui.bindButtonOnClick("buttonNewText", () => {
+    layerPolylineEdit.finishEditing();
+    layerTextEdit.startCreatingText()
+});
+Ui.bindButtonOnClick("buttonDeleteSelectedText", () => {
+    layerTextEdit.deleteEditing()
+    layerTextEdit.finishEditing();
+    layerPolylineEdit.finishEditing();
+});
 
 function load(mapString: string, dataString: string) {
 

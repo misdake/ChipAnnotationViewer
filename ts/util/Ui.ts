@@ -9,7 +9,7 @@ export class Ui {
 
     static setVisibility(id: string, visible: boolean) {
         let element: HTMLElement = document.getElementById(id);
-        element.style.visibility = visible ? "visible" : "hidden";
+        element.style.display = visible ? "block" : "none";
     }
 
     static bindCheckbox(id: string, initialValue: boolean, onchange: (newValue: boolean) => void) {
@@ -21,10 +21,10 @@ export class Ui {
     }
 
     static bindValue(id: string, initialValue: string, onchange: (newValue: string) => void) {
-        let colorPicker = <HTMLInputElement>document.getElementById(id);
-        colorPicker.value = initialValue;
-        colorPicker.onchange = ev => {
-            onchange(colorPicker.value);
+        let element = <HTMLInputElement>document.getElementById(id);
+        element.value = initialValue;
+        element.oninput = element.onchange = ev => {
+            onchange(element.value);
         };
     }
 
@@ -69,7 +69,7 @@ export class Ui {
     static bindNumber(id: string, initialValue: number, onchange: (newValue: number) => void) {
         let input = <HTMLInputElement>document.getElementById(id);
         input.value = initialValue.toString();
-        input.onchange = ev => {
+        input.oninput = input.onchange = ev => {
             let result = parseFloat(input.value);
             if (result >= 0) {
                 onchange(result);

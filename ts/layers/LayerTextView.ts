@@ -2,35 +2,35 @@ import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
 import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
-import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {MouseListener} from "../MouseListener";
-import {LayerPolylineEdit} from "./LayerPolylineEdit";
+import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
+import {LayerTextEdit} from "./LayerTextEdit";
 import {Selection} from "../util/Selection";
 
-export class LayerPolylineView extends Layer {
-    public static readonly layerName = "polyline view";
+export class LayerTextView extends Layer {
+    public static readonly layerName = "text view";
 
     private map: Map;
-    private polylines: DrawablePolyline[] = [];
-    private layerEdit: LayerPolylineEdit;
+    private texts: DrawableText[] = [];
+    private layerEdit: LayerTextEdit;
 
     public constructor(canvas: Canvas) {
-        super(LayerPolylineView.layerName, canvas);
+        super(LayerTextView.layerName, canvas);
     }
 
     public load(map: Map, data: Data, folder: string): void {
-        this.layerEdit = this.canvas.findLayer(LayerPolylineEdit.layerName) as LayerPolylineEdit;
+        this.layerEdit = this.canvas.findLayer(LayerTextEdit.layerName) as LayerTextEdit;
 
         this.map = map;
 
-        if (data.polylines) {
-            for (let pack of data.polylines) {
-                this.polylines.push(new DrawablePolyline(pack))
+        if (data.texts) {
+            for (let pack of data.texts) {
+                this.texts.push(new DrawableText(pack))
             }
         }
 
-        //listen to mouse click to select polyline
+        //listen to mouse click to select text
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private moved = false;
@@ -40,16 +40,13 @@ export class LayerPolylineView extends Layer {
             }
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.moved) {
-                    let radius = self.camera.screenSizeToCanvas(5);
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
-                    for (let polyline of self.polylines) {
-                        let pickPoint = polyline.pickPoint(x, y, radius);
-                        let pickLine = polyline.pickLine(x, y, radius);
-                        let pickShape = polyline.pickShape(x, y);
-                        if (pickPoint || pickLine || pickShape) {
+                    for (let text of self.texts) {
+                        let pick = text.pick(x, y, self.camera.screenSizeToCanvas(5));
+                        if (pick) {
                             Selection.deselectAll();
-                            self.layerEdit.startEditingPolyline(polyline);
+                            self.layerEdit.startEditingText(text);
                             return true;
                         }
                     }
@@ -68,14 +65,14 @@ export class LayerPolylineView extends Layer {
         };
     }
 
-    public addPolyline(polyline:DrawablePolyline) {
-        this.polylines.push(polyline);
+    public addText(text: DrawableText) {
+        this.texts.push(text);
         this.canvas.requestRender();
     }
-    public deletePolyline(polyline: DrawablePolyline): boolean {
-        let index = this.polylines.indexOf(polyline);
+    public deleteText(text: DrawableText): boolean {
+        let index = this.texts.indexOf(text);
         if (index !== -1) {
-            this.polylines.splice(index, 1);
+            this.texts.splice(index, 1);
             return true;
         } else {
             return false;
@@ -83,16 +80,16 @@ export class LayerPolylineView extends Layer {
     }
 
     public save(data: Data): void {
-        data.polylines = [];
-        for (const polyline of this.polylines) {
-            data.polylines.push(polyline.pack());
+        data.texts = [];
+        for (const text of this.texts) {
+            data.texts.push(text.pack());
         }
     }
 
     public render(renderer: Renderer): void {
         super.render(renderer);
-        for (const polyline of this.polylines) {
-            polyline.render(this.canvas, renderer, this.camera);
+        for (const text of this.texts) {
+            text.render(this.canvas, renderer, this.camera);
         }
     }
 

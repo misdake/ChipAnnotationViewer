@@ -1054,10 +1054,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.layerPolylineView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
             this.map = map;
             var self = this;
-            Ui_1.Ui.bindButtonOnClick("buttonStartEditing", function () { return self.startCreatingPolyline(); });
-            Ui_1.Ui.bindButtonOnClick("buttonFinishEditing", function () { return self.finishEditing(); });
+            Ui_1.Ui.bindButtonOnClick("buttonEditPolyline", function () { return self.startCreatingPolyline(); });
+            Ui_1.Ui.bindButtonOnClick("buttonFinishPolyline", function () { return self.finishEditing(); });
             Ui_1.Ui.bindButtonOnClick("buttonDeleteSelected", function () { return self.deleteEditing(); });
-            Ui_1.Ui.setVisibility("panelSelected", false);
+            Ui_1.Ui.setVisibility("panelPolylineSelected", false);
         };
         LayerPolylineEdit.prototype.startCreatingPolyline = function () {
             this.finishEditing();
@@ -1196,7 +1196,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
-            Ui_1.Ui.setVisibility("panelSelected", false);
+            Ui_1.Ui.setVisibility("panelPolylineSelected", false);
             if (this.polylineNew) {
                 if (this.polylineNew.points.length > 2) {
                     this.layerPolylineView.addPolyline(this.polylineNew);
@@ -1243,38 +1243,38 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         };
         LayerPolylineEdit.prototype.bindPolyline = function (polyline) {
             var _this = this;
-            Ui_1.Ui.setVisibility("panelSelected", true);
-            Ui_1.Ui.bindCheckbox("checkboxFill", polyline.fill, function (newValue) {
+            Ui_1.Ui.setVisibility("panelPolylineSelected", true);
+            Ui_1.Ui.bindCheckbox("polylinepolylineCheckboxFill", polyline.fill, function (newValue) {
                 polyline.fill = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindCheckbox("checkboxStroke", polyline.stroke, function (newValue) {
+            Ui_1.Ui.bindCheckbox("polylineCheckboxStroke", polyline.stroke, function (newValue) {
                 polyline.stroke = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindCheckbox("checkboxClosed", polyline.closed, function (newValue) {
+            Ui_1.Ui.bindCheckbox("polylineCheckboxClosed", polyline.closed, function (newValue) {
                 polyline.closed = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOnScreen", polyline.lineWidth.onScreen, function (newValue) {
                 polyline.lineWidth.onScreen = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOnCanvas", polyline.lineWidth.onCanvas, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOnCanvas", polyline.lineWidth.onCanvas, function (newValue) {
                 polyline.lineWidth.onCanvas = newValue;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
+            Ui_1.Ui.bindNumber("polylineTextSizeOfScreen", polyline.lineWidth.ofScreen * 1000, function (newValue) {
                 polyline.lineWidth.ofScreen = newValue * 0.001;
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindColor("strokeColorContainer", "strokeAlphaContainer", polyline.strokeColor, polyline.strokeAlpha, function (newColor, newAlpha) {
+            Ui_1.Ui.bindColor("polylineContainerStrokeColor", "polylineContainerStrokeAlpha", polyline.strokeColor, polyline.strokeAlpha, function (newColor, newAlpha) {
                 polyline.strokeColor = newColor;
                 polyline.strokeAlpha = newAlpha;
                 polyline.strokeString = Color_1.combineColorAlpha(polyline.strokeColor, polyline.strokeAlpha);
                 _this.canvas.requestRender();
             });
-            Ui_1.Ui.bindColor("fillColorContainer", "fillAlphaContainer", polyline.fillColor, polyline.fillAlpha, function (newColor, newAlpha) {
+            Ui_1.Ui.bindColor("polylineContainerFillColor", "polylineContainerFillAlpha", polyline.fillColor, polyline.fillAlpha, function (newColor, newAlpha) {
                 polyline.fillColor = newColor;
                 polyline.fillAlpha = newAlpha;
                 polyline.fillString = Color_1.combineColorAlpha(polyline.fillColor, polyline.fillAlpha);

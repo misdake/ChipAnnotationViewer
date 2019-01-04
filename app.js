@@ -964,6 +964,71 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             var y = accY / 6 / (area2 / 2);
             return new Point(x, y);
         };
+        DrawablePolyline.prototype.aabb = function () {
+            var minX = Math.min(), maxX = Math.max();
+            var minY = Math.min(), maxY = Math.max();
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+            return [new Point(minX, minY), new Point(maxX, maxY)];
+        };
+        DrawablePolyline.prototype.aabbCenter = function () {
+            var aabb = this.aabb();
+            var center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
+            return center;
+        };
+        DrawablePolyline.prototype.flipX = function () {
+            var minX = Math.min();
+            var maxX = Math.max();
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+            }
+            var xx = minX + maxX;
+            for (var _b = 0, _c = this.points; _b < _c.length; _b++) {
+                var point = _c[_b];
+                point.x = xx - point.x;
+            }
+        };
+        DrawablePolyline.prototype.flipY = function () {
+            var minY = Math.min();
+            var maxY = Math.max();
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+            var yy = minY + maxY;
+            for (var _b = 0, _c = this.points; _b < _c.length; _b++) {
+                var point = _c[_b];
+                point.y = yy - point.y;
+            }
+        };
+        DrawablePolyline.prototype.rotateCW = function () {
+            var center = this.aabbCenter();
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                var dx = point.x - center.x;
+                var dy = point.y - center.y;
+                point.x = center.x - dy;
+                point.y = center.y + dx;
+            }
+        };
+        DrawablePolyline.prototype.rotateCCW = function () {
+            var center = this.aabbCenter();
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                var dx = point.x - center.x;
+                var dy = point.y - center.y;
+                point.x = center.x + dy;
+                point.y = center.y - dx;
+            }
+        };
         DrawablePolyline.typeName = "DrawablePolyline";
         return DrawablePolyline;
     }(Drawable_1.Drawable));
@@ -1391,6 +1456,21 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     }
                     return false;
                 };
+                class_2.prototype.onwheel = function (event) {
+                    if (event.altKey) {
+                        if (event.wheelDelta > 0) {
+                            polyline.rotateCCW();
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                        else if (event.wheelDelta < 0) {
+                            polyline.rotateCW();
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                    }
+                    return false;
+                };
                 class_2.prototype.ondblclick = function (event) {
                     if (event.button == 0) {
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -1517,6 +1597,22 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 _this.finishEditing();
                 _this.layerView.addPolyline(newPolyline);
                 _this.startEditingPolyline(newPolyline);
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindButtonOnClick("polylineButtonRotateCCW", function () {
+                polyline.rotateCCW();
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindButtonOnClick("polylineButtonRotateCW", function () {
+                polyline.rotateCW();
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindButtonOnClick("polylineButtonFlipX", function () {
+                polyline.flipX();
+                _this.canvas.requestRender();
+            });
+            Ui_1.Ui.bindButtonOnClick("polylineButtonFlipY", function () {
+                polyline.flipY();
                 _this.canvas.requestRender();
             });
             Ui_1.Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, function (newValue) {

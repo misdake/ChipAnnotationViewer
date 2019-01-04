@@ -220,4 +220,64 @@ export class DrawablePolyline extends Drawable {
         return new Point(x, y);
     }
 
+    public aabb(): Point[] {
+        let minX = Math.min(), maxX = Math.max();
+        let minY = Math.min(), maxY = Math.max();
+        for (const point of this.points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+        return [new Point(minX, minY), new Point(maxX, maxY)];
+    }
+    public aabbCenter(): Point {
+        let aabb = this.aabb();
+        let center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
+        return center;
+    }
+
+    public flipX() {
+        let minX = Math.min();
+        let maxX = Math.max();
+        for (const point of this.points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+        }
+        let xx = minX + maxX;
+        for (const point of this.points) {
+            point.x = xx - point.x;
+        }
+    }
+    public flipY() {
+        let minY = Math.min();
+        let maxY = Math.max();
+        for (const point of this.points) {
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+        let yy = minY + maxY;
+        for (const point of this.points) {
+            point.y = yy - point.y;
+        }
+    }
+    public rotateCW() {
+        let center = this.aabbCenter();
+        for (const point of this.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x - dy;
+            point.y = center.y + dx;
+        }
+    }
+    public rotateCCW() {
+        let center = this.aabbCenter();
+        for (const point of this.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x + dy;
+            point.y = center.y - dx;
+        }
+    }
+
 }

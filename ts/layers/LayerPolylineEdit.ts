@@ -184,6 +184,20 @@ export class LayerPolylineEdit extends Layer {
                 }
                 return false;
             }
+            onwheel(event: MouseWheelEvent): boolean {
+                if (event.altKey) {
+                    if (event.wheelDelta > 0) {
+                        polyline.rotateCCW();
+                        self.canvas.requestRender();
+                        return true;
+                    } else if (event.wheelDelta < 0) {
+                        polyline.rotateCW();
+                        self.canvas.requestRender();
+                        return true;
+                    }
+                }
+                return false;
+            }
             ondblclick(event: MouseEvent): boolean { //double click => remove point on selection or add point on segment
                 if (event.button == 0) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -320,6 +334,24 @@ export class LayerPolylineEdit extends Layer {
 
             this.canvas.requestRender();
         });
+
+        Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
+            polyline.rotateCCW();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonRotateCW", () => {
+            polyline.rotateCW();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonFlipX", () => {
+            polyline.flipX();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonFlipY", () => {
+            polyline.flipY();
+            this.canvas.requestRender();
+        });
+
 
         Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, newValue => {
             polyline.fill = newValue;

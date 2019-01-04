@@ -29,7 +29,6 @@ Ui.bindButtonOnClick("buttonNewPolyline", () => {
     layerTextEdit.finishEditing();
     layerPolylineEdit.startCreatingPolyline();
 });
-Ui.bindButtonOnClick("buttonFinishPolyline", () => layerPolylineEdit.finishEditing());
 Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", () => {
     layerPolylineEdit.deleteEditing();
     layerTextEdit.finishEditing();

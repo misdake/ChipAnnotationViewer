@@ -1129,6 +1129,10 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
     var Ui = /** @class */ (function () {
         function Ui() {
         }
+        Ui.setContent = function (id, content) {
+            var element = document.getElementById(id);
+            element.innerHTML = content;
+        };
         Ui.bindButtonOnClick = function (id, onclick) {
             var button = document.getElementById(id);
             button.onclick = onclick;
@@ -1255,6 +1259,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             var points = [];
             this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, new Size_1.Size(2), true, "white", "25", true, "white", "75"));
             this.bindPolylineConfigUi(this.polylineNew);
+            Ui_1.Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
                 function class_1() {
@@ -1262,10 +1267,14 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     _this.down = false;
                     return _this;
                 }
-                class_1.prototype.preview = function (position) {
+                class_1.prototype.preview = function (position, magnetic) {
                     var xy = points[points.length - 1];
                     xy.x = position.x;
                     xy.y = position.y;
+                    if (magnetic) {
+                        var radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                        LayerPolylineEdit.mag(points, points.length - 1, radius);
+                    }
                 };
                 class_1.prototype.onmousedown = function (event) {
                     if (event.button == 0 && !this.down) { //left button down => add point
@@ -1283,18 +1292,20 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     if (event.button == 0) { //left button up => update last point
                         this.down = false;
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        this.preview(position);
+                        this.preview(position, event.ctrlKey);
                         self.canvas.requestRender();
                         return true;
                     }
-                    else {
-                        return false;
+                    else if (event.button == 2) {
+                        self.finishEditing();
+                        return true;
                     }
+                    return false;
                 };
                 class_1.prototype.onmousemove = function (event) {
                     if (this.down) { //left button is down => show modification
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        this.preview(position);
+                        this.preview(position, event.ctrlKey);
                         self.canvas.requestRender();
                         return true;
                     }
@@ -1311,6 +1322,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             //show polyline and its point indicators
             this.polylineEdit = polyline;
             this.bindPolylineConfigUi(this.polylineEdit);
+            Ui_1.Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_EDIT_POLYLINE);
             //start listening to mouse events: drag point, remove point on double click, add point on double click
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -1318,6 +1330,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 function class_2() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
                     _this.down = false;
+                    _this.dragPointIndex = -1;
                     _this.dragPoint = null;
                     return _this;
                 }
@@ -1330,6 +1343,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         var point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                         if (point) { //start dragging this point
                             this.dragPoint = point;
+                            this.dragPointIndex = polyline.points.indexOf(point);
                             return true;
                         }
                     }
@@ -1338,6 +1352,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 class_2.prototype.onmouseup = function (event) {
                     var passEvent = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
                     this.dragPoint = null;
+                    this.dragPointIndex = -1;
                     if (event.button == 0) { //left button up => nothing
                         this.down = false;
                         return !passEvent;
@@ -1375,6 +1390,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                             var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                             this.dragPoint.x = position.x;
                             this.dragPoint.y = position.y;
+                            if (event.ctrlKey) {
+                                var radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                                LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
+                            }
                             self.canvas.requestRender();
                             return true;
                         }
@@ -1384,6 +1403,25 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 return class_2;
             }(MouseListener_1.MouseListener));
             this.canvas.requestRender();
+        };
+        LayerPolylineEdit.mag = function (points, index, radius) {
+            var xy = points[index];
+            var newX = xy.x;
+            var newY = xy.y;
+            var first = points[(index + 1) % points.length];
+            if (Math.abs(first.x - xy.x) <= radius)
+                newX = first.x;
+            if (Math.abs(first.y - xy.y) <= radius)
+                newY = first.y;
+            if (points.length > 2) {
+                var last = points[(points.length + index - 1) % points.length];
+                if (Math.abs(last.x - xy.x) <= radius)
+                    newX = last.x;
+                if (Math.abs(last.y - xy.y) <= radius)
+                    newY = last.y;
+            }
+            xy.x = newX;
+            xy.y = newY;
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
             Ui_1.Ui.setVisibility("panelPolylineSelected", false);
@@ -1472,6 +1510,16 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             });
         };
         LayerPolylineEdit.layerName = "polyline edit";
+        LayerPolylineEdit.HINT_ELEMENT_ID = "polylineHint";
+        LayerPolylineEdit.HINT_NEW_POLYLINE = "1. left click to create point<br>" +
+            "2. hold left button to preview<br>" +
+            "3. right click to finish polyline<br>" +
+            "4. hold ctrl to help with horizontal/vertical line<br>";
+        LayerPolylineEdit.HINT_EDIT_POLYLINE = "1. left button to drag points<br>" +
+            "2. hold ctrl to help with horizontal/vertical line<br>" +
+            "3. double click on line to create point<br>" +
+            "4. double click point to delete it<br>";
+        LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer_1.Layer));
     exports.LayerPolylineEdit = LayerPolylineEdit;
@@ -2180,6 +2228,10 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
         LayerTextEdit.prototype.startCreatingText = function () {
             this.finishEditing();
             var self = this;
+            //show text and its point indicators
+            var textNew = new DrawableText_1.DrawableText(new DrawableText_1.DrawableTextPack("text", "white", "100", new Size_1.Size(20, 50), 0, 0));
+            this.bindTextConfigUi(textNew);
+            Ui_1.Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_NEW_TEXT);
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
                 function class_1() {
@@ -2198,9 +2250,10 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     if (event.button == 0) { //left button up => update last point
                         this.down = false;
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        var text = new DrawableText_1.DrawableText(new DrawableText_1.DrawableTextPack("text", "white", "100", new Size_1.Size(20, 50), position.x, position.y));
-                        self.layerView.addText(text);
-                        Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, text);
+                        textNew.x = position.x;
+                        textNew.y = position.y;
+                        self.layerView.addText(textNew);
+                        Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, textNew);
                         self.canvas.requestRender();
                         return true;
                     }
@@ -2222,6 +2275,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
             //show text and its point indicators
             this.textEdit = text;
             this.bindTextConfigUi(this.textEdit);
+            Ui_1.Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_EDIT_TEXT);
             //start listening to mouse events: drag point, remove point on double click, add point on double click
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -2241,11 +2295,11 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                         //test
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         var pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                        if (pick) { //start dragging
+                        if (pick && event.altKey) { //start dragging
                             this.drag = true;
-                            this.dragX = position.x;
-                            this.dragY = position.y;
-                            return true;
+                            this.dragX = position.x - text.x;
+                            this.dragY = position.y - text.y;
+                            return event.altKey;
                         }
                     }
                     return false;
@@ -2260,18 +2314,12 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     return false;
                 };
                 class_2.prototype.onmousemove = function (event) {
-                    if (this.down) { //left button is down => drag point
-                        if (this.drag) {
-                            var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                            if (event.altKey) {
-                                self.textEdit.x += position.x - this.dragX;
-                                self.textEdit.y += position.y - this.dragY;
-                            }
-                            this.dragX = position.x;
-                            this.dragY = position.y;
-                            self.canvas.requestRender();
-                            return true;
-                        }
+                    if (this.down && this.drag) {
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        self.textEdit.x = position.x - this.dragX;
+                        self.textEdit.y = position.y - this.dragY;
+                        self.canvas.requestRender();
+                        return true;
                     }
                     return false;
                 };
@@ -2332,6 +2380,9 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
             });
         };
         LayerTextEdit.layerName = "text edit";
+        LayerTextEdit.HINT_ELEMENT_ID = "textHint";
+        LayerTextEdit.HINT_NEW_TEXT = "1. left click to create text<br>";
+        LayerTextEdit.HINT_EDIT_TEXT = "1. hold alt to drag<br>";
         return LayerTextEdit;
     }(Layer_1.Layer));
     exports.LayerTextEdit = LayerTextEdit;
@@ -2356,7 +2407,6 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerTextEdit.finishEditing();
         layerPolylineEdit.startCreatingPolyline();
     });
-    Ui_1.Ui.bindButtonOnClick("buttonFinishPolyline", function () { return layerPolylineEdit.finishEditing(); });
     Ui_1.Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", function () {
         layerPolylineEdit.deleteEditing();
         layerTextEdit.finishEditing();

@@ -16,6 +16,18 @@ import {Drawable} from "../drawable/Drawable";
 export class LayerPolylineEdit extends Layer {
     public static readonly layerName = "polyline edit";
 
+    private static readonly HINT_ELEMENT_ID = "polylineHint";
+    private static readonly HINT_NEW_POLYLINE =
+        "1. left click to create point<br>" +
+        "2. hold left button to preview<br>" +
+        "3. right click to finish polyline<br>" +
+        "4. hold ctrl to help with horizontal/vertical line<br>";
+    private static readonly HINT_EDIT_POLYLINE =
+        "1. left button to drag points<br>" +
+        "2. hold ctrl to help with horizontal/vertical line<br>" +
+        "3. double click on line to create point<br>" +
+        "4. double click point to delete it<br>";
+
     private static readonly MAG_RADIUS = 10;
 
     private map: Map;
@@ -51,6 +63,8 @@ export class LayerPolylineEdit extends Layer {
         ));
         this.bindPolylineConfigUi(this.polylineNew);
 
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
+
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
 
@@ -81,9 +95,11 @@ export class LayerPolylineEdit extends Layer {
                     this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.button == 2) {
+                    self.finishEditing();
+                    return true;
                 }
+                return false;
             }
             onmousemove(event: MouseEvent): boolean {
                 if (this.down) { //left button is down => show modification
@@ -106,6 +122,8 @@ export class LayerPolylineEdit extends Layer {
         //show polyline and its point indicators
         this.polylineEdit = polyline;
         this.bindPolylineConfigUi(this.polylineEdit);
+
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_EDIT_POLYLINE);
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;

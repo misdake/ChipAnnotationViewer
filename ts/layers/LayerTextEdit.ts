@@ -15,6 +15,12 @@ import {Drawable} from "../drawable/Drawable";
 export class LayerTextEdit extends Layer {
     public static readonly layerName = "text edit";
 
+    private static readonly HINT_ELEMENT_ID = "textHint";
+    private static readonly HINT_NEW_TEXT =
+        "1. left click to create text<br>";
+    private static readonly HINT_EDIT_TEXT =
+        "1. hold alt to drag<br>";
+
     private map: Map;
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
@@ -39,6 +45,16 @@ export class LayerTextEdit extends Layer {
         this.finishEditing();
         let self = this;
 
+        //show text and its point indicators
+        let textNew = new DrawableText(new DrawableTextPack(
+            "text",
+            "white", "100", new Size(20, 50),
+            0, 0)
+        );
+        this.bindTextConfigUi(textNew);
+
+        Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_NEW_TEXT);
+
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
 
@@ -53,13 +69,10 @@ export class LayerTextEdit extends Layer {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    let text = new DrawableText(new DrawableTextPack(
-                        "text",
-                        "white", "100", new Size(20, 50),
-                        position.x, position.y)
-                    );
-                    self.layerView.addText(text);
-                    Selection.select(DrawableText.typeName, text);
+                    textNew.x = position.x;
+                    textNew.y = position.y;
+                    self.layerView.addText(textNew);
+                    Selection.select(DrawableText.typeName, textNew);
                     self.canvas.requestRender();
                     return true;
                 } else {
@@ -82,6 +95,8 @@ export class LayerTextEdit extends Layer {
         this.textEdit = text;
         this.bindTextConfigUi(this.textEdit);
 
+        Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_EDIT_TEXT);
+
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
         this._mouseListener = new class extends MouseListener {
@@ -98,11 +113,11 @@ export class LayerTextEdit extends Layer {
                     //test
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                    if (pick) { //start dragging
+                    if (pick && event.altKey) { //start dragging
                         this.drag = true;
-                        this.dragX = position.x;
-                        this.dragY = position.y;
-                        return true;
+                        this.dragX = position.x - text.x;
+                        this.dragY = position.y - text.y;
+                        return event.altKey;
                     }
                 }
                 return false;
@@ -118,18 +133,12 @@ export class LayerTextEdit extends Layer {
                 return false;
             }
             onmousemove(event: MouseEvent): boolean {
-                if (this.down) { //left button is down => drag point
-                    if (this.drag) {
-                        let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        if (event.altKey) {
-                            self.textEdit.x += position.x - this.dragX;
-                            self.textEdit.y += position.y - this.dragY;
-                        }
-                        this.dragX = position.x;
-                        this.dragY = position.y;
-                        self.canvas.requestRender();
-                        return true;
-                    }
+                if (this.down && this.drag) {
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    self.textEdit.x = position.x - this.dragX;
+                    self.textEdit.y = position.y - this.dragY;
+                    self.canvas.requestRender();
+                    return true;
                 }
                 return false;
             }

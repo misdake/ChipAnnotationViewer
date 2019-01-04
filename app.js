@@ -2563,8 +2563,8 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerPolylineEdit.startCreatingPolyline();
     });
     Ui_1.Ui.bindButtonOnClick("polylineButtonDelete", function () {
-        layerPolylineEdit.deleteCreating();
         layerPolylineEdit.deleteEditing();
+        layerPolylineEdit.deleteCreating();
         layerTextEdit.finishEditing();
         layerPolylineEdit.finishEditing();
     });

@@ -30,8 +30,8 @@ Ui.bindButtonOnClick("buttonNewPolyline", () => {
     layerPolylineEdit.startCreatingPolyline();
 });
 Ui.bindButtonOnClick("polylineButtonDelete", () => {
-    layerPolylineEdit.deleteCreating();
     layerPolylineEdit.deleteEditing();
+    layerPolylineEdit.deleteCreating();
     layerTextEdit.finishEditing();
     layerPolylineEdit.finishEditing();
 });

@@ -24,6 +24,7 @@ export class LayerImage extends Layer {
 
         let self = this;
         this._mouseListener = new class extends MouseListener {
+            private down = false;
             private lastX = -1;
             private lastY = -1;
             onwheel(event: MouseWheelEvent): boolean {
@@ -40,12 +41,17 @@ export class LayerImage extends Layer {
                 return true;
             }
             onmousedown(event: MouseEvent): boolean {
+                this.down = true;
                 this.lastX = event.offsetX;
                 this.lastY = event.offsetY;
                 return true;
             }
+            onmouseup(event: MouseEvent): boolean {
+                this.down = false;
+                return true;
+            }
             onmousemove(event: MouseEvent): boolean {
-                if (event.buttons > 0) {
+                if (this.down && event.buttons > 0) {
                     let camera = self.canvas.getCamera();
                     camera.action();
                     let point1 = camera.screenXyToCanvas(this.lastX, this.lastY);

@@ -29,7 +29,8 @@ Ui.bindButtonOnClick("buttonNewPolyline", () => {
     layerTextEdit.finishEditing();
     layerPolylineEdit.startCreatingPolyline();
 });
-Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", () => {
+Ui.bindButtonOnClick("polylineButtonDelete", () => {
+    layerPolylineEdit.deleteCreating();
     layerPolylineEdit.deleteEditing();
     layerTextEdit.finishEditing();
     layerPolylineEdit.finishEditing();
@@ -38,10 +39,10 @@ Ui.bindButtonOnClick("buttonNewText", () => {
     layerPolylineEdit.finishEditing();
     layerTextEdit.startCreatingText()
 });
-Ui.bindButtonOnClick("buttonDeleteSelectedText", () => {
-    layerTextEdit.deleteEditing()
-    layerTextEdit.finishEditing();
+Ui.bindButtonOnClick("textButtonDelete", () => {
     layerPolylineEdit.finishEditing();
+    layerTextEdit.deleteEditing();
+    layerTextEdit.finishEditing();
 });
 
 function load(mapString: string, dataString: string) {

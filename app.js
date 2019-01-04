@@ -866,8 +866,23 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             _this.strokeString = Color_1.combineColorAlpha(_this.strokeColor, _this.strokeAlpha);
             return _this;
         }
+        DrawablePolyline.prototype.clone = function (offsetX, offsetY) {
+            var points = [];
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                points.push(new Point(point.x + offsetX, point.y + offsetY));
+            }
+            return new DrawablePolylinePack(points, this.closed, this.lineWidth, this.fill, this.fillColor.name, this.fillAlpha.name, this.stroke, this.strokeColor.name, this.strokeAlpha.name);
+        };
         DrawablePolyline.prototype.pack = function () {
             return new DrawablePolylinePack(this.points, this.closed, this.lineWidth, this.fill, this.fillColor.name, this.fillAlpha.name, this.stroke, this.strokeColor.name, this.strokeAlpha.name);
+        };
+        DrawablePolyline.prototype.move = function (offsetX, offsetY) {
+            for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+                var point = _a[_i];
+                point.x += offsetX;
+                point.y += offsetY;
+            }
         };
         DrawablePolyline.prototype.render = function (canvas, renderer, camera) {
             renderer.setFillColor(this.fillString);
@@ -1317,6 +1332,11 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             }(MouseListener_1.MouseListener));
             return this.polylineNew;
         };
+        LayerPolylineEdit.prototype.deleteCreating = function () {
+            this.polylineNew = null;
+            this.finishEditing();
+            this.canvas.requestRender();
+        };
         LayerPolylineEdit.prototype.startEditingPolyline = function (polyline) {
             this.finishEditing();
             //show polyline and its point indicators
@@ -1332,6 +1352,9 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     _this.down = false;
                     _this.dragPointIndex = -1;
                     _this.dragPoint = null;
+                    _this.dragShape = false;
+                    _this.dragShapeX = -1;
+                    _this.dragShapeY = -1;
                     return _this;
                 }
                 class_2.prototype.onmousedown = function (event) {
@@ -1346,16 +1369,25 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                             this.dragPointIndex = polyline.points.indexOf(point);
                             return true;
                         }
+                        var shape = polyline.pickShape(position.x, position.y);
+                        if (!point && shape && event.altKey) {
+                            this.dragShape = true;
+                            this.dragShapeX = position.x;
+                            this.dragShapeY = position.y;
+                        }
                     }
                     return false;
                 };
                 class_2.prototype.onmouseup = function (event) {
-                    var passEvent = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
+                    var wasDragging = !!this.dragPoint || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
                     this.dragPoint = null;
                     this.dragPointIndex = -1;
+                    this.dragShape = false;
+                    this.dragShapeX = -1;
+                    this.dragShapeY = -1;
                     if (event.button == 0) { //left button up => nothing
                         this.down = false;
-                        return !passEvent;
+                        return wasDragging;
                     }
                     return false;
                 };
@@ -1385,15 +1417,22 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     return false;
                 };
                 class_2.prototype.onmousemove = function (event) {
-                    if (this.down) { //left button is down => drag point
+                    if (this.down) { //left button is down => drag
+                        var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         if (this.dragPoint) {
-                            var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                             this.dragPoint.x = position.x;
                             this.dragPoint.y = position.y;
                             if (event.ctrlKey) {
                                 var radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
                                 LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
                             }
+                            self.canvas.requestRender();
+                            return true;
+                        }
+                        else if (this.dragShape) {
+                            polyline.move(position.x - this.dragShapeX, position.y - this.dragShapeY);
+                            this.dragShapeX = position.x;
+                            this.dragShapeY = position.y;
                             self.canvas.requestRender();
                             return true;
                         }
@@ -1472,6 +1511,14 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         LayerPolylineEdit.prototype.bindPolylineConfigUi = function (polyline) {
             var _this = this;
             Ui_1.Ui.setVisibility("panelPolylineSelected", true);
+            Ui_1.Ui.bindButtonOnClick("polylineButtonCopy", function () {
+                var offset = _this.canvas.getCamera().screenSizeToCanvas(20);
+                var newPolyline = new DrawablePolyline_1.DrawablePolyline(polyline.clone(offset, offset));
+                _this.finishEditing();
+                _this.layerView.addPolyline(newPolyline);
+                _this.startEditingPolyline(newPolyline);
+                _this.canvas.requestRender();
+            });
             Ui_1.Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, function (newValue) {
                 polyline.fill = newValue;
                 _this.canvas.requestRender();
@@ -1515,10 +1562,11 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             "2. hold left button to preview<br>" +
             "3. right click to finish polyline<br>" +
             "4. hold ctrl to help with horizontal/vertical line<br>";
-        LayerPolylineEdit.HINT_EDIT_POLYLINE = "1. left button to drag points<br>" +
+        LayerPolylineEdit.HINT_EDIT_POLYLINE = "1. hold left button to drag points<br>" +
             "2. hold ctrl to help with horizontal/vertical line<br>" +
-            "3. double click on line to create point<br>" +
-            "4. double click point to delete it<br>";
+            "3. hold alt to drag polyline<br>" +
+            "4. double click on line to create point<br>" +
+            "5. double click point to delete it<br>";
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer_1.Layer));
@@ -2058,6 +2106,12 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
             _this.y = pack.y;
             return _this;
         }
+        DrawableText.prototype.clone = function (offsetX, offsetY) {
+            return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
+            // this.anchorX,
+            // this.anchorY,
+            this.fontSize, this.x + offsetX, this.y + offsetY);
+        };
         DrawableText.prototype.pack = function () {
             return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
             // this.anchorX,
@@ -2262,10 +2316,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     }
                 };
                 class_1.prototype.onmousemove = function (event) {
-                    if ((event.buttons & 1) && this.down) {
-                        return true;
-                    }
-                    return false;
+                    return (event.buttons & 1) && this.down;
                 };
                 return class_1;
             }(MouseListener_1.MouseListener));
@@ -2356,6 +2407,14 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
         LayerTextEdit.prototype.bindTextConfigUi = function (text) {
             var _this = this;
             Ui_1.Ui.setVisibility("panelTextSelected", true);
+            Ui_1.Ui.bindButtonOnClick("textButtonCopy", function () {
+                var offset = _this.canvas.getCamera().screenSizeToCanvas(10);
+                var newText = new DrawableText_1.DrawableText(text.clone(offset, offset));
+                _this.finishEditing();
+                _this.layerView.addText(newText);
+                _this.startEditingText(newText);
+                _this.canvas.requestRender();
+            });
             Ui_1.Ui.bindValue("textTextContent", text.text, function (newValue) {
                 text.text = newValue;
                 _this.canvas.requestRender();
@@ -2407,7 +2466,8 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerTextEdit.finishEditing();
         layerPolylineEdit.startCreatingPolyline();
     });
-    Ui_1.Ui.bindButtonOnClick("buttonDeleteSelectedPolyline", function () {
+    Ui_1.Ui.bindButtonOnClick("polylineButtonDelete", function () {
+        layerPolylineEdit.deleteCreating();
         layerPolylineEdit.deleteEditing();
         layerTextEdit.finishEditing();
         layerPolylineEdit.finishEditing();
@@ -2416,10 +2476,10 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerPolylineEdit.finishEditing();
         layerTextEdit.startCreatingText();
     });
-    Ui_1.Ui.bindButtonOnClick("buttonDeleteSelectedText", function () {
+    Ui_1.Ui.bindButtonOnClick("textButtonDelete", function () {
+        layerPolylineEdit.finishEditing();
         layerTextEdit.deleteEditing();
         layerTextEdit.finishEditing();
-        layerPolylineEdit.finishEditing();
     });
     function load(mapString, dataString) {
         Ui_1.Ui.bindButtonOnClick("buttonSave", function () {

@@ -92,6 +92,27 @@ export class DrawablePolyline extends Drawable {
         this.strokeString = combineColorAlpha(this.strokeColor, this.strokeAlpha);
     }
 
+    public clone(offsetX: number, offsetY: number): DrawablePolylinePack {
+        let points = [];
+        for (const point of this.points) {
+            points.push(new Point(point.x + offsetX, point.y + offsetY));
+        }
+
+        return new DrawablePolylinePack(
+            points,
+            this.closed,
+            this.lineWidth,
+
+            this.fill,
+            this.fillColor.name,
+            this.fillAlpha.name,
+
+            this.stroke,
+            this.strokeColor.name,
+            this.strokeAlpha.name,
+        )
+    }
+
     public pack(): DrawablePolylinePack {
         return new DrawablePolylinePack(
             this.points,
@@ -106,6 +127,13 @@ export class DrawablePolyline extends Drawable {
             this.strokeColor.name,
             this.strokeAlpha.name,
         )
+    }
+
+    public move(offsetX: number, offsetY: number) {
+        for (const point of this.points) {
+            point.x += offsetX;
+            point.y += offsetY;
+        }
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {

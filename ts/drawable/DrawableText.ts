@@ -8,7 +8,7 @@ import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 export class DrawableTextPack {
     public constructor(text: string, colorName: string, alphaName: string,
                        // anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline,
-                       fontSize: Size, x: number, y: number, lockPosition: boolean) {
+                       fontSize: Size, x: number, y: number) {
         this.text = text;
         this.colorName = colorName;
         this.alphaName = alphaName;
@@ -17,7 +17,6 @@ export class DrawableTextPack {
         this.fontSize = fontSize;
         this.x = x;
         this.y = y;
-        this.lockPosition = lockPosition;
     }
     text: string = "";
     colorName: string;
@@ -27,7 +26,6 @@ export class DrawableTextPack {
     fontSize: Size;
     x: number;
     y: number;
-    lockPosition: boolean;
 }
 
 export class DrawableText extends Drawable {
@@ -42,7 +40,6 @@ export class DrawableText extends Drawable {
     public fontSize: Size;
     public x: number;
     public y: number;
-    public lockPosition: boolean;
 
     public canvasWidth: number = 0;
     public canvasHeight: number = 0;
@@ -70,7 +67,6 @@ export class DrawableText extends Drawable {
             this.fontSize,
             this.x,
             this.y,
-            this.lockPosition,
         )
     }
 

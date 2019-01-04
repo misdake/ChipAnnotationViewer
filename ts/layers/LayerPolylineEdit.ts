@@ -16,6 +16,20 @@ import {Drawable} from "../drawable/Drawable";
 export class LayerPolylineEdit extends Layer {
     public static readonly layerName = "polyline edit";
 
+    private static readonly HINT_ELEMENT_ID = "polylineHint";
+    private static readonly HINT_NEW_POLYLINE =
+        "1. left click to create point<br>" +
+        "2. hold left button to preview<br>" +
+        "3. right click to finish polyline<br>" +
+        "4. hold ctrl to help with horizontal/vertical line<br>";
+    private static readonly HINT_EDIT_POLYLINE =
+        "1. left button to drag points<br>" +
+        "2. hold ctrl to help with horizontal/vertical line<br>" +
+        "3. double click on line to create point<br>" +
+        "4. double click point to delete it<br>";
+
+    private static readonly MAG_RADIUS = 10;
+
     private map: Map;
     private polylineNew: DrawablePolyline = null;
     private polylineEdit: DrawablePolyline = null;
@@ -49,13 +63,19 @@ export class LayerPolylineEdit extends Layer {
         ));
         this.bindPolylineConfigUi(this.polylineNew);
 
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
+
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
 
-            private preview(position: Position): void {
+            private preview(position: Position, magnetic: boolean): void {
                 let xy = points[points.length - 1];
                 xy.x = position.x;
                 xy.y = position.y;
+                if (magnetic) {
+                    let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                    LayerPolylineEdit.mag(points, points.length - 1, radius);
+                }
             }
             onmousedown(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.down) { //left button down => add point
@@ -72,17 +92,19 @@ export class LayerPolylineEdit extends Layer {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position);
+                    this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.button == 2) {
+                    self.finishEditing();
+                    return true;
                 }
+                return false;
             }
             onmousemove(event: MouseEvent): boolean {
                 if (this.down) { //left button is down => show modification
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position);
+                    this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
                 } else {
@@ -101,10 +123,13 @@ export class LayerPolylineEdit extends Layer {
         this.polylineEdit = polyline;
         this.bindPolylineConfigUi(this.polylineEdit);
 
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_EDIT_POLYLINE);
+
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
+            private dragPointIndex: number = -1;
             private dragPoint: Point = null;
 
             onmousedown(event: MouseEvent): boolean {
@@ -118,6 +143,7 @@ export class LayerPolylineEdit extends Layer {
                     let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (point) { //start dragging this point
                         this.dragPoint = point;
+                        this.dragPointIndex = polyline.points.indexOf(point);
                         return true;
                     }
                 }
@@ -126,6 +152,7 @@ export class LayerPolylineEdit extends Layer {
             onmouseup(event: MouseEvent): boolean {
                 let passEvent: boolean = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
                 this.dragPoint = null;
+                this.dragPointIndex = -1;
 
                 if (event.button == 0) { //left button up => nothing
                     this.down = false;
@@ -166,6 +193,11 @@ export class LayerPolylineEdit extends Layer {
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         this.dragPoint.x = position.x;
                         this.dragPoint.y = position.y;
+                        if (event.ctrlKey) {
+                            let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                            LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
+                        }
+
                         self.canvas.requestRender();
                         return true;
                     }
@@ -175,6 +207,23 @@ export class LayerPolylineEdit extends Layer {
         };
 
         this.canvas.requestRender();
+    }
+
+    private static mag(points: Point[], index: number, radius: number) {
+        let xy = points[index];
+
+        let newX = xy.x;
+        let newY = xy.y;
+        let first = points[(index + 1) % points.length];
+        if (Math.abs(first.x - xy.x) <= radius) newX = first.x;
+        if (Math.abs(first.y - xy.y) <= radius) newY = first.y;
+        if (points.length > 2) {
+            let last = points[(points.length + index - 1) % points.length];
+            if (Math.abs(last.x - xy.x) <= radius) newX = last.x;
+            if (Math.abs(last.y - xy.y) <= radius) newY = last.y;
+        }
+        xy.x = newX;
+        xy.y = newY;
     }
 
     public finishEditing(): void {
@@ -219,7 +268,7 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public deleteEditing() {
-        if(this.polylineEdit) {
+        if (this.polylineEdit) {
             this.layerView.deletePolyline(this.polylineEdit);
             this.finishEditing();
         }

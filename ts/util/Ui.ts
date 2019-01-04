@@ -2,6 +2,11 @@ import {AlphaEntry, ColorEntry} from "./Color";
 
 export class Ui {
 
+    static setContent(id: string, content: string) {
+        let element = document.getElementById(id);
+        element.innerHTML = content;
+    }
+
     static bindButtonOnClick(id: string, onclick: () => void) {
         let button: HTMLButtonElement = <HTMLButtonElement>document.getElementById(id);
         button.onclick = onclick;

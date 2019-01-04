@@ -322,8 +322,7 @@ export class LZString {
             if (context_data_position == bitsPerChar - 1) {
                 context_data.push(getCharFromInt(context_data_val));
                 break;
-            }
-            else context_data_position++;
+            } else context_data_position++;
         }
         return context_data.join('');
     }
@@ -337,7 +336,7 @@ export class LZString {
     }
 
     static _decompress(length: number, resetValue: number, getNextValue: (a: number) => number) {
-        let dictionary :(string|number)[] = [],
+        let dictionary: (string | number)[] = [],
             next,
             enlargeIn = 4,
             dictSize = 4,

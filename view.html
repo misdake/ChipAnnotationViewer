@@ -25,7 +25,6 @@
     <br>
 
     <button id="buttonNewPolyline" class="configButton">new polyline</button><br>
-    <button id="buttonFinishPolyline" class="configButton">finish polyline</button><br>
     <button id="buttonDeleteSelectedPolyline" class="configButton">delete polyline</button><br>
 
     <br>
@@ -42,34 +41,41 @@
 
         <div>strokeColor</div>
         <div class="configColorAlphaContainer">
-            <span class="configColorContainer" id="polylineContainerStrokeColor"></span><span class="polylineContainerSplit"></span>
+            <span class="configColorContainer" id="polylineContainerStrokeColor"></span><span class="colorAlphaContainerSplit"></span>
             <span class="configAlphaContainer" id="polylineContainerStrokeAlpha"></span><br>
         </div>
         <div>fillColor</div>
         <div class="configColorAlphaContainer">
-            <span class="configColorContainer" id="polylineContainerFillColor"></span><span class="polylineContainerSplit"></span>
+            <span class="configColorContainer" id="polylineContainerFillColor"></span><span class="colorAlphaContainerSplit"></span>
             <span class="configAlphaContainer" id="polylineContainerFillAlpha"></span><br>
         </div>
 
         <input class="configText" type="number" min=0 id="polylineTextSizeOnScreen" style="width:5em"><label for="polylineTextSizeOnScreen">pixel onScreen</label><br>
         <input class="configText" type="number" min=0 id="polylineTextSizeOnCanvas" style="width:5em"><label for="polylineTextSizeOnCanvas">pixel onCanvas</label><br>
         <input class="configText" type="number" min=0 id="polylineTextSizeOfScreen" style="width:5em"><label for="polylineTextSizeOfScreen">‰ ofScreen</label><br>
+
+        <br>
+
+        <div id="polylineHint"></div><br>
     </div>
 
     <div id="panelTextSelected" style="display: none;">
         <label for="textTextContent">text</label><br>
         <input class="configText" type="text" min=0 id="textTextContent" style="width:10em"><br>
-        <input class="configCheckbox" type="checkbox" id="textCheckboxLockPosition"><label for="textCheckboxLockPosition">lock position</label><br>
 
         <div>color</div>
         <div class="configColorAlphaContainer">
-            <span class="configColorContainer" id="textContainerColor"></span><span class="textContainerSplit"></span>
+            <span class="configColorContainer" id="textContainerColor"></span><span class="colorAlphaContainerSplit"></span>
             <span class="configAlphaContainer" id="textContainerAlpha"></span><br>
         </div>
 
         <input class="configText" type="number" min=0 id="textTextSizeOnScreen" style="width:5em"><label for="textTextSizeOnScreen">pixel onScreen</label><br>
         <input class="configText" type="number" min=0 id="textTextSizeOnCanvas" style="width:5em"><label for="textTextSizeOnCanvas">pixel onCanvas</label><br>
         <input class="configText" type="number" min=0 id="textTextSizeOfScreen" style="width:5em"><label for="textTextSizeOfScreen">‰ ofScreen</label><br>
+
+        <br>
+
+        <div id="textHint"></div><br>
     </div>
 
 </div>

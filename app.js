@@ -649,6 +649,7 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
                 __extends(class_1, _super);
                 function class_1() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
+                    _this.down = false;
                     _this.lastX = -1;
                     _this.lastY = -1;
                     return _this;
@@ -667,12 +668,17 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
                     return true;
                 };
                 class_1.prototype.onmousedown = function (event) {
+                    this.down = true;
                     this.lastX = event.offsetX;
                     this.lastY = event.offsetY;
                     return true;
                 };
+                class_1.prototype.onmouseup = function (event) {
+                    this.down = false;
+                    return true;
+                };
                 class_1.prototype.onmousemove = function (event) {
-                    if (event.buttons > 0) {
+                    if (this.down && event.buttons > 0) {
                         var camera = self.canvas.getCamera();
                         camera.action();
                         var point1 = camera.screenXyToCanvas(this.lastX, this.lastY);

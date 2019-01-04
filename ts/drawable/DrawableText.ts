@@ -57,6 +57,19 @@ export class DrawableText extends Drawable {
         this.y = pack.y;
     }
 
+    public clone(offsetX: number, offsetY: number): DrawableTextPack {
+        return new DrawableTextPack(
+            this.text,
+            this.color.name,
+            this.alpha.name,
+            // this.anchorX,
+            // this.anchorY,
+            this.fontSize,
+            this.x + offsetX,
+            this.y + offsetY,
+        )
+    }
+
     public pack(): DrawableTextPack {
         return new DrawableTextPack(
             this.text,

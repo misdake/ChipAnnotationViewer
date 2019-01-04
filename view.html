@@ -25,16 +25,24 @@
     <br>
 
     <button id="buttonNewPolyline" class="configButton">new polyline</button><br>
-    <button id="buttonDeleteSelectedPolyline" class="configButton">delete polyline</button><br>
 
     <br>
 
     <button id="buttonNewText" class="configButton">new text</button><br>
-    <button id="buttonDeleteSelectedText" class="configButton">delete text</button><br>
 
     <br>
 
     <div id="panelPolylineSelected" style="display: none;">
+        <button id="polylineButtonDelete" class="configButton">delete polyline</button><br>
+        <button id="polylineButtonCopy" class="configButton">copy polyline</button><br>
+
+        <button id="polylineButtonRotateCCW" class="configButton">rotate ccw</button>
+        <button id="polylineButtonRotateCW" class="configButton">rotate cw</button>
+        <button id="polylineButtonFlipX" class="configButton">flip x</button>
+        <button id="polylineButtonFlipY" class="configButton">flip y</button>
+
+        <br>
+
         <input class="configCheckbox" type="checkbox" id="polylineCheckboxFill"><label for="polylineCheckboxFill">fill</label><br>
         <input class="configCheckbox" type="checkbox" id="polylineCheckboxStroke"><label for="polylineCheckboxStroke">stroke</label><br>
         <input class="configCheckbox" type="checkbox" id="polylineCheckboxClosed"><label for="polylineCheckboxClosed">closed</label><br>
@@ -60,6 +68,8 @@
     </div>
 
     <div id="panelTextSelected" style="display: none;">
+        <button id="textButtonDelete" class="configButton">delete text</button><br>
+        <button id="textButtonCopy" class="configButton">copy text</button><br>
         <label for="textTextContent">text</label><br>
         <input class="configText" type="text" min=0 id="textTextContent" style="width:10em"><br>
 

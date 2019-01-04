@@ -11,6 +11,7 @@ import {Data} from "../data/Data";
 import {combineColorAlpha} from "../util/Color";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
+import {DrawablePolyline} from "../drawable/DrawablePolyline";
 
 export class LayerTextEdit extends Layer {
     public static readonly layerName = "text edit";
@@ -80,10 +81,8 @@ export class LayerTextEdit extends Layer {
                 }
             }
             onmousemove(event: MouseEvent): boolean {
-                if ((event.buttons & 1) && this.down) {
-                    return true;
-                }
-                return false;
+                return (event.buttons & 1) && this.down;
+
             }
         };
     }
@@ -183,6 +182,17 @@ export class LayerTextEdit extends Layer {
     private bindTextConfigUi(text: DrawableText) {
         Ui.setVisibility("panelTextSelected", true);
 
+        Ui.bindButtonOnClick("textButtonCopy", () => {
+            let offset = this.canvas.getCamera().screenSizeToCanvas(10);
+            let newText = new DrawableText(text.clone(offset, offset));
+
+            this.finishEditing();
+            this.layerView.addText(newText);
+            this.startEditingText(newText);
+
+            this.canvas.requestRender();
+        });
+        
         Ui.bindValue("textTextContent", text.text, newValue => {
             text.text = newValue;
             this.canvas.requestRender();

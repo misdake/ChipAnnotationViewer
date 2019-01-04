@@ -56,7 +56,7 @@ export class LayerTextEdit extends Layer {
                     let text = new DrawableText(new DrawableTextPack(
                         "text",
                         "white", "100", new Size(20, 50),
-                        position.x, position.y, false)
+                        position.x, position.y)
                     );
                     self.layerView.addText(text);
                     Selection.select(DrawableText.typeName, text);
@@ -121,7 +121,7 @@ export class LayerTextEdit extends Layer {
                 if (this.down) { //left button is down => drag point
                     if (this.drag) {
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        if (!self.textEdit.lockPosition) {
+                        if (event.altKey) {
                             self.textEdit.x += position.x - this.dragX;
                             self.textEdit.y += position.y - this.dragY;
                         }
@@ -176,10 +176,6 @@ export class LayerTextEdit extends Layer {
 
         Ui.bindValue("textTextContent", text.text, newValue => {
             text.text = newValue;
-            this.canvas.requestRender();
-        });
-        Ui.bindCheckbox("textCheckboxLockPosition", text.lockPosition, newValue => {
-            text.lockPosition = newValue;
             this.canvas.requestRender();
         });
 

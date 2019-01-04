@@ -1978,7 +1978,7 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
     var DrawableTextPack = /** @class */ (function () {
         function DrawableTextPack(text, colorName, alphaName, 
         // anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline,
-        fontSize, x, y, lockPosition) {
+        fontSize, x, y) {
             this.text = "";
             this.text = text;
             this.colorName = colorName;
@@ -1988,7 +1988,6 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
             this.fontSize = fontSize;
             this.x = x;
             this.y = y;
-            this.lockPosition = lockPosition;
         }
         return DrawableTextPack;
     }());
@@ -2015,7 +2014,7 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
             return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
             // this.anchorX,
             // this.anchorY,
-            this.fontSize, this.x, this.y, this.lockPosition);
+            this.fontSize, this.x, this.y);
         };
         DrawableText.prototype.render = function (canvas, renderer, camera) {
             renderer.setColor(this.colorString);
@@ -2199,7 +2198,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     if (event.button == 0) { //left button up => update last point
                         this.down = false;
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        var text = new DrawableText_1.DrawableText(new DrawableText_1.DrawableTextPack("text", "white", "100", new Size_1.Size(20, 50), position.x, position.y, false));
+                        var text = new DrawableText_1.DrawableText(new DrawableText_1.DrawableTextPack("text", "white", "100", new Size_1.Size(20, 50), position.x, position.y));
                         self.layerView.addText(text);
                         Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, text);
                         self.canvas.requestRender();
@@ -2264,7 +2263,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     if (this.down) { //left button is down => drag point
                         if (this.drag) {
                             var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                            if (!self.textEdit.lockPosition) {
+                            if (event.altKey) {
                                 self.textEdit.x += position.x - this.dragX;
                                 self.textEdit.y += position.y - this.dragY;
                             }
@@ -2311,10 +2310,6 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
             Ui_1.Ui.setVisibility("panelTextSelected", true);
             Ui_1.Ui.bindValue("textTextContent", text.text, function (newValue) {
                 text.text = newValue;
-                _this.canvas.requestRender();
-            });
-            Ui_1.Ui.bindCheckbox("textCheckboxLockPosition", text.lockPosition, function (newValue) {
-                text.lockPosition = newValue;
                 _this.canvas.requestRender();
             });
             Ui_1.Ui.bindNumber("textTextSizeOnScreen", text.fontSize.onScreen, function (newValue) {

@@ -288,5 +288,25 @@ export class DrawablePolyline extends Drawable {
         }
         return Math.abs(s * 0.5);
     }
+    public length(): number {
+        if (this.points.length < 2) return 0;
+
+        let s = 0;
+        let p0 = this.points[0];
+        let pn = this.points[this.points.length - 1];
+        if (this.closed) {
+            s = DrawablePolyline.hypot(p0.x - pn.x, p0.y - pn.y);
+        }
+        for (let i = 0; i < this.points.length - 1; i++) {
+            let pi = this.points[i];
+            let pj = this.points[i+1];
+            s += DrawablePolyline.hypot(pi.x - pj.x, pi.y - pj.y);
+        }
+        return s;
+    }
+
+    private static hypot(x: number, y: number): number {
+        return Math.sqrt(x * x + y * y);
+    }
 
 }

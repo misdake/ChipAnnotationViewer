@@ -1044,6 +1044,25 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             }
             return Math.abs(s * 0.5);
         };
+        DrawablePolyline.prototype.length = function () {
+            if (this.points.length < 2)
+                return 0;
+            var s = 0;
+            var p0 = this.points[0];
+            var pn = this.points[this.points.length - 1];
+            if (this.closed) {
+                s = DrawablePolyline.hypot(p0.x - pn.x, p0.y - pn.y);
+            }
+            for (var i = 0; i < this.points.length - 1; i++) {
+                var pi = this.points[i];
+                var pj = this.points[i + 1];
+                s += DrawablePolyline.hypot(pi.x - pj.x, pi.y - pj.y);
+            }
+            return s;
+        };
+        DrawablePolyline.hypot = function (x, y) {
+            return Math.sqrt(x * x + y * y);
+        };
         DrawablePolyline.typeName = "DrawablePolyline";
         return DrawablePolyline;
     }(Drawable_1.Drawable));
@@ -1443,6 +1462,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 function class_2() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
                     _this.down = false;
+                    _this.moved = false;
                     _this.dragPointIndex = -1;
                     _this.dragPoint = null;
                     _this.dragShape = false;
@@ -1469,6 +1489,9 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                             this.dragShapeY = position.y;
                         }
                     }
+                    else if (event.button == 2) {
+                        this.moved = false;
+                    }
                     return false;
                 };
                 class_2.prototype.onmouseup = function (event) {
@@ -1481,6 +1504,25 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     if (event.button == 0) { //left button up => nothing
                         this.down = false;
                         return wasDragging;
+                    }
+                    else if (event.button == 2) {
+                        var hit = false;
+                        if (!this.moved) {
+                            var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                            //test points
+                            var point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                            if (point) { //delete point
+                                if (polyline.points.length > 3) { //so it will be at least a triangle
+                                    var index = polyline.points.indexOf(point);
+                                    if (index !== -1)
+                                        polyline.points.splice(index, 1);
+                                    self.canvas.requestRender();
+                                }
+                                hit = true;
+                            }
+                        }
+                        this.moved = false;
+                        return hit;
                     }
                     return false;
                 };
@@ -1630,10 +1672,19 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             Ui_1.Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
             Ui_1.Ui.bindButtonOnClick("polylineButtonArea", function () {
                 if (_this.map.widthMillimeter > 0 && _this.map.heightMillimeter > 0) {
-                    var area = polyline.area();
-                    var areaMM2 = area / _this.map.width / _this.map.height * _this.map.widthMillimeter * _this.map.heightMillimeter;
-                    areaMM2 = Math.round(areaMM2 * 100) / 100;
-                    Ui_1.Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                    Ui_1.Ui.setContent("poylineTextArea", "");
+                    if (polyline.fill) {
+                        var area = polyline.area();
+                        var areaMM2 = area / _this.map.width / _this.map.height * _this.map.widthMillimeter * _this.map.heightMillimeter;
+                        areaMM2 = Math.round(areaMM2 * 100) / 100;
+                        Ui_1.Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                    }
+                    else {
+                        var length_1 = polyline.length();
+                        var lengthMM = length_1 * Math.sqrt(_this.map.widthMillimeter * _this.map.heightMillimeter / _this.map.width / _this.map.height);
+                        lengthMM = Math.round(lengthMM * 100) / 100;
+                        Ui_1.Ui.setContent("poylineTextArea", lengthMM + "mm");
+                    }
                 }
             });
             Ui_1.Ui.setContent("poylineTextArea", "");
@@ -1693,14 +1744,14 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         LayerPolylineEdit.layerName = "polyline edit";
         LayerPolylineEdit.HINT_ELEMENT_ID = "polylineHint";
         LayerPolylineEdit.HINT_NEW_POLYLINE = "1. left click to create point<br>" +
-            "2. hold left button to preview<br>" +
-            "3. right click to finish polyline<br>" +
+            "2. hold left button to preview point<br>" +
+            "3. right click to finish creating<br>" +
             "4. hold ctrl to help with horizontal/vertical line<br>";
         LayerPolylineEdit.HINT_EDIT_POLYLINE = "1. hold left button to drag points<br>" +
             "2. hold ctrl to help with horizontal/vertical line<br>" +
             "3. hold alt to drag polyline<br>" +
             "4. double click on line to create point<br>" +
-            "5. double click point to delete it<br>";
+            "5. right-click / double left-click point to delete it<br>";
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer_1.Layer));

@@ -19,15 +19,15 @@ export class LayerPolylineEdit extends Layer {
     private static readonly HINT_ELEMENT_ID = "polylineHint";
     private static readonly HINT_NEW_POLYLINE =
         "1. left click to create point<br>" +
-        "2. hold left button to preview<br>" +
-        "3. right click to finish polyline<br>" +
+        "2. hold left button to preview point<br>" +
+        "3. right click to finish creating<br>" +
         "4. hold ctrl to help with horizontal/vertical line<br>";
     private static readonly HINT_EDIT_POLYLINE =
         "1. hold left button to drag points<br>" +
         "2. hold ctrl to help with horizontal/vertical line<br>" +
         "3. hold alt to drag polyline<br>" +
         "4. double click on line to create point<br>" +
-        "5. double click point to delete it<br>";
+        "5. right-click / double left-click point to delete it<br>";
 
     private static readonly MAG_RADIUS = 10;
 
@@ -146,6 +146,7 @@ export class LayerPolylineEdit extends Layer {
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
+            private moved: boolean = false;
 
             private dragPointIndex: number = -1;
             private dragPoint: Point = null;
@@ -175,6 +176,8 @@ export class LayerPolylineEdit extends Layer {
                         this.dragShapeX = position.x;
                         this.dragShapeY = position.y;
                     }
+                } else if (event.button == 2) {
+                    this.moved = false;
                 }
                 return false;
             }
@@ -191,20 +194,23 @@ export class LayerPolylineEdit extends Layer {
                 if (event.button == 0) { //left button up => nothing
                     this.down = false;
                     return wasDragging;
-                }
-                return false;
-            }
-            onwheel(event: MouseWheelEvent): boolean {
-                if (event.altKey) {
-                    if (event.wheelDelta > 0) {
-                        polyline.rotateCCW();
-                        self.canvas.requestRender();
-                        return true;
-                    } else if (event.wheelDelta < 0) {
-                        polyline.rotateCW();
-                        self.canvas.requestRender();
-                        return true;
+                } else if (event.button == 2) {
+                    let hit = false;
+                    if (!this.moved) {
+                        let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        //test points
+                        let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (point) { //delete point
+                            if (polyline.points.length > 3) { //so it will be at least a triangle
+                                let index = polyline.points.indexOf(point);
+                                if (index !== -1) polyline.points.splice(index, 1);
+                                self.canvas.requestRender();
+                            }
+                            hit = true;
+                        }
                     }
+                    this.moved = false;
+                    return hit;
                 }
                 return false;
             }
@@ -258,6 +264,8 @@ export class LayerPolylineEdit extends Layer {
                         self.canvas.requestRender();
                         return true;
                     }
+                } else if(event.buttons & 2) {
+                    this.moved = true;
                 }
                 return false;
             }
@@ -348,10 +356,18 @@ export class LayerPolylineEdit extends Layer {
         Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
         Ui.bindButtonOnClick("polylineButtonArea", () => {
             if (this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0) {
-                let area = polyline.area();
-                let areaMM2 = area / this.map.width / this.map.height * this.map.widthMillimeter * this.map.heightMillimeter;
-                areaMM2 = Math.round(areaMM2 * 100) / 100;
-                Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                Ui.setContent("poylineTextArea", "");
+                if (polyline.fill) {
+                    let area = polyline.area();
+                    let areaMM2 = area / this.map.width / this.map.height * this.map.widthMillimeter * this.map.heightMillimeter;
+                    areaMM2 = Math.round(areaMM2 * 100) / 100;
+                    Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                } else {
+                    let length = polyline.length();
+                    let lengthMM = length * Math.sqrt(this.map.widthMillimeter * this.map.heightMillimeter / this.map.width / this.map.height);
+                    lengthMM = Math.round(lengthMM * 100) / 100;
+                    Ui.setContent("poylineTextArea", lengthMM + "mm");
+                }
             }
         });
         Ui.setContent("poylineTextArea", "");

@@ -10,4 +10,6 @@ export class Map {
     height: number;
     maxLevel: number;
     levels: TileLevel[];
+    widthMillimeter: number;
+    heightMillimeter: number;
 }

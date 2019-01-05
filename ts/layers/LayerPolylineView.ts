@@ -76,6 +76,9 @@ export class LayerPolylineView extends Layer {
             return false;
         }
     }
+    public containPolyline(polyline: DrawablePolyline): boolean {
+        return this.polylines.indexOf(polyline) >= 0;
+    }
 
     public save(data: Data): void {
         data.polylines = [];

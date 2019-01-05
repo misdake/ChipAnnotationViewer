@@ -280,4 +280,13 @@ export class DrawablePolyline extends Drawable {
         }
     }
 
+    public area(): number {
+        if (this.points.length < 3) return 0;
+        let s = this.points[0].y * (this.points[this.points.length - 1].x - this.points[1].x);
+        for (let i = 1; i < this.points.length; i++) {
+            s += this.points[i].y * (this.points[i - 1].x - this.points[(i + 1) % this.points.length].x);
+        }
+        return Math.abs(s * 0.5);
+    }
+
 }

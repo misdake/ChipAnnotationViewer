@@ -68,6 +68,7 @@ export class LayerPolylineEdit extends Layer {
 
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
+            private moved: boolean = false;
 
             private preview(position: Position, magnetic: boolean): void {
                 let xy = points[points.length - 1];
@@ -85,9 +86,10 @@ export class LayerPolylineEdit extends Layer {
                     points.push(new Point(position.x, position.y));
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.button == 2) {
+                    this.moved = false;
                 }
+                return false;
             }
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0) { //left button up => update last point
@@ -97,7 +99,14 @@ export class LayerPolylineEdit extends Layer {
                     self.canvas.requestRender();
                     return true;
                 } else if (event.button == 2) {
-                    self.finishEditing();
+                    if (!this.moved) {
+                        let newPolyline = self.polylineNew;
+                        self.finishEditing();
+                        if (self.layerView.containPolyline(newPolyline)) {
+                            self.startEditingPolyline(newPolyline);
+                        }
+                    }
+                    this.moved = false;
                     return true;
                 }
                 return false;
@@ -108,9 +117,10 @@ export class LayerPolylineEdit extends Layer {
                     this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.buttons & 2) {
+                    this.moved = true;
                 }
+                return false;
             }
         };
 
@@ -334,6 +344,17 @@ export class LayerPolylineEdit extends Layer {
 
             this.canvas.requestRender();
         });
+
+        Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
+        Ui.bindButtonOnClick("polylineButtonArea", () => {
+            if (this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0) {
+                let area = polyline.area();
+                let areaMM2 = area / this.map.width / this.map.height * this.map.widthMillimeter * this.map.heightMillimeter;
+                areaMM2 = Math.round(areaMM2 * 100) / 100;
+                Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+            }
+        });
+        Ui.setContent("poylineTextArea", "");
 
         Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
             polyline.rotateCCW();

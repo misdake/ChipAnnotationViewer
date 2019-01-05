@@ -1035,6 +1035,15 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
                 point.y = center.y - dx;
             }
         };
+        DrawablePolyline.prototype.area = function () {
+            if (this.points.length < 3)
+                return 0;
+            var s = this.points[0].y * (this.points[this.points.length - 1].x - this.points[1].x);
+            for (var i = 1; i < this.points.length; i++) {
+                s += this.points[i].y * (this.points[i - 1].x - this.points[(i + 1) % this.points.length].x);
+            }
+            return Math.abs(s * 0.5);
+        };
         DrawablePolyline.typeName = "DrawablePolyline";
         return DrawablePolyline;
     }(Drawable_1.Drawable));
@@ -1171,6 +1180,9 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
             else {
                 return false;
             }
+        };
+        LayerPolylineView.prototype.containPolyline = function (polyline) {
+            return this.polylines.indexOf(polyline) >= 0;
         };
         LayerPolylineView.prototype.save = function (data) {
             data.polylines = [];
@@ -1351,6 +1363,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 function class_1() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
                     _this.down = false;
+                    _this.moved = false;
                     return _this;
                 }
                 class_1.prototype.preview = function (position, magnetic) {
@@ -1370,9 +1383,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         self.canvas.requestRender();
                         return true;
                     }
-                    else {
-                        return false;
+                    else if (event.button == 2) {
+                        this.moved = false;
                     }
+                    return false;
                 };
                 class_1.prototype.onmouseup = function (event) {
                     if (event.button == 0) { //left button up => update last point
@@ -1383,7 +1397,14 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         return true;
                     }
                     else if (event.button == 2) {
-                        self.finishEditing();
+                        if (!this.moved) {
+                            var newPolyline = self.polylineNew;
+                            self.finishEditing();
+                            if (self.layerView.containPolyline(newPolyline)) {
+                                self.startEditingPolyline(newPolyline);
+                            }
+                        }
+                        this.moved = false;
                         return true;
                     }
                     return false;
@@ -1395,9 +1416,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         self.canvas.requestRender();
                         return true;
                     }
-                    else {
-                        return false;
+                    else if (event.buttons & 2) {
+                        this.moved = true;
                     }
+                    return false;
                 };
                 return class_1;
             }(MouseListener_1.MouseListener));
@@ -1605,6 +1627,16 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                 _this.startEditingPolyline(newPolyline);
                 _this.canvas.requestRender();
             });
+            Ui_1.Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
+            Ui_1.Ui.bindButtonOnClick("polylineButtonArea", function () {
+                if (_this.map.widthMillimeter > 0 && _this.map.heightMillimeter > 0) {
+                    var area = polyline.area();
+                    var areaMM2 = area / _this.map.width / _this.map.height * _this.map.widthMillimeter * _this.map.heightMillimeter;
+                    areaMM2 = Math.round(areaMM2 * 100) / 100;
+                    Ui_1.Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                }
+            });
+            Ui_1.Ui.setContent("poylineTextArea", "");
             Ui_1.Ui.bindButtonOnClick("polylineButtonRotateCCW", function () {
                 polyline.rotateCCW();
                 _this.canvas.requestRender();

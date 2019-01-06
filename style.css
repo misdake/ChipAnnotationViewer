@@ -7,6 +7,13 @@ body, html {
     height: 100%;
 }
 
+#mapSelect {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+}
+
 #panel {
     float: left;
     width: 200px;

@@ -20,6 +20,8 @@ export class LayerPolylineView extends Layer {
     public load(map: Map, data: Data, folder: string): void {
         this.map = map;
 
+        this.polylines = [];
+
         if (data.polylines) {
             for (let pack of data.polylines) {
                 this.polylines.push(new DrawablePolyline(pack))

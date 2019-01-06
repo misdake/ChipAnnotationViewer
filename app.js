@@ -1136,6 +1136,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         }
         LayerPolylineView.prototype.load = function (map, data, folder) {
             this.map = map;
+            this.polylines = [];
             if (data.polylines) {
                 for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
                     var pack = _a[_i];
@@ -1265,6 +1266,21 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
                 onchange(checkbox.checked);
             };
         };
+        Ui.bindSelect = function (id, options, initialValue, onchange) {
+            var select = document.getElementById(id);
+            select.options.length = 0;
+            for (var _i = 0, options_1 = options; _i < options_1.length; _i++) {
+                var map = options_1[_i];
+                select.add(new Option(map, map));
+            }
+            var index = options.indexOf(initialValue);
+            if (index > 0) {
+                select.options[index].selected = true;
+            }
+            select.onchange = function (ev) {
+                onchange(select.options[select.selectedIndex].value);
+            };
+        };
         Ui.bindValue = function (id, initialValue, onchange) {
             var element = document.getElementById(id);
             element.value = initialValue;
@@ -1368,6 +1384,9 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         LayerPolylineEdit.prototype.load = function (map, data, folder) {
             this.layerView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
             this.map = map;
+            this.polylineNew = null;
+            this.polylineEdit = null;
+            this.finishEditing();
             Ui_1.Ui.setVisibility("panelPolylineSelected", false);
         };
         LayerPolylineEdit.prototype.startCreatingPolyline = function () {
@@ -1526,21 +1545,6 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     }
                     return false;
                 };
-                class_2.prototype.onwheel = function (event) {
-                    if (event.altKey) {
-                        if (event.wheelDelta > 0) {
-                            polyline.rotateCCW();
-                            self.canvas.requestRender();
-                            return true;
-                        }
-                        else if (event.wheelDelta < 0) {
-                            polyline.rotateCW();
-                            self.canvas.requestRender();
-                            return true;
-                        }
-                    }
-                    return false;
-                };
                 class_2.prototype.ondblclick = function (event) {
                     if (event.button == 0) {
                         var position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -1586,6 +1590,9 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                             self.canvas.requestRender();
                             return true;
                         }
+                    }
+                    else if (event.buttons & 2) {
+                        this.moved = true;
                     }
                     return false;
                 };
@@ -2346,6 +2353,7 @@ define('layers/LayerTextView',["require", "exports", "../Layer", "../MouseListen
         }
         LayerTextView.prototype.load = function (map, data, folder) {
             this.map = map;
+            this.texts = [];
             if (data.texts) {
                 for (var _i = 0, _a = data.texts; _i < _a.length; _i++) {
                     var pack = _a[_i];
@@ -2462,6 +2470,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
         LayerTextEdit.prototype.load = function (map, data, folder) {
             this.layerView = this.canvas.findLayer(LayerTextView_1.LayerTextView.layerName);
             this.map = map;
+            this.finishEditing();
             Ui_1.Ui.setVisibility("panelTextSelected", false);
         };
         LayerTextEdit.prototype.startCreatingText = function () {
@@ -2675,7 +2684,7 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
             var url = location.pathname + '?map=' + mapString + '&data=' + compressed;
             history.replaceState(data, "", url);
         });
-        NetUtil_1.NetUtil.get("data/" + map + "/content.json", function (mapDesc) {
+        NetUtil_1.NetUtil.get("data/" + mapString + "/content.json", function (mapDesc) {
             var map = JSON.parse(mapDesc);
             var decompressed = dataString ? LZString_1.LZString.decompressFromEncodedURIComponent(dataString) : null;
             var data = decompressed ? JSON.parse(decompressed) : new Data_1.Data;
@@ -2683,10 +2692,25 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
             canvas.requestRender();
         });
     }
-    var url_string = window.location.href;
-    var url = new URL(url_string);
-    var map = url.searchParams.get("map") || "fiji";
-    var data = url.searchParams.get("data");
-    load(map, data);
+    NetUtil_1.NetUtil.get("data/list.txt", function (text) {
+        var defaultMap = null;
+        var lines = [];
+        if (text && text.length) {
+            lines = text.split("\n").filter(function (value) { return value.length > 0; }).map(function (value) { return value.trim(); });
+            if (lines.length > 0) {
+                defaultMap = lines[0];
+            }
+        }
+        if (!defaultMap)
+            defaultMap = "Fiji";
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        var mapString = url.searchParams.get("map") || defaultMap;
+        var dataString = url.searchParams.get("data");
+        Ui_1.Ui.bindSelect("mapSelect", lines, mapString, function (newMap) {
+            load(newMap, null);
+        });
+        load(mapString, dataString);
+    });
 });
 //# sourceMappingURL=App.js.map;

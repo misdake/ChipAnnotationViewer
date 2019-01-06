@@ -20,6 +20,8 @@ export class LayerTextView extends Layer {
     public load(map: Map, data: Data, folder: string): void {
         this.map = map;
 
+        this.texts = [];
+
         if (data.texts) {
             for (let pack of data.texts) {
                 this.texts.push(new DrawableText(pack))

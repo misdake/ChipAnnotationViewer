@@ -49,6 +49,9 @@ export class LayerPolylineEdit extends Layer {
     public load(map: Map, data: Data, folder: string): void {
         this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
         this.map = map;
+        this.polylineNew = null;
+        this.polylineEdit = null;
+        this.finishEditing();
         Ui.setVisibility("panelPolylineSelected", false);
     }
 

@@ -11,7 +11,6 @@ import {Data} from "../data/Data";
 import {combineColorAlpha} from "../util/Color";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
-import {DrawablePolyline} from "../drawable/DrawablePolyline";
 
 export class LayerTextEdit extends Layer {
     public static readonly layerName = "text edit";
@@ -39,6 +38,7 @@ export class LayerTextEdit extends Layer {
     public load(map: Map, data: Data, folder: string): void {
         this.layerView = this.canvas.findLayer(LayerTextView.layerName) as LayerTextView;
         this.map = map;
+        this.finishEditing();
         Ui.setVisibility("panelTextSelected", false);
     }
 

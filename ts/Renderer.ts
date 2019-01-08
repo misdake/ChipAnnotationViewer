@@ -105,7 +105,7 @@ export class Renderer {
 
 
     //---------------------------------------------
-    //circle
+    //shape
 
     public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: Size) {
         let position = camera.canvasToScreen(x, y);
@@ -129,20 +129,39 @@ export class Renderer {
         }
     }
 
-    //circle
+    public drawRect(x1: number, y1: number, x2: number, y2: number, fill: boolean, stroke: boolean, lineWidth?: number) {
+        if (lineWidth) this.context.lineWidth = lineWidth;
+
+        this.context.beginPath();
+        this.context.moveTo(x1, y1);
+        this.context.lineTo(x1, y2);
+        this.context.lineTo(x2, y2);
+        this.context.lineTo(x2, y1);
+        this.context.closePath();
+
+        if (fill) {
+            this.context.fill();
+        }
+        if (stroke) {
+            this.context.stroke();
+        }
+    }
+
+    //shape
     //---------------------------------------------
 
 
     //---------------------------------------------
     //text
 
-    public renderText(camera: Camera, text:string, fontSize:Size, x:number, y:number, anchorX:string, anchorY:string) {
+    public renderText(camera: Camera, text: string, fontSize: Size, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline): number[] {
         let position = camera.canvasToScreen(x, y);
         let size = this.calculateLineWidth(camera, fontSize);
         this.drawText(text, size, position.x, position.y, anchorX, anchorY);
+        return [this.context.measureText(text).width, size];
     }
 
-    public drawText(text: string, fontSize: number, x: number, y: number, anchorX: string, anchorY: string) {
+    public drawText(text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
         this.context.textAlign = anchorX;
         this.context.textBaseline = anchorY;
         this.context.font = fontSize + "px Arial";

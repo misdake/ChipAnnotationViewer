@@ -17,6 +17,11 @@ export class Canvas {
     public constructor(domElement: HTMLElement, id: string) {
         this.domElement = domElement;
         this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
+
+        this.domElement.oncontextmenu = function (ev) {
+            return false; //disable context menu
+        };
+
         this.canvasElement = document.getElementById(id) as HTMLCanvasElement;
         this.context = this.canvasElement.getContext("2d");
         this.camera = new Camera();
@@ -145,6 +150,15 @@ export class Canvas {
 
     public addLayer(layer: Layer): void {
         this.layers.push(layer);
+    }
+
+    public findLayer(name: string): Layer {
+        for (const layer of this.layers) {
+            if (layer.name == name) {
+                return layer;
+            }
+        }
+        return null;
     }
 
     public getWidth(): number {

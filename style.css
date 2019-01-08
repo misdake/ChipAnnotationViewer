@@ -1,11 +1,24 @@
-* { margin: 0; padding: 0;}
+* {
+    margin: 0;
+    padding: 0;
+}
 
-body, html { height:100%; }
+body, html {
+    height: 100%;
+}
+
+#mapSelect {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+}
 
 #panel {
     float: left;
     width: 200px;
     height: 100%;
+    overflow-y: auto;
 }
 
 #container {
@@ -16,6 +29,30 @@ body, html { height:100%; }
 
 .configButton {
     /*margin:20px 5px;*/
+}
+
+.configColorAlphaContainer {
+    margin: 5px;
+}
+
+.colorAlphaContainerSplit {
+    width: 40px;
+    display: inline-block;
+}
+
+.configColorButton {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    border: 2px black solid;
+    margin: 2px 0;
+}
+
+.configAlphaButton {
+    width: 12px;
+    height: 24px;
+    border: 2px black solid;
+    margin: 2px 0;
 }
 
 .configCheckbox {

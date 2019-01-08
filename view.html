@@ -5,31 +5,99 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <script src="lib/require.js"></script>
-    <script>
+</head>
+<body onload="__load()">
+<script>
+    function __load() {
         requirejs.config({
             baseUrl: '.',
             paths: {
-                'App': 'app',
+                'App': 'app'
             }
         });
         require(['App']);
-    </script>
-</head>
-<body>
+    }
+</script>
+
+<select id="mapSelect">
+
+</select>
+
 <div id="panel">
+
     <button id="buttonSave" class="configButton">save to url</button><br>
-    <button id="buttonStartEditing" class="configButton">new polyline</button><br>
-    <button id="buttonFinishEditing" class="configButton">finish polyline</button><br>
-    <button id="buttonDeleteSelected" class="configButton">delete selected</button><br>
-    <div id="panelSelected" style="visibility: hidden;">
-        <input class="configCheckbox" type="checkbox" id="checkboxFill"><label for="checkboxFill">fill</label><br>
-        <input class="configCheckbox" type="checkbox" id="checkboxClosed"><label for="checkboxClosed">closed</label><br>
-        <input class="configColor" type="color" id="colorStroke"><label for="colorStroke">strokeColor</label><br>
-        <input class="configColor" type="color" id="colorFill"><label for="colorFill">fillColor</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOnScreen" style="width:5em"><label for="textSizeOnScreen">onScreen</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOnCanvas" style="width:5em"><label for="textSizeOnCanvas">onCanvas</label><br>
-        <input class="configText" type="number" min=0 id="textSizeOfScreen" style="width:5em"><label for="textSizeOfScreen">ofScreen</label><br>
+
+    <br>
+
+    <button id="buttonNewPolyline" class="configButton">new polyline</button><br>
+
+    <br>
+
+    <button id="buttonNewText" class="configButton">new text</button><br>
+
+    <br>
+
+    <div id="panelPolylineSelected" style="display: none;">
+        <button id="polylineButtonDelete" class="configButton">delete polyline</button><br>
+        <button id="polylineButtonCopy" class="configButton">copy polyline</button><br>
+        <span id="polylineAreaContainer">
+            <button id="polylineButtonArea" class="configButton">area/length</button>
+            <span id="poylineTextArea"></span>
+            <br>
+        </span>
+
+        <button id="polylineButtonRotateCCW" class="configButton">rotate ccw</button>
+        <button id="polylineButtonRotateCW" class="configButton">rotate cw</button>
+        <button id="polylineButtonFlipX" class="configButton">flip x</button>
+        <button id="polylineButtonFlipY" class="configButton">flip y</button>
+
+        <br>
+
+        <input class="configCheckbox" type="checkbox" id="polylineCheckboxFill"><label for="polylineCheckboxFill">fill</label><br>
+        <input class="configCheckbox" type="checkbox" id="polylineCheckboxStroke"><label for="polylineCheckboxStroke">stroke</label><br>
+        <input class="configCheckbox" type="checkbox" id="polylineCheckboxClosed"><label for="polylineCheckboxClosed">closed</label><br>
+
+        <div>strokeColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="polylineContainerStrokeColor"></span><span class="colorAlphaContainerSplit"></span>
+            <span class="configAlphaContainer" id="polylineContainerStrokeAlpha"></span><br>
+        </div>
+        <div>fillColor</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="polylineContainerFillColor"></span><span class="colorAlphaContainerSplit"></span>
+            <span class="configAlphaContainer" id="polylineContainerFillAlpha"></span><br>
+        </div>
+
+        <input class="configText" type="number" min=0 id="polylineTextSizeOnScreen" style="width:5em"><label for="polylineTextSizeOnScreen">pixel onScreen</label><br>
+        <input class="configText" type="number" min=0 id="polylineTextSizeOnCanvas" style="width:5em"><label for="polylineTextSizeOnCanvas">pixel onCanvas</label><br>
+        <input class="configText" type="number" min=0 id="polylineTextSizeOfScreen" style="width:5em"><label for="polylineTextSizeOfScreen">‰ ofScreen</label><br>
+
+        <br>
+
+        <div id="polylineHint"></div><br>
     </div>
+
+    <div id="panelTextSelected" style="display: none;">
+        <button id="textButtonDelete" class="configButton">delete text</button><br>
+        <button id="textButtonCopy" class="configButton">copy text</button><br>
+        <label for="textTextContent">text</label><br>
+        <input class="configText" type="text" min=0 id="textTextContent" style="width:10em"><br>
+
+        <div>color</div>
+        <div class="configColorAlphaContainer">
+            <span class="configColorContainer" id="textContainerColor"></span><span class="colorAlphaContainerSplit"></span>
+            <span class="configAlphaContainer" id="textContainerAlpha"></span><br>
+        </div>
+
+        <input class="configText" type="number" min=0 id="textTextSizeOnScreen" style="width:5em"><label for="textTextSizeOnScreen">pixel onScreen</label><br>
+        <input class="configText" type="number" min=0 id="textTextSizeOnCanvas" style="width:5em"><label for="textTextSizeOnCanvas">pixel onCanvas</label><br>
+        <input class="configText" type="number" min=0 id="textTextSizeOfScreen" style="width:5em"><label for="textTextSizeOfScreen">‰ ofScreen</label><br>
+
+        <br>
+
+        <div id="textHint"></div><br>
+    </div>
+
 </div>
 <div id='container'></div>
 </body>

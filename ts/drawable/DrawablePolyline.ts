@@ -3,6 +3,7 @@ import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
+import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -27,47 +28,117 @@ export class PointSegmentResult {
 }
 
 export class DrawablePolylinePack {
-    public constructor(points: Point[], closed: boolean, fill: boolean, lineWidth?: Size) {
+    public constructor(points: Point[], closed: boolean, lineWidth: Size,
+                       fill: boolean, fillColorName: string, fillAlphaName: string,
+                       stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
         this.points = points;
         this.closed = closed;
-        this.fill = fill;
-        this.stroke = true; //TODO add to parameter
         this.lineWidth = lineWidth;
+
+        this.fill = fill;
+        this.fillColorName = fillColorName;
+        this.fillAlphaName = fillAlphaName;
+
+        this.stroke = stroke;
+        this.strokeColorName = strokeColorName;
+        this.strokeAlphaName = strokeAlphaName;
     }
-    closed: boolean;
-    fill: boolean;
-    stroke: boolean;
-    fillColor?: string;
-    strokeColor?: string;
-    lineWidth?: Size;
+
     points: Point[];
+    closed: boolean;
+    lineWidth: Size;
+
+    fill: boolean;
+    fillColorName: string;
+    fillAlphaName: string;
+
+    stroke: boolean;
+    strokeColorName: string;
+    strokeAlphaName: string;
 }
 
 export class DrawablePolyline extends Drawable {
+    public static readonly typeName = "DrawablePolyline";
 
-    public closed: boolean;
-    public fill: boolean;
-    public stroke: boolean;
-    public fillColor?: string;
-    public strokeColor?: string;
-    public lineWidth?: Size;
     public points: Point[];
+    public closed: boolean;
+    public lineWidth?: Size;
+
+    public fill: boolean;
+    public fillColor: ColorEntry;
+    public fillAlpha: AlphaEntry;
+    public fillString: string;
+
+    public stroke: boolean;
+    public strokeColor: ColorEntry;
+    public strokeAlpha: AlphaEntry;
+    public strokeString: string;
+
 
     public constructor(pack: DrawablePolylinePack) {
         super();
-        //TODO for each field, copy
-        this.closed = pack.closed;
-        this.fill = pack.fill;
-        this.stroke = pack.stroke;
-        this.fillColor = pack.fillColor;
-        this.strokeColor = pack.strokeColor;
-        this.lineWidth = pack.lineWidth;
         this.points = pack.points;
+        this.closed = pack.closed;
+        this.lineWidth = pack.lineWidth;
+
+        this.fill = pack.fill;
+        this.fillColor = ColorEntry.findByName(pack.fillColorName);
+        this.fillAlpha = AlphaEntry.findByName(pack.fillAlphaName);
+        this.fillString = combineColorAlpha(this.fillColor, this.fillAlpha);
+
+        this.stroke = pack.stroke;
+        this.strokeColor = ColorEntry.findByName(pack.strokeColorName);
+        this.strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
+        this.strokeString = combineColorAlpha(this.strokeColor, this.strokeAlpha);
+    }
+
+    public clone(offsetX: number, offsetY: number): DrawablePolylinePack {
+        let points = [];
+        for (const point of this.points) {
+            points.push(new Point(point.x + offsetX, point.y + offsetY));
+        }
+
+        return new DrawablePolylinePack(
+            points,
+            this.closed,
+            this.lineWidth,
+
+            this.fill,
+            this.fillColor.name,
+            this.fillAlpha.name,
+
+            this.stroke,
+            this.strokeColor.name,
+            this.strokeAlpha.name,
+        )
+    }
+
+    public pack(): DrawablePolylinePack {
+        return new DrawablePolylinePack(
+            this.points,
+            this.closed,
+            this.lineWidth,
+
+            this.fill,
+            this.fillColor.name,
+            this.fillAlpha.name,
+
+            this.stroke,
+            this.strokeColor.name,
+            this.strokeAlpha.name,
+        )
+    }
+
+    public move(offsetX: number, offsetY: number) {
+        for (const point of this.points) {
+            point.x += offsetX;
+            point.y += offsetY;
+        }
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        if (this.fillColor) renderer.setFillColor(this.fillColor);
-        if (this.strokeColor) renderer.setStrokeColor(this.strokeColor);
+        renderer.setFillColor(this.fillString);
+        renderer.setStrokeColor(this.strokeString);
         renderer.renderPolyline(camera, this.points, this.closed, this.fill, this.stroke, this.lineWidth);
     }
 
@@ -129,7 +200,113 @@ export class DrawablePolyline extends Drawable {
         return minResult;
     }
     public pickShape(canvasX: number, canvasY: number): boolean {
-        return DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
+        return this.fill && DrawablePolyline.testPointPolygon(this.points, canvasX, canvasY);
+    }
+
+    public centroid(): Point {
+        let area2 = 0;
+        let accX = 0;
+        let accY = 0;
+        for (let i = 0; i < this.points.length; i++) {
+            let p1 = this.points[i];
+            let p2 = this.points[(i + 1) % this.points.length];
+            let c = p1.x * p2.y - p2.x * p1.y;
+            area2 += c;
+            accX += (p1.x + p2.x) * c;
+            accY += (p1.y + p2.y) * c;
+        }
+        let x = accX / 6 / (area2 / 2);
+        let y = accY / 6 / (area2 / 2);
+        return new Point(x, y);
+    }
+
+    public aabb(): Point[] {
+        let minX = Math.min(), maxX = Math.max();
+        let minY = Math.min(), maxY = Math.max();
+        for (const point of this.points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+        return [new Point(minX, minY), new Point(maxX, maxY)];
+    }
+    public aabbCenter(): Point {
+        let aabb = this.aabb();
+        let center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
+        return center;
+    }
+
+    public flipX() {
+        let minX = Math.min();
+        let maxX = Math.max();
+        for (const point of this.points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+        }
+        let xx = minX + maxX;
+        for (const point of this.points) {
+            point.x = xx - point.x;
+        }
+    }
+    public flipY() {
+        let minY = Math.min();
+        let maxY = Math.max();
+        for (const point of this.points) {
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+        let yy = minY + maxY;
+        for (const point of this.points) {
+            point.y = yy - point.y;
+        }
+    }
+    public rotateCW() {
+        let center = this.aabbCenter();
+        for (const point of this.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x - dy;
+            point.y = center.y + dx;
+        }
+    }
+    public rotateCCW() {
+        let center = this.aabbCenter();
+        for (const point of this.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x + dy;
+            point.y = center.y - dx;
+        }
+    }
+
+    public area(): number {
+        if (this.points.length < 3) return 0;
+        let s = this.points[0].y * (this.points[this.points.length - 1].x - this.points[1].x);
+        for (let i = 1; i < this.points.length; i++) {
+            s += this.points[i].y * (this.points[i - 1].x - this.points[(i + 1) % this.points.length].x);
+        }
+        return Math.abs(s * 0.5);
+    }
+    public length(): number {
+        if (this.points.length < 2) return 0;
+
+        let s = 0;
+        let p0 = this.points[0];
+        let pn = this.points[this.points.length - 1];
+        if (this.closed) {
+            s = DrawablePolyline.hypot(p0.x - pn.x, p0.y - pn.y);
+        }
+        for (let i = 0; i < this.points.length - 1; i++) {
+            let pi = this.points[i];
+            let pj = this.points[i+1];
+            s += DrawablePolyline.hypot(pi.x - pj.x, pi.y - pj.y);
+        }
+        return s;
+    }
+
+    private static hypot(x: number, y: number): number {
+        return Math.sqrt(x * x + y * y);
     }
 
 }

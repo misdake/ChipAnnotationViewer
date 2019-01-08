@@ -9,31 +9,50 @@ import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
+import {combineColorAlpha} from "../util/Color";
+import {Selection} from "./Selection";
+import {Drawable} from "../drawable/Drawable";
 
 export class LayerPolylineEdit extends Layer {
+    public static readonly layerName = "polyline edit";
+
+    private static readonly HINT_ELEMENT_ID = "polylineHint";
+    private static readonly HINT_NEW_POLYLINE =
+        "1. left click to create point<br>" +
+        "2. hold left button to preview point<br>" +
+        "3. right click to finish creating<br>" +
+        "4. hold ctrl to help with horizontal/vertical line<br>";
+    private static readonly HINT_EDIT_POLYLINE =
+        "1. hold left button to drag points<br>" +
+        "2. hold ctrl to help with horizontal/vertical line<br>" +
+        "3. hold alt to drag polyline<br>" +
+        "4. double click on line to create point<br>" +
+        "5. right-click / double left-click point to delete it<br>";
+
+    private static readonly MAG_RADIUS = 10;
 
     private map: Map;
     private polylineNew: DrawablePolyline = null;
     private polylineEdit: DrawablePolyline = null;
-    private layerPolylineView: LayerPolylineView;
+    private layerView: LayerPolylineView;
 
     public constructor(canvas: Canvas) {
-        super("polyline_edit", canvas);
-    }
-
-    public setLayer(layerPolylineView: LayerPolylineView) {
-        this.layerPolylineView = layerPolylineView;
+        super(LayerPolylineEdit.layerName, canvas);
+        let self = this;
+        Selection.register(DrawablePolyline.typeName, (item: Drawable) => {
+            this.startEditingPolyline(item as DrawablePolyline);
+        }, () => {
+            self.finishEditing();
+        });
     }
 
     public load(map: Map, data: Data, folder: string): void {
+        this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
         this.map = map;
-
-        let self = this;
-        Ui.bindButtonOnClick("buttonStartEditing", () => self.startCreatingPolyline());
-        Ui.bindButtonOnClick("buttonFinishEditing", () => self.finishEditing());
-        Ui.bindButtonOnClick("buttonDeleteSelected", () => self.deleteEditing());
-
-        Ui.setVisibility("panelSelected", false);
+        this.polylineNew = null;
+        this.polylineEdit = null;
+        this.finishEditing();
+        Ui.setVisibility("panelPolylineSelected", false);
     }
 
     public startCreatingPolyline(): DrawablePolyline {
@@ -41,18 +60,27 @@ export class LayerPolylineEdit extends Layer {
         let self = this;
 
         let points: Point[] = [];
-        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(points, true, true, new Size(2)));
-        this.polylineNew.strokeColor = "rgba(255,255,255,0.5)";
-        this.polylineNew.fillColor = "rgba(255,255,255,0.2)";
-        this.bindPolyline(this.polylineNew);
+        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(
+            points, true, new Size(2),
+            true, "white", "25",
+            true, "white", "75",
+        ));
+        this.bindPolylineConfigUi(this.polylineNew);
+
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
 
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
+            private moved: boolean = false;
 
-            private preview(position: Position): void {
+            private preview(position: Position, magnetic: boolean): void {
                 let xy = points[points.length - 1];
                 xy.x = position.x;
                 xy.y = position.y;
+                if (magnetic) {
+                    let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                    LayerPolylineEdit.mag(points, points.length - 1, radius);
+                }
             }
             onmousedown(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.down) { //left button down => add point
@@ -61,34 +89,51 @@ export class LayerPolylineEdit extends Layer {
                     points.push(new Point(position.x, position.y));
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.button == 2) {
+                    this.moved = false;
                 }
+                return false;
             }
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position);
+                    this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.button == 2) {
+                    if (!this.moved) {
+                        let newPolyline = self.polylineNew;
+                        self.finishEditing();
+                        if (self.layerView.containPolyline(newPolyline)) {
+                            self.startEditingPolyline(newPolyline);
+                        }
+                    }
+                    this.moved = false;
+                    return true;
                 }
+                return false;
             }
             onmousemove(event: MouseEvent): boolean {
                 if (this.down) { //left button is down => show modification
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position);
+                    this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else {
-                    return false;
+                } else if (event.buttons & 2) {
+                    this.moved = true;
                 }
+                return false;
             }
         };
 
         return this.polylineNew;
+    }
+
+    public deleteCreating() {
+        this.polylineNew = null;
+        this.finishEditing();
+        this.canvas.requestRender();
     }
 
     public startEditingPolyline(polyline: DrawablePolyline): void {
@@ -96,13 +141,22 @@ export class LayerPolylineEdit extends Layer {
 
         //show polyline and its point indicators
         this.polylineEdit = polyline;
-        this.bindPolyline(this.polylineEdit);
+        this.bindPolylineConfigUi(this.polylineEdit);
+
+        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_EDIT_POLYLINE);
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
+            private moved: boolean = false;
+
+            private dragPointIndex: number = -1;
             private dragPoint: Point = null;
+
+            private dragShape: boolean = false;
+            private dragShapeX: number = -1;
+            private dragShapeY: number = -1;
 
             onmousedown(event: MouseEvent): boolean {
                 this.dragPoint = null;
@@ -115,18 +169,51 @@ export class LayerPolylineEdit extends Layer {
                     let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (point) { //start dragging this point
                         this.dragPoint = point;
+                        this.dragPointIndex = polyline.points.indexOf(point);
                         return true;
                     }
+
+                    let shape = polyline.pickShape(position.x, position.y);
+                    if (!point && shape && event.altKey) {
+                        this.dragShape = true;
+                        this.dragShapeX = position.x;
+                        this.dragShapeY = position.y;
+                    }
+                } else if (event.button == 2) {
+                    this.moved = false;
                 }
                 return false;
             }
             onmouseup(event: MouseEvent): boolean {
-                let passEvent: boolean = !this.dragPoint; //pass event if not moving point, so that LayerPolylineView will deselect this polyline
+                let wasDragging: boolean = !!this.dragPoint || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
+
                 this.dragPoint = null;
+                this.dragPointIndex = -1;
+
+                this.dragShape = false;
+                this.dragShapeX = -1;
+                this.dragShapeY = -1;
 
                 if (event.button == 0) { //left button up => nothing
                     this.down = false;
-                    return !passEvent;
+                    return wasDragging;
+                } else if (event.button == 2) {
+                    let hit = false;
+                    if (!this.moved) {
+                        let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        //test points
+                        let point = polyline.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                        if (point) { //delete point
+                            if (polyline.points.length > 3) { //so it will be at least a triangle
+                                let index = polyline.points.indexOf(point);
+                                if (index !== -1) polyline.points.splice(index, 1);
+                                self.canvas.requestRender();
+                            }
+                            hit = true;
+                        }
+                    }
+                    this.moved = false;
+                    return hit;
                 }
                 return false;
             }
@@ -158,14 +245,30 @@ export class LayerPolylineEdit extends Layer {
                 return false;
             }
             onmousemove(event: MouseEvent): boolean {
-                if (this.down) { //left button is down => drag point
+                if (this.down) { //left button is down => drag
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+
                     if (this.dragPoint) {
-                        let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         this.dragPoint.x = position.x;
                         this.dragPoint.y = position.y;
+                        if (event.ctrlKey) {
+                            let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
+                            LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
+                        }
+
+                        self.canvas.requestRender();
+                        return true;
+
+                    } else if (this.dragShape) {
+                        polyline.move(position.x - this.dragShapeX, position.y - this.dragShapeY);
+                        this.dragShapeX = position.x;
+                        this.dragShapeY = position.y;
+
                         self.canvas.requestRender();
                         return true;
                     }
+                } else if(event.buttons & 2) {
+                    this.moved = true;
                 }
                 return false;
             }
@@ -174,12 +277,29 @@ export class LayerPolylineEdit extends Layer {
         this.canvas.requestRender();
     }
 
+    private static mag(points: Point[], index: number, radius: number) {
+        let xy = points[index];
+
+        let newX = xy.x;
+        let newY = xy.y;
+        let first = points[(index + 1) % points.length];
+        if (Math.abs(first.x - xy.x) <= radius) newX = first.x;
+        if (Math.abs(first.y - xy.y) <= radius) newY = first.y;
+        if (points.length > 2) {
+            let last = points[(points.length + index - 1) % points.length];
+            if (Math.abs(last.x - xy.x) <= radius) newX = last.x;
+            if (Math.abs(last.y - xy.y) <= radius) newY = last.y;
+        }
+        xy.x = newX;
+        xy.y = newY;
+    }
+
     public finishEditing(): void {
-        Ui.setVisibility("panelSelected", false);
+        Ui.setVisibility("panelPolylineSelected", false);
 
         if (this.polylineNew) {
             if (this.polylineNew.points.length > 2) {
-                this.layerPolylineView.addPolyline(this.polylineNew);
+                this.layerView.addPolyline(this.polylineNew);
             }
             this.polylineNew = null;
             this.canvas.requestRender();
@@ -216,40 +336,99 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public deleteEditing() {
-        if(this.polylineEdit) {
-            this.layerPolylineView.deletePolyline(this.polylineEdit);
+        if (this.polylineEdit) {
+            this.layerView.deletePolyline(this.polylineEdit);
             this.finishEditing();
         }
     }
 
-    private bindPolyline(polyline: DrawablePolyline) {
-        Ui.setVisibility("panelSelected", true);
-        Ui.bindCheckbox("checkboxClosed", polyline.closed, newValue => {
-            polyline.closed = newValue;
+    private bindPolylineConfigUi(polyline: DrawablePolyline) {
+        Ui.setVisibility("panelPolylineSelected", true);
+
+        Ui.bindButtonOnClick("polylineButtonCopy", () => {
+            let offset = this.canvas.getCamera().screenSizeToCanvas(20);
+            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
+
+            this.finishEditing();
+            this.layerView.addPolyline(newPolyline);
+            this.startEditingPolyline(newPolyline);
+
             this.canvas.requestRender();
         });
-        Ui.bindCheckbox("checkboxFill", polyline.fill, newValue => {
+
+        Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
+        Ui.bindButtonOnClick("polylineButtonArea", () => {
+            if (this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0) {
+                Ui.setContent("poylineTextArea", "");
+                if (polyline.fill) {
+                    let area = polyline.area();
+                    let areaMM2 = area / this.map.width / this.map.height * this.map.widthMillimeter * this.map.heightMillimeter;
+                    areaMM2 = Math.round(areaMM2 * 100) / 100;
+                    Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
+                } else {
+                    let length = polyline.length();
+                    let lengthMM = length * Math.sqrt(this.map.widthMillimeter * this.map.heightMillimeter / this.map.width / this.map.height);
+                    lengthMM = Math.round(lengthMM * 100) / 100;
+                    Ui.setContent("poylineTextArea", lengthMM + "mm");
+                }
+            }
+        });
+        Ui.setContent("poylineTextArea", "");
+
+        Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
+            polyline.rotateCCW();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonRotateCW", () => {
+            polyline.rotateCW();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonFlipX", () => {
+            polyline.flipX();
+            this.canvas.requestRender();
+        });
+        Ui.bindButtonOnClick("polylineButtonFlipY", () => {
+            polyline.flipY();
+            this.canvas.requestRender();
+        });
+
+
+        Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, newValue => {
             polyline.fill = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindValue("colorStroke", polyline.strokeColor, newValue => {
-            polyline.strokeColor = newValue;
+        Ui.bindCheckbox("polylineCheckboxStroke", polyline.stroke, newValue => {
+            polyline.stroke = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindValue("colorFill", polyline.fillColor, newValue => {
-            polyline.fillColor = newValue;
+        Ui.bindCheckbox("polylineCheckboxClosed", polyline.closed, newValue => {
+            polyline.closed = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textSizeOnScreen", polyline.lineWidth.onScreen, newValue => {
+
+        Ui.bindNumber("polylineTextSizeOnScreen", polyline.lineWidth.onScreen, newValue => {
             polyline.lineWidth.onScreen = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textSizeOnCanvas", polyline.lineWidth.onCanvas, newValue => {
+        Ui.bindNumber("polylineTextSizeOnCanvas", polyline.lineWidth.onCanvas, newValue => {
             polyline.lineWidth.onCanvas = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textSizeOfScreen", polyline.lineWidth.ofScreen, newValue => {
-            polyline.lineWidth.ofScreen = newValue;
+        Ui.bindNumber("polylineTextSizeOfScreen", polyline.lineWidth.ofScreen * 1000, newValue => {
+            polyline.lineWidth.ofScreen = newValue * 0.001;
+            this.canvas.requestRender();
+        });
+
+        Ui.bindColor("polylineContainerStrokeColor", "polylineContainerStrokeAlpha", polyline.strokeColor, polyline.strokeAlpha, (newColor, newAlpha) => {
+            polyline.strokeColor = newColor;
+            polyline.strokeAlpha = newAlpha;
+            polyline.strokeString = combineColorAlpha(polyline.strokeColor, polyline.strokeAlpha);
+            this.canvas.requestRender();
+        });
+        Ui.bindColor("polylineContainerFillColor", "polylineContainerFillAlpha", polyline.fillColor, polyline.fillAlpha, (newColor, newAlpha) => {
+            polyline.fillColor = newColor;
+            polyline.fillAlpha = newAlpha;
+            polyline.fillString = combineColorAlpha(polyline.fillColor, polyline.fillAlpha);
             this.canvas.requestRender();
         });
     }

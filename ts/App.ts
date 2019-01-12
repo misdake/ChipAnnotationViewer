@@ -9,6 +9,7 @@ import {Ui} from "./util/Ui";
 import {LZString} from "./util/LZString";
 import {LayerTextEdit} from "./layers/LayerTextEdit";
 import {LayerTextView} from "./layers/LayerTextView";
+import {Github} from "./util/GithubUtil";
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -45,10 +46,19 @@ Ui.bindButtonOnClick("textButtonDelete", () => {
     layerTextEdit.finishEditing();
 });
 
-function load(mapString: string, dataString: string) {
+let currentMap: string = null;
+
+function loadDataString(mapString: string, dataString: string) {
+    let decompressed = dataString ? LZString.decompressFromEncodedURIComponent(dataString) : null;
+    let data: Data = decompressed ? JSON.parse(decompressed) as Data : new Data;
+    loadData(mapString, data);
+}
+function loadData(mapString: string, data: Data) {
+    currentMap = mapString;
 
     Ui.bindButtonOnClick("buttonSave", () => {
         let data = canvas.save();
+        data.title = (document.getElementById("dataTitle") as HTMLInputElement).value;
         let dataString = JSON.stringify(data);
         console.log(dataString);
         let compressed = LZString.compressToEncodedURIComponent(dataString);
@@ -58,10 +68,49 @@ function load(mapString: string, dataString: string) {
 
     NetUtil.get("data/" + mapString + "/content.json", mapDesc => {
         let map: Map = JSON.parse(mapDesc) as Map;
-        let decompressed = dataString ? LZString.decompressFromEncodedURIComponent(dataString) : null;
-        let data: Data = decompressed ? JSON.parse(decompressed) as Data : new Data;
         canvas.load(map, data, "data/" + mapString);
         canvas.requestRender();
+
+        Ui.bindValue("dataTitle", data.title || "", newValue => {
+        });
+        Ui.bindSelect("dataSelect", [], null, index => {
+        });
+
+        if (map.githubRepo && map.githubIssueId) {
+            Github.getComments(map.githubRepo, map.githubIssueId, comments => {
+                let entries: Data[] = [];
+                let items: string[] = [];
+
+                entries.push(data);
+                items.push("current");
+
+                for (let comment of comments) {
+                    try {
+                        let data: Data = JSON.parse(comment.body);
+                        if (data.polylines != null && data.texts != null) {
+                            if (data.title == null || data.title == "") {
+                                data.title = "untitled";
+                            }
+                            entries.push(data);
+                            items.push(data.title + " @" + comment.user.login);
+                        }
+                    } catch (e) {
+                    }
+                }
+
+                if (entries.length > 1) {
+                    if (currentMap == mapString) {
+                        Ui.bindSelect("dataSelect", items, items[0], index => {
+                            let data = entries[index];
+                            Ui.bindValue("dataTitle", data.title, newValue => {
+                            });
+                            canvas.load(map, data, "data/" + mapString);
+                            canvas.requestRender();
+                        });
+                    }
+                }
+            });
+        }
     });
 
 }
@@ -85,10 +134,10 @@ NetUtil.get("data/list.txt", text => {
     let mapString = url.searchParams.get("map") || defaultMap;
     let dataString = url.searchParams.get("data");
 
-    Ui.bindSelect("mapSelect", lines, mapString, newMap => {
-        load(newMap, null);
+    Ui.bindSelect("mapSelect", lines, mapString, (index, newMap) => {
+        loadDataString(newMap, null);
     });
 
-    load(mapString, dataString);
+    loadDataString(mapString, dataString);
 
 });

@@ -10,6 +10,13 @@ export class Github {
             }
         });
     }
+
+    static getIssueLink(repo: string, issueId: number): string {
+        return "https://github.com/" + repo + "/issues/" + issueId;
+    }
+    static getCommentLink(repo: string, issueId: number, commentId: number): string {
+        return "https://github.com/" + repo + "/issues/" + issueId + "#issuecomment-" + commentId;
+    }
 }
 
 export class GithubUser {

@@ -9,7 +9,7 @@ import {Ui} from "./util/Ui";
 import {LZString} from "./util/LZString";
 import {LayerTextEdit} from "./layers/LayerTextEdit";
 import {LayerTextView} from "./layers/LayerTextView";
-import {Github} from "./util/GithubUtil";
+import {Github, GithubComment} from "./util/GithubUtil";
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -46,7 +46,8 @@ Ui.bindButtonOnClick("textButtonDelete", () => {
     layerTextEdit.finishEditing();
 });
 
-let currentMap: string = null;
+let currentMapString: string = null;
+let issueLink = "";
 
 function loadDataString(mapString: string, dataString: string) {
     let decompressed = dataString ? LZString.decompressFromEncodedURIComponent(dataString) : null;
@@ -54,23 +55,30 @@ function loadDataString(mapString: string, dataString: string) {
     loadData(mapString, data);
 }
 function loadData(mapString: string, data: Data) {
-    currentMap = mapString;
-
-    Ui.bindButtonOnClick("buttonSave", () => {
-        let data = canvas.save();
-        data.title = (document.getElementById("dataTitle") as HTMLInputElement).value;
-        let dataString = JSON.stringify(data);
-        console.log(dataString);
-        let compressed = LZString.compressToEncodedURIComponent(dataString);
-        let url = location.pathname + '?map=' + mapString + '&data=' + compressed;
-        history.replaceState(data, "", url);
-    });
+    currentMapString = mapString;
 
     NetUtil.get("data/" + mapString + "/content.json", mapDesc => {
         let map: Map = JSON.parse(mapDesc) as Map;
         canvas.load(map, data, "data/" + mapString);
         canvas.requestRender();
 
+        issueLink = Github.getIssueLink(map.githubRepo, map.githubIssueId);
+
+        Ui.bindButtonOnClick("buttonSave", () => {
+            let data = canvas.save();
+            data.title = (document.getElementById("dataTitle") as HTMLInputElement).value;
+            let dataString = JSON.stringify(data);
+            Ui.bindValue("dataOutput", dataString, newValue => {
+            });
+            Ui.copyToClipboard("dataOutput");
+
+            if (issueLink) {
+                window.open(issueLink, '_blank');
+            }
+        });
+
+        Ui.bindValue("dataOutput", "", newValue => {
+        });
         Ui.bindValue("dataTitle", data.title || "", newValue => {
         });
         Ui.bindSelect("dataSelect", [], null, index => {
@@ -78,9 +86,11 @@ function loadData(mapString: string, data: Data) {
 
         if (map.githubRepo && map.githubIssueId) {
             Github.getComments(map.githubRepo, map.githubIssueId, comments => {
+                let list: GithubComment[] = [];
                 let entries: Data[] = [];
                 let items: string[] = [];
 
+                list.push(null);
                 entries.push(data);
                 items.push("current");
 
@@ -91,6 +101,7 @@ function loadData(mapString: string, data: Data) {
                             if (data.title == null || data.title == "") {
                                 data.title = "untitled";
                             }
+                            list.push(comment);
                             entries.push(data);
                             items.push(data.title + " @" + comment.user.login);
                         }
@@ -99,11 +110,19 @@ function loadData(mapString: string, data: Data) {
                 }
 
                 if (entries.length > 1) {
-                    if (currentMap == mapString) {
+                    if (currentMapString == mapString) {
                         Ui.bindSelect("dataSelect", items, items[0], index => {
+                            let comment = list[index];
                             let data = entries[index];
                             Ui.bindValue("dataTitle", data.title, newValue => {
                             });
+
+                            if (comment) {
+                                issueLink = Github.getCommentLink(map.githubRepo, map.githubIssueId, comment.id);
+                            } else {
+                                issueLink = Github.getIssueLink(map.githubRepo, map.githubIssueId);
+                            }
+
                             canvas.load(map, data, "data/" + mapString);
                             canvas.requestRender();
                         });

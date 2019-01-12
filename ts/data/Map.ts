@@ -5,6 +5,9 @@ export class TileLevel {
 }
 
 export class Map {
+    githubRepo: string;
+    githubIssueId: number;
+
     tileSize: number;
     width: number;
     height: number;

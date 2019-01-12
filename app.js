@@ -473,6 +473,36 @@ define('util/NetUtil',["require", "exports"], function (require, exports) {
             request.open("GET", url, true);
             request.send();
         };
+        NetUtil.post = function (url, params, callback) {
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (request.readyState == 4 && request.status == 200) {
+                    callback(request.responseText);
+                }
+            };
+            request.open('POST', url, true);
+            request.setRequestHeader("Access-Control-Allow-Origin", "*");
+            request.setRequestHeader("Access-Control-Allow-Methods", "POST,GET");
+            request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            var s = null;
+            for (var key in params) {
+                if (s == null) {
+                    s = "";
+                }
+                else {
+                    s = s + "&";
+                }
+                s += key + "=" + params[key];
+            }
+            console.log(s);
+            request.send(s);
+            {
+                var httpRequest = new XMLHttpRequest(); //第一步：创建需要的对象
+                httpRequest.open('POST', 'url', true); //第二步：打开连接
+                httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded"); //设置请求头 注：post方式必须设置请求头（在建立连接后设置请求头）
+                httpRequest.send('name=teswe&ee=ef'); //发送请求 将情头体写在send中
+            }
+        };
         return NetUtil;
     }());
     exports.NetUtil = NetUtil;
@@ -1247,6 +1277,11 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
     var Ui = /** @class */ (function () {
         function Ui() {
         }
+        Ui.copyToClipboard = function (inputId) {
+            var input = document.getElementById(inputId);
+            input.select();
+            document.execCommand("Copy");
+        };
         Ui.setContent = function (id, content) {
             var element = document.getElementById(id);
             element.innerHTML = content;
@@ -1278,7 +1313,7 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
                 select.options[index].selected = true;
             }
             select.onchange = function (ev) {
-                onchange(select.options[select.selectedIndex].value);
+                onchange(select.selectedIndex, select.options[select.selectedIndex].value);
             };
         };
         Ui.bindValue = function (id, initialValue, onchange) {
@@ -2641,7 +2676,46 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
     exports.LayerTextEdit = LayerTextEdit;
 });
 //# sourceMappingURL=LayerTextEdit.js.map;
-define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString", "./layers/LayerTextEdit", "./layers/LayerTextView"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1, LayerTextEdit_1, LayerTextView_1) {
+define('util/GithubUtil',["require", "exports", "./NetUtil"], function (require, exports, NetUtil_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Github = /** @class */ (function () {
+        function Github() {
+        }
+        Github.getComments = function (repo, issueId, callback) {
+            NetUtil_1.NetUtil.get("https://api.github.com/repos/" + repo + "/issues/" + issueId + "/comments", function (json) {
+                try {
+                    var array = JSON.parse(json);
+                    callback(array);
+                }
+                catch (e) {
+                }
+            });
+        };
+        Github.getIssueLink = function (repo, issueId) {
+            return "https://github.com/" + repo + "/issues/" + issueId;
+        };
+        Github.getCommentLink = function (repo, issueId, commentId) {
+            return "https://github.com/" + repo + "/issues/" + issueId + "#issuecomment-" + commentId;
+        };
+        return Github;
+    }());
+    exports.Github = Github;
+    var GithubUser = /** @class */ (function () {
+        function GithubUser() {
+        }
+        return GithubUser;
+    }());
+    exports.GithubUser = GithubUser;
+    var GithubComment = /** @class */ (function () {
+        function GithubComment() {
+        }
+        return GithubComment;
+    }());
+    exports.GithubComment = GithubComment;
+});
+//# sourceMappingURL=GithubUtil.js.map;
+define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString", "./layers/LayerTextEdit", "./layers/LayerTextView", "./util/GithubUtil"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1, LayerTextEdit_1, LayerTextView_1, GithubUtil_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
@@ -2675,21 +2749,81 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerTextEdit.deleteEditing();
         layerTextEdit.finishEditing();
     });
-    function load(mapString, dataString) {
-        Ui_1.Ui.bindButtonOnClick("buttonSave", function () {
-            var data = canvas.save();
-            var dataString = JSON.stringify(data);
-            console.log(dataString);
-            var compressed = LZString_1.LZString.compressToEncodedURIComponent(dataString);
-            var url = location.pathname + '?map=' + mapString + '&data=' + compressed;
-            history.replaceState(data, "", url);
-        });
+    var currentMapString = null;
+    var issueLink = "";
+    function loadDataString(mapString, dataString) {
+        var decompressed = dataString ? LZString_1.LZString.decompressFromEncodedURIComponent(dataString) : null;
+        var data = decompressed ? JSON.parse(decompressed) : new Data_1.Data;
+        loadData(mapString, data);
+    }
+    function loadData(mapString, data) {
+        currentMapString = mapString;
         NetUtil_1.NetUtil.get("data/" + mapString + "/content.json", function (mapDesc) {
             var map = JSON.parse(mapDesc);
-            var decompressed = dataString ? LZString_1.LZString.decompressFromEncodedURIComponent(dataString) : null;
-            var data = decompressed ? JSON.parse(decompressed) : new Data_1.Data;
             canvas.load(map, data, "data/" + mapString);
             canvas.requestRender();
+            issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
+            Ui_1.Ui.bindButtonOnClick("buttonSave", function () {
+                var data = canvas.save();
+                data.title = document.getElementById("dataTitle").value;
+                var dataString = JSON.stringify(data);
+                Ui_1.Ui.bindValue("dataOutput", dataString, function (newValue) {
+                });
+                Ui_1.Ui.copyToClipboard("dataOutput");
+                if (issueLink) {
+                    window.open(issueLink, '_blank');
+                }
+            });
+            Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+            });
+            Ui_1.Ui.bindValue("dataTitle", data.title || "", function (newValue) {
+            });
+            Ui_1.Ui.bindSelect("dataSelect", [], null, function (index) {
+            });
+            if (map.githubRepo && map.githubIssueId) {
+                GithubUtil_1.Github.getComments(map.githubRepo, map.githubIssueId, function (comments) {
+                    var list = [];
+                    var entries = [];
+                    var items = [];
+                    list.push(null);
+                    entries.push(data);
+                    items.push("current");
+                    for (var _i = 0, comments_1 = comments; _i < comments_1.length; _i++) {
+                        var comment = comments_1[_i];
+                        try {
+                            var data_1 = JSON.parse(comment.body);
+                            if (data_1.polylines != null && data_1.texts != null) {
+                                if (data_1.title == null || data_1.title == "") {
+                                    data_1.title = "untitled";
+                                }
+                                list.push(comment);
+                                entries.push(data_1);
+                                items.push(data_1.title + " @" + comment.user.login);
+                            }
+                        }
+                        catch (e) {
+                        }
+                    }
+                    if (entries.length > 1) {
+                        if (currentMapString == mapString) {
+                            Ui_1.Ui.bindSelect("dataSelect", items, items[0], function (index) {
+                                var comment = list[index];
+                                var data = entries[index];
+                                Ui_1.Ui.bindValue("dataTitle", data.title, function (newValue) {
+                                });
+                                if (comment) {
+                                    issueLink = GithubUtil_1.Github.getCommentLink(map.githubRepo, map.githubIssueId, comment.id);
+                                }
+                                else {
+                                    issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
+                                }
+                                canvas.load(map, data, "data/" + mapString);
+                                canvas.requestRender();
+                            });
+                        }
+                    }
+                });
+            }
         });
     }
     NetUtil_1.NetUtil.get("data/list.txt", function (text) {
@@ -2707,10 +2841,10 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         var url = new URL(url_string);
         var mapString = url.searchParams.get("map") || defaultMap;
         var dataString = url.searchParams.get("data");
-        Ui_1.Ui.bindSelect("mapSelect", lines, mapString, function (newMap) {
-            load(newMap, null);
+        Ui_1.Ui.bindSelect("mapSelect", lines, mapString, function (index, newMap) {
+            loadDataString(newMap, null);
         });
-        load(mapString, dataString);
+        loadDataString(mapString, dataString);
     });
 });
 //# sourceMappingURL=App.js.map;

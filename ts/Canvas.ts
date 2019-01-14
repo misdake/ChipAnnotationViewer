@@ -180,17 +180,30 @@ export class Canvas {
         })
     }
 
-    public load(map: Map, data: Data, folder: string): void {
-        this.camera.load(this, map);
-        for (let layer of this.layers) {
-            layer.load(map, data, folder);
+    private map: Map = null;
+    private data: Data = null;
+    public loadMap(map: Map): void {
+        if (!this.map || this.map.name != map.name) {
+            this.camera.load(this, map);
+            for (let layer of this.layers) {
+                layer.loadMap(map);
+            }
         }
+        this.map = map;
+    }
+    public loadData(data: Data): void {
+        if (this.data != data) {
+            for (let layer of this.layers) {
+                layer.loadData(data);
+            }
+        }
+        this.data = data;
     }
 
     public save(): Data {
         let data = new Data();
         for (let layer of this.layers) {
-            layer.save(data);
+            layer.saveData(data);
         }
         return data;
     }

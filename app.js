@@ -262,6 +262,8 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera", "./data/Data"],
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
             this.renderNext = false;
+            this.map = null;
+            this.data = null;
             this.domElement = domElement;
             this.domElement.innerHTML = "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
             this.domElement.oncontextmenu = function (ev) {
@@ -423,18 +425,30 @@ define('Canvas',["require", "exports", "./Renderer", "./Camera", "./data/Data"],
                 self.render();
             });
         };
-        Canvas.prototype.load = function (map, data, folder) {
-            this.camera.load(this, map);
-            for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
-                var layer = _a[_i];
-                layer.load(map, data, folder);
+        Canvas.prototype.loadMap = function (map) {
+            if (!this.map || this.map.name != map.name) {
+                this.camera.load(this, map);
+                for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
+                    var layer = _a[_i];
+                    layer.loadMap(map);
+                }
             }
+            this.map = map;
+        };
+        Canvas.prototype.loadData = function (data) {
+            if (this.data != data) {
+                for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
+                    var layer = _a[_i];
+                    layer.loadData(data);
+                }
+            }
+            this.data = data;
         };
         Canvas.prototype.save = function () {
             var data = new Data_1.Data();
             for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
                 var layer = _a[_i];
-                layer.save(data);
+                layer.saveData(data);
             }
             return data;
         };
@@ -533,9 +547,11 @@ define('Layer',["require", "exports"], function (require, exports) {
             enumerable: true,
             configurable: true
         });
-        Layer.prototype.load = function (map, data, folder) {
+        Layer.prototype.loadMap = function (map) {
         };
-        Layer.prototype.save = function (data) {
+        Layer.prototype.loadData = function (data) {
+        };
+        Layer.prototype.saveData = function (data) {
         };
         Layer.prototype.render = function (renderer) {
         };
@@ -669,10 +685,10 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
         function LayerImage(canvas) {
             return _super.call(this, "image", canvas) || this;
         }
-        LayerImage.prototype.load = function (map, data, folder) {
+        LayerImage.prototype.loadMap = function (map) {
             this.map = map;
             this.maxLevel = map.maxLevel;
-            this.baseFolder = folder;
+            this.baseFolder = "data/" + this.map.name;
             this.currentZoom = -1;
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
@@ -1164,8 +1180,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
             _this.polylines = [];
             return _this;
         }
-        LayerPolylineView.prototype.load = function (map, data, folder) {
-            this.map = map;
+        LayerPolylineView.prototype.loadData = function (data) {
             this.polylines = [];
             if (data.polylines) {
                 for (var _i = 0, _a = data.polylines; _i < _a.length; _i++) {
@@ -1234,7 +1249,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         LayerPolylineView.prototype.containPolyline = function (polyline) {
             return this.polylines.indexOf(polyline) >= 0;
         };
-        LayerPolylineView.prototype.save = function (data) {
+        LayerPolylineView.prototype.saveData = function (data) {
             data.polylines = [];
             for (var _i = 0, _a = this.polylines; _i < _a.length; _i++) {
                 var polyline = _a[_i];
@@ -1281,6 +1296,7 @@ define('util/Ui',["require", "exports", "./Color"], function (require, exports, 
             var input = document.getElementById(inputId);
             input.select();
             document.execCommand("Copy");
+            input.blur();
         };
         Ui.setContent = function (id, content) {
             var element = document.getElementById(id);
@@ -1416,9 +1432,11 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             });
             return _this;
         }
-        LayerPolylineEdit.prototype.load = function (map, data, folder) {
-            this.layerView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
+        LayerPolylineEdit.prototype.loadMap = function (map) {
             this.map = map;
+        };
+        LayerPolylineEdit.prototype.loadData = function (data) {
+            this.layerView = this.canvas.findLayer(LayerPolylineView_1.LayerPolylineView.layerName);
             this.polylineNew = null;
             this.polylineEdit = null;
             this.finishEditing();
@@ -1800,488 +1818,6 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
-define('util/LZString',["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var LZString = /** @class */ (function () {
-        function LZString() {
-        }
-        LZString.getBaseValue = function (alphabet, character) {
-            if (!LZString.baseReverseDic[alphabet]) {
-                LZString.baseReverseDic[alphabet] = {};
-                for (var i = 0; i < alphabet.length; i++) {
-                    LZString.baseReverseDic[alphabet][alphabet.charAt(i)] = i;
-                }
-            }
-            return LZString.baseReverseDic[alphabet][character];
-        };
-        LZString.compressToBase64 = function (input) {
-            if (input == null)
-                return "";
-            var res = LZString._compress(input, 6, function (a) {
-                return LZString.keyStrBase64.charAt(a);
-            });
-            switch (res.length % 4) { // To produce valid Base64
-                default: // When could this happen ?
-                case 0:
-                    return res;
-                case 1:
-                    return res + "===";
-                case 2:
-                    return res + "==";
-                case 3:
-                    return res + "=";
-            }
-        };
-        LZString.decompressFromBase64 = function (input) {
-            if (input == null)
-                return "";
-            if (input == "")
-                return null;
-            return LZString._decompress(input.length, 32, function (index) {
-                return LZString.getBaseValue(LZString.keyStrBase64, input.charAt(index));
-            });
-        };
-        LZString.compressToUTF16 = function (input) {
-            if (input == null)
-                return "";
-            return LZString._compress(input, 15, function (a) {
-                return String.fromCharCode(a + 32);
-            }) + " ";
-        };
-        LZString.decompressFromUTF16 = function (compressed) {
-            if (compressed == null)
-                return "";
-            if (compressed == "")
-                return null;
-            return LZString._decompress(compressed.length, 16384, function (index) {
-                return compressed.charCodeAt(index) - 32;
-            });
-        };
-        //compress into uint8array (UCS-2 big endian format)
-        LZString.compressToUint8Array = function (uncompressed) {
-            var compressed = LZString.compress(uncompressed);
-            var buf = new Uint8Array(compressed.length * 2); // 2 bytes per character
-            for (var i = 0, TotalLen = compressed.length; i < TotalLen; i++) {
-                var current_value = compressed.charCodeAt(i);
-                buf[i * 2] = current_value >>> 8;
-                buf[i * 2 + 1] = current_value % 256;
-            }
-            return buf;
-        };
-        //decompress from uint8array (UCS-2 big endian format)
-        LZString.decompressFromUint8Array = function (compressed) {
-            if (compressed === null || compressed === undefined) {
-                return LZString.decompress(compressed);
-            }
-            else {
-                var buf = new Array(compressed.length / 2); // 2 bytes per character
-                for (var i = 0, TotalLen = buf.length; i < TotalLen; i++) {
-                    buf[i] = compressed.charCodeAt(i * 2) * 256 + compressed.charCodeAt(i * 2 + 1);
-                }
-                var result_1 = [];
-                buf.forEach(function (c) {
-                    result_1.push(String.fromCharCode(c));
-                });
-                return LZString.decompress(result_1.join(''));
-            }
-        };
-        //compress into a string that is already URI encoded
-        LZString.compressToEncodedURIComponent = function (input) {
-            if (input == null)
-                return "";
-            return LZString._compress(input, 6, function (a) {
-                return LZString.keyStrUriSafe.charAt(a);
-            });
-        };
-        //decompress from an output of compressToEncodedURIComponent
-        LZString.decompressFromEncodedURIComponent = function (input) {
-            if (input == null)
-                return "";
-            if (input == "")
-                return null;
-            input = input.replace(/ /g, "+");
-            return LZString._decompress(input.length, 32, function (index) {
-                return LZString.getBaseValue(LZString.keyStrUriSafe, input.charAt(index));
-            });
-        };
-        LZString.compress = function (uncompressed) {
-            return LZString._compress(uncompressed, 16, function (a) {
-                return String.fromCharCode(a);
-            });
-        };
-        LZString._compress = function (uncompressed, bitsPerChar, getCharFromInt) {
-            if (uncompressed == null)
-                return "";
-            var i, value, context_dictionary = {}, context_dictionaryToCreate = {}, context_c = "", context_wc = "", context_w = "", context_enlargeIn = 2, // Compensate for the first entry which should not count
-            context_dictSize = 3, context_numBits = 2, context_data = [], context_data_val = 0, context_data_position = 0, ii;
-            for (ii = 0; ii < uncompressed.length; ii += 1) {
-                context_c = uncompressed.charAt(ii);
-                if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
-                    context_dictionary[context_c] = context_dictSize++;
-                    context_dictionaryToCreate[context_c] = true;
-                }
-                context_wc = context_w + context_c;
-                if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
-                    context_w = context_wc;
-                }
-                else {
-                    if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
-                        if (context_w.charCodeAt(0) < 256) {
-                            for (i = 0; i < context_numBits; i++) {
-                                context_data_val = (context_data_val << 1);
-                                if (context_data_position == bitsPerChar - 1) {
-                                    context_data_position = 0;
-                                    context_data.push(getCharFromInt(context_data_val));
-                                    context_data_val = 0;
-                                }
-                                else {
-                                    context_data_position++;
-                                }
-                            }
-                            value = context_w.charCodeAt(0);
-                            for (i = 0; i < 8; i++) {
-                                context_data_val = (context_data_val << 1) | (value & 1);
-                                if (context_data_position == bitsPerChar - 1) {
-                                    context_data_position = 0;
-                                    context_data.push(getCharFromInt(context_data_val));
-                                    context_data_val = 0;
-                                }
-                                else {
-                                    context_data_position++;
-                                }
-                                value = value >> 1;
-                            }
-                        }
-                        else {
-                            value = 1;
-                            for (i = 0; i < context_numBits; i++) {
-                                context_data_val = (context_data_val << 1) | value;
-                                if (context_data_position == bitsPerChar - 1) {
-                                    context_data_position = 0;
-                                    context_data.push(getCharFromInt(context_data_val));
-                                    context_data_val = 0;
-                                }
-                                else {
-                                    context_data_position++;
-                                }
-                                value = 0;
-                            }
-                            value = context_w.charCodeAt(0);
-                            for (i = 0; i < 16; i++) {
-                                context_data_val = (context_data_val << 1) | (value & 1);
-                                if (context_data_position == bitsPerChar - 1) {
-                                    context_data_position = 0;
-                                    context_data.push(getCharFromInt(context_data_val));
-                                    context_data_val = 0;
-                                }
-                                else {
-                                    context_data_position++;
-                                }
-                                value = value >> 1;
-                            }
-                        }
-                        context_enlargeIn--;
-                        if (context_enlargeIn == 0) {
-                            context_enlargeIn = Math.pow(2, context_numBits);
-                            context_numBits++;
-                        }
-                        delete context_dictionaryToCreate[context_w];
-                    }
-                    else {
-                        value = context_dictionary[context_w];
-                        for (i = 0; i < context_numBits; i++) {
-                            context_data_val = (context_data_val << 1) | (value & 1);
-                            if (context_data_position == bitsPerChar - 1) {
-                                context_data_position = 0;
-                                context_data.push(getCharFromInt(context_data_val));
-                                context_data_val = 0;
-                            }
-                            else {
-                                context_data_position++;
-                            }
-                            value = value >> 1;
-                        }
-                    }
-                    context_enlargeIn--;
-                    if (context_enlargeIn == 0) {
-                        context_enlargeIn = Math.pow(2, context_numBits);
-                        context_numBits++;
-                    }
-                    // Add wc to the dictionary.
-                    context_dictionary[context_wc] = context_dictSize++;
-                    context_w = String(context_c);
-                }
-            }
-            // Output the code for w.
-            if (context_w !== "") {
-                if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate, context_w)) {
-                    if (context_w.charCodeAt(0) < 256) {
-                        for (i = 0; i < context_numBits; i++) {
-                            context_data_val = (context_data_val << 1);
-                            if (context_data_position == bitsPerChar - 1) {
-                                context_data_position = 0;
-                                context_data.push(getCharFromInt(context_data_val));
-                                context_data_val = 0;
-                            }
-                            else {
-                                context_data_position++;
-                            }
-                        }
-                        value = context_w.charCodeAt(0);
-                        for (i = 0; i < 8; i++) {
-                            context_data_val = (context_data_val << 1) | (value & 1);
-                            if (context_data_position == bitsPerChar - 1) {
-                                context_data_position = 0;
-                                context_data.push(getCharFromInt(context_data_val));
-                                context_data_val = 0;
-                            }
-                            else {
-                                context_data_position++;
-                            }
-                            value = value >> 1;
-                        }
-                    }
-                    else {
-                        value = 1;
-                        for (i = 0; i < context_numBits; i++) {
-                            context_data_val = (context_data_val << 1) | value;
-                            if (context_data_position == bitsPerChar - 1) {
-                                context_data_position = 0;
-                                context_data.push(getCharFromInt(context_data_val));
-                                context_data_val = 0;
-                            }
-                            else {
-                                context_data_position++;
-                            }
-                            value = 0;
-                        }
-                        value = context_w.charCodeAt(0);
-                        for (i = 0; i < 16; i++) {
-                            context_data_val = (context_data_val << 1) | (value & 1);
-                            if (context_data_position == bitsPerChar - 1) {
-                                context_data_position = 0;
-                                context_data.push(getCharFromInt(context_data_val));
-                                context_data_val = 0;
-                            }
-                            else {
-                                context_data_position++;
-                            }
-                            value = value >> 1;
-                        }
-                    }
-                    context_enlargeIn--;
-                    if (context_enlargeIn == 0) {
-                        context_enlargeIn = Math.pow(2, context_numBits);
-                        context_numBits++;
-                    }
-                    delete context_dictionaryToCreate[context_w];
-                }
-                else {
-                    value = context_dictionary[context_w];
-                    for (i = 0; i < context_numBits; i++) {
-                        context_data_val = (context_data_val << 1) | (value & 1);
-                        if (context_data_position == bitsPerChar - 1) {
-                            context_data_position = 0;
-                            context_data.push(getCharFromInt(context_data_val));
-                            context_data_val = 0;
-                        }
-                        else {
-                            context_data_position++;
-                        }
-                        value = value >> 1;
-                    }
-                }
-                context_enlargeIn--;
-                if (context_enlargeIn == 0) {
-                    context_enlargeIn = Math.pow(2, context_numBits);
-                    context_numBits++;
-                }
-            }
-            // Mark the end of the stream
-            value = 2;
-            for (i = 0; i < context_numBits; i++) {
-                context_data_val = (context_data_val << 1) | (value & 1);
-                if (context_data_position == bitsPerChar - 1) {
-                    context_data_position = 0;
-                    context_data.push(getCharFromInt(context_data_val));
-                    context_data_val = 0;
-                }
-                else {
-                    context_data_position++;
-                }
-                value = value >> 1;
-            }
-            // Flush the last char
-            while (true) {
-                context_data_val = (context_data_val << 1);
-                if (context_data_position == bitsPerChar - 1) {
-                    context_data.push(getCharFromInt(context_data_val));
-                    break;
-                }
-                else
-                    context_data_position++;
-            }
-            return context_data.join('');
-        };
-        LZString.decompress = function (compressed) {
-            if (compressed == null)
-                return "";
-            if (compressed == "")
-                return null;
-            return LZString._decompress(compressed.length, 32768, function (index) {
-                return compressed.charCodeAt(index);
-            });
-        };
-        LZString._decompress = function (length, resetValue, getNextValue) {
-            var dictionary = [], next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], i, w, bits, resb, maxpower, power, c, data = { val: getNextValue(0), position: resetValue, index: 1 };
-            for (i = 0; i < 3; i += 1) {
-                dictionary[i] = i;
-            }
-            bits = 0;
-            maxpower = Math.pow(2, 2);
-            power = 1;
-            while (power != maxpower) {
-                resb = data.val & data.position;
-                data.position >>= 1;
-                if (data.position == 0) {
-                    data.position = resetValue;
-                    data.val = getNextValue(data.index++);
-                }
-                bits |= (resb > 0 ? 1 : 0) * power;
-                power <<= 1;
-            }
-            switch (next = bits) {
-                case 0:
-                    bits = 0;
-                    maxpower = Math.pow(2, 8);
-                    power = 1;
-                    while (power != maxpower) {
-                        resb = data.val & data.position;
-                        data.position >>= 1;
-                        if (data.position == 0) {
-                            data.position = resetValue;
-                            data.val = getNextValue(data.index++);
-                        }
-                        bits |= (resb > 0 ? 1 : 0) * power;
-                        power <<= 1;
-                    }
-                    c = String.fromCharCode(bits);
-                    break;
-                case 1:
-                    bits = 0;
-                    maxpower = Math.pow(2, 16);
-                    power = 1;
-                    while (power != maxpower) {
-                        resb = data.val & data.position;
-                        data.position >>= 1;
-                        if (data.position == 0) {
-                            data.position = resetValue;
-                            data.val = getNextValue(data.index++);
-                        }
-                        bits |= (resb > 0 ? 1 : 0) * power;
-                        power <<= 1;
-                    }
-                    c = String.fromCharCode(bits);
-                    break;
-                case 2:
-                    return "";
-            }
-            dictionary[3] = c;
-            w = c;
-            result.push(c);
-            while (true) {
-                if (data.index > length) {
-                    return "";
-                }
-                bits = 0;
-                maxpower = Math.pow(2, numBits);
-                power = 1;
-                while (power != maxpower) {
-                    resb = data.val & data.position;
-                    data.position >>= 1;
-                    if (data.position == 0) {
-                        data.position = resetValue;
-                        data.val = getNextValue(data.index++);
-                    }
-                    bits |= (resb > 0 ? 1 : 0) * power;
-                    power <<= 1;
-                }
-                switch (c = bits) {
-                    case 0:
-                        bits = 0;
-                        maxpower = Math.pow(2, 8);
-                        power = 1;
-                        while (power != maxpower) {
-                            resb = data.val & data.position;
-                            data.position >>= 1;
-                            if (data.position == 0) {
-                                data.position = resetValue;
-                                data.val = getNextValue(data.index++);
-                            }
-                            bits |= (resb > 0 ? 1 : 0) * power;
-                            power <<= 1;
-                        }
-                        dictionary[dictSize++] = String.fromCharCode(bits);
-                        c = dictSize - 1;
-                        enlargeIn--;
-                        break;
-                    case 1:
-                        bits = 0;
-                        maxpower = Math.pow(2, 16);
-                        power = 1;
-                        while (power != maxpower) {
-                            resb = data.val & data.position;
-                            data.position >>= 1;
-                            if (data.position == 0) {
-                                data.position = resetValue;
-                                data.val = getNextValue(data.index++);
-                            }
-                            bits |= (resb > 0 ? 1 : 0) * power;
-                            power <<= 1;
-                        }
-                        dictionary[dictSize++] = String.fromCharCode(bits);
-                        c = dictSize - 1;
-                        enlargeIn--;
-                        break;
-                    case 2:
-                        return result.join('');
-                }
-                if (enlargeIn == 0) {
-                    enlargeIn = Math.pow(2, numBits);
-                    numBits++;
-                }
-                if (dictionary[c]) {
-                    entry = dictionary[c];
-                }
-                else {
-                    if (c === dictSize) {
-                        entry = w + w.charAt(0);
-                    }
-                    else {
-                        return null;
-                    }
-                }
-                result.push(entry);
-                // Add w+entry[0] to the dictionary.
-                dictionary[dictSize++] = w + entry.charAt(0);
-                enlargeIn--;
-                w = entry;
-                if (enlargeIn == 0) {
-                    enlargeIn = Math.pow(2, numBits);
-                    numBits++;
-                }
-            }
-        };
-        // private property
-        LZString.keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-        LZString.keyStrUriSafe = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$";
-        LZString.baseReverseDic = {};
-        return LZString;
-    }());
-    exports.LZString = LZString;
-});
-//# sourceMappingURL=LZString.js.map;
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -2386,8 +1922,7 @@ define('layers/LayerTextView',["require", "exports", "../Layer", "../MouseListen
             _this.texts = [];
             return _this;
         }
-        LayerTextView.prototype.load = function (map, data, folder) {
-            this.map = map;
+        LayerTextView.prototype.loadData = function (data) {
             this.texts = [];
             if (data.texts) {
                 for (var _i = 0, _a = data.texts; _i < _a.length; _i++) {
@@ -2450,7 +1985,7 @@ define('layers/LayerTextView',["require", "exports", "../Layer", "../MouseListen
                 return false;
             }
         };
-        LayerTextView.prototype.save = function (data) {
+        LayerTextView.prototype.saveData = function (data) {
             data.texts = [];
             for (var _i = 0, _a = this.texts; _i < _a.length; _i++) {
                 var text = _a[_i];
@@ -2502,9 +2037,8 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
             });
             return _this;
         }
-        LayerTextEdit.prototype.load = function (map, data, folder) {
+        LayerTextEdit.prototype.loadData = function (data) {
             this.layerView = this.canvas.findLayer(LayerTextView_1.LayerTextView.layerName);
-            this.map = map;
             this.finishEditing();
             Ui_1.Ui.setVisibility("panelTextSelected", false);
         };
@@ -2715,7 +2249,7 @@ define('util/GithubUtil',["require", "exports", "./NetUtil"], function (require,
     exports.GithubComment = GithubComment;
 });
 //# sourceMappingURL=GithubUtil.js.map;
-define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./util/LZString", "./layers/LayerTextEdit", "./layers/LayerTextView", "./util/GithubUtil"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LZString_1, LayerTextEdit_1, LayerTextView_1, GithubUtil_1) {
+define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/LayerImage", "./layers/LayerPolylineView", "./layers/LayerPolylineEdit", "./data/Data", "./util/Ui", "./layers/LayerTextEdit", "./layers/LayerTextView", "./util/GithubUtil"], function (require, exports, Canvas_1, NetUtil_1, LayerImage_1, LayerPolylineView_1, LayerPolylineEdit_1, Data_1, Ui_1, LayerTextEdit_1, LayerTextView_1, GithubUtil_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var canvas = new Canvas_1.Canvas(document.getElementById("container"), 'canvas2d');
@@ -2749,102 +2283,149 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
         layerTextEdit.deleteEditing();
         layerTextEdit.finishEditing();
     });
-    var currentMapString = null;
-    var issueLink = "";
-    function loadDataString(mapString, dataString) {
-        var decompressed = dataString ? LZString_1.LZString.decompressFromEncodedURIComponent(dataString) : null;
-        var data = decompressed ? JSON.parse(decompressed) : new Data_1.Data;
-        loadData(mapString, data);
-    }
-    function loadData(mapString, data) {
-        currentMapString = mapString;
-        NetUtil_1.NetUtil.get("data/" + mapString + "/content.json", function (mapDesc) {
-            var map = JSON.parse(mapDesc);
-            canvas.load(map, data, "data/" + mapString);
-            canvas.requestRender();
-            issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
-            Ui_1.Ui.bindButtonOnClick("buttonSave", function () {
-                var data = canvas.save();
-                data.title = document.getElementById("dataTitle").value;
-                var dataString = JSON.stringify(data);
-                Ui_1.Ui.bindValue("dataOutput", dataString, function (newValue) {
-                });
-                Ui_1.Ui.copyToClipboard("dataOutput");
-                if (issueLink) {
-                    window.open(issueLink, '_blank');
+    var App = /** @class */ (function () {
+        function App() {
+            this.currentMapString = null;
+            this.issueLink = "";
+            this.currentCommentId = 0;
+            this.dummyData = null;
+        }
+        App.prototype.start = function () {
+            var _this = this;
+            NetUtil_1.NetUtil.get("data/list.txt", function (text) {
+                var defaultMap = null;
+                var lines = [];
+                if (text && text.length) {
+                    lines = text.split("\n").filter(function (value) { return value.length > 0; }).map(function (value) { return value.trim(); });
+                    if (lines.length > 0) {
+                        defaultMap = lines[0];
+                    }
                 }
+                if (!defaultMap)
+                    defaultMap = "Fiji";
+                var url_string = window.location.href;
+                var url = new URL(url_string);
+                var mapString = url.searchParams.get("map") || defaultMap;
+                var commentIdString = url.searchParams.get("commentId") || "0";
+                _this.currentCommentId = parseInt(commentIdString);
+                Ui_1.Ui.bindSelect("mapSelect", lines, mapString, function (index, newMap) {
+                    _this.currentCommentId = 0;
+                    _this.loadMap(newMap);
+                    _this.replaceUrl();
+                });
+                _this.loadMap(mapString);
             });
-            Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+        };
+        App.prototype.loadMap = function (mapString) {
+            var _this = this;
+            this.currentMapString = mapString;
+            NetUtil_1.NetUtil.get("data/" + mapString + "/content.json", function (mapDesc) {
+                var map = JSON.parse(mapDesc);
+                canvas.loadMap(map);
+                canvas.requestRender();
+                _this.issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
+                Ui_1.Ui.bindButtonOnClick("buttonSave", function () {
+                    layerTextEdit.finishEditing();
+                    layerPolylineEdit.finishEditing();
+                    var data = canvas.save();
+                    data.title = document.getElementById("dataTitle").value;
+                    if (data.title == null || data.title == "") {
+                        data.title = "untitled";
+                    }
+                    var dataString = JSON.stringify(data);
+                    Ui_1.Ui.bindValue("dataOutput", dataString, function (newValue) {
+                    });
+                    Ui_1.Ui.copyToClipboard("dataOutput");
+                    Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+                    });
+                    if (_this.issueLink) {
+                        window.open(_this.issueLink, '_blank');
+                    }
+                });
+                Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+                });
+                Ui_1.Ui.bindValue("dataTitle", "", function (newValue) {
+                });
+                Ui_1.Ui.bindSelect("dataSelect", [], null, function (index) {
+                });
+                _this.dummyData = new Data_1.Data();
+                _this.dummyData.title = "";
+                canvas.loadData(_this.dummyData);
+                Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+                });
+                _this.loadGithubComment(mapString, map, _this.currentCommentId);
+                Ui_1.Ui.bindButtonOnClick("buttonRefreshData", function () {
+                    _this.loadGithubComment(mapString, map, _this.currentCommentId);
+                });
             });
-            Ui_1.Ui.bindValue("dataTitle", data.title || "", function (newValue) {
-            });
-            Ui_1.Ui.bindSelect("dataSelect", [], null, function (index) {
-            });
+        };
+        App.prototype.loadGithubComment = function (mapString, map, commentId) {
+            var _this = this;
             if (map.githubRepo && map.githubIssueId) {
                 GithubUtil_1.Github.getComments(map.githubRepo, map.githubIssueId, function (comments) {
                     var list = [];
                     var entries = [];
                     var items = [];
                     list.push(null);
-                    entries.push(data);
-                    items.push("current");
+                    entries.push(_this.dummyData);
+                    items.push("(empty)");
+                    var startIndex = 0;
+                    var startData = _this.dummyData;
+                    var startCommentId = 0;
                     for (var _i = 0, comments_1 = comments; _i < comments_1.length; _i++) {
                         var comment = comments_1[_i];
                         try {
-                            var data_1 = JSON.parse(comment.body);
-                            if (data_1.polylines != null && data_1.texts != null) {
-                                if (data_1.title == null || data_1.title == "") {
-                                    data_1.title = "untitled";
+                            var data = JSON.parse(comment.body);
+                            if (data.polylines != null && data.texts != null) {
+                                if (data.title == null || data.title == "") {
+                                    data.title = "untitled";
                                 }
                                 list.push(comment);
-                                entries.push(data_1);
-                                items.push(data_1.title + " @" + comment.user.login);
+                                entries.push(data);
+                                items.push(data.title + " @" + comment.user.login);
+                                if (commentId == comment.id) {
+                                    startIndex = list.length - 1;
+                                    startData = data;
+                                    startCommentId = comment.id;
+                                }
                             }
                         }
                         catch (e) {
                         }
                     }
-                    if (entries.length > 1) {
-                        if (currentMapString == mapString) {
-                            Ui_1.Ui.bindSelect("dataSelect", items, items[0], function (index) {
-                                var comment = list[index];
-                                var data = entries[index];
-                                Ui_1.Ui.bindValue("dataTitle", data.title, function (newValue) {
-                                });
-                                if (comment) {
-                                    issueLink = GithubUtil_1.Github.getCommentLink(map.githubRepo, map.githubIssueId, comment.id);
-                                }
-                                else {
-                                    issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
-                                }
-                                canvas.load(map, data, "data/" + mapString);
-                                canvas.requestRender();
-                            });
-                        }
-                    }
+                    Ui_1.Ui.bindSelect("dataSelect", items, items[startIndex], function (index) {
+                        var comment = list[index];
+                        var data = entries[index];
+                        _this.loadData(map, data, comment ? comment.id : 0);
+                    });
+                    _this.loadData(map, startData, startCommentId);
                 });
             }
-        });
-    }
-    NetUtil_1.NetUtil.get("data/list.txt", function (text) {
-        var defaultMap = null;
-        var lines = [];
-        if (text && text.length) {
-            lines = text.split("\n").filter(function (value) { return value.length > 0; }).map(function (value) { return value.trim(); });
-            if (lines.length > 0) {
-                defaultMap = lines[0];
+        };
+        App.prototype.loadData = function (map, data, commentId) {
+            Ui_1.Ui.bindValue("dataTitle", data.title, function (newValue) {
+            });
+            this.currentCommentId = commentId;
+            if (commentId > 0) {
+                this.issueLink = GithubUtil_1.Github.getCommentLink(map.githubRepo, map.githubIssueId, commentId);
             }
-        }
-        if (!defaultMap)
-            defaultMap = "Fiji";
-        var url_string = window.location.href;
-        var url = new URL(url_string);
-        var mapString = url.searchParams.get("map") || defaultMap;
-        var dataString = url.searchParams.get("data");
-        Ui_1.Ui.bindSelect("mapSelect", lines, mapString, function (index, newMap) {
-            loadDataString(newMap, null);
-        });
-        loadDataString(mapString, dataString);
-    });
+            else {
+                this.issueLink = GithubUtil_1.Github.getIssueLink(map.githubRepo, map.githubIssueId);
+            }
+            Ui_1.Ui.bindValue("dataOutput", "", function (newValue) {
+            });
+            canvas.loadData(data);
+            this.replaceUrl();
+            canvas.requestRender();
+        };
+        App.prototype.replaceUrl = function () {
+            var url = location.pathname + '?map=' + this.currentMapString;
+            if (this.currentCommentId > 0)
+                url += '&commentId=' + this.currentCommentId;
+            history.replaceState(null, "", url);
+        };
+        return App;
+    }());
+    new App().start();
 });
 //# sourceMappingURL=App.js.map;

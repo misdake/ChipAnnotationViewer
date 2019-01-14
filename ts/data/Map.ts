@@ -8,6 +8,7 @@ export class Map {
     githubRepo: string;
     githubIssueId: number;
 
+    name: string;
     tileSize: number;
     width: number;
     height: number;

@@ -28,11 +28,15 @@ export class Layer {
         this.camera = canvas.getCamera();
     }
 
-    public load(map: Map, data: Data, folder: string): void {
+    public loadMap(map: Map): void {
 
     }
 
-    public save(data: Data): void {
+    public loadData(data: Data): void {
+
+    }
+
+    public saveData(data: Data): void {
 
     }
 

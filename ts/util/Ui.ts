@@ -6,6 +6,7 @@ export class Ui {
         let input = document.getElementById(inputId) as HTMLInputElement;
         input.select();
         document.execCommand("Copy");
+        input.blur();
     }
 
     static setContent(id: string, content: string) {

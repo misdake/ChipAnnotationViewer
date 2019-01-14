@@ -10,16 +10,13 @@ import {Selection} from "./Selection";
 export class LayerTextView extends Layer {
     public static readonly layerName = "text view";
 
-    private map: Map;
     private texts: DrawableText[] = [];
 
     public constructor(canvas: Canvas) {
         super(LayerTextView.layerName, canvas);
     }
 
-    public load(map: Map, data: Data, folder: string): void {
-        this.map = map;
-
+    public loadData(data: Data): void {
         this.texts = [];
 
         if (data.texts) {
@@ -76,7 +73,7 @@ export class LayerTextView extends Layer {
         }
     }
 
-    public save(data: Data): void {
+    public saveData(data: Data): void {
         data.texts = [];
         for (const text of this.texts) {
             data.texts.push(text.pack());

@@ -2,6 +2,13 @@ import {AlphaEntry, ColorEntry} from "./Color";
 
 export class Ui {
 
+    static copyToClipboard(inputId: string) {
+        let input = document.getElementById(inputId) as HTMLInputElement;
+        input.select();
+        document.execCommand("Copy");
+        input.blur();
+    }
+
     static setContent(id: string, content: string) {
         let element = document.getElementById(id);
         element.innerHTML = content;
@@ -25,7 +32,7 @@ export class Ui {
         };
     }
 
-    static bindSelect(id: string, options: string[], initialValue: string, onchange: (newValue: string) => void) {
+    static bindSelect(id: string, options: string[], initialValue: string, onchange: (index:number, newValue: string) => void) {
         let select = <HTMLSelectElement>document.getElementById(id);
         select.options.length = 0;
         for (let map of options) {
@@ -37,7 +44,7 @@ export class Ui {
             select.options[index].selected = true;
         }
         select.onchange = ev => {
-            onchange(select.options[select.selectedIndex].value);
+            onchange(select.selectedIndex, select.options[select.selectedIndex].value);
         };
     }
 

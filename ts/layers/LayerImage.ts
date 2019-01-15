@@ -5,7 +5,6 @@ import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawableImage} from "../drawable/DrawableImage";
 import {MouseListener} from "../MouseListener";
-import {Data} from "../data/Data";
 
 export class LayerImage extends Layer {
     private map: Map;
@@ -16,10 +15,10 @@ export class LayerImage extends Layer {
         super("image", canvas);
     }
 
-    public load(map: Map, data: Data, folder: string): void {
+    public loadMap(map: Map): void {
         this.map = map;
         this.maxLevel = map.maxLevel;
-        this.baseFolder = folder;
+        this.baseFolder = "data/" + this.map.name;
         this.currentZoom = -1;
 
         let self = this;

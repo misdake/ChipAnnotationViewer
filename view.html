@@ -19,14 +19,22 @@
     }
 </script>
 
-<select id="mapSelect">
-
-</select>
+<div id="selectPanel">
+    <select id="mapSelect"></select>
+    <select id="dataSelect"></select>
+    <button id="buttonRefreshData" class="configButton">refresh</button>
+</div>
 
 <div id="panel">
 
-    <button id="buttonSave" class="configButton">save to url</button><br>
+    <label for="dataTitle">title</label>
+    <input class="configText" id="dataTitle" style="width:10em">
+    <br>
 
+    <button id="buttonSave" class="configButton" title="click export button to copy annotation data. comment in opened issue page and refresh.">export and copy</button>
+    <input class="configText" id="dataOutput" style="width:1em">
+
+    <br>
     <br>
 
     <button id="buttonNewPolyline" class="configButton">new polyline</button><br>

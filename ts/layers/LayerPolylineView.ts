@@ -10,16 +10,13 @@ import {Selection} from "./Selection";
 export class LayerPolylineView extends Layer {
     public static readonly layerName = "polyline view";
 
-    private map: Map;
     private polylines: DrawablePolyline[] = [];
 
     public constructor(canvas: Canvas) {
         super(LayerPolylineView.layerName, canvas);
     }
 
-    public load(map: Map, data: Data, folder: string): void {
-        this.map = map;
-
+    public loadData(data: Data): void {
         this.polylines = [];
 
         if (data.polylines) {
@@ -82,7 +79,7 @@ export class LayerPolylineView extends Layer {
         return this.polylines.indexOf(polyline) >= 0;
     }
 
-    public save(data: Data): void {
+    public saveData(data: Data): void {
         data.polylines = [];
         for (const polyline of this.polylines) {
             data.polylines.push(polyline.pack());

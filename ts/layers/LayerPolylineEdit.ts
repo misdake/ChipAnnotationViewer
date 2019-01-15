@@ -46,9 +46,12 @@ export class LayerPolylineEdit extends Layer {
         });
     }
 
-    public load(map: Map, data: Data, folder: string): void {
-        this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
+    public loadMap(map: Map): void {
         this.map = map;
+    }
+
+    public loadData(data: Data): void {
+        this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
         this.polylineNew = null;
         this.polylineEdit = null;
         this.finishEditing();

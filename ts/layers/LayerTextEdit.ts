@@ -21,7 +21,6 @@ export class LayerTextEdit extends Layer {
     private static readonly HINT_EDIT_TEXT =
         "1. hold alt to drag<br>";
 
-    private map: Map;
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
 
@@ -35,9 +34,8 @@ export class LayerTextEdit extends Layer {
         });
     }
 
-    public load(map: Map, data: Data, folder: string): void {
+    public loadData(data: Data): void {
         this.layerView = this.canvas.findLayer(LayerTextView.layerName) as LayerTextView;
-        this.map = map;
         this.finishEditing();
         Ui.setVisibility("panelTextSelected", false);
     }
@@ -192,7 +190,7 @@ export class LayerTextEdit extends Layer {
 
             this.canvas.requestRender();
         });
-        
+
         Ui.bindValue("textTextContent", text.text, newValue => {
             text.text = newValue;
             this.canvas.requestRender();

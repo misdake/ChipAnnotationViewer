@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "amd",
     "moduleResolution": "node",
-    "target": "es5",
+    "target": "es2015",
     "rootDir": "ts",
     "outDir": "js",
     "sourceMap": true,

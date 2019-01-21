@@ -1,5 +1,4 @@
 import {Layer} from "../Layer";
-import {Map} from "../data/Map";
 import {DrawableText, DrawableTextPack} from "../drawable/DrawableText";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
@@ -19,7 +18,8 @@ export class LayerTextEdit extends Layer {
     private static readonly HINT_NEW_TEXT =
         "1. left click to create text<br>";
     private static readonly HINT_EDIT_TEXT =
-        "1. hold alt to drag<br>";
+        "1. hold alt to drag<br>" +
+        "2. hold ctrl+alt to copy and drag <br>";
 
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
@@ -111,6 +111,10 @@ export class LayerTextEdit extends Layer {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pick && event.altKey) { //start dragging
+                        if (event.ctrlKey) {
+                            let copied = new DrawableText(text.clone(0, 0));
+                            self.layerView.addText(copied);
+                        }
                         this.drag = true;
                         this.dragX = position.x - text.x;
                         this.dragY = position.y - text.y;

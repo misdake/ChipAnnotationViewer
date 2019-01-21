@@ -1405,6 +1405,10 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         }
                         let shape = polyline.pickShape(position.x, position.y);
                         if (!point && shape && event.altKey) {
+                            if (event.ctrlKey) {
+                                let copied = new DrawablePolyline_1.DrawablePolyline(polyline.clone(0, 0));
+                                self.layerView.addPolyline(copied);
+                            }
                             this.dragShape = true;
                             this.dragShapeX = position.x;
                             this.dragShapeY = position.y;
@@ -1657,8 +1661,9 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
     LayerPolylineEdit.HINT_EDIT_POLYLINE = "1. hold left button to drag points<br>" +
         "2. hold ctrl to help with horizontal/vertical line<br>" +
         "3. hold alt to drag polyline<br>" +
-        "4. double click on line to create point<br>" +
-        "5. right-click / double left-click point to delete it<br>";
+        "4. hold ctrl+alt to copy and drag polyline<br>" +
+        "5. double click on line to create point<br>" +
+        "6. right-click / double left-click point to delete it<br>";
     LayerPolylineEdit.MAG_RADIUS = 10;
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
@@ -1898,6 +1903,10 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
                         if (pick && event.altKey) { //start dragging
+                            if (event.ctrlKey) {
+                                let copied = new DrawableText_1.DrawableText(text.clone(0, 0));
+                                self.layerView.addText(copied);
+                            }
                             this.drag = true;
                             this.dragX = position.x - text.x;
                             this.dragY = position.y - text.y;
@@ -1991,7 +2000,8 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
     LayerTextEdit.layerName = "text edit";
     LayerTextEdit.HINT_ELEMENT_ID = "textHint";
     LayerTextEdit.HINT_NEW_TEXT = "1. left click to create text<br>";
-    LayerTextEdit.HINT_EDIT_TEXT = "1. hold alt to drag<br>";
+    LayerTextEdit.HINT_EDIT_TEXT = "1. hold alt to drag<br>" +
+        "2. hold ctrl+alt to copy and drag <br>";
     exports.LayerTextEdit = LayerTextEdit;
 });
 //# sourceMappingURL=LayerTextEdit.js.map;

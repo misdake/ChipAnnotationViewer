@@ -26,8 +26,9 @@ export class LayerPolylineEdit extends Layer {
         "1. hold left button to drag points<br>" +
         "2. hold ctrl to help with horizontal/vertical line<br>" +
         "3. hold alt to drag polyline<br>" +
-        "4. double click on line to create point<br>" +
-        "5. right-click / double left-click point to delete it<br>";
+        "4. hold ctrl+alt to copy and drag polyline<br>" +
+        "5. double click on line to create point<br>" +
+        "6. right-click / double left-click point to delete it<br>";
 
     private static readonly MAG_RADIUS = 10;
 
@@ -178,6 +179,10 @@ export class LayerPolylineEdit extends Layer {
 
                     let shape = polyline.pickShape(position.x, position.y);
                     if (!point && shape && event.altKey) {
+                        if (event.ctrlKey) {
+                            let copied = new DrawablePolyline(polyline.clone(0, 0));
+                            self.layerView.addPolyline(copied);
+                        }
                         this.dragShape = true;
                         this.dragShapeX = position.x;
                         this.dragShapeY = position.y;

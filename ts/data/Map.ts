@@ -5,6 +5,7 @@ export class TileLevel {
 }
 
 export class Map {
+    source:string;
     githubRepo: string;
     githubIssueId: number;
 

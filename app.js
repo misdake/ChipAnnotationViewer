@@ -617,7 +617,175 @@ define('MouseListener',["require", "exports"], function (require, exports) {
     exports.MouseListener = MouseListener;
 });
 //# sourceMappingURL=MouseListener.js.map;
-define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/DrawableImage", "../MouseListener"], function (require, exports, Layer_1, DrawableImage_1, MouseListener_1) {
+define('util/Color',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class ColorEntry {
+        constructor(name, r, g, b) {
+            this.name = name;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+        static findByName(name) {
+            for (const colorValue of this.list) {
+                if (name == colorValue.name) {
+                    return colorValue;
+                }
+            }
+            return this.list[0];
+        }
+    }
+    ColorEntry.list = [
+        new ColorEntry("red", 255, 0, 0),
+        new ColorEntry("green", 0, 255, 0),
+        new ColorEntry("blue", 0, 0, 255),
+        new ColorEntry("cyan", 0, 255, 255),
+        new ColorEntry("purple", 255, 0, 255),
+        new ColorEntry("yellow", 255, 255, 0),
+        new ColorEntry("gray", 127, 127, 127),
+        new ColorEntry("white", 255, 255, 255),
+    ];
+    exports.ColorEntry = ColorEntry;
+    class AlphaEntry {
+        constructor(name, buttonColor, value) {
+            this.name = name;
+            this.buttonColor = buttonColor;
+            this.value = value;
+        }
+        static findByName(name) {
+            for (const alphaValue of this.list) {
+                if (name == alphaValue.name) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        }
+        static findByValue(value) {
+            for (const alphaValue of this.list) {
+                if (value == alphaValue.value) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        }
+    }
+    AlphaEntry.list = [
+        new AlphaEntry("25", "rgb(191,191,191)", 0.25),
+        new AlphaEntry("50", "rgb(127,127,127)", 0.50),
+        new AlphaEntry("75", "rgb(63,63,63)", 0.75),
+        new AlphaEntry("100", "rgb(0,0,0)", 1.00),
+    ];
+    exports.AlphaEntry = AlphaEntry;
+    function combineColorAlpha(color, alpha) {
+        return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
+    }
+    exports.combineColorAlpha = combineColorAlpha;
+});
+//# sourceMappingURL=Color.js.map;
+define('util/Ui',["require", "exports", "./Color"], function (require, exports, Color_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Ui {
+        static copyToClipboard(inputId) {
+            let input = document.getElementById(inputId);
+            input.select();
+            document.execCommand("Copy");
+            input.blur();
+        }
+        static setContent(id, content) {
+            let element = document.getElementById(id);
+            element.innerHTML = content;
+        }
+        static bindButtonOnClick(id, onclick) {
+            let button = document.getElementById(id);
+            button.onclick = onclick;
+        }
+        static setVisibility(id, visible) {
+            let element = document.getElementById(id);
+            element.style.display = visible ? "block" : "none";
+        }
+        static bindCheckbox(id, initialValue, onchange) {
+            let checkbox = document.getElementById(id);
+            checkbox.checked = initialValue;
+            checkbox.onchange = ev => {
+                onchange(checkbox.checked);
+            };
+        }
+        static bindSelect(id, options, initialValue, onchange) {
+            let select = document.getElementById(id);
+            select.options.length = 0;
+            for (let map of options) {
+                select.add(new Option(map, map));
+            }
+            let index = options.indexOf(initialValue);
+            if (index > 0) {
+                select.options[index].selected = true;
+            }
+            select.onchange = ev => {
+                onchange(select.selectedIndex, select.options[select.selectedIndex].value);
+            };
+        }
+        static bindValue(id, initialValue, onchange) {
+            let element = document.getElementById(id);
+            element.value = initialValue;
+            element.oninput = element.onchange = ev => {
+                onchange(element.value);
+            };
+        }
+        static bindColor(colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
+            let colorContainer = document.getElementById(colorContainerId);
+            let alphaContainer = document.getElementById(alphaContainerId);
+            colorContainer.innerHTML = "";
+            alphaContainer.innerHTML = "";
+            let thisColor = initialColor;
+            let thisAlpha = initialAlpha;
+            for (const colorValue of Color_1.ColorEntry.list) {
+                let id = colorContainerId + "_" + colorValue.name;
+                let style = "background:" + colorValue.name;
+                colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
+            }
+            for (const alphaValue of Color_1.AlphaEntry.list) {
+                let id = alphaContainerId + "_" + alphaValue.name;
+                let style = "background:" + alphaValue.buttonColor;
+                alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
+            }
+            for (const colorValue of Color_1.ColorEntry.list) {
+                let id = colorContainerId + "_" + colorValue.name;
+                let button = document.getElementById(id);
+                button.onclick = ev => {
+                    thisColor = colorValue;
+                    onchange(thisColor, thisAlpha);
+                };
+            }
+            for (const alphaValue of Color_1.AlphaEntry.list) {
+                let id = alphaContainerId + "_" + alphaValue.name;
+                let button = document.getElementById(id);
+                button.onclick = ev => {
+                    thisAlpha = alphaValue;
+                    onchange(thisColor, thisAlpha);
+                };
+            }
+        }
+        static bindNumber(id, initialValue, onchange) {
+            let input = document.getElementById(id);
+            input.value = initialValue.toString();
+            input.oninput = input.onchange = ev => {
+                let result = parseFloat(input.value);
+                if (result >= 0) {
+                    onchange(result);
+                }
+                else {
+                    input.value = "0";
+                    onchange(0);
+                }
+            };
+        }
+    }
+    exports.Ui = Ui;
+});
+//# sourceMappingURL=Ui.js.map;
+define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/DrawableImage", "../MouseListener", "../util/Ui"], function (require, exports, Layer_1, DrawableImage_1, MouseListener_1, Ui_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class LayerImage extends Layer_1.Layer {
@@ -629,6 +797,12 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
             this.maxLevel = map.maxLevel;
             this.baseFolder = "data/" + this.map.name;
             this.currentZoom = -1;
+            let imageSource = document.getElementById("imageSource");
+            Ui_1.Ui.setVisibility("imageSource", !!map.source);
+            if (map.source) {
+                imageSource.href = map.source;
+                imageSource.innerHTML = map.source;
+            }
             let self = this;
             this._mouseListener = new class extends MouseListener_1.MouseListener {
                 constructor() {
@@ -716,72 +890,6 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
     exports.LayerImage = LayerImage;
 });
 //# sourceMappingURL=LayerImage.js.map;
-define('util/Color',["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    class ColorEntry {
-        constructor(name, r, g, b) {
-            this.name = name;
-            this.r = r;
-            this.g = g;
-            this.b = b;
-        }
-        static findByName(name) {
-            for (const colorValue of this.list) {
-                if (name == colorValue.name) {
-                    return colorValue;
-                }
-            }
-            return this.list[0];
-        }
-    }
-    ColorEntry.list = [
-        new ColorEntry("red", 255, 0, 0),
-        new ColorEntry("green", 0, 255, 0),
-        new ColorEntry("blue", 0, 0, 255),
-        new ColorEntry("cyan", 0, 255, 255),
-        new ColorEntry("purple", 255, 0, 255),
-        new ColorEntry("yellow", 255, 255, 0),
-        new ColorEntry("gray", 127, 127, 127),
-        new ColorEntry("white", 255, 255, 255),
-    ];
-    exports.ColorEntry = ColorEntry;
-    class AlphaEntry {
-        constructor(name, buttonColor, value) {
-            this.name = name;
-            this.buttonColor = buttonColor;
-            this.value = value;
-        }
-        static findByName(name) {
-            for (const alphaValue of this.list) {
-                if (name == alphaValue.name) {
-                    return alphaValue;
-                }
-            }
-            return this.list[0];
-        }
-        static findByValue(value) {
-            for (const alphaValue of this.list) {
-                if (value == alphaValue.value) {
-                    return alphaValue;
-                }
-            }
-            return this.list[0];
-        }
-    }
-    AlphaEntry.list = [
-        new AlphaEntry("25", "rgb(191,191,191)", 0.25),
-        new AlphaEntry("50", "rgb(127,127,127)", 0.50),
-        new AlphaEntry("75", "rgb(63,63,63)", 0.75),
-        new AlphaEntry("100", "rgb(0,0,0)", 1.00),
-    ];
-    exports.AlphaEntry = AlphaEntry;
-    function combineColorAlpha(color, alpha) {
-        return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
-    }
-    exports.combineColorAlpha = combineColorAlpha;
-});
-//# sourceMappingURL=Color.js.map;
 define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util/Color"], function (require, exports, Drawable_1, Color_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -1163,108 +1271,6 @@ define('util/Size',["require", "exports"], function (require, exports) {
     exports.Size = Size;
 });
 //# sourceMappingURL=Size.js.map;
-define('util/Ui',["require", "exports", "./Color"], function (require, exports, Color_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    class Ui {
-        static copyToClipboard(inputId) {
-            let input = document.getElementById(inputId);
-            input.select();
-            document.execCommand("Copy");
-            input.blur();
-        }
-        static setContent(id, content) {
-            let element = document.getElementById(id);
-            element.innerHTML = content;
-        }
-        static bindButtonOnClick(id, onclick) {
-            let button = document.getElementById(id);
-            button.onclick = onclick;
-        }
-        static setVisibility(id, visible) {
-            let element = document.getElementById(id);
-            element.style.display = visible ? "block" : "none";
-        }
-        static bindCheckbox(id, initialValue, onchange) {
-            let checkbox = document.getElementById(id);
-            checkbox.checked = initialValue;
-            checkbox.onchange = ev => {
-                onchange(checkbox.checked);
-            };
-        }
-        static bindSelect(id, options, initialValue, onchange) {
-            let select = document.getElementById(id);
-            select.options.length = 0;
-            for (let map of options) {
-                select.add(new Option(map, map));
-            }
-            let index = options.indexOf(initialValue);
-            if (index > 0) {
-                select.options[index].selected = true;
-            }
-            select.onchange = ev => {
-                onchange(select.selectedIndex, select.options[select.selectedIndex].value);
-            };
-        }
-        static bindValue(id, initialValue, onchange) {
-            let element = document.getElementById(id);
-            element.value = initialValue;
-            element.oninput = element.onchange = ev => {
-                onchange(element.value);
-            };
-        }
-        static bindColor(colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
-            let colorContainer = document.getElementById(colorContainerId);
-            let alphaContainer = document.getElementById(alphaContainerId);
-            colorContainer.innerHTML = "";
-            alphaContainer.innerHTML = "";
-            let thisColor = initialColor;
-            let thisAlpha = initialAlpha;
-            for (const colorValue of Color_1.ColorEntry.list) {
-                let id = colorContainerId + "_" + colorValue.name;
-                let style = "background:" + colorValue.name;
-                colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
-            }
-            for (const alphaValue of Color_1.AlphaEntry.list) {
-                let id = alphaContainerId + "_" + alphaValue.name;
-                let style = "background:" + alphaValue.buttonColor;
-                alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
-            }
-            for (const colorValue of Color_1.ColorEntry.list) {
-                let id = colorContainerId + "_" + colorValue.name;
-                let button = document.getElementById(id);
-                button.onclick = ev => {
-                    thisColor = colorValue;
-                    onchange(thisColor, thisAlpha);
-                };
-            }
-            for (const alphaValue of Color_1.AlphaEntry.list) {
-                let id = alphaContainerId + "_" + alphaValue.name;
-                let button = document.getElementById(id);
-                button.onclick = ev => {
-                    thisAlpha = alphaValue;
-                    onchange(thisColor, thisAlpha);
-                };
-            }
-        }
-        static bindNumber(id, initialValue, onchange) {
-            let input = document.getElementById(id);
-            input.value = initialValue.toString();
-            input.oninput = input.onchange = ev => {
-                let result = parseFloat(input.value);
-                if (result >= 0) {
-                    onchange(result);
-                }
-                else {
-                    input.value = "0";
-                    onchange(0);
-                }
-            };
-        }
-    }
-    exports.Ui = Ui;
-});
-//# sourceMappingURL=Ui.js.map;
 define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawable/DrawablePolyline", "../util/Size", "../MouseListener", "./LayerPolylineView", "../util/Ui", "../util/Color", "./Selection"], function (require, exports, Layer_1, DrawablePolyline_1, Size_1, MouseListener_1, LayerPolylineView_1, Ui_1, Color_1, Selection_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });

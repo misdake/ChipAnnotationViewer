@@ -5,6 +5,7 @@ import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawableImage} from "../drawable/DrawableImage";
 import {MouseListener} from "../MouseListener";
+import {Ui} from "../util/Ui";
 
 export class LayerImage extends Layer {
     private map: Map;
@@ -20,6 +21,13 @@ export class LayerImage extends Layer {
         this.maxLevel = map.maxLevel;
         this.baseFolder = "data/" + this.map.name;
         this.currentZoom = -1;
+
+        let imageSource = document.getElementById("imageSource") as HTMLLinkElement;
+        Ui.setVisibility("imageSource", !!map.source);
+        if (map.source) {
+            imageSource.href = map.source;
+            imageSource.innerHTML = map.source;
+        }
 
         let self = this;
         this._mouseListener = new class extends MouseListener {

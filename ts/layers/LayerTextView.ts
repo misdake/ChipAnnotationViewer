@@ -1,6 +1,5 @@
 import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {MouseListener} from "../MouseListener";
 import {DrawableText} from "../drawable/DrawableText";
@@ -37,12 +36,14 @@ export class LayerTextView extends Layer {
                 if (event.button == 0 && !this.moved) {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
+                    let selected: DrawableText = null;
                     for (let text of self.texts) {
                         let pick = text.pick(x, y, self.camera.screenSizeToCanvas(5));
-                        if (pick) {
-                            Selection.select(DrawableText.typeName, text);
-                            return true;
-                        }
+                        if (pick) selected = text;
+                    }
+                    if (selected) {
+                        Selection.select(DrawableText.typeName, selected);
+                        return true;
                     }
                     Selection.deselect(DrawableText.typeName);
                     return false;

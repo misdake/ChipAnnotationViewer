@@ -1,6 +1,5 @@
 import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {MouseListener} from "../MouseListener";
@@ -38,14 +37,18 @@ export class LayerPolylineView extends Layer {
                     let radius = self.camera.screenSizeToCanvas(5);
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
+                    let selected: DrawablePolyline = null;
                     for (let polyline of self.polylines) {
                         let pickPoint = polyline.pickPoint(x, y, radius);
                         let pickLine = polyline.pickLine(x, y, radius);
                         let pickShape = polyline.pickShape(x, y);
                         if (pickPoint || pickLine || pickShape) {
-                            Selection.select(DrawablePolyline.typeName, polyline);
-                            return true;
+                            selected = polyline;
                         }
+                    }
+                    if (selected) {
+                        Selection.select(DrawablePolyline.typeName, selected);
+                        return true;
                     }
                     Selection.deselect(DrawablePolyline.typeName);
                     return false;

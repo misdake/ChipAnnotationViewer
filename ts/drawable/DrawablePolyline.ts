@@ -4,6 +4,7 @@ import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
+import {AABB} from "../util/AABB";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -59,7 +60,7 @@ export class DrawablePolylinePack {
 
 export class DrawablePolylinePicker {
     private polyline: DrawablePolyline;
-    private points: Point[];
+    private readonly points: Point[];
     public constructor(polyline: DrawablePolyline, points: Point[]) {
         this.polyline = polyline;
         this.points = points;
@@ -139,7 +140,7 @@ export class DrawablePolylineEditor {
     public forEachPoint(func: ((x: number, y: number, index: number) => void)) {
         this.points.forEach((point, index) => {
             func(point.x, point.y, index);
-        })
+        });
     }
 
     public pointCount(): number {
@@ -152,16 +153,19 @@ export class DrawablePolylineEditor {
     }
     public addPoint(x: number, y: number) {
         this.points.push(new Point(x, y));
+        this.polyline.invalidate();
     }
     public insertPoint(x: number, y: number, beforeIndex: number = -1) {
         let points = this.points;
         beforeIndex = (beforeIndex + points.length) % points.length;
         points.splice(beforeIndex, 0, new Point(x, y));
+        this.polyline.invalidate();
     }
     public removePoint(index: number) {
         let points = this.points;
         index = (index + points.length) % points.length;
         points.splice(index, 1);
+        this.polyline.invalidate();
     }
     public setPoint(index: number, x: number, y: number) {
         let points = this.points;
@@ -169,12 +173,14 @@ export class DrawablePolylineEditor {
         let point = points[index];
         point.x = x;
         point.y = y;
+        this.polyline.invalidate();
     }
     public move(offsetX: number, offsetY: number) {
         for (const point of this.points) {
             point.x += offsetX;
             point.y += offsetY;
         }
+        this.polyline.invalidate();
     }
     public flipX() {
         let minX = Math.min();
@@ -245,7 +251,8 @@ export class DrawablePolylineCalculator {
         return new Point(x, y);
     }
 
-    public aabb(): Point[] {
+    public aabb(aabb: AABB = new AABB()): AABB {
+        if (!aabb) aabb = new AABB();
         let minX = Math.min(), maxX = Math.max();
         let minY = Math.min(), maxY = Math.max();
         for (const point of this.points) {
@@ -254,11 +261,12 @@ export class DrawablePolylineCalculator {
             minY = Math.min(minY, point.y);
             maxY = Math.max(maxY, point.y);
         }
-        return [new Point(minX, minY), new Point(maxX, maxY)];
+        aabb.set(minX, minY, maxX, maxY);
+        return aabb;
     }
     public aabbCenter(): Point {
         let aabb = this.aabb();
-        let center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
+        let center = new Point((aabb.x1 + aabb.x2) / 2, (aabb.y1 + aabb.y2) / 2);
         return center;
     }
 
@@ -460,10 +468,25 @@ export class DrawablePolyline extends Drawable {
         return pack;
     }
 
+    public invalidate() {
+        this.valid = false;
+    }
+    private canvasAABB: AABB = new AABB();
+    private valid: boolean = false;
+    private validate() {
+        if (!this.valid) {
+            this.calculator.aabb(this.canvasAABB);
+        }
+    }
+
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        renderer.setFillColor(this.style.fillString);
-        renderer.setStrokeColor(this.style.strokeString);
-        renderer.renderPolyline(camera, this.points, this.style.closed, this.style.fill, this.style.stroke, this.style.lineWidth);
+        this.validate();
+        let inScreen = camera.canvasAABBInScreen(this.canvasAABB);
+        if (inScreen) {
+            renderer.setFillColor(this.style.fillString);
+            renderer.setStrokeColor(this.style.strokeString);
+            renderer.renderPolyline(camera, this.points, this.style.closed, this.style.fill, this.style.stroke, this.style.lineWidth);
+        }
     }
 
 }

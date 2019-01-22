@@ -875,7 +875,27 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
     exports.LayerImage = LayerImage;
 });
 //# sourceMappingURL=LayerImage.js.map;
-define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util/Color"], function (require, exports, Drawable_1, Color_1) {
+define('util/AABB',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class AABB {
+        constructor(x1 = Math.min(), y1 = Math.min(), x2 = Math.max(), y2 = Math.max()) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+        }
+        set(x1, y1, x2, y2) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+        }
+    }
+    exports.AABB = AABB;
+});
+//# sourceMappingURL=AABB.js.map;
+define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util/Color", "../util/AABB"], function (require, exports, Drawable_1, Color_1, AABB_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class Point {
@@ -995,16 +1015,19 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         }
         addPoint(x, y) {
             this.points.push(new Point(x, y));
+            this.polyline.invalidate();
         }
         insertPoint(x, y, beforeIndex = -1) {
             let points = this.points;
             beforeIndex = (beforeIndex + points.length) % points.length;
             points.splice(beforeIndex, 0, new Point(x, y));
+            this.polyline.invalidate();
         }
         removePoint(index) {
             let points = this.points;
             index = (index + points.length) % points.length;
             points.splice(index, 1);
+            this.polyline.invalidate();
         }
         setPoint(index, x, y) {
             let points = this.points;
@@ -1012,12 +1035,14 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             let point = points[index];
             point.x = x;
             point.y = y;
+            this.polyline.invalidate();
         }
         move(offsetX, offsetY) {
             for (const point of this.points) {
                 point.x += offsetX;
                 point.y += offsetY;
             }
+            this.polyline.invalidate();
         }
         flipX() {
             let minX = Math.min();
@@ -1084,7 +1109,9 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             let y = accY / 6 / (area2 / 2);
             return new Point(x, y);
         }
-        aabb() {
+        aabb(aabb = new AABB_1.AABB()) {
+            if (!aabb)
+                aabb = new AABB_1.AABB();
             let minX = Math.min(), maxX = Math.max();
             let minY = Math.min(), maxY = Math.max();
             for (const point of this.points) {
@@ -1093,11 +1120,12 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
                 minY = Math.min(minY, point.y);
                 maxY = Math.max(maxY, point.y);
             }
-            return [new Point(minX, minY), new Point(maxX, maxY)];
+            aabb.set(minX, minY, maxX, maxY);
+            return aabb;
         }
         aabbCenter() {
             let aabb = this.aabb();
-            let center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
+            let center = new Point((aabb.x1 + aabb.x2) / 2, (aabb.y1 + aabb.y2) / 2);
             return center;
         }
         area() {
@@ -1237,6 +1265,8 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
     class DrawablePolyline extends Drawable_1.Drawable {
         constructor(pack) {
             super();
+            this.canvasAABB = new AABB_1.AABB();
+            this.valid = false;
             this.points = pack.points;
             this.style = new DrawablePolylineStyle(pack);
             this.picker = new DrawablePolylinePicker(this, this.points);
@@ -1257,10 +1287,22 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             pack.points = this.points;
             return pack;
         }
+        invalidate() {
+            this.valid = false;
+        }
+        validate() {
+            if (!this.valid) {
+                this.calculator.aabb(this.canvasAABB);
+            }
+        }
         render(canvas, renderer, camera) {
-            renderer.setFillColor(this.style.fillString);
-            renderer.setStrokeColor(this.style.strokeString);
-            renderer.renderPolyline(camera, this.points, this.style.closed, this.style.fill, this.style.stroke, this.style.lineWidth);
+            this.validate();
+            let inScreen = camera.canvasAABBInScreen(this.canvasAABB);
+            if (inScreen) {
+                renderer.setFillColor(this.style.fillString);
+                renderer.setStrokeColor(this.style.strokeString);
+                renderer.renderPolyline(camera, this.points, this.style.closed, this.style.fill, this.style.stroke, this.style.lineWidth);
+            }
         }
     }
     DrawablePolyline.typeName = "DrawablePolyline";
@@ -1783,20 +1825,6 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
-define('util/AABB',["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    class AABB {
-        constructor(x1 = Math.min(), y1 = Math.min(), x2 = Math.max(), y2 = Math.max()) {
-            this.x1 = x1;
-            this.y1 = y1;
-            this.x2 = x2;
-            this.y2 = y2;
-        }
-    }
-    exports.AABB = AABB;
-});
-//# sourceMappingURL=AABB.js.map;
 define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Color", "../util/AABB"], function (require, exports, Drawable_1, Color_1, AABB_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });

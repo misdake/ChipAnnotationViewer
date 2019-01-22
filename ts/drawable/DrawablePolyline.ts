@@ -128,7 +128,7 @@ export class DrawablePolylinePicker {
     }
 }
 
-export class DrawablePolylinePointEditor {
+export class DrawablePolylineEditor {
     private polyline: DrawablePolyline;
     private readonly points: Point[];
     public constructor(polyline: DrawablePolyline, points: Point[]) {
@@ -308,9 +308,8 @@ export class DrawablePolylineCalculator {
     }
 }
 
-export class DrawablePolylineData {
+export class DrawablePolylineStyle {
     public constructor(pack: DrawablePolylinePack) {
-        this._points = pack.points;
         this._closed = pack.closed;
         this._lineWidth = pack.lineWidth;
 
@@ -324,7 +323,6 @@ export class DrawablePolylineData {
         this._strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
     }
-    protected _points: Point[];
     protected _closed: boolean;
     protected _lineWidth: Size;
 
@@ -381,30 +379,9 @@ export class DrawablePolylineData {
         return this._lineWidth.ofScreen;
     }
 
-    public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
-        let points = [];
-        for (const point of this._points) {
-            points.push(new Point(point.x + offsetX, point.y + offsetY));
-        }
-
-        return new DrawablePolylinePack(
-            points,
-            this._closed,
-            this._lineWidth,
-
-            this._fill,
-            this._fillColor.name,
-            this._fillAlpha.name,
-
-            this._stroke,
-            this._strokeColor.name,
-            this._strokeAlpha.name,
-        )
-    }
-
     public pack(): DrawablePolylinePack {
         return new DrawablePolylinePack(
-            this._points,
+            null,
             this._closed,
             this._lineWidth,
 
@@ -457,16 +434,31 @@ export class DrawablePolyline extends Drawable {
     public constructor(pack: DrawablePolylinePack) {
         super();
         this.points = pack.points;
-        this.style = new DrawablePolylineData(pack);
+        this.style = new DrawablePolylineStyle(pack);
         this.picker = new DrawablePolylinePicker(this, this.points);
-        this.editor = new DrawablePolylinePointEditor(this, this.points);
+        this.editor = new DrawablePolylineEditor(this, this.points);
         this.calculator = new DrawablePolylineCalculator(this, this.points);
     }
 
-    public readonly style: DrawablePolylineData;
+    public readonly style: DrawablePolylineStyle;
     public readonly picker: DrawablePolylinePicker;
-    public readonly editor: DrawablePolylinePointEditor;
+    public readonly editor: DrawablePolylineEditor;
     public readonly calculator: DrawablePolylineCalculator;
+
+    public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
+        let points = [];
+        for (const point of this.points) {
+            points.push(new Point(point.x + offsetX, point.y + offsetY));
+        }
+        let pack = this.style.pack();
+        pack.points = points;
+        return pack;
+    }
+    public pack() : DrawablePolylinePack {
+        let pack = this.style.pack();
+        pack.points = this.points;
+        return pack;
+    }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
         renderer.setFillColor(this.style.fillString);

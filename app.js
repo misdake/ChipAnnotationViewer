@@ -33,10 +33,7 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
             this.context.fillStyle = color;
         }
         setStrokeColor(color) {
-            let grd = this.context.createLinearGradient(0, 0, 170, 0);
-            grd.addColorStop(0, color);
-            grd.addColorStop(0.5, color);
-            this.context.strokeStyle = grd;
+            this.context.strokeStyle = color;
         }
         calculateLineWidth(camera, lineWidth) {
             if (!lineWidth)
@@ -474,36 +471,6 @@ define('util/NetUtil',["require", "exports"], function (require, exports) {
             };
             request.open("GET", url, true);
             request.send();
-        }
-        static post(url, params, callback) {
-            let request = new XMLHttpRequest();
-            request.onreadystatechange = function () {
-                if (request.readyState == 4 && request.status == 200) {
-                    callback(request.responseText);
-                }
-            };
-            request.open('POST', url, true);
-            request.setRequestHeader("Access-Control-Allow-Origin", "*");
-            request.setRequestHeader("Access-Control-Allow-Methods", "POST,GET");
-            request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            let s = null;
-            for (let key in params) {
-                if (s == null) {
-                    s = "";
-                }
-                else {
-                    s = s + "&";
-                }
-                s += key + "=" + params[key];
-            }
-            console.log(s);
-            request.send(s);
-            {
-                var httpRequest = new XMLHttpRequest(); //第一步：创建需要的对象
-                httpRequest.open('POST', 'url', true); //第二步：打开连接
-                httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded"); //设置请求头 注：post方式必须设置请求头（在建立连接后设置请求头）
-                httpRequest.send('name=teswe&ee=ef'); //发送请求 将情头体写在send中
-            }
         }
     }
     exports.NetUtil = NetUtil;
@@ -995,7 +962,7 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         }
     }
     exports.DrawablePolylinePicker = DrawablePolylinePicker;
-    class DrawablePolylinePointEditor {
+    class DrawablePolylineEditor {
         constructor(polyline, points) {
             this.polyline = polyline;
             this.points = points;
@@ -1082,7 +1049,7 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             }
         }
     }
-    exports.DrawablePolylinePointEditor = DrawablePolylinePointEditor;
+    exports.DrawablePolylineEditor = DrawablePolylineEditor;
     class DrawablePolylineCalculator {
         constructor(polyline, points) {
             this.polyline = polyline;
@@ -1169,9 +1136,8 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         }
     }
     exports.DrawablePolylineCalculator = DrawablePolylineCalculator;
-    class DrawablePolylineData {
+    class DrawablePolylineStyle {
         constructor(pack) {
-            this._points = pack.points;
             this._closed = pack.closed;
             this._lineWidth = pack.lineWidth;
             this._fill = pack.fill;
@@ -1222,15 +1188,8 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         get ofScreen() {
             return this._lineWidth.ofScreen;
         }
-        clone(offsetX = 0, offsetY = 0) {
-            let points = [];
-            for (const point of this._points) {
-                points.push(new Point(point.x + offsetX, point.y + offsetY));
-            }
-            return new DrawablePolylinePack(points, this._closed, this._lineWidth, this._fill, this._fillColor.name, this._fillAlpha.name, this._stroke, this._strokeColor.name, this._strokeAlpha.name);
-        }
         pack() {
-            return new DrawablePolylinePack(this._points, this._closed, this._lineWidth, this._fill, this._fillColor.name, this._fillAlpha.name, this._stroke, this._strokeColor.name, this._strokeAlpha.name);
+            return new DrawablePolylinePack(null, this._closed, this._lineWidth, this._fill, this._fillColor.name, this._fillAlpha.name, this._stroke, this._strokeColor.name, this._strokeAlpha.name);
         }
         set closed(value) {
             this._closed = value;
@@ -1261,15 +1220,29 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             this._strokeString = Color_1.combineColorAlpha(this._strokeColor, this._strokeAlpha);
         }
     }
-    exports.DrawablePolylineData = DrawablePolylineData;
+    exports.DrawablePolylineStyle = DrawablePolylineStyle;
     class DrawablePolyline extends Drawable_1.Drawable {
         constructor(pack) {
             super();
             this.points = pack.points;
-            this.style = new DrawablePolylineData(pack);
+            this.style = new DrawablePolylineStyle(pack);
             this.picker = new DrawablePolylinePicker(this, this.points);
-            this.editor = new DrawablePolylinePointEditor(this, this.points);
+            this.editor = new DrawablePolylineEditor(this, this.points);
             this.calculator = new DrawablePolylineCalculator(this, this.points);
+        }
+        clone(offsetX = 0, offsetY = 0) {
+            let points = [];
+            for (const point of this.points) {
+                points.push(new Point(point.x + offsetX, point.y + offsetY));
+            }
+            let pack = this.style.pack();
+            pack.points = points;
+            return pack;
+        }
+        pack() {
+            let pack = this.style.pack();
+            pack.points = this.points;
+            return pack;
         }
         render(canvas, renderer, camera) {
             renderer.setFillColor(this.style.fillString);
@@ -1398,7 +1371,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         saveData(data) {
             data.polylines = [];
             for (const polyline of this.polylines) {
-                data.polylines.push(polyline.style.pack());
+                data.polylines.push(polyline.pack());
             }
         }
         render(renderer) {
@@ -1559,7 +1532,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         let shape = polyline.picker.pickShape(position.x, position.y);
                         if (pointIndex == null && shape && event.altKey) {
                             if (event.ctrlKey) {
-                                let copied = new DrawablePolyline_1.DrawablePolyline(polyline.style.clone());
+                                let copied = new DrawablePolyline_1.DrawablePolyline(polyline.clone());
                                 self.layerView.addPolyline(copied);
                             }
                             this.dragShape = true;
@@ -1706,7 +1679,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             Ui_1.Ui.setVisibility("panelPolylineSelected", true);
             Ui_1.Ui.bindButtonOnClick("polylineButtonCopy", () => {
                 let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-                let newPolyline = new DrawablePolyline_1.DrawablePolyline(polyline.style.clone(offset, offset));
+                let newPolyline = new DrawablePolyline_1.DrawablePolyline(polyline.clone(offset, offset));
                 this.finishEditing();
                 this.layerView.addPolyline(newPolyline);
                 this.startEditingPolyline(newPolyline);

@@ -923,9 +923,77 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         }
     }
     exports.DrawablePolylinePack = DrawablePolylinePack;
+    class DrawablePolylineExporter {
+        constructor(polyline) {
+            this.polyline = polyline;
+        }
+        clone(offsetX = 0, offsetY = 0) {
+            let points = [];
+            for (const point of this.polyline.points) {
+                points.push(new Point(point.x + offsetX, point.y + offsetY));
+            }
+            return new DrawablePolylinePack(points, this.polyline.closed, this.polyline.lineWidth, this.polyline.fill, this.polyline.fillColor.name, this.polyline.fillAlpha.name, this.polyline.stroke, this.polyline.strokeColor.name, this.polyline.strokeAlpha.name);
+        }
+        pack() {
+            return new DrawablePolylinePack(this.polyline.points, this.polyline.closed, this.polyline.lineWidth, this.polyline.fill, this.polyline.fillColor.name, this.polyline.fillAlpha.name, this.polyline.stroke, this.polyline.strokeColor.name, this.polyline.strokeAlpha.name);
+        }
+    }
+    exports.DrawablePolylineExporter = DrawablePolylineExporter;
+    class DrawablePolylineEditor {
+        constructor(polyline) {
+            this.polyline = polyline;
+        }
+        flipX() {
+            let minX = Math.min();
+            let maxX = Math.max();
+            for (const point of this.polyline.points) {
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+            }
+            let xx = minX + maxX;
+            for (const point of this.polyline.points) {
+                point.x = xx - point.x;
+            }
+        }
+        flipY() {
+            let minY = Math.min();
+            let maxY = Math.max();
+            for (const point of this.polyline.points) {
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+            let yy = minY + maxY;
+            for (const point of this.polyline.points) {
+                point.y = yy - point.y;
+            }
+        }
+        rotateCW() {
+            let center = this.polyline.aabbCenter();
+            for (const point of this.polyline.points) {
+                let dx = point.x - center.x;
+                let dy = point.y - center.y;
+                point.x = center.x - dy;
+                point.y = center.y + dx;
+            }
+        }
+        rotateCCW() {
+            let center = this.polyline.aabbCenter();
+            for (const point of this.polyline.points) {
+                let dx = point.x - center.x;
+                let dy = point.y - center.y;
+                point.x = center.x + dy;
+                point.y = center.y - dx;
+            }
+        }
+    }
+    exports.DrawablePolylineEditor = DrawablePolylineEditor;
     class DrawablePolyline extends Drawable_1.Drawable {
         constructor(pack) {
             super();
+            //operations
+            this.editor = new DrawablePolylineEditor(this);
+            //export
+            this.exporter = new DrawablePolylineExporter(this);
             this.points = pack.points;
             this.closed = pack.closed;
             this.lineWidth = pack.lineWidth;
@@ -938,15 +1006,26 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             this.strokeAlpha = Color_1.AlphaEntry.findByName(pack.strokeAlphaName);
             this.strokeString = Color_1.combineColorAlpha(this.strokeColor, this.strokeAlpha);
         }
-        clone(offsetX, offsetY) {
-            let points = [];
-            for (const point of this.points) {
-                points.push(new Point(point.x + offsetX, point.y + offsetY));
-            }
-            return new DrawablePolylinePack(points, this.closed, this.lineWidth, this.fill, this.fillColor.name, this.fillAlpha.name, this.stroke, this.strokeColor.name, this.strokeAlpha.name);
+        //edit
+        pointCount() {
+            return this.points.length;
         }
-        pack() {
-            return new DrawablePolylinePack(this.points, this.closed, this.lineWidth, this.fill, this.fillColor.name, this.fillAlpha.name, this.stroke, this.strokeColor.name, this.strokeAlpha.name);
+        getPoint(index) {
+            index = (index + this.points.length) % this.points.length;
+            return this.points[index];
+        }
+        addPoint(point) {
+            this.points.push(point);
+        }
+        removePoint(index) {
+            index = (index + this.points.length) % this.points.length;
+            this.points.splice(index, 1);
+        }
+        setPoint(index, x, y) {
+            index = (index + this.points.length) % this.points.length;
+            let point = this.points[index];
+            point.x = x;
+            point.y = y;
         }
         move(offsetX, offsetY) {
             for (const point of this.points) {
@@ -1048,48 +1127,6 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
             let aabb = this.aabb();
             let center = new Point((aabb[0].x + aabb[1].x) / 2, (aabb[0].y + aabb[1].y) / 2);
             return center;
-        }
-        flipX() {
-            let minX = Math.min();
-            let maxX = Math.max();
-            for (const point of this.points) {
-                minX = Math.min(minX, point.x);
-                maxX = Math.max(maxX, point.x);
-            }
-            let xx = minX + maxX;
-            for (const point of this.points) {
-                point.x = xx - point.x;
-            }
-        }
-        flipY() {
-            let minY = Math.min();
-            let maxY = Math.max();
-            for (const point of this.points) {
-                minY = Math.min(minY, point.y);
-                maxY = Math.max(maxY, point.y);
-            }
-            let yy = minY + maxY;
-            for (const point of this.points) {
-                point.y = yy - point.y;
-            }
-        }
-        rotateCW() {
-            let center = this.aabbCenter();
-            for (const point of this.points) {
-                let dx = point.x - center.x;
-                let dy = point.y - center.y;
-                point.x = center.x - dy;
-                point.y = center.y + dx;
-            }
-        }
-        rotateCCW() {
-            let center = this.aabbCenter();
-            for (const point of this.points) {
-                let dx = point.x - center.x;
-                let dy = point.y - center.y;
-                point.x = center.x + dy;
-                point.y = center.y - dx;
-            }
         }
         area() {
             if (this.points.length < 3)
@@ -1241,7 +1278,7 @@ define('layers/LayerPolylineView',["require", "exports", "../Layer", "../drawabl
         saveData(data) {
             data.polylines = [];
             for (const polyline of this.polylines) {
-                data.polylines.push(polyline.pack());
+                data.polylines.push(polyline.exporter.pack());
             }
         }
         render(renderer) {
@@ -1299,8 +1336,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
         startCreatingPolyline() {
             this.finishEditing();
             let self = this;
-            let points = [];
-            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack(points, true, new Size_1.Size(2), true, "white", "25", true, "white", "75"));
+            this.polylineNew = new DrawablePolyline_1.DrawablePolyline(new DrawablePolyline_1.DrawablePolylinePack([], true, new Size_1.Size(2), true, "white", "25", true, "white", "75"));
             this.bindPolylineConfigUi(this.polylineNew);
             Ui_1.Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
             this._mouseListener = new class extends MouseListener_1.MouseListener {
@@ -1310,19 +1346,17 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                     this.moved = false;
                 }
                 preview(position, magnetic) {
-                    let xy = points[points.length - 1];
-                    xy.x = position.x;
-                    xy.y = position.y;
+                    self.polylineNew.setPoint(-1, position.x, position.y);
                     if (magnetic) {
                         let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
-                        LayerPolylineEdit.mag(points, points.length - 1, radius);
+                        LayerPolylineEdit.mag(self.polylineNew, -1, radius);
                     }
                 }
                 onmousedown(event) {
                     if (event.button == 0 && !this.down) { //left button down => add point
                         this.down = true;
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        points.push(new DrawablePolyline_1.Point(position.x, position.y));
+                        self.polylineNew.addPoint(new DrawablePolyline_1.Point(position.x, position.y));
                         self.canvas.requestRender();
                         return true;
                     }
@@ -1406,7 +1440,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                         let shape = polyline.pickShape(position.x, position.y);
                         if (!point && shape && event.altKey) {
                             if (event.ctrlKey) {
-                                let copied = new DrawablePolyline_1.DrawablePolyline(polyline.clone(0, 0));
+                                let copied = new DrawablePolyline_1.DrawablePolyline(polyline.exporter.clone());
                                 self.layerView.addPolyline(copied);
                             }
                             this.dragShape = true;
@@ -1440,7 +1474,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                                 if (polyline.points.length > 3) { //so it will be at least a triangle
                                     let index = polyline.points.indexOf(point);
                                     if (index !== -1)
-                                        polyline.points.splice(index, 1);
+                                        polyline.removePoint(index);
                                     self.canvas.requestRender();
                                 }
                                 hit = true;
@@ -1484,7 +1518,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
                             this.dragPoint.y = position.y;
                             if (event.ctrlKey) {
                                 let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
-                                LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
+                                LayerPolylineEdit.mag(polyline, this.dragPointIndex, radius);
                             }
                             self.canvas.requestRender();
                             return true;
@@ -1505,29 +1539,28 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             };
             this.canvas.requestRender();
         }
-        static mag(points, index, radius) {
-            let xy = points[index];
+        static mag(polyline, index, radius) {
+            let xy = polyline.getPoint(index);
             let newX = xy.x;
             let newY = xy.y;
-            let first = points[(index + 1) % points.length];
+            let first = polyline.getPoint(index + 1);
             if (Math.abs(first.x - xy.x) <= radius)
                 newX = first.x;
             if (Math.abs(first.y - xy.y) <= radius)
                 newY = first.y;
-            if (points.length > 2) {
-                let last = points[(points.length + index - 1) % points.length];
+            if (polyline.pointCount() > 2) {
+                let last = polyline.getPoint(index - 1);
                 if (Math.abs(last.x - xy.x) <= radius)
                     newX = last.x;
                 if (Math.abs(last.y - xy.y) <= radius)
                     newY = last.y;
             }
-            xy.x = newX;
-            xy.y = newY;
+            polyline.setPoint(index, newX, newY);
         }
         finishEditing() {
             Ui_1.Ui.setVisibility("panelPolylineSelected", false);
             if (this.polylineNew) {
-                if (this.polylineNew.points.length > 2) {
+                if (this.polylineNew.pointCount() > 2) {
                     this.layerView.addPolyline(this.polylineNew);
                 }
                 this.polylineNew = null;
@@ -1573,7 +1606,7 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             Ui_1.Ui.setVisibility("panelPolylineSelected", true);
             Ui_1.Ui.bindButtonOnClick("polylineButtonCopy", () => {
                 let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-                let newPolyline = new DrawablePolyline_1.DrawablePolyline(polyline.clone(offset, offset));
+                let newPolyline = new DrawablePolyline_1.DrawablePolyline(polyline.exporter.clone(offset, offset));
                 this.finishEditing();
                 this.layerView.addPolyline(newPolyline);
                 this.startEditingPolyline(newPolyline);
@@ -1599,19 +1632,19 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
             });
             Ui_1.Ui.setContent("poylineTextArea", "");
             Ui_1.Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
-                polyline.rotateCCW();
+                polyline.editor.rotateCCW();
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindButtonOnClick("polylineButtonRotateCW", () => {
-                polyline.rotateCW();
+                polyline.editor.rotateCW();
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindButtonOnClick("polylineButtonFlipX", () => {
-                polyline.flipX();
+                polyline.editor.flipX();
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindButtonOnClick("polylineButtonFlipY", () => {
-                polyline.flipY();
+                polyline.editor.flipY();
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindCheckbox("polylineCheckboxFill", polyline.fill, newValue => {

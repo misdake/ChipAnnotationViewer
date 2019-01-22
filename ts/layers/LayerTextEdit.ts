@@ -48,8 +48,8 @@ export class LayerTextEdit extends Layer {
         let textNew = new DrawableText(new DrawableTextPack(
             "text",
             "white", "100", new Size(20, 50),
-            0, 0)
-        );
+            0, 0
+        ));
         this.bindTextConfigUi(textNew);
 
         Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_NEW_TEXT);

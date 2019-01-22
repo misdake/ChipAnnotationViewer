@@ -85,7 +85,7 @@ export class LayerPolylineView extends Layer {
     public saveData(data: Data): void {
         data.polylines = [];
         for (const polyline of this.polylines) {
-            data.polylines.push(polyline.pack());
+            data.polylines.push(polyline.exporter.pack());
         }
     }
 

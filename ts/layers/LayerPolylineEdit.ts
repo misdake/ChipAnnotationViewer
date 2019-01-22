@@ -63,9 +63,8 @@ export class LayerPolylineEdit extends Layer {
         this.finishEditing();
         let self = this;
 
-        let points: Point[] = [];
         this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(
-            points, true, new Size(2),
+            [], true, new Size(2),
             true, "white", "25",
             true, "white", "75",
         ));
@@ -78,19 +77,17 @@ export class LayerPolylineEdit extends Layer {
             private moved: boolean = false;
 
             private preview(position: Position, magnetic: boolean): void {
-                let xy = points[points.length - 1];
-                xy.x = position.x;
-                xy.y = position.y;
+                self.polylineNew.setPoint(-1, position.x, position.y);
                 if (magnetic) {
                     let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
-                    LayerPolylineEdit.mag(points, points.length - 1, radius);
+                    LayerPolylineEdit.mag(self.polylineNew, -1, radius);
                 }
             }
             onmousedown(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.down) { //left button down => add point
                     this.down = true;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    points.push(new Point(position.x, position.y));
+                    self.polylineNew.addPoint(new Point(position.x, position.y));
                     self.canvas.requestRender();
                     return true;
                 } else if (event.button == 2) {
@@ -180,7 +177,7 @@ export class LayerPolylineEdit extends Layer {
                     let shape = polyline.pickShape(position.x, position.y);
                     if (!point && shape && event.altKey) {
                         if (event.ctrlKey) {
-                            let copied = new DrawablePolyline(polyline.clone(0, 0));
+                            let copied = new DrawablePolyline(polyline.exporter.clone());
                             self.layerView.addPolyline(copied);
                         }
                         this.dragShape = true;
@@ -214,7 +211,7 @@ export class LayerPolylineEdit extends Layer {
                         if (point) { //delete point
                             if (polyline.points.length > 3) { //so it will be at least a triangle
                                 let index = polyline.points.indexOf(point);
-                                if (index !== -1) polyline.points.splice(index, 1);
+                                if (index !== -1) polyline.removePoint(index);
                                 self.canvas.requestRender();
                             }
                             hit = true;
@@ -261,7 +258,7 @@ export class LayerPolylineEdit extends Layer {
                         this.dragPoint.y = position.y;
                         if (event.ctrlKey) {
                             let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
-                            LayerPolylineEdit.mag(polyline.points, this.dragPointIndex, radius);
+                            LayerPolylineEdit.mag(polyline, this.dragPointIndex, radius);
                         }
 
                         self.canvas.requestRender();
@@ -285,28 +282,27 @@ export class LayerPolylineEdit extends Layer {
         this.canvas.requestRender();
     }
 
-    private static mag(points: Point[], index: number, radius: number) {
-        let xy = points[index];
+    private static mag(polyline: DrawablePolyline, index: number, radius: number) {
+        let xy = polyline.getPoint(index);
 
         let newX = xy.x;
         let newY = xy.y;
-        let first = points[(index + 1) % points.length];
+        let first = polyline.getPoint(index + 1);
         if (Math.abs(first.x - xy.x) <= radius) newX = first.x;
         if (Math.abs(first.y - xy.y) <= radius) newY = first.y;
-        if (points.length > 2) {
-            let last = points[(points.length + index - 1) % points.length];
+        if (polyline.pointCount() > 2) {
+            let last = polyline.getPoint(index - 1);
             if (Math.abs(last.x - xy.x) <= radius) newX = last.x;
             if (Math.abs(last.y - xy.y) <= radius) newY = last.y;
         }
-        xy.x = newX;
-        xy.y = newY;
+        polyline.setPoint(index, newX, newY);
     }
 
     public finishEditing(): void {
         Ui.setVisibility("panelPolylineSelected", false);
 
         if (this.polylineNew) {
-            if (this.polylineNew.points.length > 2) {
+            if (this.polylineNew.pointCount() > 2) {
                 this.layerView.addPolyline(this.polylineNew);
             }
             this.polylineNew = null;
@@ -355,7 +351,7 @@ export class LayerPolylineEdit extends Layer {
 
         Ui.bindButtonOnClick("polylineButtonCopy", () => {
             let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
+            let newPolyline = new DrawablePolyline(polyline.exporter.clone(offset, offset));
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);
@@ -384,19 +380,19 @@ export class LayerPolylineEdit extends Layer {
         Ui.setContent("poylineTextArea", "");
 
         Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
-            polyline.rotateCCW();
+            polyline.editor.rotateCCW();
             this.canvas.requestRender();
         });
         Ui.bindButtonOnClick("polylineButtonRotateCW", () => {
-            polyline.rotateCW();
+            polyline.editor.rotateCW();
             this.canvas.requestRender();
         });
         Ui.bindButtonOnClick("polylineButtonFlipX", () => {
-            polyline.flipX();
+            polyline.editor.flipX();
             this.canvas.requestRender();
         });
         Ui.bindButtonOnClick("polylineButtonFlipY", () => {
-            polyline.flipY();
+            polyline.editor.flipY();
             this.canvas.requestRender();
         });
 

@@ -57,6 +57,98 @@ export class DrawablePolylinePack {
     strokeAlphaName: string;
 }
 
+export class DrawablePolylineExporter {
+    private polyline: DrawablePolyline;
+    public constructor(polyline: DrawablePolyline) {
+        this.polyline = polyline;
+    }
+    public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
+        let points = [];
+        for (const point of this.polyline.points) {
+            points.push(new Point(point.x + offsetX, point.y + offsetY));
+        }
+
+        return new DrawablePolylinePack(
+            points,
+            this.polyline.closed,
+            this.polyline.lineWidth,
+
+            this.polyline.fill,
+            this.polyline.fillColor.name,
+            this.polyline.fillAlpha.name,
+
+            this.polyline.stroke,
+            this.polyline.strokeColor.name,
+            this.polyline.strokeAlpha.name,
+        )
+    }
+
+    public pack(): DrawablePolylinePack {
+        return new DrawablePolylinePack(
+            this.polyline.points,
+            this.polyline.closed,
+            this.polyline.lineWidth,
+
+            this.polyline.fill,
+            this.polyline.fillColor.name,
+            this.polyline.fillAlpha.name,
+
+            this.polyline.stroke,
+            this.polyline.strokeColor.name,
+            this.polyline.strokeAlpha.name,
+        )
+    }
+}
+
+export class DrawablePolylineEditor {
+    private polyline: DrawablePolyline;
+    public constructor(polyline: DrawablePolyline) {
+        this.polyline = polyline;
+    }
+    public flipX() {
+        let minX = Math.min();
+        let maxX = Math.max();
+        for (const point of this.polyline.points) {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+        }
+        let xx = minX + maxX;
+        for (const point of this.polyline.points) {
+            point.x = xx - point.x;
+        }
+    }
+    public flipY() {
+        let minY = Math.min();
+        let maxY = Math.max();
+        for (const point of this.polyline.points) {
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+        let yy = minY + maxY;
+        for (const point of this.polyline.points) {
+            point.y = yy - point.y;
+        }
+    }
+    public rotateCW() {
+        let center = this.polyline.aabbCenter();
+        for (const point of this.polyline.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x - dy;
+            point.y = center.y + dx;
+        }
+    }
+    public rotateCCW() {
+        let center = this.polyline.aabbCenter();
+        for (const point of this.polyline.points) {
+            let dx = point.x - center.x;
+            let dy = point.y - center.y;
+            point.x = center.x + dy;
+            point.y = center.y - dx;
+        }
+    }
+}
+
 export class DrawablePolyline extends Drawable {
     public static readonly typeName = "DrawablePolyline";
 
@@ -92,49 +184,39 @@ export class DrawablePolyline extends Drawable {
         this.strokeString = combineColorAlpha(this.strokeColor, this.strokeAlpha);
     }
 
-    public clone(offsetX: number, offsetY: number): DrawablePolylinePack {
-        let points = [];
-        for (const point of this.points) {
-            points.push(new Point(point.x + offsetX, point.y + offsetY));
-        }
-
-        return new DrawablePolylinePack(
-            points,
-            this.closed,
-            this.lineWidth,
-
-            this.fill,
-            this.fillColor.name,
-            this.fillAlpha.name,
-
-            this.stroke,
-            this.strokeColor.name,
-            this.strokeAlpha.name,
-        )
+    //edit
+    public pointCount(): number {
+        return this.points.length;
     }
-
-    public pack(): DrawablePolylinePack {
-        return new DrawablePolylinePack(
-            this.points,
-            this.closed,
-            this.lineWidth,
-
-            this.fill,
-            this.fillColor.name,
-            this.fillAlpha.name,
-
-            this.stroke,
-            this.strokeColor.name,
-            this.strokeAlpha.name,
-        )
+    public getPoint(index: number): Point {
+        index = (index + this.points.length) % this.points.length;
+        return this.points[index];
     }
-
+    public addPoint(point: Point) {
+        this.points.push(point);
+    }
+    public removePoint(index: number) {
+        index = (index + this.points.length) % this.points.length;
+        this.points.splice(index, 1);
+    }
+    public setPoint(index: number, x: number, y: number) {
+        index = (index + this.points.length) % this.points.length;
+        let point = this.points[index];
+        point.x = x;
+        point.y = y;
+    }
     public move(offsetX: number, offsetY: number) {
         for (const point of this.points) {
             point.x += offsetX;
             point.y += offsetY;
         }
     }
+
+    //operations
+    public readonly editor = new DrawablePolylineEditor(this);
+
+    //export
+    public readonly exporter = new DrawablePolylineExporter(this);
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
         renderer.setFillColor(this.fillString);
@@ -237,48 +319,6 @@ export class DrawablePolyline extends Drawable {
         return center;
     }
 
-    public flipX() {
-        let minX = Math.min();
-        let maxX = Math.max();
-        for (const point of this.points) {
-            minX = Math.min(minX, point.x);
-            maxX = Math.max(maxX, point.x);
-        }
-        let xx = minX + maxX;
-        for (const point of this.points) {
-            point.x = xx - point.x;
-        }
-    }
-    public flipY() {
-        let minY = Math.min();
-        let maxY = Math.max();
-        for (const point of this.points) {
-            minY = Math.min(minY, point.y);
-            maxY = Math.max(maxY, point.y);
-        }
-        let yy = minY + maxY;
-        for (const point of this.points) {
-            point.y = yy - point.y;
-        }
-    }
-    public rotateCW() {
-        let center = this.aabbCenter();
-        for (const point of this.points) {
-            let dx = point.x - center.x;
-            let dy = point.y - center.y;
-            point.x = center.x - dy;
-            point.y = center.y + dx;
-        }
-    }
-    public rotateCCW() {
-        let center = this.aabbCenter();
-        for (const point of this.points) {
-            let dx = point.x - center.x;
-            let dy = point.y - center.y;
-            point.x = center.x + dy;
-            point.y = center.y - dx;
-        }
-    }
 
     public area(): number {
         if (this.points.length < 3) return 0;

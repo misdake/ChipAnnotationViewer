@@ -1,5 +1,4 @@
 import {Layer} from "../Layer";
-import {Map} from "../data/Map";
 import {DrawableText, DrawableTextPack} from "../drawable/DrawableText";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
@@ -8,7 +7,6 @@ import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
-import {combineColorAlpha} from "../util/Color";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 
@@ -19,7 +17,8 @@ export class LayerTextEdit extends Layer {
     private static readonly HINT_NEW_TEXT =
         "1. left click to create text<br>";
     private static readonly HINT_EDIT_TEXT =
-        "1. hold alt to drag<br>";
+        "1. hold alt to drag<br>" +
+        "2. hold ctrl+alt to copy and drag <br>";
 
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
@@ -48,8 +47,8 @@ export class LayerTextEdit extends Layer {
         let textNew = new DrawableText(new DrawableTextPack(
             "text",
             "white", "100", new Size(20, 50),
-            0, 0)
-        );
+            0, 0
+        ));
         this.bindTextConfigUi(textNew);
 
         Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_NEW_TEXT);
@@ -68,8 +67,7 @@ export class LayerTextEdit extends Layer {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    textNew.x = position.x;
-                    textNew.y = position.y;
+                    textNew.setPosition(position.x, position.y);
                     self.layerView.addText(textNew);
                     Selection.select(DrawableText.typeName, textNew);
                     self.canvas.requestRender();
@@ -111,6 +109,10 @@ export class LayerTextEdit extends Layer {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pick && event.altKey) { //start dragging
+                        if (event.ctrlKey) {
+                            let copied = new DrawableText(text.clone(0, 0));
+                            self.layerView.addText(copied);
+                        }
                         this.drag = true;
                         this.dragX = position.x - text.x;
                         this.dragY = position.y - text.y;
@@ -132,8 +134,7 @@ export class LayerTextEdit extends Layer {
             onmousemove(event: MouseEvent): boolean {
                 if (this.down && this.drag) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.textEdit.x = position.x - this.dragX;
-                    self.textEdit.y = position.y - this.dragY;
+                    self.textEdit.setPosition(position.x - this.dragX, position.y - this.dragY);
                     self.canvas.requestRender();
                     return true;
                 }
@@ -161,8 +162,9 @@ export class LayerTextEdit extends Layer {
         if (this.textEdit) {
             //draw rect
             renderer.setColor(this.textEdit.colorString);
-            let p1 = this.camera.canvasToScreen(this.textEdit.x - this.textEdit.canvasWidth, this.textEdit.y - this.textEdit.canvasHeight);
-            let p2 = this.camera.canvasToScreen(this.textEdit.x + this.textEdit.canvasWidth, this.textEdit.y + this.textEdit.canvasHeight);
+            let aabb = this.textEdit.validateCanvasAABB(this.camera, renderer);
+            let p1 = this.camera.canvasToScreen(aabb.x1, aabb.y1);
+            let p2 = this.camera.canvasToScreen(aabb.x2, aabb.y2);
             renderer.drawRect(
                 p1.x - 5, p1.y - 5, p2.x + 5, p2.y + 5,
                 false, true, 2
@@ -210,9 +212,7 @@ export class LayerTextEdit extends Layer {
         });
 
         Ui.bindColor("textContainerColor", "textContainerAlpha", text.color, text.alpha, (newColor, newAlpha) => {
-            text.color = newColor;
-            text.alpha = newAlpha;
-            text.colorString = combineColorAlpha(text.color, text.alpha);
+            text.setColorAlpha(newColor, newAlpha);
             this.canvas.requestRender();
         });
     }

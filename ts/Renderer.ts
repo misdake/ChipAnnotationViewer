@@ -49,6 +49,8 @@ export class Renderer {
 
         this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
         this.context.beginPath();
+        this.context.lineCap = "round";
+        this.context.lineJoin = "round";
 
         let start = camera.canvasToScreen(points[0].x, points[0].y);
         this.context.moveTo(start.x, start.y);
@@ -154,11 +156,16 @@ export class Renderer {
     //---------------------------------------------
     //text
 
-    public renderText(camera: Camera, text: string, fontSize: Size, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline): number[] {
-        let position = camera.canvasToScreen(x, y);
+    public measureText(camera: Camera, text: string, fontSize: Size) {
         let size = this.calculateLineWidth(camera, fontSize);
-        this.drawText(text, size, position.x, position.y, anchorX, anchorY);
-        return [this.context.measureText(text).width, size];
+        this.context.font = size + "px Arial";
+        let textMetrics = this.context.measureText(text);
+        return [textMetrics.width, size];
+    }
+
+    public renderText(camera: Camera, text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
+        let position = camera.canvasToScreen(x, y);
+        this.drawText(text, fontSize, position.x, position.y, anchorX, anchorY);
     }
 
     public drawText(text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {

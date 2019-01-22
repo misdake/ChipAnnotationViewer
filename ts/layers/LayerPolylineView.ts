@@ -39,10 +39,10 @@ export class LayerPolylineView extends Layer {
                     let x = canvasXY.x, y = canvasXY.y;
                     let selected: DrawablePolyline = null;
                     for (let polyline of self.polylines) {
-                        let pickPoint = polyline.pickPoint(x, y, radius);
-                        let pickLine = polyline.pickLine(x, y, radius);
-                        let pickShape = polyline.pickShape(x, y);
-                        if (pickPoint || pickLine || pickShape) {
+                        let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
+                        let pickLine = polyline.picker.pickLine(x, y, radius);
+                        let pickShape = polyline.picker.pickShape(x, y);
+                        if (pickPointIndex != null || pickLine || pickShape) {
                             selected = polyline;
                         }
                     }
@@ -85,7 +85,7 @@ export class LayerPolylineView extends Layer {
     public saveData(data: Data): void {
         data.polylines = [];
         for (const polyline of this.polylines) {
-            data.polylines.push(polyline.exporter.pack());
+            data.polylines.push(polyline.style.pack());
         }
     }
 

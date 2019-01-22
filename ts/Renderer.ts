@@ -49,6 +49,8 @@ export class Renderer {
 
         this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
         this.context.beginPath();
+        this.context.lineCap = "round";
+        this.context.lineJoin = "round";
 
         let start = camera.canvasToScreen(points[0].x, points[0].y);
         this.context.moveTo(start.x, start.y);

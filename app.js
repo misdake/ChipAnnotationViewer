@@ -137,11 +137,15 @@ define('Renderer',["require", "exports", "./util/ScreenRect"], function (require
         //---------------------------------------------
         //---------------------------------------------
         //text
+        measureText(camera, text, fontSize) {
+            let size = this.calculateLineWidth(camera, fontSize);
+            this.context.font = size + "px Arial";
+            let textMetrics = this.context.measureText(text);
+            return [textMetrics.width, size];
+        }
         renderText(camera, text, fontSize, x, y, anchorX, anchorY) {
             let position = camera.canvasToScreen(x, y);
-            let size = this.calculateLineWidth(camera, fontSize);
-            this.drawText(text, size, position.x, position.y, anchorX, anchorY);
-            return [this.context.measureText(text).width, size];
+            this.drawText(text, fontSize, position.x, position.y, anchorX, anchorY);
         }
         drawText(text, fontSize, x, y, anchorX, anchorY) {
             this.context.textAlign = anchorX;
@@ -237,6 +241,15 @@ define('Camera',["require", "exports", "./util/Transform"], function (require, e
         }
         canvasSizeToScreen(s) {
             return s * this.scale;
+        }
+        canvasAABBInScreen(aabb) {
+            let x1 = aabb.x1 * this.scale + this.tx;
+            let y1 = aabb.y1 * this.scale + this.ty;
+            let x2 = aabb.x2 * this.scale + this.tx;
+            let y2 = aabb.y2 * this.scale + this.ty;
+            let w = this.canvas.getWidth();
+            let h = this.canvas.getHeight();
+            return !(x2 < 0 || x1 > w || y2 < 0 || y1 > h);
         }
     }
     exports.Camera = Camera;
@@ -1200,11 +1213,11 @@ define('drawable/DrawablePolyline',["require", "exports", "./Drawable", "../util
         set stroke(value) {
             this._stroke = value;
         }
-        set onCanvas(onCanvas) {
-            this._lineWidth.onCanvas = onCanvas;
-        }
         set onScreen(onScreen) {
             this._lineWidth.onScreen = onScreen;
+        }
+        set onCanvas(onCanvas) {
+            this._lineWidth.onCanvas = onCanvas;
         }
         set ofScreen(ofScreen) {
             this._lineWidth.ofScreen = ofScreen;
@@ -1770,7 +1783,21 @@ define('layers/LayerPolylineEdit',["require", "exports", "../Layer", "../drawabl
     exports.LayerPolylineEdit = LayerPolylineEdit;
 });
 //# sourceMappingURL=LayerPolylineEdit.js.map;
-define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Color"], function (require, exports, Drawable_1, Color_1) {
+define('util/AABB',["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class AABB {
+        constructor(x1 = Math.min(), y1 = Math.min(), x2 = Math.max(), y2 = Math.max()) {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+        }
+    }
+    exports.AABB = AABB;
+});
+//# sourceMappingURL=AABB.js.map;
+define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Color", "../util/AABB"], function (require, exports, Drawable_1, Color_1, AABB_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class DrawableTextPack {
@@ -1781,8 +1808,6 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
             this.text = text;
             this.colorName = colorName;
             this.alphaName = alphaName;
-            // this.anchorX = anchorX;
-            // this.anchorY = anchorY;
             this.fontSize = fontSize;
             this.x = x;
             this.y = y;
@@ -1792,42 +1817,111 @@ define('drawable/DrawableText',["require", "exports", "./Drawable", "../util/Col
     class DrawableText extends Drawable_1.Drawable {
         constructor(pack) {
             super();
-            this.text = "";
+            this._text = "";
+            this._canvasAABB = new AABB_1.AABB();
+            this.sizeValid = false;
+            this.canvasZoom = -1;
             this.canvasWidth = 0;
             this.canvasHeight = 0;
-            this.text = pack.text;
+            this.screenWidth = 0;
+            this.screenHeight = 0;
+            this._text = pack.text;
             this.color = Color_1.ColorEntry.findByName(pack.colorName);
             this.alpha = Color_1.AlphaEntry.findByName(pack.alphaName);
             this.colorString = Color_1.combineColorAlpha(this.color, this.alpha);
-            // this.anchorX = pack.anchorX;
-            // this.anchorY = pack.anchorY;
             this.fontSize = pack.fontSize;
-            this.x = pack.x;
-            this.y = pack.y;
+            this._x = pack.x;
+            this._y = pack.y;
+        }
+        invalidate() {
+            this.sizeValid = false;
+        }
+        get text() {
+            return this._text;
+        }
+        get x() {
+            return this._x;
+        }
+        get y() {
+            return this._y;
+        }
+        validateCanvasAABB(camera, renderer) {
+            this.validate(camera, renderer);
+            return this._canvasAABB;
+        }
+        get onScreen() {
+            return this.fontSize.onScreen;
+        }
+        get onCanvas() {
+            return this.fontSize.onCanvas;
+        }
+        get ofScreen() {
+            return this.fontSize.ofScreen;
+        }
+        set onScreen(onScreen) {
+            this.fontSize.onScreen = onScreen;
+            this.invalidate();
+        }
+        set onCanvas(onCanvas) {
+            this.fontSize.onCanvas = onCanvas;
+            this.invalidate();
+        }
+        set ofScreen(ofScreen) {
+            this.fontSize.ofScreen = ofScreen;
+            this.invalidate();
+        }
+        setPosition(x, y) {
+            this._x = x;
+            this._y = y;
+            this.invalidate();
+        }
+        set text(value) {
+            this._text = value;
+            this.invalidate();
+        }
+        setColorAlpha(color, alpha) {
+            this.color = color;
+            this.alpha = alpha;
+            this.colorString = Color_1.combineColorAlpha(this.color, this.alpha);
         }
         clone(offsetX, offsetY) {
-            return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
-            // this.anchorX,
-            // this.anchorY,
-            this.fontSize, this.x + offsetX, this.y + offsetY);
+            return new DrawableTextPack(this._text, this.color.name, this.alpha.name, this.fontSize, this._x + offsetX, this._y + offsetY);
         }
         pack() {
-            return new DrawableTextPack(this.text, this.color.name, this.alpha.name, 
-            // this.anchorX,
-            // this.anchorY,
-            this.fontSize, this.x, this.y);
+            return new DrawableTextPack(this._text, this.color.name, this.alpha.name, this.fontSize, this._x, this._y);
         }
         render(canvas, renderer, camera) {
             renderer.setColor(this.colorString);
-            let wh = renderer.renderText(camera, this.text, this.fontSize, this.x, this.y, "center", "middle");
-            let ratio = camera.screenSizeToCanvas(1);
-            this.canvasWidth = wh[0] * ratio / 2;
-            this.canvasHeight = wh[1] * ratio / 2;
+            this.validate(camera, renderer);
+            let inScreen = camera.canvasAABBInScreen(this._canvasAABB);
+            if (inScreen) {
+                renderer.renderText(camera, this._text, this.screenHeight, this._x, this._y, "center", "middle");
+            }
+        }
+        validate(camera, renderer) {
+            if (!this.sizeValid || this.canvasZoom != camera.getZoom()) {
+                this.sizeValid = true;
+                let wh = renderer.measureText(camera, this._text, this.fontSize);
+                let ratio = camera.screenSizeToCanvas(1);
+                this.canvasZoom = camera.getZoom();
+                this.canvasWidth = wh[0] * ratio / 2;
+                this.canvasHeight = wh[1] * ratio / 2;
+                this.screenWidth = wh[0];
+                this.screenHeight = wh[1];
+                this.calcCanvasAABB();
+            }
         }
         pick(x, y, radius) {
-            let h = (this.x - this.canvasWidth - radius <= x) && (x <= this.x + this.canvasWidth + radius);
-            let v = (this.y - this.canvasHeight - radius <= y) && (y <= this.y + this.canvasHeight + radius);
+            let h = (this._x - this.canvasWidth - radius <= x) && (x <= this._x + this.canvasWidth + radius);
+            let v = (this._y - this.canvasHeight - radius <= y) && (y <= this._y + this.canvasHeight + radius);
             return h && v;
+        }
+        calcCanvasAABB() {
+            this._canvasAABB.x1 = this.x - this.canvasWidth;
+            this._canvasAABB.y1 = this.y - this.canvasHeight;
+            this._canvasAABB.x2 = this.x + this.canvasWidth;
+            this._canvasAABB.y2 = this.y + this.canvasHeight;
+            return this._canvasAABB;
         }
     }
     DrawableText.typeName = "DrawableText";
@@ -1923,7 +2017,7 @@ define('layers/LayerTextView',["require", "exports", "../Layer", "../MouseListen
     exports.LayerTextView = LayerTextView;
 });
 //# sourceMappingURL=LayerTextView.js.map;
-define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/DrawableText", "../util/Size", "../MouseListener", "./LayerTextView", "../util/Ui", "../util/Color", "./Selection"], function (require, exports, Layer_1, DrawableText_1, Size_1, MouseListener_1, LayerTextView_1, Ui_1, Color_1, Selection_1) {
+define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/DrawableText", "../util/Size", "../MouseListener", "./LayerTextView", "../util/Ui", "./Selection"], function (require, exports, Layer_1, DrawableText_1, Size_1, MouseListener_1, LayerTextView_1, Ui_1, Selection_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class LayerTextEdit extends Layer_1.Layer {
@@ -1965,8 +2059,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                     if (event.button == 0) { //left button up => update last point
                         this.down = false;
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        textNew.x = position.x;
-                        textNew.y = position.y;
+                        textNew.setPosition(position.x, position.y);
                         self.layerView.addText(textNew);
                         Selection_1.Selection.select(DrawableText_1.DrawableText.typeName, textNew);
                         self.canvas.requestRender();
@@ -2029,8 +2122,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                 onmousemove(event) {
                     if (this.down && this.drag) {
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                        self.textEdit.x = position.x - this.dragX;
-                        self.textEdit.y = position.y - this.dragY;
+                        self.textEdit.setPosition(position.x - this.dragX, position.y - this.dragY);
                         self.canvas.requestRender();
                         return true;
                     }
@@ -2054,8 +2146,9 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
             if (this.textEdit) {
                 //draw rect
                 renderer.setColor(this.textEdit.colorString);
-                let p1 = this.camera.canvasToScreen(this.textEdit.x - this.textEdit.canvasWidth, this.textEdit.y - this.textEdit.canvasHeight);
-                let p2 = this.camera.canvasToScreen(this.textEdit.x + this.textEdit.canvasWidth, this.textEdit.y + this.textEdit.canvasHeight);
+                let aabb = this.textEdit.validateCanvasAABB(this.camera, renderer);
+                let p1 = this.camera.canvasToScreen(aabb.x1, aabb.y1);
+                let p2 = this.camera.canvasToScreen(aabb.x2, aabb.y2);
                 renderer.drawRect(p1.x - 5, p1.y - 5, p2.x + 5, p2.y + 5, false, true, 2);
             }
         }
@@ -2092,9 +2185,7 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindColor("textContainerColor", "textContainerAlpha", text.color, text.alpha, (newColor, newAlpha) => {
-                text.color = newColor;
-                text.alpha = newAlpha;
-                text.colorString = Color_1.combineColorAlpha(text.color, text.alpha);
+                text.setColorAlpha(newColor, newAlpha);
                 this.canvas.requestRender();
             });
         }

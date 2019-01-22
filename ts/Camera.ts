@@ -1,6 +1,7 @@
 import {Map} from "./data/Map";
 import {Canvas} from "./Canvas";
 import {Position} from "./util/Transform";
+import {AABB} from "./util/AABB";
 
 export class Camera {
     private canvas: Canvas;
@@ -88,5 +89,16 @@ export class Camera {
     }
     public canvasSizeToScreen(s: number): number {
         return s * this.scale;
+    }
+
+    public canvasAABBInScreen(aabb: AABB): boolean {
+        let x1 = aabb.x1 * this.scale + this.tx;
+        let y1 = aabb.y1 * this.scale + this.ty;
+        let x2 = aabb.x2 * this.scale + this.tx;
+        let y2 = aabb.y2 * this.scale + this.ty;
+
+        let w = this.canvas.getWidth();
+        let h = this.canvas.getHeight();
+        return !(x2 < 0 || x1 > w || y2 < 0 || y1 > h);
     }
 }

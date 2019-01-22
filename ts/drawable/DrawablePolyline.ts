@@ -405,11 +405,11 @@ export class DrawablePolylineStyle {
         this._stroke = value;
     }
 
-    set onCanvas(onCanvas: number) {
-        this._lineWidth.onCanvas = onCanvas;
-    }
     set onScreen(onScreen: number) {
         this._lineWidth.onScreen = onScreen;
+    }
+    set onCanvas(onCanvas: number) {
+        this._lineWidth.onCanvas = onCanvas;
     }
     set ofScreen(ofScreen: number) {
         this._lineWidth.ofScreen = ofScreen;

@@ -6,7 +6,7 @@ TODO & Progress: https://github.com/misdake/ChipAnnotationViewer/projects/1
 
 Features:
 1. view die shot like a tiled-map
-2. view posted annotations stored in Github issues ([example viewer link](https://github.com/misdake/ChipAnnotationData/issues/1#issuecomment-453739448), corresponding [issue comment](https://github.com/misdake/ChipAnnotationData/issues/1))
+2. view posted annotations stored in Github issues ([example viewer link](https://misdake.github.io/ChipAnnotationViewer/view.html?map=Fiji&commentId=453739448), corresponding [issue comment](https://github.com/misdake/ChipAnnotationData/issues/1#issuecomment-453739448))
 3. place polygons, polylines, labels
 4. calculate polygon area and polyline length
 5. export current annotations as json and share it by posting it as an issue comment (then select it in 2.)

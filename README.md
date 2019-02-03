@@ -17,4 +17,4 @@ Current die shots:
 
 Extra links:
 - Image storage: https://github.com/misdake/ChipAnnotationData
-- Image processer: https://github.com/misdake/ChipAnnotationServer
+- Image processor: https://github.com/misdake/ChipAnnotationTool

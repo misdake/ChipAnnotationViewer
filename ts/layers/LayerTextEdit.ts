@@ -198,16 +198,16 @@ export class LayerTextEdit extends Layer {
             this.canvas.requestRender();
         });
 
-        Ui.bindNumber("textTextSizeOnScreen", text.fontSize.onScreen, newValue => {
-            text.fontSize.onScreen = newValue;
+        Ui.bindNumber("textTextSizeOnScreen", text.onScreen, newValue => {
+            text.onScreen = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textTextSizeOnCanvas", text.fontSize.onCanvas, newValue => {
-            text.fontSize.onCanvas = newValue;
+        Ui.bindNumber("textTextSizeOnCanvas", text.onCanvas, newValue => {
+            text.onCanvas = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textTextSizeOfScreen", text.fontSize.ofScreen * 1000, newValue => {
-            text.fontSize.ofScreen = newValue * 0.001;
+        Ui.bindNumber("textTextSizeOfScreen", text.ofScreen * 1000, newValue => {
+            text.ofScreen = newValue * 0.001;
             this.canvas.requestRender();
         });
 

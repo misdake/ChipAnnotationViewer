@@ -35,7 +35,7 @@ export class DrawableText extends Drawable {
     public color: ColorEntry;
     public alpha: AlphaEntry;
     public colorString: string;
-    public fontSize: Size;
+    protected readonly fontSize: Size;
 
     public constructor(pack: DrawableTextPack) {
         super();

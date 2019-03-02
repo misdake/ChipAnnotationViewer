@@ -2200,16 +2200,16 @@ define('layers/LayerTextEdit',["require", "exports", "../Layer", "../drawable/Dr
                 text.text = newValue;
                 this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textTextSizeOnScreen", text.fontSize.onScreen, newValue => {
-                text.fontSize.onScreen = newValue;
+            Ui_1.Ui.bindNumber("textTextSizeOnScreen", text.onScreen, newValue => {
+                text.onScreen = newValue;
                 this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textTextSizeOnCanvas", text.fontSize.onCanvas, newValue => {
-                text.fontSize.onCanvas = newValue;
+            Ui_1.Ui.bindNumber("textTextSizeOnCanvas", text.onCanvas, newValue => {
+                text.onCanvas = newValue;
                 this.canvas.requestRender();
             });
-            Ui_1.Ui.bindNumber("textTextSizeOfScreen", text.fontSize.ofScreen * 1000, newValue => {
-                text.fontSize.ofScreen = newValue * 0.001;
+            Ui_1.Ui.bindNumber("textTextSizeOfScreen", text.ofScreen * 1000, newValue => {
+                text.ofScreen = newValue * 0.001;
                 this.canvas.requestRender();
             });
             Ui_1.Ui.bindColor("textContainerColor", "textContainerAlpha", text.color, text.alpha, (newColor, newAlpha) => {

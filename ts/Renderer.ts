@@ -32,7 +32,7 @@ export class Renderer {
         this.context.strokeStyle = color;
     }
 
-    private calculateLineWidth(camera: Camera, lineWidth?: Size): number {
+    public calculateLineWidth(camera: Camera, lineWidth?: Size): number {
         if (!lineWidth) return 1;
         let onScreen = lineWidth.onScreen;
         let onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);

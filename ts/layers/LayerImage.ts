@@ -19,7 +19,11 @@ export class LayerImage extends Layer {
     public loadMap(map: Map): void {
         this.map = map;
         this.maxLevel = map.maxLevel;
-        this.baseFolder = "data/" + this.map.name;
+
+        let split = map.githubRepo.indexOf('/');
+        let username = map.githubRepo.substring(0,split);
+        let repo = map.githubRepo.substring(split+1);
+        this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
         this.currentZoom = -1;
 
         let imageSource = document.getElementById("imageSource") as HTMLLinkElement;
@@ -34,11 +38,11 @@ export class LayerImage extends Layer {
             private down = false;
             private lastX = -1;
             private lastY = -1;
-            onwheel(event: MouseWheelEvent): boolean {
+            onwheel(event: WheelEvent): boolean {
                 let camera = self.canvas.getCamera();
                 camera.action();
                 let point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
+                camera.changeZoomBy(event.deltaY > 0 ? 1 : -1);
                 camera.action();
                 let point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
                 let dx = point1.x - point2.x;

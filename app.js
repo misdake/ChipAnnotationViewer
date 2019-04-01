@@ -219,6 +219,8 @@ define('Camera',["require", "exports", "./util/Transform"], function (require, e
             this.zoom = Math.min(Math.max(this.zoom, this.zoomMin), this.zoomMax);
         }
         action() {
+            if (!this.canvas)
+                return;
             this.checkXy();
             this.checkZoom();
             let scale = 1.0 / (1 << this.zoom);
@@ -780,7 +782,10 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
         loadMap(map) {
             this.map = map;
             this.maxLevel = map.maxLevel;
-            this.baseFolder = "data/" + this.map.name;
+            let split = map.githubRepo.indexOf('/');
+            let username = map.githubRepo.substring(0, split);
+            let repo = map.githubRepo.substring(split + 1);
+            this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
             this.currentZoom = -1;
             let imageSource = document.getElementById("imageSource");
             Ui_1.Ui.setVisibility("imageSource", !!map.source);
@@ -800,7 +805,7 @@ define('layers/LayerImage',["require", "exports", "../Layer", "../drawable/Drawa
                     let camera = self.canvas.getCamera();
                     camera.action();
                     let point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    camera.changeZoomBy(event.wheelDelta > 0 ? -1 : 1);
+                    camera.changeZoomBy(event.deltaY > 0 ? 1 : -1);
                     camera.action();
                     let point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let dx = point1.x - point2.x;
@@ -2292,39 +2297,46 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
     });
     class App {
         constructor() {
-            this.currentMapString = null;
+            this.currentMapName = null;
             this.issueLink = "";
             this.currentCommentId = 0;
             this.dummyData = null;
         }
         start() {
-            NetUtil_1.NetUtil.get("data/list.txt", text => {
+            NetUtil_1.NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.txt", text => {
                 let defaultMap = null;
                 let lines = [];
+                let maps = {};
+                let names = [];
                 if (text && text.length) {
                     lines = text.split("\n").filter(value => value.length > 0).map(value => value.trim());
+                    for (let line of lines) {
+                        let name = line.substring(line.lastIndexOf('/') + 1);
+                        names.push(name);
+                        maps[name] = line;
+                    }
                     if (lines.length > 0) {
-                        defaultMap = lines[0];
+                        defaultMap = names[0];
                     }
                 }
                 if (!defaultMap)
                     defaultMap = "Fiji";
                 let url_string = window.location.href;
                 let url = new URL(url_string);
-                let mapString = url.searchParams.get("map") || defaultMap;
+                let mapName = url.searchParams.get("map") || defaultMap;
                 let commentIdString = url.searchParams.get("commentId") || "0";
                 this.currentCommentId = parseInt(commentIdString);
-                Ui_1.Ui.bindSelect("mapSelect", lines, mapString, (index, newMap) => {
+                Ui_1.Ui.bindSelect("mapSelect", names, mapName, (index, newMap) => {
                     this.currentCommentId = 0;
-                    this.loadMap(newMap);
+                    this.loadMap(newMap, maps[newMap]);
                     this.replaceUrl();
                 });
-                this.loadMap(mapString);
+                this.loadMap(mapName, maps[mapName]);
             });
         }
-        loadMap(mapString) {
-            this.currentMapString = mapString;
-            NetUtil_1.NetUtil.get("data/" + mapString + "/content.json", mapDesc => {
+        loadMap(mapName, mapString) {
+            this.currentMapName = mapName;
+            NetUtil_1.NetUtil.get(mapString + "/content.json", mapDesc => {
                 let map = JSON.parse(mapDesc);
                 canvas.loadMap(map);
                 canvas.requestRender();
@@ -2358,13 +2370,13 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
                 canvas.loadData(this.dummyData);
                 Ui_1.Ui.bindValue("dataOutput", "", newValue => {
                 });
-                this.loadGithubComment(mapString, map, this.currentCommentId);
+                this.loadGithubComment(map, this.currentCommentId);
                 Ui_1.Ui.bindButtonOnClick("buttonRefreshData", () => {
-                    this.loadGithubComment(mapString, map, this.currentCommentId);
+                    this.loadGithubComment(map, this.currentCommentId);
                 });
             });
         }
-        loadGithubComment(mapString, map, commentId) {
+        loadGithubComment(map, commentId) {
             if (map.githubRepo && map.githubIssueId) {
                 GithubUtil_1.Github.getComments(map.githubRepo, map.githubIssueId, comments => {
                     let list = [];
@@ -2422,7 +2434,7 @@ define('App',["require", "exports", "./Canvas", "./util/NetUtil", "./layers/Laye
             canvas.requestRender();
         }
         replaceUrl() {
-            let url = location.pathname + '?map=' + this.currentMapString;
+            let url = location.pathname + '?map=' + this.currentMapName;
             if (this.currentCommentId > 0)
                 url += '&commentId=' + this.currentCommentId;
             history.replaceState(null, "", url);

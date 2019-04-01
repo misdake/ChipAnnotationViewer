@@ -1,4 +1,0 @@
-[submodule "data"]
-	path = data
-	url = https://github.com/misdake/ChipAnnotationData.git
-	branch = master

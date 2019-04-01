@@ -1,8 +1,8 @@
-A die shot & annotation viewer. Webpage: https://misdake.github.io/ChipAnnotationViewer/view.html
+A die shot & annotation viewer. Webpage: <https://misdake.github.io/ChipAnnotationViewer/view.html>
 
 This project is WIP, with minimal UI.
 
-TODO & Progress: https://github.com/misdake/ChipAnnotationViewer/projects/1
+TODO & Progress: <https://github.com/misdake/ChipAnnotationViewer/projects/1>
 
 Features:
 1. view die shot like a tiled-map
@@ -12,9 +12,9 @@ Features:
 5. export current annotations as json and share it by posting it as an issue comment (then select it in 2.)
 
 Current die shots:
-- AMD: Fiji, Hawaii, Polaris10, Polaris11, Vega10
-- nVIDIA: GT200, GK110, GM200, GP102, GP104, GP106
+- AMD: Fiji, Hawaii, Polaris10, Polaris11, Polaris22, Vega10
+- nVIDIA: GT200, GK110, GM200, GP102, GP104, GP106, TU104, TU106, TU116
 
 Extra links:
-- Image storage: https://github.com/misdake/ChipAnnotationData
-- Image processor: https://github.com/misdake/ChipAnnotationTool
+- Image storage: <https://github.com/misdake/ChipAnnotationData>
+- Image processor: <https://github.com/misdake/ChipAnnotationTool>

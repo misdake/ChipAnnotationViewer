@@ -14,7 +14,6 @@
         }
         return ScreenRect;
     }());
-    //# sourceMappingURL=ScreenRect.js.map
 
     var Renderer = /** @class */ (function () {
         function Renderer(canvas, canvasElement, context) {
@@ -156,7 +155,6 @@
         };
         return Renderer;
     }());
-    //# sourceMappingURL=Renderer.js.map
 
     var Transform = /** @class */ (function () {
         function Transform() {
@@ -171,7 +169,6 @@
         }
         return Position;
     }());
-    //# sourceMappingURL=Transform.js.map
 
     var Camera = /** @class */ (function () {
         function Camera() {
@@ -250,14 +247,12 @@
         };
         return Camera;
     }());
-    //# sourceMappingURL=Camera.js.map
 
     var Data = /** @class */ (function () {
         function Data() {
         }
         return Data;
     }());
-    //# sourceMappingURL=Data.js.map
 
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
@@ -484,7 +479,6 @@
         };
         return NetUtil;
     }());
-    //# sourceMappingURL=NetUtil.js.map
 
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation. All rights reserved.
@@ -549,7 +543,6 @@
         };
         return Layer;
     }());
-    //# sourceMappingURL=Layer.js.map
 
     var Drawable = /** @class */ (function () {
         function Drawable() {
@@ -559,7 +552,6 @@
         };
         return Drawable;
     }());
-    //# sourceMappingURL=Drawable.js.map
 
     var DrawableImage = /** @class */ (function (_super) {
         __extends(DrawableImage, _super);
@@ -598,7 +590,6 @@
         };
         return DrawableImage;
     }(Drawable));
-    //# sourceMappingURL=DrawableImage.js.map
 
     var MouseListener = /** @class */ (function () {
         function MouseListener() {
@@ -626,7 +617,6 @@
         };
         return MouseListener;
     }());
-    //# sourceMappingURL=MouseListener.js.map
 
     var ColorEntry = /** @class */ (function () {
         function ColorEntry(name, r, g, b) {
@@ -691,7 +681,6 @@
     function combineColorAlpha(color, alpha) {
         return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
     }
-    //# sourceMappingURL=Color.js.map
 
     var Ui = /** @class */ (function () {
         function Ui() {
@@ -803,7 +792,6 @@
         };
         return Ui;
     }());
-    //# sourceMappingURL=Ui.js.map
 
     var LayerImage = /** @class */ (function (_super) {
         __extends(LayerImage, _super);
@@ -912,7 +900,6 @@
         };
         return LayerImage;
     }(Layer));
-    //# sourceMappingURL=LayerImage.js.map
 
     var AABB = /** @class */ (function () {
         function AABB(x1, y1, x2, y2) {
@@ -933,7 +920,6 @@
         };
         return AABB;
     }());
-    //# sourceMappingURL=AABB.js.map
 
     var Point = /** @class */ (function () {
         function Point(x, y) {
@@ -1412,7 +1398,6 @@
         DrawablePolyline.typeName = "DrawablePolyline";
         return DrawablePolyline;
     }(Drawable));
-    //# sourceMappingURL=DrawablePolyline.js.map
 
     var Selection = /** @class */ (function () {
         function Selection() {
@@ -1450,7 +1435,6 @@
         Selection.mapDeselect = {};
         return Selection;
     }());
-    //# sourceMappingURL=Selection.js.map
 
     var LayerPolylineView = /** @class */ (function (_super) {
         __extends(LayerPolylineView, _super);
@@ -1552,7 +1536,6 @@
         LayerPolylineView.layerName = "polyline view";
         return LayerPolylineView;
     }(Layer));
-    //# sourceMappingURL=LayerPolylineView.js.map
 
     var Size = /** @class */ (function () {
         function Size(onScreen, onCanvas, ofScreen) {
@@ -1562,7 +1545,6 @@
         }
         return Size;
     }());
-    //# sourceMappingURL=Size.js.map
 
     var LayerPolylineEdit = /** @class */ (function (_super) {
         __extends(LayerPolylineEdit, _super);
@@ -1938,7 +1920,6 @@
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer));
-    //# sourceMappingURL=LayerPolylineEdit.js.map
 
     var DrawableTextPack = /** @class */ (function () {
         function DrawableTextPack(text, colorName, alphaName, 
@@ -2092,7 +2073,6 @@
         DrawableText.typeName = "DrawableText";
         return DrawableText;
     }(Drawable));
-    //# sourceMappingURL=DrawableText.js.map
 
     var LayerTextView = /** @class */ (function (_super) {
         __extends(LayerTextView, _super);
@@ -2187,7 +2167,6 @@
         LayerTextView.layerName = "text view";
         return LayerTextView;
     }(Layer));
-    //# sourceMappingURL=LayerTextView.js.map
 
     var LayerTextEdit = /** @class */ (function (_super) {
         __extends(LayerTextEdit, _super);
@@ -2374,7 +2353,6 @@
             "2. hold ctrl+alt to copy and drag <br>";
         return LayerTextEdit;
     }(Layer));
-    //# sourceMappingURL=LayerTextEdit.js.map
 
     var Github = /** @class */ (function () {
         function Github() {
@@ -2397,7 +2375,6 @@
         };
         return Github;
     }());
-    //# sourceMappingURL=GithubUtil.js.map
 
     var canvas = new Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
@@ -2582,7 +2559,6 @@
         return App;
     }());
     new App().start();
-    //# sourceMappingURL=App.js.map
 
 }));
 //# sourceMappingURL=app.js.map

@@ -1,13 +1,13 @@
 {
-  "compilerOptions": {
-    "module": "amd",
-    "moduleResolution": "node",
-    "target": "es2015",
-    "rootDir": "ts",
-    "outDir": "js",
-    "sourceMap": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true
-  }
+    "compilerOptions": {
+        "rootDir": "./ts/",
+        "module": "es6",
+        "lib": ["es5", "dom", "es2015.core"],
+        "target": "es5",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "outDir": "./js/"
+    }
 }

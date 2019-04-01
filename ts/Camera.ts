@@ -65,6 +65,7 @@ export class Camera {
     private ty: number;
 
     public action() {
+        if (!this.canvas) return;
         this.checkXy();
         this.checkZoom();
 

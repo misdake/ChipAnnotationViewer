@@ -46,21 +46,28 @@ Ui.bindButtonOnClick("textButtonDelete", () => {
 });
 
 class App {
-    currentMapString: string = null;
+    currentMapName: string = null;
     issueLink = "";
     currentCommentId: number = 0;
     dummyData: Data = null;
 
     public start() {
-        NetUtil.get("data/list.txt", text => {
+        NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.txt", text => {
 
             let defaultMap: string = null;
             let lines: string[] = [];
+            let maps: { [key: string]: string } = {};
+            let names: string[] = [];
 
             if (text && text.length) {
                 lines = text.split("\n").filter(value => value.length > 0).map(value => value.trim());
+                for (let line of lines) {
+                    let name = line.substring(line.lastIndexOf('/') + 1);
+                    names.push(name);
+                    maps[name] = line;
+                }
                 if (lines.length > 0) {
-                    defaultMap = lines[0];
+                    defaultMap = names[0];
                 }
             }
 
@@ -68,25 +75,25 @@ class App {
 
             let url_string = window.location.href;
             let url = new URL(url_string);
-            let mapString = url.searchParams.get("map") || defaultMap;
+            let mapName = url.searchParams.get("map") || defaultMap;
             let commentIdString = url.searchParams.get("commentId") || "0";
             this.currentCommentId = parseInt(commentIdString);
 
-            Ui.bindSelect("mapSelect", lines, mapString, (index, newMap) => {
+            Ui.bindSelect("mapSelect", names, mapName, (index, newMap) => {
                 this.currentCommentId = 0;
-                this.loadMap(newMap);
+                this.loadMap(newMap, maps[newMap]);
                 this.replaceUrl();
             });
 
-            this.loadMap(mapString);
+            this.loadMap(mapName, maps[mapName]);
 
         });
     }
 
-    loadMap(mapString: string) {
-        this.currentMapString = mapString;
+    loadMap(mapName: string, mapString: string) {
+        this.currentMapName = mapName;
 
-        NetUtil.get("data/" + mapString + "/content.json", mapDesc => {
+        NetUtil.get(mapString + "/content.json", mapDesc => {
             let map: Map = JSON.parse(mapDesc) as Map;
             canvas.loadMap(map);
             canvas.requestRender();
@@ -129,15 +136,15 @@ class App {
             Ui.bindValue("dataOutput", "", newValue => {
             });
 
-            this.loadGithubComment(mapString, map, this.currentCommentId);
+            this.loadGithubComment(map, this.currentCommentId);
 
             Ui.bindButtonOnClick("buttonRefreshData", () => {
-                this.loadGithubComment(mapString, map, this.currentCommentId);
+                this.loadGithubComment(map, this.currentCommentId);
             });
         });
     }
 
-    loadGithubComment(mapString: string, map: Map, commentId: number) {
+    loadGithubComment(map: Map, commentId: number) {
         if (map.githubRepo && map.githubIssueId) {
             Github.getComments(map.githubRepo, map.githubIssueId, comments => {
                 let list: GithubComment[] = [];
@@ -204,7 +211,7 @@ class App {
     }
 
     replaceUrl() {
-        let url = location.pathname + '?map=' + this.currentMapString;
+        let url = location.pathname + '?map=' + this.currentMapName;
         if (this.currentCommentId > 0) url += '&commentId=' + this.currentCommentId;
         history.replaceState(null, "", url);
     }

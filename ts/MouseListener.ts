@@ -6,7 +6,7 @@ export class MouseListener {
         return false;
     }
 
-    public onwheel(event: MouseWheelEvent): boolean {
+    public onwheel(event: WheelEvent): boolean {
         return false;
     }
 

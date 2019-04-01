@@ -1,0 +1,28 @@
+{
+  "name": "ChipAnnotationViewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {},
+  "devDependencies": {
+    "rollup": "^1.7.3",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-typescript2": "^0.20.1",
+    "ts-loader": "^5.3.3",
+    "tslib": "^1.9.3",
+    "typescript": "^3.4.1"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misdake/ChipAnnotationViewer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/misdake/ChipAnnotationViewer/issues"
+  },
+  "homepage": "https://github.com/misdake/ChipAnnotationViewer#readme"
+}

@@ -4,27 +4,9 @@
     <title>Chip Annotation Viewer</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <script src="lib/require.js"></script>
 </head>
-<body onload="__load()">
-<script>
-    function __load() {
-        requirejs.config({
-            baseUrl: 'js',
-            paths: {
-                'App': 'app'
-            }
-        });
-        require(['App']);
-    }
-</script>
 
-<div id="selectPanel">
-    <select id="mapSelect"></select>
-    <select id="dataSelect"></select>
-    <button id="buttonRefreshData" class="configButton">refresh</button>
-    <br>
-</div>
+<body>
 
 <a id="imageSource" target="_blank" href=""></a>
 
@@ -108,8 +90,19 @@
 
         <div id="textHint"></div><br>
     </div>
-
 </div>
-<div id='container'></div>
+
+<div id='container'>
+    <div id="selectPanel">
+        <select id="mapSelect"></select>
+        <select id="dataSelect"></select>
+        <button id="buttonRefreshData" class="configButton">refresh</button>
+    </div>
+</div>
+
+<script src="dist/app.js"></script>
+
 </body>
+
+
 </html>

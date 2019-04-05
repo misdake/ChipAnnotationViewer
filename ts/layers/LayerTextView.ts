@@ -5,14 +5,15 @@ import {MouseListener} from "../MouseListener";
 import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
+import {LayerPolylineEdit} from "./LayerPolylineEdit";
+import {Names} from "./Names";
 
 export class LayerTextView extends Layer {
-    public static readonly layerName = "text view";
 
     private texts: DrawableText[] = [];
 
     public constructor(canvas: Canvas) {
-        super(LayerTextView.layerName, canvas);
+        super(Names.TEXT_VIEW, canvas);
     }
 
     public loadData(data: Data): void {
@@ -42,10 +43,11 @@ export class LayerTextView extends Layer {
                         if (pick) selected = text;
                     }
                     if (selected) {
-                        Selection.select(DrawableText.typeName, selected);
+                        Selection.select(Names.TEXT_EDIT, selected);
                         return true;
                     }
-                    Selection.deselect(DrawableText.typeName);
+                    Selection.deselect(Names.TEXT_CREATE);
+                    Selection.deselect(Names.TEXT_EDIT);
                     return false;
                 } else {
                     return false;

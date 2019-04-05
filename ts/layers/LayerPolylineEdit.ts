@@ -1,26 +1,18 @@
 import {Layer} from "../Layer";
 import {Map} from "../data/Map";
-import {DrawablePolyline, DrawablePolylinePack} from "../drawable/DrawablePolyline";
+import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
-import {Size} from "../util/Size";
 import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
-import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
+import {Names} from "./Names";
 
 export class LayerPolylineEdit extends Layer {
-    public static readonly layerName = "polyline edit";
-
-    private static readonly HINT_ELEMENT_ID = "polylineHint";
-    private static readonly HINT_NEW_POLYLINE =
-        "1. left click to create point<br>" +
-        "2. hold left button to preview point<br>" +
-        "3. right click to finish creating<br>" +
-        "4. hold ctrl to help with horizontal/vertical line<br>";
+    private static readonly HINT_ELEMENT_ID = "hint";
     private static readonly HINT_EDIT_POLYLINE =
         "1. hold left button to drag points<br>" +
         "2. hold ctrl to help with horizontal/vertical line<br>" +
@@ -32,14 +24,13 @@ export class LayerPolylineEdit extends Layer {
     private static readonly MAG_RADIUS = 10;
 
     private map: Map;
-    private polylineNew: DrawablePolyline = null;
     private polylineEdit: DrawablePolyline = null;
     private layerView: LayerPolylineView;
 
     public constructor(canvas: Canvas) {
-        super(LayerPolylineEdit.layerName, canvas);
+        super(Names.POLYLINE_EDIT, canvas);
         let self = this;
-        Selection.register(DrawablePolyline.typeName, (item: Drawable) => {
+        Selection.register(Names.POLYLINE_EDIT, (item: Drawable) => {
             this.startEditingPolyline(item as DrawablePolyline);
         }, () => {
             self.finishEditing();
@@ -51,90 +42,10 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(LayerPolylineView.layerName) as LayerPolylineView;
-        this.polylineNew = null;
+        this.layerView = this.canvas.findLayer(Names.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineEdit = null;
         this.finishEditing();
         Ui.setVisibility("panelPolylineSelected", false);
-    }
-
-    public startCreatingPolyline(): DrawablePolyline {
-        this.finishEditing();
-        let self = this;
-
-        this.polylineNew = new DrawablePolyline(new DrawablePolylinePack(
-            [], true, new Size(2),
-            true, "white", "25",
-            true, "white", "75",
-        ));
-        this.bindPolylineConfigUi(this.polylineNew);
-
-        Ui.setContent(LayerPolylineEdit.HINT_ELEMENT_ID, LayerPolylineEdit.HINT_NEW_POLYLINE);
-
-        this._mouseListener = new class extends MouseListener {
-            private down: boolean = false;
-            private moved: boolean = false;
-
-            private preview(position: Position, magnetic: boolean): void {
-                self.polylineNew.editor.setPoint(-1, position.x, position.y);
-                if (magnetic) {
-                    let radius = self.camera.screenSizeToCanvas(LayerPolylineEdit.MAG_RADIUS);
-                    let result = self.polylineNew.calculator.alignPoint(-1, radius);
-                    self.polylineNew.editor.setPoint(-1, result.x, result.y);
-                }
-            }
-            onmousedown(event: MouseEvent): boolean {
-                if (event.button == 0 && !this.down) { //left button down => add point
-                    this.down = true;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.polylineNew.editor.addPoint(position.x, position.y);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.button == 2) {
-                    this.moved = false;
-                }
-                return false;
-            }
-            onmouseup(event: MouseEvent): boolean {
-                if (event.button == 0) { //left button up => update last point
-                    this.down = false;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position, event.ctrlKey);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.button == 2) {
-                    if (!this.moved) {
-                        let newPolyline = self.polylineNew;
-                        self.finishEditing();
-                        if (self.layerView.containPolyline(newPolyline)) {
-                            self.startEditingPolyline(newPolyline);
-                        }
-                    }
-                    this.moved = false;
-                    return true;
-                }
-                return false;
-            }
-            onmousemove(event: MouseEvent): boolean {
-                if (this.down) { //left button is down => show modification
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position, event.ctrlKey);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.buttons & 2) {
-                    this.moved = true;
-                }
-                return false;
-            }
-        };
-
-        return this.polylineNew;
-    }
-
-    public deleteCreating() {
-        this.polylineNew = null;
-        this.finishEditing();
-        this.canvas.requestRender();
     }
 
     public startEditingPolyline(polyline: DrawablePolyline): void {
@@ -280,13 +191,6 @@ export class LayerPolylineEdit extends Layer {
     public finishEditing(): void {
         Ui.setVisibility("panelPolylineSelected", false);
 
-        if (this.polylineNew) {
-            if (this.polylineNew.editor.pointCount() > 2) {
-                this.layerView.addPolyline(this.polylineNew);
-            }
-            this.polylineNew = null;
-            this.canvas.requestRender();
-        }
         if (this.polylineEdit) {
             this.polylineEdit = null;
             this.canvas.requestRender();
@@ -295,19 +199,6 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public render(renderer: Renderer): void {
-        if (this.polylineNew) {
-            this.polylineNew.render(this.canvas, renderer, this.camera);
-            //draw two points
-            let pointCount = this.polylineNew.editor.pointCount();
-            if (pointCount > 0) {
-                let p = this.polylineNew.editor.getPoint(0);
-                this.drawPointCircle(p.x, p.y, renderer);
-            }
-            if (pointCount > 1) {
-                let p = this.polylineNew.editor.getPoint(-1);
-                this.drawPointCircle(p.x, p.y, renderer);
-            }
-        }
         if (this.polylineEdit) {
             //draw all points
             this.polylineEdit.editor.forEachPoint((x, y) => {

@@ -9,38 +9,46 @@ import {Ui} from "./util/Ui";
 import {LayerTextEdit} from "./layers/LayerTextEdit";
 import {LayerTextView} from "./layers/LayerTextView";
 import {Github, GithubComment} from "./util/GithubUtil";
+import {LayerPolylineCreate} from "./layers/LayerPolylineCreate";
+import {LayerTextCreate} from "./layers/LayerTextCreate";
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
 let layerImage = new LayerImage(canvas);
 let layerPolylineView = new LayerPolylineView(canvas);
+let layerPolylineCreate = new LayerPolylineCreate(canvas);
 let layerPolylineEdit = new LayerPolylineEdit(canvas);
 let layerTextView = new LayerTextView(canvas);
+let layerTextCreate = new LayerTextCreate(canvas);
 let layerTextEdit = new LayerTextEdit(canvas);
 
 canvas.addLayer(layerImage);
 canvas.addLayer(layerPolylineView);
 canvas.addLayer(layerPolylineEdit);
+canvas.addLayer(layerPolylineCreate);
 canvas.addLayer(layerTextView);
 canvas.addLayer(layerTextEdit);
+canvas.addLayer(layerTextCreate);
 
 Ui.bindButtonOnClick("buttonNewPolyline", () => {
     layerTextEdit.finishEditing();
-    layerPolylineEdit.startCreatingPolyline();
+    layerPolylineCreate.createPolylineAndEdit();
 });
 Ui.bindButtonOnClick("polylineButtonDelete", () => {
     layerPolylineEdit.deleteEditing();
-    layerPolylineEdit.deleteCreating();
+    layerPolylineCreate.deleteCreating();
     layerTextEdit.finishEditing();
     layerPolylineEdit.finishEditing();
 });
 Ui.bindButtonOnClick("buttonNewText", () => {
     layerPolylineEdit.finishEditing();
-    layerTextEdit.startCreatingText()
+    layerTextCreate.createTextAndEdit()
 });
 Ui.bindButtonOnClick("textButtonDelete", () => {
     layerPolylineEdit.finishEditing();
+    layerTextCreate.deleteCreating();
+    layerTextCreate.finishCreating();
     layerTextEdit.deleteEditing();
     layerTextEdit.finishEditing();
 });

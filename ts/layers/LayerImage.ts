@@ -6,14 +6,27 @@ import {Renderer} from "../Renderer";
 import {DrawableImage} from "../drawable/DrawableImage";
 import {MouseListener} from "../MouseListener";
 import {Ui} from "../util/Ui";
+import {Selection} from "./Selection";
+import {Names} from "./Names";
 
 export class LayerImage extends Layer {
+
+    private static readonly HINT_ELEMENT_ID = "hint";
+    private static readonly HINT_VIEW =
+        "1. hold mouse button to drag<br>" +
+        "2. left click polygon/text to select<br>" +
+        "3. mouse wheel to zoom<br>";
+
     private map: Map;
     private maxLevel: number;
     private baseFolder: string;
 
     public constructor(canvas: Canvas) {
-        super("image", canvas);
+        super(Names.IMAGE, canvas);
+        Selection.register(null, null, () => {
+            Ui.setContent(LayerImage.HINT_ELEMENT_ID, LayerImage.HINT_VIEW);
+        });
+        Ui.setContent(LayerImage.HINT_ELEMENT_ID, LayerImage.HINT_VIEW);
     }
 
     public loadMap(map: Map): void {

@@ -9,13 +9,12 @@ import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
+import {Names} from "./Names";
 
 export class LayerTextEdit extends Layer {
-    public static readonly layerName = "text edit";
 
-    private static readonly HINT_ELEMENT_ID = "textHint";
-    private static readonly HINT_NEW_TEXT =
-        "1. left click to create text<br>";
+    private static readonly HINT_ELEMENT_ID = "hint";
+
     private static readonly HINT_EDIT_TEXT =
         "1. hold alt to drag<br>" +
         "2. hold ctrl+alt to copy and drag <br>";
@@ -24,9 +23,9 @@ export class LayerTextEdit extends Layer {
     private layerView: LayerTextView;
 
     public constructor(canvas: Canvas) {
-        super(LayerTextEdit.layerName, canvas);
+        super(Names.TEXT_EDIT, canvas);
         let self = this;
-        Selection.register(DrawableText.typeName, (item: Drawable) => {
+        Selection.register(Names.TEXT_EDIT, (item: Drawable) => {
             self.startEditingText(item as DrawableText);
         }, () => {
             self.finishEditing();
@@ -34,53 +33,9 @@ export class LayerTextEdit extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(LayerTextView.layerName) as LayerTextView;
+        this.layerView = this.canvas.findLayer(Names.TEXT_VIEW) as LayerTextView;
         this.finishEditing();
         Ui.setVisibility("panelTextSelected", false);
-    }
-
-    public startCreatingText() {
-        this.finishEditing();
-        let self = this;
-
-        //show text and its point indicators
-        let textNew = new DrawableText(new DrawableTextPack(
-            "text",
-            "white", "100", new Size(20, 50),
-            0, 0
-        ));
-        this.bindTextConfigUi(textNew);
-
-        Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_NEW_TEXT);
-
-        this._mouseListener = new class extends MouseListener {
-            private down: boolean = false;
-
-            onmousedown(event: MouseEvent): boolean {
-                if (event.button == 0) {
-                    this.down = true;
-                    return true;
-                }
-                return false;
-            }
-            onmouseup(event: MouseEvent): boolean {
-                if (event.button == 0) { //left button up => update last point
-                    this.down = false;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    textNew.setPosition(position.x, position.y);
-                    self.layerView.addText(textNew);
-                    Selection.select(DrawableText.typeName, textNew);
-                    self.canvas.requestRender();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            onmousemove(event: MouseEvent): boolean {
-                return (event.buttons & 1) && this.down;
-
-            }
-        };
     }
 
     public startEditingText(text: DrawableText): void {

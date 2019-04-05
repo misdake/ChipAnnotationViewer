@@ -436,7 +436,6 @@ export class DrawablePolylineStyle {
 }
 
 export class DrawablePolyline extends Drawable {
-    public static readonly typeName = "DrawablePolyline";
     private readonly points: Point[];
 
     public constructor(pack: DrawablePolylinePack) {

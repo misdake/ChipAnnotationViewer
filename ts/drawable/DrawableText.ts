@@ -26,8 +26,6 @@ export class DrawableTextPack {
 }
 
 export class DrawableText extends Drawable {
-    public static readonly typeName = "DrawableText";
-
     private _text: string = "";
     private _x: number;
     private _y: number;

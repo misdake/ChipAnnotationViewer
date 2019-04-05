@@ -5,14 +5,14 @@ import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {MouseListener} from "../MouseListener";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
+import {Names} from "./Names";
 
 export class LayerPolylineView extends Layer {
-    public static readonly layerName = "polyline view";
 
     private polylines: DrawablePolyline[] = [];
 
     public constructor(canvas: Canvas) {
-        super(LayerPolylineView.layerName, canvas);
+        super(Names.POLYLINE_VIEW, canvas);
     }
 
     public loadData(data: Data): void {
@@ -47,10 +47,11 @@ export class LayerPolylineView extends Layer {
                         }
                     }
                     if (selected) {
-                        Selection.select(DrawablePolyline.typeName, selected);
+                        Selection.select(Names.POLYLINE_EDIT, selected);
                         return true;
                     }
-                    Selection.deselect(DrawablePolyline.typeName);
+                    Selection.deselect(Names.POLYLINE_CREATE);
+                    Selection.deselect(Names.POLYLINE_EDIT);
                     return false;
                 } else {
                     return false;

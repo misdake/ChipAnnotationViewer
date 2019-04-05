@@ -699,9 +699,10 @@
             var button = document.getElementById(id);
             button.onclick = onclick;
         };
-        Ui.setVisibility = function (id, visible) {
+        Ui.setVisibility = function (id, visible, displayProperty) {
+            if (displayProperty === void 0) { displayProperty = "block"; }
             var element = document.getElementById(id);
-            element.style.display = visible ? "block" : "none";
+            element.style.display = visible ? displayProperty : "none";
         };
         Ui.bindCheckbox = function (id, initialValue, onchange) {
             var checkbox = document.getElementById(id);
@@ -883,7 +884,7 @@
             this.baseFolder = "https://" + username + ".github.io/" + repo + "/" + this.map.name;
             this.currentZoom = -1;
             var imageSource = document.getElementById("imageSource");
-            Ui.setVisibility("imageSource", !!map.source);
+            Ui.setVisibility("imageSource", !!map.source, "inline");
             if (map.source) {
                 imageSource.href = map.source;
                 imageSource.innerHTML = map.source;

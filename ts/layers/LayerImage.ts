@@ -40,7 +40,7 @@ export class LayerImage extends Layer {
         this.currentZoom = -1;
 
         let imageSource = document.getElementById("imageSource") as HTMLLinkElement;
-        Ui.setVisibility("imageSource", !!map.source);
+        Ui.setVisibility("imageSource", !!map.source, "inline");
         if (map.source) {
             imageSource.href = map.source;
             imageSource.innerHTML = map.source;

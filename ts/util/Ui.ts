@@ -19,9 +19,9 @@ export class Ui {
         button.onclick = onclick;
     }
 
-    static setVisibility(id: string, visible: boolean) {
+    static setVisibility(id: string, visible: boolean, displayProperty: string = "block") {
         let element: HTMLElement = document.getElementById(id);
-        element.style.display = visible ? "block" : "none";
+        element.style.display = visible ? displayProperty : "none";
     }
 
     static bindCheckbox(id: string, initialValue: boolean, onchange: (newValue: boolean) => void) {

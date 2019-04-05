@@ -16,10 +16,7 @@ body, html {
 
 #imageSource {
     color: rgba(255, 255, 255, 0.8);
-    position: fixed;
-    bottom: 5px;
-    right: 5px;
-    z-index: 999;
+    font-size: 15px;
 }
 
 #panel {

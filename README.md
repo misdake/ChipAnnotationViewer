@@ -2,7 +2,7 @@ A die shot & annotation viewer. Webpage: <https://misdake.github.io/ChipAnnotati
 
 This project is WIP, with minimal UI.
 
-TODO & Progress: <https://github.com/misdake/ChipAnnotationViewer/projects/1>
+TODO & Progress: <https://trello.com/b/4lZH7Qsp/chip-anntoation>
 
 Features:
 1. view die shot like a tiled-map

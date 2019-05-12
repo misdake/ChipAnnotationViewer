@@ -1,5 +1,5 @@
 import typescript from 'rollup-plugin-typescript2';
-import serve from 'rollup-plugin-serve'
+import serve from 'rollup-plugin-serve';
 import minify from 'rollup-plugin-babel-minify';
 
 export default {

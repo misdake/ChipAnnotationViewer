@@ -2,6 +2,10 @@ import {AlphaEntry, ColorEntry} from "./Color";
 
 export class Ui {
 
+    static isMobile() {
+        return (/Mobi|Android/i.test(navigator.userAgent));
+    }
+
     static copyToClipboard(inputId: string) {
         let input = document.getElementById(inputId) as HTMLInputElement;
         input.select();
@@ -32,7 +36,7 @@ export class Ui {
         };
     }
 
-    static bindSelect(id: string, options: string[], initialValue: string, onchange: (index:number, newValue: string) => void) {
+    static bindSelect(id: string, options: string[], initialValue: string, onchange: (index: number, newValue: string) => void) {
         let select = <HTMLSelectElement>document.getElementById(id);
         select.options.length = 0;
         for (let map of options) {

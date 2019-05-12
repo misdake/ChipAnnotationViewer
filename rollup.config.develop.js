@@ -1,6 +1,6 @@
 import typescript from 'rollup-plugin-typescript2';
-import serve from 'rollup-plugin-serve'
-import livereload from 'rollup-plugin-livereload'
+import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload';
 
 export default {
     input: './ts/App.ts',

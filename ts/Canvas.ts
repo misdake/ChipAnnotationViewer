@@ -3,6 +3,7 @@ import {Map} from "./data/Map";
 import {Renderer} from "./Renderer";
 import {Camera} from "./Camera";
 import {Data} from "./data/Data";
+import {Ui} from "./util/Ui";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -144,6 +145,19 @@ export class Canvas {
                 if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) break;
             }
         };
+
+        if (Ui.isMobile()) {
+            let hammer = new Hammer(this.canvasElement);
+            hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+            hammer.on("pan", (event: HammerInput) => {
+                event.preventDefault();
+                let length = this.layers.length;
+                for (let i = length - 1; i >= 0; i--) {
+                    let layer = this.layers[i];
+                    if (layer.mouseListener && layer.mouseListener.onpan(event)) break;
+                }
+            });
+        }
     }
 
     private layers: Layer[];

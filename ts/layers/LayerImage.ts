@@ -102,6 +102,21 @@ export class LayerImage extends Layer {
                     return false;
                 }
             }
+            onpan(event: HammerInput): boolean {
+                let dx = event.deltaX - this.lastX;
+                let dy = event.deltaY - this.lastY;
+                let camera = self.canvas.getCamera();
+                let scale = camera.screenSizeToCanvas(1);
+                camera.moveXy(-dx * scale, -dy * scale);
+                self.canvas.requestRender();
+                this.lastX = event.deltaX;
+                this.lastY = event.deltaY;
+                if (event.isFinal) {
+                    this.lastX = 0;
+                    this.lastY = 0;
+                }
+                return true;
+            }
         };
     }
 

@@ -12,6 +12,12 @@ import {Github, GithubComment} from "./util/GithubUtil";
 import {LayerPolylineCreate} from "./layers/LayerPolylineCreate";
 import {LayerTextCreate} from "./layers/LayerTextCreate";
 
+if (Ui.isMobile()) {
+    document.getElementById("panel").style.display = "none";
+} else {
+    document.getElementById("panel").style.display = "block";
+}
+
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 

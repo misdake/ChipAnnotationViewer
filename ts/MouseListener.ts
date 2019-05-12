@@ -22,4 +22,7 @@ export class MouseListener {
     public onmouseout(event: MouseEvent): boolean {
         return false;
     }
+    public onpan(event: HammerInput): boolean {
+        return false;
+    }
 }

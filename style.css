@@ -4,6 +4,7 @@
 }
 
 body, html {
+    background: black;
     height: 100%;
 }
 
@@ -23,25 +24,27 @@ body, html {
 }
 
 .zoomButton {
-    width:24px;
-    height:24px;
+    width: 24px;
+    height: 24px;
 }
 
 .zoomText {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 15px;
+    font-size: 12px;
 }
 
 #imageSource {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 15px;
+    font-size: 12px;
 }
 
 #panel {
+    display: none;
     float: left;
     width: 200px;
     height: 100%;
     overflow-y: auto;
+    background: white;
 }
 
 #container {

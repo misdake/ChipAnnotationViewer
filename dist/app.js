@@ -259,6 +259,187 @@
     }());
     //# sourceMappingURL=Data.js.map
 
+    var ColorEntry = /** @class */ (function () {
+        function ColorEntry(name, r, g, b) {
+            this.name = name;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+        ColorEntry.findByName = function (name) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var colorValue = _a[_i];
+                if (name == colorValue.name) {
+                    return colorValue;
+                }
+            }
+            return this.list[0];
+        };
+        ColorEntry.list = [
+            new ColorEntry("red", 255, 0, 0),
+            new ColorEntry("green", 0, 255, 0),
+            new ColorEntry("blue", 0, 0, 255),
+            new ColorEntry("cyan", 0, 255, 255),
+            new ColorEntry("purple", 255, 0, 255),
+            new ColorEntry("yellow", 255, 255, 0),
+            new ColorEntry("gray", 127, 127, 127),
+            new ColorEntry("white", 255, 255, 255),
+        ];
+        return ColorEntry;
+    }());
+    var AlphaEntry = /** @class */ (function () {
+        function AlphaEntry(name, buttonColor, value) {
+            this.name = name;
+            this.buttonColor = buttonColor;
+            this.value = value;
+        }
+        AlphaEntry.findByName = function (name) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var alphaValue = _a[_i];
+                if (name == alphaValue.name) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        };
+        AlphaEntry.findByValue = function (value) {
+            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
+                var alphaValue = _a[_i];
+                if (value == alphaValue.value) {
+                    return alphaValue;
+                }
+            }
+            return this.list[0];
+        };
+        AlphaEntry.list = [
+            new AlphaEntry("25", "rgb(191,191,191)", 0.25),
+            new AlphaEntry("50", "rgb(127,127,127)", 0.50),
+            new AlphaEntry("75", "rgb(63,63,63)", 0.75),
+            new AlphaEntry("100", "rgb(0,0,0)", 1.00),
+        ];
+        return AlphaEntry;
+    }());
+    function combineColorAlpha(color, alpha) {
+        return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
+    }
+    //# sourceMappingURL=Color.js.map
+
+    var Ui = /** @class */ (function () {
+        function Ui() {
+        }
+        Ui.isMobile = function () {
+            return (/Mobi|Android/i.test(navigator.userAgent));
+        };
+        Ui.copyToClipboard = function (inputId) {
+            var input = document.getElementById(inputId);
+            input.select();
+            document.execCommand("Copy");
+            input.blur();
+        };
+        Ui.setContent = function (id, content) {
+            var element = document.getElementById(id);
+            element.innerHTML = content;
+        };
+        Ui.bindButtonOnClick = function (id, onclick) {
+            var button = document.getElementById(id);
+            button.onclick = onclick;
+        };
+        Ui.setVisibility = function (id, visible, displayProperty) {
+            if (displayProperty === void 0) { displayProperty = "block"; }
+            var element = document.getElementById(id);
+            element.style.display = visible ? displayProperty : "none";
+        };
+        Ui.bindCheckbox = function (id, initialValue, onchange) {
+            var checkbox = document.getElementById(id);
+            checkbox.checked = initialValue;
+            checkbox.onchange = function (ev) {
+                onchange(checkbox.checked);
+            };
+        };
+        Ui.bindSelect = function (id, options, initialValue, onchange) {
+            var select = document.getElementById(id);
+            select.options.length = 0;
+            for (var _i = 0, options_1 = options; _i < options_1.length; _i++) {
+                var map = options_1[_i];
+                select.add(new Option(map, map));
+            }
+            var index = options.indexOf(initialValue);
+            if (index > 0) {
+                select.options[index].selected = true;
+            }
+            select.onchange = function (ev) {
+                onchange(select.selectedIndex, select.options[select.selectedIndex].value);
+            };
+        };
+        Ui.bindValue = function (id, initialValue, onchange) {
+            var element = document.getElementById(id);
+            element.value = initialValue;
+            element.oninput = element.onchange = function (ev) {
+                onchange(element.value);
+            };
+        };
+        Ui.bindColor = function (colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
+            var colorContainer = document.getElementById(colorContainerId);
+            var alphaContainer = document.getElementById(alphaContainerId);
+            colorContainer.innerHTML = "";
+            alphaContainer.innerHTML = "";
+            var thisColor = initialColor;
+            var thisAlpha = initialAlpha;
+            for (var _i = 0, _a = ColorEntry.list; _i < _a.length; _i++) {
+                var colorValue = _a[_i];
+                var id = colorContainerId + "_" + colorValue.name;
+                var style = "background:" + colorValue.name;
+                colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
+            }
+            for (var _b = 0, _c = AlphaEntry.list; _b < _c.length; _b++) {
+                var alphaValue = _c[_b];
+                var id = alphaContainerId + "_" + alphaValue.name;
+                var style = "background:" + alphaValue.buttonColor;
+                alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
+            }
+            var _loop_1 = function (colorValue) {
+                var id = colorContainerId + "_" + colorValue.name;
+                var button = document.getElementById(id);
+                button.onclick = function (ev) {
+                    thisColor = colorValue;
+                    onchange(thisColor, thisAlpha);
+                };
+            };
+            for (var _d = 0, _e = ColorEntry.list; _d < _e.length; _d++) {
+                var colorValue = _e[_d];
+                _loop_1(colorValue);
+            }
+            var _loop_2 = function (alphaValue) {
+                var id = alphaContainerId + "_" + alphaValue.name;
+                var button = document.getElementById(id);
+                button.onclick = function (ev) {
+                    thisAlpha = alphaValue;
+                    onchange(thisColor, thisAlpha);
+                };
+            };
+            for (var _f = 0, _g = AlphaEntry.list; _f < _g.length; _f++) {
+                var alphaValue = _g[_f];
+                _loop_2(alphaValue);
+            }
+        };
+        Ui.bindNumber = function (id, initialValue, onchange) {
+            var input = document.getElementById(id);
+            input.value = initialValue.toString();
+            input.oninput = input.onchange = function (ev) {
+                var result = parseFloat(input.value);
+                if (result >= 0) {
+                    onchange(result);
+                }
+                else {
+                    input.value = "0";
+                    onchange(0);
+                }
+            };
+        };
+        return Ui;
+    }());
+    //# sourceMappingURL=Ui.js.map
+
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
             this.renderNext = false;
@@ -396,6 +577,19 @@
                         break;
                 }
             };
+            if (Ui.isMobile()) {
+                var hammer = new Hammer(this.canvasElement);
+                hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+                hammer.on("pan", function (event) {
+                    event.preventDefault();
+                    var length = _this.layers.length;
+                    for (var i = length - 1; i >= 0; i--) {
+                        var layer = _this.layers[i];
+                        if (layer.mouseListener && layer.mouseListener.onpan(event))
+                            break;
+                    }
+                });
+            }
         };
         Canvas.prototype.addLayer = function (layer) {
             this.layers.push(layer);
@@ -625,187 +819,12 @@
         MouseListener.prototype.onmouseout = function (event) {
             return false;
         };
+        MouseListener.prototype.onpan = function (event) {
+            return false;
+        };
         return MouseListener;
     }());
     //# sourceMappingURL=MouseListener.js.map
-
-    var ColorEntry = /** @class */ (function () {
-        function ColorEntry(name, r, g, b) {
-            this.name = name;
-            this.r = r;
-            this.g = g;
-            this.b = b;
-        }
-        ColorEntry.findByName = function (name) {
-            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
-                var colorValue = _a[_i];
-                if (name == colorValue.name) {
-                    return colorValue;
-                }
-            }
-            return this.list[0];
-        };
-        ColorEntry.list = [
-            new ColorEntry("red", 255, 0, 0),
-            new ColorEntry("green", 0, 255, 0),
-            new ColorEntry("blue", 0, 0, 255),
-            new ColorEntry("cyan", 0, 255, 255),
-            new ColorEntry("purple", 255, 0, 255),
-            new ColorEntry("yellow", 255, 255, 0),
-            new ColorEntry("gray", 127, 127, 127),
-            new ColorEntry("white", 255, 255, 255),
-        ];
-        return ColorEntry;
-    }());
-    var AlphaEntry = /** @class */ (function () {
-        function AlphaEntry(name, buttonColor, value) {
-            this.name = name;
-            this.buttonColor = buttonColor;
-            this.value = value;
-        }
-        AlphaEntry.findByName = function (name) {
-            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
-                var alphaValue = _a[_i];
-                if (name == alphaValue.name) {
-                    return alphaValue;
-                }
-            }
-            return this.list[0];
-        };
-        AlphaEntry.findByValue = function (value) {
-            for (var _i = 0, _a = this.list; _i < _a.length; _i++) {
-                var alphaValue = _a[_i];
-                if (value == alphaValue.value) {
-                    return alphaValue;
-                }
-            }
-            return this.list[0];
-        };
-        AlphaEntry.list = [
-            new AlphaEntry("25", "rgb(191,191,191)", 0.25),
-            new AlphaEntry("50", "rgb(127,127,127)", 0.50),
-            new AlphaEntry("75", "rgb(63,63,63)", 0.75),
-            new AlphaEntry("100", "rgb(0,0,0)", 1.00),
-        ];
-        return AlphaEntry;
-    }());
-    function combineColorAlpha(color, alpha) {
-        return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
-    }
-    //# sourceMappingURL=Color.js.map
-
-    var Ui = /** @class */ (function () {
-        function Ui() {
-        }
-        Ui.copyToClipboard = function (inputId) {
-            var input = document.getElementById(inputId);
-            input.select();
-            document.execCommand("Copy");
-            input.blur();
-        };
-        Ui.setContent = function (id, content) {
-            var element = document.getElementById(id);
-            element.innerHTML = content;
-        };
-        Ui.bindButtonOnClick = function (id, onclick) {
-            var button = document.getElementById(id);
-            button.onclick = onclick;
-        };
-        Ui.setVisibility = function (id, visible, displayProperty) {
-            if (displayProperty === void 0) { displayProperty = "block"; }
-            var element = document.getElementById(id);
-            element.style.display = visible ? displayProperty : "none";
-        };
-        Ui.bindCheckbox = function (id, initialValue, onchange) {
-            var checkbox = document.getElementById(id);
-            checkbox.checked = initialValue;
-            checkbox.onchange = function (ev) {
-                onchange(checkbox.checked);
-            };
-        };
-        Ui.bindSelect = function (id, options, initialValue, onchange) {
-            var select = document.getElementById(id);
-            select.options.length = 0;
-            for (var _i = 0, options_1 = options; _i < options_1.length; _i++) {
-                var map = options_1[_i];
-                select.add(new Option(map, map));
-            }
-            var index = options.indexOf(initialValue);
-            if (index > 0) {
-                select.options[index].selected = true;
-            }
-            select.onchange = function (ev) {
-                onchange(select.selectedIndex, select.options[select.selectedIndex].value);
-            };
-        };
-        Ui.bindValue = function (id, initialValue, onchange) {
-            var element = document.getElementById(id);
-            element.value = initialValue;
-            element.oninput = element.onchange = function (ev) {
-                onchange(element.value);
-            };
-        };
-        Ui.bindColor = function (colorContainerId, alphaContainerId, initialColor, initialAlpha, onchange) {
-            var colorContainer = document.getElementById(colorContainerId);
-            var alphaContainer = document.getElementById(alphaContainerId);
-            colorContainer.innerHTML = "";
-            alphaContainer.innerHTML = "";
-            var thisColor = initialColor;
-            var thisAlpha = initialAlpha;
-            for (var _i = 0, _a = ColorEntry.list; _i < _a.length; _i++) {
-                var colorValue = _a[_i];
-                var id = colorContainerId + "_" + colorValue.name;
-                var style = "background:" + colorValue.name;
-                colorContainer.innerHTML = colorContainer.innerHTML + "<button id=\"" + id + "\" class=\"configColorButton\" style=\"" + style + "\"></button>\n";
-            }
-            for (var _b = 0, _c = AlphaEntry.list; _b < _c.length; _b++) {
-                var alphaValue = _c[_b];
-                var id = alphaContainerId + "_" + alphaValue.name;
-                var style = "background:" + alphaValue.buttonColor;
-                alphaContainer.innerHTML = alphaContainer.innerHTML + "<button id=\"" + id + "\" class=\"configAlphaButton\" style=\"" + style + "\"></button>\n";
-            }
-            var _loop_1 = function (colorValue) {
-                var id = colorContainerId + "_" + colorValue.name;
-                var button = document.getElementById(id);
-                button.onclick = function (ev) {
-                    thisColor = colorValue;
-                    onchange(thisColor, thisAlpha);
-                };
-            };
-            for (var _d = 0, _e = ColorEntry.list; _d < _e.length; _d++) {
-                var colorValue = _e[_d];
-                _loop_1(colorValue);
-            }
-            var _loop_2 = function (alphaValue) {
-                var id = alphaContainerId + "_" + alphaValue.name;
-                var button = document.getElementById(id);
-                button.onclick = function (ev) {
-                    thisAlpha = alphaValue;
-                    onchange(thisColor, thisAlpha);
-                };
-            };
-            for (var _f = 0, _g = AlphaEntry.list; _f < _g.length; _f++) {
-                var alphaValue = _g[_f];
-                _loop_2(alphaValue);
-            }
-        };
-        Ui.bindNumber = function (id, initialValue, onchange) {
-            var input = document.getElementById(id);
-            input.value = initialValue.toString();
-            input.oninput = input.onchange = function (ev) {
-                var result = parseFloat(input.value);
-                if (result >= 0) {
-                    onchange(result);
-                }
-                else {
-                    input.value = "0";
-                    onchange(0);
-                }
-            };
-        };
-        return Ui;
-    }());
-    //# sourceMappingURL=Ui.js.map
 
     var Selection = /** @class */ (function () {
         function Selection() {
@@ -965,6 +984,21 @@
                     else {
                         return false;
                     }
+                };
+                class_1.prototype.onpan = function (event) {
+                    var dx = event.deltaX - this.lastX;
+                    var dy = event.deltaY - this.lastY;
+                    var camera = self.canvas.getCamera();
+                    var scale = camera.screenSizeToCanvas(1);
+                    camera.moveXy(-dx * scale, -dy * scale);
+                    self.canvas.requestRender();
+                    this.lastX = event.deltaX;
+                    this.lastY = event.deltaY;
+                    if (event.isFinal) {
+                        this.lastX = 0;
+                        this.lastY = 0;
+                    }
+                    return true;
                 };
                 return class_1;
             }(MouseListener));
@@ -2664,6 +2698,12 @@
     }(Layer));
     //# sourceMappingURL=LayerTextCreate.js.map
 
+    if (Ui.isMobile()) {
+        document.getElementById("panel").style.display = "none";
+    }
+    else {
+        document.getElementById("panel").style.display = "block";
+    }
     var canvas = new Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
     var layerImage = new LayerImage(canvas);

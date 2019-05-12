@@ -891,6 +891,7 @@
             return _this;
         }
         LayerImage.prototype.loadMap = function (map) {
+            var _this = this;
             this.map = map;
             this.maxLevel = map.maxLevel;
             var split = map.githubRepo.indexOf('/');
@@ -904,6 +905,16 @@
                 imageSource.href = map.source;
                 imageSource.innerHTML = map.source;
             }
+            Ui.bindButtonOnClick("buttonZoomIn", function () {
+                _this.camera.changeZoomBy(-1);
+                _this.camera.action();
+                _this.canvas.requestRender();
+            });
+            Ui.bindButtonOnClick("buttonZoomOut", function () {
+                _this.camera.changeZoomBy(1);
+                _this.camera.action();
+                _this.canvas.requestRender();
+            });
             var self = this;
             this._mouseListener = new /** @class */ (function (_super) {
                 __extends(class_1, _super);
@@ -979,6 +990,8 @@
         };
         LayerImage.prototype.render = function (renderer) {
             this.prepare(this.camera, this.canvas);
+            var density = this.camera.screenSizeToCanvas(1);
+            Ui.setContent("textZoomInfo", (density > 1 ? "1/" : "") + density + "x");
             if (this.imageMatrix) {
                 for (var i = 0; i < this.xCount; i++) {
                     for (var j = 0; j < this.yCount; j++) {
@@ -996,7 +1009,6 @@
             "3. mouse wheel to zoom<br>";
         return LayerImage;
     }(Layer));
-    //# sourceMappingURL=LayerImage.js.map
 
     var AABB = /** @class */ (function () {
         function AABB(x1, y1, x2, y2) {
@@ -1883,6 +1895,7 @@
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer));
+    //# sourceMappingURL=LayerPolylineEdit.js.map
 
     var DrawableTextPack = /** @class */ (function () {
         function DrawableTextPack(text, colorName, alphaName, 

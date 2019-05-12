@@ -14,6 +14,24 @@ body, html {
     z-index: 999;
 }
 
+#cameraPanel {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    z-index: 999;
+    /*alignment: center;*/
+}
+
+.zoomButton {
+    width:24px;
+    height:24px;
+}
+
+.zoomText {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 15px;
+}
+
 #imageSource {
     color: rgba(255, 255, 255, 0.8);
     font-size: 15px;

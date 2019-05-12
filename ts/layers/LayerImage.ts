@@ -62,6 +62,8 @@ export class LayerImage extends Layer {
             private down = false;
             private lastX = -1;
             private lastY = -1;
+            private lastPanX = -1;
+            private lastPanY = -1;
             onwheel(event: WheelEvent): boolean {
                 let camera = self.canvas.getCamera();
                 camera.action();
@@ -103,17 +105,18 @@ export class LayerImage extends Layer {
                 }
             }
             onpan(event: HammerInput): boolean {
-                let dx = event.deltaX - this.lastX;
-                let dy = event.deltaY - this.lastY;
+                let dx = event.deltaX - this.lastPanX;
+                let dy = event.deltaY - this.lastPanY;
                 let camera = self.canvas.getCamera();
                 let scale = camera.screenSizeToCanvas(1);
                 camera.moveXy(-dx * scale, -dy * scale);
                 self.canvas.requestRender();
-                this.lastX = event.deltaX;
-                this.lastY = event.deltaY;
+                console.log("onpan", event.isFirst, event.isFinal, event.deltaX, event.deltaY, dx, dy);
+                this.lastPanX = event.deltaX;
+                this.lastPanY = event.deltaY;
                 if (event.isFinal) {
-                    this.lastX = 0;
-                    this.lastY = 0;
+                    this.lastPanX = 0;
+                    this.lastPanY = 0;
                 }
                 return true;
             }

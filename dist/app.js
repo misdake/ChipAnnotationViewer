@@ -942,6 +942,8 @@
                     _this.down = false;
                     _this.lastX = -1;
                     _this.lastY = -1;
+                    _this.lastPanX = -1;
+                    _this.lastPanY = -1;
                     return _this;
                 }
                 class_1.prototype.onwheel = function (event) {
@@ -986,17 +988,18 @@
                     }
                 };
                 class_1.prototype.onpan = function (event) {
-                    var dx = event.deltaX - this.lastX;
-                    var dy = event.deltaY - this.lastY;
+                    var dx = event.deltaX - this.lastPanX;
+                    var dy = event.deltaY - this.lastPanY;
                     var camera = self.canvas.getCamera();
                     var scale = camera.screenSizeToCanvas(1);
                     camera.moveXy(-dx * scale, -dy * scale);
                     self.canvas.requestRender();
-                    this.lastX = event.deltaX;
-                    this.lastY = event.deltaY;
+                    console.log("onpan", event.isFirst, event.isFinal, event.deltaX, event.deltaY, dx, dy);
+                    this.lastPanX = event.deltaX;
+                    this.lastPanY = event.deltaY;
                     if (event.isFinal) {
-                        this.lastX = 0;
-                        this.lastY = 0;
+                        this.lastPanX = 0;
+                        this.lastPanY = 0;
                     }
                     return true;
                 };

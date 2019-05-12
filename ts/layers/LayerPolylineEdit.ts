@@ -178,7 +178,7 @@ export class LayerPolylineEdit extends Layer {
                         self.canvas.requestRender();
                         return true;
                     }
-                } else if(event.buttons & 2) {
+                } else if (event.buttons & 2) {
                     this.moved = true;
                 }
                 return false;
@@ -236,24 +236,40 @@ export class LayerPolylineEdit extends Layer {
             this.canvas.requestRender();
         });
 
-        Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
+        // Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
         Ui.bindButtonOnClick("polylineButtonArea", () => {
-            if (this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0) {
-                Ui.setContent("poylineTextArea", "");
-                if (polyline.style.fill) {
-                    let area = polyline.calculator.area();
-                    let areaMM2 = area / this.map.width / this.map.height * this.map.widthMillimeter * this.map.heightMillimeter;
-                    areaMM2 = Math.round(areaMM2 * 100) / 100;
-                    Ui.setContent("poylineTextArea", areaMM2 + "mm^2");
-                } else {
-                    let length = polyline.calculator.length();
-                    let lengthMM = length * Math.sqrt(this.map.widthMillimeter * this.map.heightMillimeter / this.map.width / this.map.height);
-                    lengthMM = Math.round(lengthMM * 100) / 100;
-                    Ui.setContent("poylineTextArea", lengthMM + "mm");
+            Ui.setContent("polylineTextArea", "");
+            if (polyline.style.fill) {
+                let width = this.map.widthMillimeter;
+                let height = this.map.heightMillimeter;
+                let unit = "mm^2";
+                if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
+                    width = this.map.width;
+                    height = this.map.height;
+                    unit = "pixels"
                 }
+
+                let area = polyline.calculator.area();
+                let areaMM2 = area / this.map.width / this.map.height * width * height;
+                areaMM2 = Math.round(areaMM2 * 100) / 100;
+                Ui.setContent("polylineTextArea", areaMM2 + unit);
+            } else {
+                let width = this.map.widthMillimeter;
+                let height = this.map.heightMillimeter;
+                let unit = "mm";
+                if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
+                    width = this.map.width;
+                    height = this.map.height;
+                    unit = "pixels"
+                }
+
+                let length = polyline.calculator.length();
+                let lengthMM = length * Math.sqrt(width * height / this.map.width / this.map.height);
+                lengthMM = Math.round(lengthMM * 100) / 100;
+                Ui.setContent("polylineTextArea", lengthMM + unit);
             }
         });
-        Ui.setContent("poylineTextArea", "");
+        Ui.setContent("polylineTextArea", "");
 
         Ui.bindButtonOnClick("polylineButtonRotateCCW", () => {
             polyline.editor.rotateCCW();

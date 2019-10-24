@@ -70,18 +70,47 @@ class App {
             let chips = JSON.parse(text) as Chip[];
 
             let defaultMap: string = null;
-            let maps: { [key: string]: Chip } = {};
-            let names: string[] = [];
+            let name_chip: { [key: string]: Chip } = {};
+
+            let selections: string[] = [];
+            let selection_chip: Chip[] = [];
+
+            let sortMap: { [key: string]: Chip } = {};
+            let sortKeys: string[] = [];
 
             if (chips && chips.length) {
                 for (let chip of chips) {
-                    names.push(chip.name);
-                    maps[chip.name] = chip;
+                    let id = `${chip.vendor} ${chip.type} ${chip.family} ${chip.name}`;
+                    sortKeys.push(id);
+                    sortMap[id] = chip;
+
+                    name_chip[chip.name] = chip;
                 }
-                defaultMap = names[0];
+                defaultMap = chips[0].name;
             }
 
-            if (!defaultMap) defaultMap = "Fiji";
+            sortKeys.sort();
+            let last_VenderType = "";
+            let last_Family = "";
+            for (let key of sortKeys) {
+                let chip = sortMap[key];
+                let curr_VenderType = `${chip.vendor} ${chip.type}`;
+                let curr_Family = `${chip.family}`;
+
+                if (last_VenderType !== curr_VenderType) {
+                    selections.push(curr_VenderType);
+                    selection_chip.push(null);
+                }
+                if (last_Family !== curr_Family) {
+                    selections.push("\xA0\xA0" + curr_Family);
+                    selection_chip.push(null);
+                }
+                selections.push("\xA0\xA0\xA0\xA0" + chip.name);
+                selection_chip.push(chip);
+
+                last_VenderType = curr_VenderType;
+                last_Family = curr_Family;
+            }
 
             let url_string = window.location.href;
             let url = new URL(url_string);
@@ -89,13 +118,16 @@ class App {
             let commentIdString = url.searchParams.get("commentId") || "0";
             this.currentCommentId = parseInt(commentIdString);
 
-            Ui.bindSelect("mapSelect", names, mapName, (index, newMap) => {
+            Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0" + mapName, (index, newMap) => {
                 this.currentCommentId = 0;
-                this.loadMap(chips[index]);
-                this.replaceUrl();
+                let chip = selection_chip[index];
+                if (chip) {
+                    this.loadMap(chip);
+                    this.replaceUrl();
+                }
             });
 
-            this.loadMap(maps[mapName]);
+            this.loadMap(name_chip[mapName]);
 
         });
     }

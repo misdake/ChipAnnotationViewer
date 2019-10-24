@@ -2757,29 +2757,56 @@
             NetUtil.get("https://misdake.github.io/ChipAnnotationData2/list.json", function (text) {
                 var chips = JSON.parse(text);
                 var defaultMap = null;
-                var maps = {};
-                var names = [];
+                var name_chip = {};
+                var selections = [];
+                var selection_chip = [];
+                var sortMap = {};
+                var sortKeys = [];
                 if (chips && chips.length) {
                     for (var _i = 0, chips_1 = chips; _i < chips_1.length; _i++) {
                         var chip = chips_1[_i];
-                        names.push(chip.name);
-                        maps[chip.name] = chip;
+                        var id = chip.vendor + " " + chip.type + " " + chip.family + " " + chip.name;
+                        sortKeys.push(id);
+                        sortMap[id] = chip;
+                        name_chip[chip.name] = chip;
                     }
-                    defaultMap = names[0];
+                    defaultMap = chips[0].name;
                 }
-                if (!defaultMap)
-                    defaultMap = "Fiji";
+                sortKeys.sort();
+                var last_VenderType = "";
+                var last_Family = "";
+                for (var _a = 0, sortKeys_1 = sortKeys; _a < sortKeys_1.length; _a++) {
+                    var key = sortKeys_1[_a];
+                    var chip = sortMap[key];
+                    var curr_VenderType = chip.vendor + " " + chip.type;
+                    var curr_Family = "" + chip.family;
+                    if (last_VenderType !== curr_VenderType) {
+                        selections.push(curr_VenderType);
+                        selection_chip.push(null);
+                    }
+                    if (last_Family !== curr_Family) {
+                        selections.push("\xA0\xA0" + curr_Family);
+                        selection_chip.push(null);
+                    }
+                    selections.push("\xA0\xA0\xA0\xA0" + chip.name);
+                    selection_chip.push(chip);
+                    last_VenderType = curr_VenderType;
+                    last_Family = curr_Family;
+                }
                 var url_string = window.location.href;
                 var url = new URL(url_string);
                 var mapName = url.searchParams.get("map") || defaultMap;
                 var commentIdString = url.searchParams.get("commentId") || "0";
                 _this.currentCommentId = parseInt(commentIdString);
-                Ui.bindSelect("mapSelect", names, mapName, function (index, newMap) {
+                Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0" + mapName, function (index, newMap) {
                     _this.currentCommentId = 0;
-                    _this.loadMap(chips[index]);
-                    _this.replaceUrl();
+                    var chip = selection_chip[index];
+                    if (chip) {
+                        _this.loadMap(chip);
+                        _this.replaceUrl();
+                    }
                 });
-                _this.loadMap(maps[mapName]);
+                _this.loadMap(name_chip[mapName]);
             });
         };
         App.prototype.loadMap = function (chip) {

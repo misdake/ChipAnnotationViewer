@@ -8,6 +8,9 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "outDir": "./js/"
+        "outDir": "./js/",
+        "types": [
+            "hammerjs"
+        ]
     }
 }

@@ -1,9 +1,9 @@
 
-(function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.head.appendChild(r) })(window.document);
 (function (factory) {
     typeof define === 'function' && define.amd ? define(factory) :
     factory();
-}(function () { 'use strict';
+}((function () { 'use strict';
 
     var ScreenRect = /** @class */ (function () {
         function ScreenRect(left, top, width, height) {
@@ -1046,6 +1046,7 @@
             "3. mouse wheel to zoom<br>";
         return LayerImage;
     }(Layer));
+    //# sourceMappingURL=LayerImage.js.map
 
     var AABB = /** @class */ (function () {
         function AABB(x1, y1, x2, y2) {
@@ -2746,29 +2747,25 @@
     });
     var App = /** @class */ (function () {
         function App() {
-            this.currentMapName = null;
+            this.currentChip = null;
             this.issueLink = "";
             this.currentCommentId = 0;
             this.dummyData = null;
         }
         App.prototype.start = function () {
             var _this = this;
-            NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.txt", function (text) {
+            NetUtil.get("https://misdake.github.io/ChipAnnotationData2/list.json", function (text) {
+                var chips = JSON.parse(text);
                 var defaultMap = null;
-                var lines = [];
                 var maps = {};
                 var names = [];
-                if (text && text.length) {
-                    lines = text.split("\n").filter(function (value) { return value.length > 0; }).map(function (value) { return value.trim(); });
-                    for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-                        var line = lines_1[_i];
-                        var name_1 = line.substring(line.lastIndexOf('/') + 1);
-                        names.push(name_1);
-                        maps[name_1] = line;
+                if (chips && chips.length) {
+                    for (var _i = 0, chips_1 = chips; _i < chips_1.length; _i++) {
+                        var chip = chips_1[_i];
+                        names.push(chip.name);
+                        maps[chip.name] = chip;
                     }
-                    if (lines.length > 0) {
-                        defaultMap = names[0];
-                    }
+                    defaultMap = names[0];
                 }
                 if (!defaultMap)
                     defaultMap = "Fiji";
@@ -2779,16 +2776,16 @@
                 _this.currentCommentId = parseInt(commentIdString);
                 Ui.bindSelect("mapSelect", names, mapName, function (index, newMap) {
                     _this.currentCommentId = 0;
-                    _this.loadMap(newMap, maps[newMap]);
+                    _this.loadMap(chips[index]);
                     _this.replaceUrl();
                 });
-                _this.loadMap(mapName, maps[mapName]);
+                _this.loadMap(maps[mapName]);
             });
         };
-        App.prototype.loadMap = function (mapName, mapString) {
+        App.prototype.loadMap = function (chip) {
             var _this = this;
-            this.currentMapName = mapName;
-            NetUtil.get(mapString + "/content.json", function (mapDesc) {
+            this.currentChip = chip;
+            NetUtil.get(chip.url + "/content.json", function (mapDesc) {
                 var map = JSON.parse(mapDesc);
                 canvas.loadMap(map);
                 canvas.requestRender();
@@ -2888,7 +2885,7 @@
             canvas.requestRender();
         };
         App.prototype.replaceUrl = function () {
-            var url = location.pathname + '?map=' + this.currentMapName;
+            var url = location.pathname + '?map=' + this.currentChip.name;
             if (this.currentCommentId > 0)
                 url += '&commentId=' + this.currentCommentId;
             history.replaceState(null, "", url);
@@ -2896,7 +2893,6 @@
         return App;
     }());
     new App().start();
-    //# sourceMappingURL=App.js.map
 
-}));
+})));
 //# sourceMappingURL=app.js.map

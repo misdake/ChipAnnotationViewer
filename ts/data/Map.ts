@@ -4,12 +4,25 @@ export class TileLevel {
     yMax: number;
 }
 
+export class Chip {
+    vendor: string;
+    type: string;
+    family: string;
+    name: string;
+
+    url: string;
+}
+
 export class Map {
     source:string;
     githubRepo: string;
     githubIssueId: number;
 
+    vendor: string;
+    type: string;
+    family: string;
     name: string;
+
     tileSize: number;
     width: number;
     height: number;

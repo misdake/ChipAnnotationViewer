@@ -1,6 +1,6 @@
 import {Canvas} from "./Canvas";
 import {NetUtil} from "./util/NetUtil";
-import {Map} from "./data/Map";
+import {Chip, Map} from "./data/Map";
 import {LayerImage} from "./layers/LayerImage";
 import {LayerPolylineView} from "./layers/LayerPolylineView";
 import {LayerPolylineEdit} from "./layers/LayerPolylineEdit";
@@ -60,29 +60,25 @@ Ui.bindButtonOnClick("textButtonDelete", () => {
 });
 
 class App {
-    currentMapName: string = null;
+    currentChip: Chip = null;
     issueLink = "";
     currentCommentId: number = 0;
     dummyData: Data = null;
 
     public start() {
-        NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.txt", text => {
+        NetUtil.get("https://misdake.github.io/ChipAnnotationData2/list.json", text => {
+            let chips = JSON.parse(text) as Chip[];
 
             let defaultMap: string = null;
-            let lines: string[] = [];
-            let maps: { [key: string]: string } = {};
+            let maps: { [key: string]: Chip } = {};
             let names: string[] = [];
 
-            if (text && text.length) {
-                lines = text.split("\n").filter(value => value.length > 0).map(value => value.trim());
-                for (let line of lines) {
-                    let name = line.substring(line.lastIndexOf('/') + 1);
-                    names.push(name);
-                    maps[name] = line;
+            if (chips && chips.length) {
+                for (let chip of chips) {
+                    names.push(chip.name);
+                    maps[chip.name] = chip;
                 }
-                if (lines.length > 0) {
-                    defaultMap = names[0];
-                }
+                defaultMap = names[0];
             }
 
             if (!defaultMap) defaultMap = "Fiji";
@@ -95,19 +91,19 @@ class App {
 
             Ui.bindSelect("mapSelect", names, mapName, (index, newMap) => {
                 this.currentCommentId = 0;
-                this.loadMap(newMap, maps[newMap]);
+                this.loadMap(chips[index]);
                 this.replaceUrl();
             });
 
-            this.loadMap(mapName, maps[mapName]);
+            this.loadMap(maps[mapName]);
 
         });
     }
 
-    loadMap(mapName: string, mapString: string) {
-        this.currentMapName = mapName;
+    loadMap(chip: Chip) {
+        this.currentChip = chip;
 
-        NetUtil.get(mapString + "/content.json", mapDesc => {
+        NetUtil.get(chip.url + "/content.json", mapDesc => {
             let map: Map = JSON.parse(mapDesc) as Map;
             canvas.loadMap(map);
             canvas.requestRender();
@@ -225,7 +221,7 @@ class App {
     }
 
     replaceUrl() {
-        let url = location.pathname + '?map=' + this.currentMapName;
+        let url = location.pathname + '?map=' + this.currentChip.name;
         if (this.currentCommentId > 0) url += '&commentId=' + this.currentCommentId;
         history.replaceState(null, "", url);
     }

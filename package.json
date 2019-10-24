@@ -1,10 +1,11 @@
 {
-  "name": "ChipAnnotationViewer",
-  "version": "1.0.0",
+  "name": "chip-annotation-viewer",
+  "version": "1.2.0",
   "description": "",
   "main": "app.js",
   "dependencies": {},
   "devDependencies": {
+    "@types/hammerjs": "^2.0.36",
     "rollup": "^1.7.3",
     "rollup-plugin-babel-minify": "^8.0.0",
     "rollup-plugin-livereload": "^1.0.0",

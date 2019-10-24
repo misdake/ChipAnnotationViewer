@@ -66,7 +66,7 @@ class App {
     dummyData: Data = null;
 
     public start() {
-        NetUtil.get("https://misdake.github.io/ChipAnnotationData2/list.json", text => {
+        NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.json", text => {
             let chips = JSON.parse(text) as Chip[];
 
             let defaultMap: string = null;
@@ -97,15 +97,15 @@ class App {
                 let curr_VenderType = `${chip.vendor} ${chip.type}`;
                 let curr_Family = `${chip.family}`;
 
-                if (last_VenderType !== curr_VenderType) {
+                if (last_VenderType !== curr_VenderType && curr_VenderType && curr_VenderType.length) {
                     selections.push(curr_VenderType);
                     selection_chip.push(null);
                 }
-                if (last_Family !== curr_Family) {
-                    selections.push("\xA0\xA0" + curr_Family);
+                if (last_Family !== curr_Family && curr_Family && curr_Family.length) {
+                    selections.push("\xA0\xA0\xA0\xA0" + curr_Family);
                     selection_chip.push(null);
                 }
-                selections.push("\xA0\xA0\xA0\xA0" + chip.name);
+                selections.push("\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0" + chip.name);
                 selection_chip.push(chip);
 
                 last_VenderType = curr_VenderType;
@@ -118,7 +118,7 @@ class App {
             let commentIdString = url.searchParams.get("commentId") || "0";
             this.currentCommentId = parseInt(commentIdString);
 
-            Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0" + mapName, (index, newMap) => {
+            Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0" + mapName, (index, newMap) => {
                 this.currentCommentId = 0;
                 let chip = selection_chip[index];
                 if (chip) {

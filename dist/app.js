@@ -2754,7 +2754,7 @@
         }
         App.prototype.start = function () {
             var _this = this;
-            NetUtil.get("https://misdake.github.io/ChipAnnotationData2/list.json", function (text) {
+            NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.json", function (text) {
                 var chips = JSON.parse(text);
                 var defaultMap = null;
                 var name_chip = {};
@@ -2780,15 +2780,15 @@
                     var chip = sortMap[key];
                     var curr_VenderType = chip.vendor + " " + chip.type;
                     var curr_Family = "" + chip.family;
-                    if (last_VenderType !== curr_VenderType) {
+                    if (last_VenderType !== curr_VenderType && curr_VenderType && curr_VenderType.length) {
                         selections.push(curr_VenderType);
                         selection_chip.push(null);
                     }
-                    if (last_Family !== curr_Family) {
-                        selections.push("\xA0\xA0" + curr_Family);
+                    if (last_Family !== curr_Family && curr_Family && curr_Family.length) {
+                        selections.push("\xA0\xA0\xA0\xA0" + curr_Family);
                         selection_chip.push(null);
                     }
-                    selections.push("\xA0\xA0\xA0\xA0" + chip.name);
+                    selections.push("\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0" + chip.name);
                     selection_chip.push(chip);
                     last_VenderType = curr_VenderType;
                     last_Family = curr_Family;
@@ -2798,7 +2798,7 @@
                 var mapName = url.searchParams.get("map") || defaultMap;
                 var commentIdString = url.searchParams.get("commentId") || "0";
                 _this.currentCommentId = parseInt(commentIdString);
-                Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0" + mapName, function (index, newMap) {
+                Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0" + mapName, function (index, newMap) {
                     _this.currentCommentId = 0;
                     var chip = selection_chip[index];
                     if (chip) {

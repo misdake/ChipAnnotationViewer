@@ -86,7 +86,6 @@ class App {
 
                     name_chip[chip.name] = chip;
                 }
-                defaultMap = chips[0].name;
             }
 
             sortKeys.sort();
@@ -114,7 +113,7 @@ class App {
 
             let url_string = window.location.href;
             let url = new URL(url_string);
-            let mapName = url.searchParams.get("map") || defaultMap;
+            let mapName = url.searchParams.get("map") || "Fiji";
             let commentIdString = url.searchParams.get("commentId") || "0";
             this.currentCommentId = parseInt(commentIdString);
 
@@ -210,7 +209,7 @@ class App {
                             }
                             list.push(comment);
                             entries.push(data);
-                            items.push(data.title + " @" + comment.user.login);
+                            items.push(data.title + " by " + comment.user.login);
                             if (commentId == comment.id) {
                                 startIndex = list.length - 1;
                                 startData = data;

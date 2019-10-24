@@ -2756,7 +2756,6 @@
             var _this = this;
             NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.json", function (text) {
                 var chips = JSON.parse(text);
-                var defaultMap = null;
                 var name_chip = {};
                 var selections = [];
                 var selection_chip = [];
@@ -2770,7 +2769,6 @@
                         sortMap[id] = chip;
                         name_chip[chip.name] = chip;
                     }
-                    defaultMap = chips[0].name;
                 }
                 sortKeys.sort();
                 var last_VenderType = "";
@@ -2795,7 +2793,7 @@
                 }
                 var url_string = window.location.href;
                 var url = new URL(url_string);
-                var mapName = url.searchParams.get("map") || defaultMap;
+                var mapName = url.searchParams.get("map") || "Fiji";
                 var commentIdString = url.searchParams.get("commentId") || "0";
                 _this.currentCommentId = parseInt(commentIdString);
                 Ui.bindSelect("mapSelect", selections, "\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0" + mapName, function (index, newMap) {
@@ -2875,7 +2873,7 @@
                                 }
                                 list.push(comment);
                                 entries.push(data);
-                                items.push(data.title + " @" + comment.user.login);
+                                items.push(data.title + " by " + comment.user.login);
                                 if (commentId == comment.id) {
                                     startIndex = list.length - 1;
                                     startData = data;

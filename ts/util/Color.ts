@@ -45,6 +45,7 @@ export class AlphaEntry {
     }
 
     public static list = [
+        new AlphaEntry("15", "rgb(217,217,217)", 0.15),
         new AlphaEntry("25", "rgb(191,191,191)", 0.25),
         new AlphaEntry("50", "rgb(127,127,127)", 0.50),
         new AlphaEntry("75", "rgb(63,63,63)", 0.75),

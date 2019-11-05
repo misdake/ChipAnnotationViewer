@@ -69,7 +69,6 @@ class App {
         NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.json", text => {
             let chips = JSON.parse(text) as Chip[];
 
-            let defaultMap: string = null;
             let name_chip: { [key: string]: Chip } = {};
 
             let selections: string[] = [];
@@ -194,7 +193,7 @@ class App {
 
                 list.push(null);
                 entries.push(this.dummyData);
-                items.push("(empty)");
+                items.push("dummy");
 
                 let startIndex = 0;
                 let startData = this.dummyData;
@@ -209,7 +208,7 @@ class App {
                             }
                             list.push(comment);
                             entries.push(data);
-                            items.push(data.title + " by " + comment.user.login);
+                            items.push(`${data.title} by ${comment.user.login}`);
                             if (commentId == comment.id) {
                                 startIndex = list.length - 1;
                                 startData = data;
@@ -219,6 +218,8 @@ class App {
                     } catch (e) {
                     }
                 }
+
+                items[0] = `(total: ${items.length - 1})`;
 
                 Ui.bindSelect("dataSelect", items, items[startIndex], index => {
                     let comment = list[index];

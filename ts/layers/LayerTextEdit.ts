@@ -1,7 +1,6 @@
 import {Layer} from "../Layer";
-import {DrawableText, DrawableTextPack} from "../drawable/DrawableText";
+import {DrawableText} from "../drawable/DrawableText";
 import {Canvas} from "../Canvas";
-import {Size} from "../util/Size";
 import {MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
@@ -10,6 +9,7 @@ import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {Names} from "./Names";
+import {KeyboardListener} from "../KeyboardListener";
 
 export class LayerTextEdit extends Layer {
 
@@ -49,6 +49,7 @@ export class LayerTextEdit extends Layer {
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
+
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
             private drag: boolean = false;
@@ -97,6 +98,8 @@ export class LayerTextEdit extends Layer {
             }
         };
 
+        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit);
+
         this.canvas.requestRender();
     }
 
@@ -111,6 +114,7 @@ export class LayerTextEdit extends Layer {
             this.canvas.requestRender();
         }
         this._mouseListener = null;
+        this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {

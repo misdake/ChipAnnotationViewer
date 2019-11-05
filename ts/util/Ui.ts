@@ -1,9 +1,60 @@
 import {AlphaEntry, ColorEntry} from "./Color";
+import {KeyboardListener} from "../KeyboardListener";
+import {Camera} from "../Camera";
+import {Canvas} from "../Canvas";
+import {DrawableText} from "../drawable/DrawableText";
+import {DrawablePolyline} from "../drawable/DrawablePolyline";
 
 export class Ui {
 
     static isMobile() {
         return (/Mobi|Android/i.test(navigator.userAgent));
+    }
+
+    static createPolylineKeyboardListener(canvas: Canvas, camera: Camera, text: DrawablePolyline) {
+        return new class extends KeyboardListener {
+            public onkeydown(event: KeyboardEvent): boolean {
+                let scale = camera.screenSizeToCanvas(1);
+                let {dx, dy} = Ui.getMove(event, scale);
+                text.editor.move(dx, dy);
+                canvas.requestRender();
+                return true;
+            }
+        };
+    }
+    static createTextKeyboardListener(canvas: Canvas, camera: Camera, text: DrawableText) {
+        return new class extends KeyboardListener {
+            public onkeydown(event: KeyboardEvent): boolean {
+                let scale = camera.screenSizeToCanvas(1);
+                let {dx, dy} = Ui.getMove(event, scale);
+                text.setPosition(text.x + dx, text.y + dy);
+                canvas.requestRender();
+                return true;
+            }
+        };
+    }
+    static getMove(event: KeyboardEvent, scale: number) {
+        let dx = 0, dy = 0;
+        if (event.ctrlKey) scale *= 10;
+        switch (event.key) {
+            case 'w':
+            case 'ArrowUp':
+                dy -= scale;
+                break;
+            case 'a':
+            case 'ArrowLeft':
+                dx -= scale;
+                break;
+            case 's':
+            case 'ArrowDown':
+                dy += scale;
+                break;
+            case 'd':
+            case 'ArrowRight':
+                dx += scale;
+                break;
+        }
+        return {dx: dx, dy: dy};
     }
 
     static copyToClipboard(inputId: string) {

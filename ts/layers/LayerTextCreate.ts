@@ -10,6 +10,7 @@ import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {Names} from "./Names";
+import {KeyboardListener} from "../KeyboardListener";
 
 export class LayerTextCreate extends Layer {
 
@@ -80,12 +81,15 @@ export class LayerTextCreate extends Layer {
 
             }
         };
+
+        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew);
     }
 
     public finishCreating(): void {
         Ui.setVisibility("panelTextSelected", false);
 
         this._mouseListener = null;
+        this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {

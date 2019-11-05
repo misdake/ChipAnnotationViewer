@@ -120,6 +120,7 @@ export class LayerPolylineCreate extends Layer {
                 return false;
             }
         };
+        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew);
 
         return this.polylineNew;
     }
@@ -141,6 +142,7 @@ export class LayerPolylineCreate extends Layer {
             this.canvas.requestRender();
         }
         this._mouseListener = null;
+        this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {

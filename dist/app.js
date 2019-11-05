@@ -259,6 +259,35 @@
     }());
     //# sourceMappingURL=Data.js.map
 
+    /*! *****************************************************************************
+    Copyright (c) Microsoft Corporation. All rights reserved.
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+    this file except in compliance with the License. You may obtain a copy of the
+    License at http://www.apache.org/licenses/LICENSE-2.0
+
+    THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+    WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+    MERCHANTABLITY OR NON-INFRINGEMENT.
+
+    See the Apache Version 2.0 License for specific language governing permissions
+    and limitations under the License.
+    ***************************************************************************** */
+    /* global Reflect, Promise */
+
+    var extendStatics = function(d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+
+    function __extends(d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    }
+
     var ColorEntry = /** @class */ (function () {
         function ColorEntry(name, r, g, b) {
             this.name = name;
@@ -323,12 +352,85 @@
     function combineColorAlpha(color, alpha) {
         return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
     }
+    //# sourceMappingURL=Color.js.map
+
+    var KeyboardListener = /** @class */ (function () {
+        function KeyboardListener() {
+        }
+        KeyboardListener.prototype.onkeydown = function (event) {
+            return false;
+        };
+        KeyboardListener.prototype.onkeyup = function (event) {
+            return false;
+        };
+        KeyboardListener.prototype.onkeypress = function (event) {
+            return false;
+        };
+        return KeyboardListener;
+    }());
+    //# sourceMappingURL=KeyboardListener.js.map
 
     var Ui = /** @class */ (function () {
         function Ui() {
         }
         Ui.isMobile = function () {
             return (/Mobi|Android/i.test(navigator.userAgent));
+        };
+        Ui.createPolylineKeyboardListener = function (canvas, camera, text) {
+            return new /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    return _super !== null && _super.apply(this, arguments) || this;
+                }
+                class_1.prototype.onkeydown = function (event) {
+                    var scale = camera.screenSizeToCanvas(1);
+                    var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
+                    text.editor.move(dx, dy);
+                    canvas.requestRender();
+                    return true;
+                };
+                return class_1;
+            }(KeyboardListener));
+        };
+        Ui.createTextKeyboardListener = function (canvas, camera, text) {
+            return new /** @class */ (function (_super) {
+                __extends(class_2, _super);
+                function class_2() {
+                    return _super !== null && _super.apply(this, arguments) || this;
+                }
+                class_2.prototype.onkeydown = function (event) {
+                    var scale = camera.screenSizeToCanvas(1);
+                    var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
+                    text.setPosition(text.x + dx, text.y + dy);
+                    canvas.requestRender();
+                    return true;
+                };
+                return class_2;
+            }(KeyboardListener));
+        };
+        Ui.getMove = function (event, scale) {
+            var dx = 0, dy = 0;
+            if (event.ctrlKey)
+                scale *= 10;
+            switch (event.key) {
+                case 'w':
+                case 'ArrowUp':
+                    dy -= scale;
+                    break;
+                case 'a':
+                case 'ArrowLeft':
+                    dx -= scale;
+                    break;
+                case 's':
+                case 'ArrowDown':
+                    dy += scale;
+                    break;
+                case 'd':
+                case 'ArrowRight':
+                    dx += scale;
+                    break;
+            }
+            return { dx: dx, dy: dy };
         };
         Ui.copyToClipboard = function (inputId) {
             var input = document.getElementById(inputId);
@@ -446,7 +548,7 @@
             this.map = null;
             this.data = null;
             this.domElement = domElement;
-            this.domElement.innerHTML += "<canvas id=\"" + id + "\" style='width:100%;height:100%;overflow:hidden'></canvas>";
+            this.domElement.innerHTML += "<canvas id=\"" + id + "\" tabindex='0' style='width:100%;height:100%;overflow:hidden;display:inline-block;'></canvas>";
             this.domElement.oncontextmenu = function (ev) {
                 return false; //disable context menu
             };
@@ -468,6 +570,7 @@
             var _this = this;
             this.layers = [];
             this.canvasElement.onclick = function (event) {
+                _this.canvasElement.focus();
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
@@ -662,7 +765,6 @@
         };
         return Canvas;
     }());
-    //# sourceMappingURL=Canvas.js.map
 
     var NetUtil = /** @class */ (function () {
         function NetUtil() {
@@ -680,35 +782,6 @@
         return NetUtil;
     }());
     //# sourceMappingURL=NetUtil.js.map
-
-    /*! *****************************************************************************
-    Copyright (c) Microsoft Corporation. All rights reserved.
-    Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-    this file except in compliance with the License. You may obtain a copy of the
-    License at http://www.apache.org/licenses/LICENSE-2.0
-
-    THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-    WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-    MERCHANTABLITY OR NON-INFRINGEMENT.
-
-    See the Apache Version 2.0 License for specific language governing permissions
-    and limitations under the License.
-    ***************************************************************************** */
-    /* global Reflect, Promise */
-
-    var extendStatics = function(d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-
-    function __extends(d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    }
 
     var Layer = /** @class */ (function () {
         function Layer(name, canvas) {
@@ -1798,6 +1871,7 @@
                 };
                 return class_1;
             }(MouseListener));
+            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit);
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
@@ -1807,6 +1881,7 @@
                 this.canvas.requestRender();
             }
             this._mouseListener = null;
+            this._keyboardListener = null;
         };
         LayerPolylineEdit.prototype.render = function (renderer) {
             var _this = this;
@@ -2164,6 +2239,7 @@
                 };
                 return class_1;
             }(MouseListener));
+            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit);
             this.canvas.requestRender();
         };
         LayerTextEdit.prototype.finishEditing = function () {
@@ -2176,6 +2252,7 @@
                 this.canvas.requestRender();
             }
             this._mouseListener = null;
+            this._keyboardListener = null;
         };
         LayerTextEdit.prototype.render = function (renderer) {
             if (this.textEdit) {
@@ -2454,6 +2531,7 @@
                 };
                 return class_1;
             }(MouseListener));
+            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew);
             return this.polylineNew;
         };
         LayerPolylineCreate.prototype.deleteCreating = function () {
@@ -2471,6 +2549,7 @@
                 this.canvas.requestRender();
             }
             this._mouseListener = null;
+            this._keyboardListener = null;
         };
         LayerPolylineCreate.prototype.render = function (renderer) {
             if (this.polylineNew) {
@@ -2615,7 +2694,7 @@
         };
         LayerTextCreate.prototype.createTextAndEdit = function () {
             //show text and its point indicators
-            this.textNew = new DrawableText(new DrawableTextPack("text", "white", "100", new Size(20, 50), 0, 0));
+            this.textNew = new DrawableText(new DrawableTextPack("text", "white", "100", new Size(5, 50), 0, 0));
             Selection.select(Names.TEXT_CREATE, this.textNew);
         };
         LayerTextCreate.prototype.startCreatingText = function () {
@@ -2656,10 +2735,12 @@
                 };
                 return class_1;
             }(MouseListener));
+            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew);
         };
         LayerTextCreate.prototype.finishCreating = function () {
             Ui.setVisibility("panelTextSelected", false);
             this._mouseListener = null;
+            this._keyboardListener = null;
         };
         LayerTextCreate.prototype.render = function (renderer) {
         };
@@ -2859,7 +2940,7 @@
                     var items = [];
                     list.push(null);
                     entries.push(_this.dummyData);
-                    items.push("(empty)");
+                    items.push("dummy");
                     var startIndex = 0;
                     var startData = _this.dummyData;
                     var startCommentId = 0;
@@ -2884,6 +2965,7 @@
                         catch (e) {
                         }
                     }
+                    items[0] = "(total: " + (items.length - 1) + ")";
                     Ui.bindSelect("dataSelect", items, items[startIndex], function (index) {
                         var comment = list[index];
                         var data = entries[index];

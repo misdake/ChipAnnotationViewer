@@ -184,6 +184,7 @@ export class LayerPolylineEdit extends Layer {
                 return false;
             }
         };
+        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit);
 
         this.canvas.requestRender();
     }
@@ -196,6 +197,7 @@ export class LayerPolylineEdit extends Layer {
             this.canvas.requestRender();
         }
         this._mouseListener = null;
+        this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {

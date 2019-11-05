@@ -39,7 +39,7 @@ export class LayerTextCreate extends Layer {
         //show text and its point indicators
         this.textNew = new DrawableText(new DrawableTextPack(
             "text",
-            "white", "100", new Size(20, 50),
+            "white", "100", new Size(5, 50),
             0, 0
         ));
         Selection.select(Names.TEXT_CREATE, this.textNew);

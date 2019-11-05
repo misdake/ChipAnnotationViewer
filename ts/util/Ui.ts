@@ -11,23 +11,33 @@ export class Ui {
         return (/Mobi|Android/i.test(navigator.userAgent));
     }
 
-    static createPolylineKeyboardListener(canvas: Canvas, camera: Camera, text: DrawablePolyline) {
+    static createPolylineKeyboardListener(canvas: Canvas, camera: Camera, text: DrawablePolyline, ondelete: () => void) {
         return new class extends KeyboardListener {
             public onkeydown(event: KeyboardEvent): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
-                text.editor.move(dx, dy);
+                if (dx !== 0 || dy !== 0) {
+                    text.editor.move(dx, dy);
+                }
+                if (event.key === "Delete") {
+                    if (ondelete) ondelete();
+                }
                 canvas.requestRender();
                 return true;
             }
         };
     }
-    static createTextKeyboardListener(canvas: Canvas, camera: Camera, text: DrawableText) {
+    static createTextKeyboardListener(canvas: Canvas, camera: Camera, text: DrawableText, ondelete: () => void) {
         return new class extends KeyboardListener {
             public onkeydown(event: KeyboardEvent): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
-                text.setPosition(text.x + dx, text.y + dy);
+                if (dx !== 0 || dy !== 0) {
+                    text.setPosition(text.x + dx, text.y + dy);
+                }
+                if (event.key === "Delete") {
+                    if (ondelete) ondelete();
+                }
                 canvas.requestRender();
                 return true;
             }

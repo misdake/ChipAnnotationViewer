@@ -82,7 +82,9 @@ export class LayerTextCreate extends Layer {
             }
         };
 
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew);
+        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, () => {
+            this.deleteCreating();
+        });
     }
 
     public finishCreating(): void {

@@ -120,7 +120,9 @@ export class LayerPolylineCreate extends Layer {
                 return false;
             }
         };
-        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew);
+        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, () => {
+            this.deleteCreating();
+        });
 
         return this.polylineNew;
     }

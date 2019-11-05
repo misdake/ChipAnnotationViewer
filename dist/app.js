@@ -1,9 +1,9 @@
 
-(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.head.appendChild(r) })(window.document);
+(function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
 (function (factory) {
     typeof define === 'function' && define.amd ? define(factory) :
     factory();
-}((function () { 'use strict';
+}(function () { 'use strict';
 
     var ScreenRect = /** @class */ (function () {
         function ScreenRect(left, top, width, height) {
@@ -376,7 +376,7 @@
         Ui.isMobile = function () {
             return (/Mobi|Android/i.test(navigator.userAgent));
         };
-        Ui.createPolylineKeyboardListener = function (canvas, camera, text) {
+        Ui.createPolylineKeyboardListener = function (canvas, camera, text, ondelete) {
             return new /** @class */ (function (_super) {
                 __extends(class_1, _super);
                 function class_1() {
@@ -385,14 +385,20 @@
                 class_1.prototype.onkeydown = function (event) {
                     var scale = camera.screenSizeToCanvas(1);
                     var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
-                    text.editor.move(dx, dy);
+                    if (dx !== 0 || dy !== 0) {
+                        text.editor.move(dx, dy);
+                    }
+                    if (event.key === "Delete") {
+                        if (ondelete)
+                            ondelete();
+                    }
                     canvas.requestRender();
                     return true;
                 };
                 return class_1;
             }(KeyboardListener));
         };
-        Ui.createTextKeyboardListener = function (canvas, camera, text) {
+        Ui.createTextKeyboardListener = function (canvas, camera, text, ondelete) {
             return new /** @class */ (function (_super) {
                 __extends(class_2, _super);
                 function class_2() {
@@ -401,7 +407,13 @@
                 class_2.prototype.onkeydown = function (event) {
                     var scale = camera.screenSizeToCanvas(1);
                     var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
-                    text.setPosition(text.x + dx, text.y + dy);
+                    if (dx !== 0 || dy !== 0) {
+                        text.setPosition(text.x + dx, text.y + dy);
+                    }
+                    if (event.key === "Delete") {
+                        if (ondelete)
+                            ondelete();
+                    }
                     canvas.requestRender();
                     return true;
                 };
@@ -540,7 +552,6 @@
         };
         return Ui;
     }());
-    //# sourceMappingURL=Ui.js.map
 
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
@@ -765,6 +776,7 @@
         };
         return Canvas;
     }());
+    //# sourceMappingURL=Canvas.js.map
 
     var NetUtil = /** @class */ (function () {
         function NetUtil() {
@@ -1745,6 +1757,7 @@
             Ui.setVisibility("panelPolylineSelected", false);
         };
         LayerPolylineEdit.prototype.startEditingPolyline = function (polyline) {
+            var _this = this;
             this.finishEditing();
             //show polyline and its point indicators
             this.polylineEdit = polyline;
@@ -1871,7 +1884,9 @@
                 };
                 return class_1;
             }(MouseListener));
-            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit);
+            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit, function () {
+                _this.deleteEditing();
+            });
             this.canvas.requestRender();
         };
         LayerPolylineEdit.prototype.finishEditing = function () {
@@ -2182,6 +2197,7 @@
             Ui.setVisibility("panelTextSelected", false);
         };
         LayerTextEdit.prototype.startEditingText = function (text) {
+            var _this = this;
             this.finishEditing();
             //show text and its point indicators
             this.textEdit = text;
@@ -2239,7 +2255,9 @@
                 };
                 return class_1;
             }(MouseListener));
-            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit);
+            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, function () {
+                _this.deleteEditing();
+            });
             this.canvas.requestRender();
         };
         LayerTextEdit.prototype.finishEditing = function () {
@@ -2463,6 +2481,7 @@
             Selection.select(Names.POLYLINE_CREATE, this.polylineNew);
         };
         LayerPolylineCreate.prototype.startCreatingPolyline = function () {
+            var _this = this;
             var self = this;
             this.bindPolylineConfigUi(this.polylineNew);
             Ui.setContent(LayerPolylineCreate.HINT_ELEMENT_ID, LayerPolylineCreate.HINT_NEW_POLYLINE);
@@ -2531,7 +2550,9 @@
                 };
                 return class_1;
             }(MouseListener));
-            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew);
+            this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, function () {
+                _this.deleteCreating();
+            });
             return this.polylineNew;
         };
         LayerPolylineCreate.prototype.deleteCreating = function () {
@@ -2698,6 +2719,7 @@
             Selection.select(Names.TEXT_CREATE, this.textNew);
         };
         LayerTextCreate.prototype.startCreatingText = function () {
+            var _this = this;
             this.finishCreating();
             var self = this;
             this.bindTextConfigUi(this.textNew);
@@ -2735,7 +2757,9 @@
                 };
                 return class_1;
             }(MouseListener));
-            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew);
+            this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, function () {
+                _this.deleteCreating();
+            });
         };
         LayerTextCreate.prototype.finishCreating = function () {
             Ui.setVisibility("panelTextSelected", false);
@@ -3002,5 +3026,5 @@
     new App().start();
     //# sourceMappingURL=App.js.map
 
-})));
+}));
 //# sourceMappingURL=app.js.map

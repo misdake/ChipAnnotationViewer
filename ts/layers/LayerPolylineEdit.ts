@@ -184,7 +184,9 @@ export class LayerPolylineEdit extends Layer {
                 return false;
             }
         };
-        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit);
+        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit, () => {
+            this.deleteEditing();
+        });
 
         this.canvas.requestRender();
     }

@@ -98,7 +98,9 @@ export class LayerTextEdit extends Layer {
             }
         };
 
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit);
+        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, () => {
+            this.deleteEditing();
+        });
 
         this.canvas.requestRender();
     }

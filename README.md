@@ -10,8 +10,9 @@ Features:
 5. export current annotations as json and share it by posting it as an issue comment (then select it in 2.)
 
 Current die shots:
-- AMD: Fiji, Hawaii, Polaris10, Polaris11, Polaris22, Vega10
-- nVIDIA: GT200, GK110, GM200, GP102, GP104, GP106, TU104, TU106, TU116
+- AMD: Fiji, Hawaii, Polaris10, Polaris11, Polaris22, Vega10, ...
+- nVIDIA: GT200, GK110, GM200, GP102, GP104, GP106, TU104, TU106, TU116, ...
+- ...
 
 Extra links:
 - Image storage: <https://github.com/misdake/ChipAnnotationData>

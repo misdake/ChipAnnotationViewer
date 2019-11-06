@@ -2342,6 +2342,7 @@
             "4. press del to delete<br>";
         return LayerTextEdit;
     }(Layer));
+    //# sourceMappingURL=LayerTextEdit.js.map
 
     var LayerTextView = /** @class */ (function (_super) {
         __extends(LayerTextView, _super);
@@ -2827,6 +2828,7 @@
             "3. press del to delete<br>";
         return LayerTextCreate;
     }(Layer));
+    //# sourceMappingURL=LayerTextCreate.js.map
 
     if (Ui.isMobile()) {
         document.getElementById("panel").style.display = "none";
@@ -2950,16 +2952,11 @@
                         data.title = "untitled";
                     }
                     var dataString = JSON.stringify(data);
-                    Ui.bindValue("dataOutput", dataString, function (newValue) {
+                    navigator.clipboard.writeText(dataString).then(function () {
+                        if (_this.issueLink) {
+                            window.open(_this.issueLink, '_blank');
+                        }
                     });
-                    Ui.copyToClipboard("dataOutput");
-                    Ui.bindValue("dataOutput", "", function (newValue) {
-                    });
-                    if (_this.issueLink) {
-                        window.open(_this.issueLink, '_blank');
-                    }
-                });
-                Ui.bindValue("dataOutput", "", function (newValue) {
                 });
                 Ui.bindValue("dataTitle", "", function (newValue) {
                 });
@@ -2968,8 +2965,6 @@
                 _this.dummyData = new Data();
                 _this.dummyData.title = "";
                 canvas.loadData(_this.dummyData);
-                Ui.bindValue("dataOutput", "", function (newValue) {
-                });
                 _this.loadGithubComment(map, _this.currentCommentId);
                 Ui.bindButtonOnClick("buttonRefreshData", function () {
                     _this.loadGithubComment(map, _this.currentCommentId);
@@ -3030,8 +3025,6 @@
             else {
                 this.issueLink = Github.getIssueLink(map.githubRepo, map.githubIssueId);
             }
-            Ui.bindValue("dataOutput", "", function (newValue) {
-            });
             canvas.loadData(data);
             this.replaceUrl();
             canvas.requestRender();
@@ -3045,7 +3038,6 @@
         return App;
     }());
     new App().start();
-    //# sourceMappingURL=App.js.map
 
 })));
 //# sourceMappingURL=app.js.map

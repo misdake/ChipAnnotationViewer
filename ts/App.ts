@@ -151,18 +151,11 @@ class App {
                 }
 
                 let dataString = JSON.stringify(data);
-                Ui.bindValue("dataOutput", dataString, newValue => {
+                navigator.clipboard.writeText(dataString).then(() => {
+                    if (this.issueLink) {
+                        window.open(this.issueLink, '_blank');
+                    }
                 });
-                Ui.copyToClipboard("dataOutput");
-                Ui.bindValue("dataOutput", "", newValue => {
-                });
-
-                if (this.issueLink) {
-                    window.open(this.issueLink, '_blank');
-                }
-            });
-
-            Ui.bindValue("dataOutput", "", newValue => {
             });
             Ui.bindValue("dataTitle", "", newValue => {
             });
@@ -172,9 +165,6 @@ class App {
             this.dummyData = new Data();
             this.dummyData.title = "";
             canvas.loadData(this.dummyData);
-
-            Ui.bindValue("dataOutput", "", newValue => {
-            });
 
             this.loadGithubComment(map, this.currentCommentId);
 
@@ -243,9 +233,6 @@ class App {
         } else {
             this.issueLink = Github.getIssueLink(map.githubRepo, map.githubIssueId);
         }
-
-        Ui.bindValue("dataOutput", "", newValue => {
-        });
 
         canvas.loadData(data);
         this.replaceUrl();

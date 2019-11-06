@@ -9,7 +9,6 @@ import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {Names} from "./Names";
-import {KeyboardListener} from "../KeyboardListener";
 
 export class LayerTextEdit extends Layer {
 
@@ -17,7 +16,9 @@ export class LayerTextEdit extends Layer {
 
     private static readonly HINT_EDIT_TEXT =
         "1. hold alt to drag<br>" +
-        "2. hold ctrl+alt to copy and drag <br>";
+        "2. hold ctrl+alt to copy and drag<br>" +
+        "3. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+        "4. press del to delete<br>";
 
     private textEdit: DrawableText = null;
     private layerView: LayerTextView;
@@ -100,6 +101,7 @@ export class LayerTextEdit extends Layer {
 
         this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, () => {
             this.deleteEditing();
+            Selection.deselect(Names.TEXT_EDIT);
         });
 
         this.canvas.requestRender();

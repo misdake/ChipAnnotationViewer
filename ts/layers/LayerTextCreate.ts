@@ -10,13 +10,14 @@ import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {Names} from "./Names";
-import {KeyboardListener} from "../KeyboardListener";
 
 export class LayerTextCreate extends Layer {
 
     private static readonly HINT_ELEMENT_ID = "hint";
     private static readonly HINT_NEW_TEXT =
-        "1. left click to create text<br>";
+        "1. left click to create text<br>" +
+        "2. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+        "3. press del to delete<br>";
 
     private textNew: DrawableText;
     private layerView: LayerTextView;
@@ -84,6 +85,7 @@ export class LayerTextCreate extends Layer {
 
         this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, () => {
             this.deleteCreating();
+            Selection.deselect(Names.TEXT_CREATE);
         });
     }
 

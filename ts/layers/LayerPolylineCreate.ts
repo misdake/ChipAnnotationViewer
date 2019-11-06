@@ -19,7 +19,9 @@ export class LayerPolylineCreate extends Layer {
         "1. left click to create point<br>" +
         "2. hold left button to preview point<br>" +
         "3. right click to finish creating<br>" +
-        "4. hold ctrl to help with horizontal/vertical line<br>";
+        "4. hold ctrl to help with horizontal/vertical line<br>" +
+        "5. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+        "6. press del to delete<br>";
 
     private static readonly MAG_RADIUS = 10;
 
@@ -122,6 +124,7 @@ export class LayerPolylineCreate extends Layer {
         };
         this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, () => {
             this.deleteCreating();
+            Selection.deselect(Names.POLYLINE_CREATE);
         });
 
         return this.polylineNew;
@@ -180,7 +183,7 @@ export class LayerPolylineCreate extends Layer {
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);
-            Selection.select("polylinecreate", newPolyline);
+            Selection.select(Names.POLYLINE_CREATE, newPolyline);
 
             this.canvas.requestRender();
         });

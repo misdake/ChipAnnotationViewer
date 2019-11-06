@@ -19,7 +19,9 @@ export class LayerPolylineEdit extends Layer {
         "3. hold alt to drag polyline<br>" +
         "4. hold ctrl+alt to copy and drag polyline<br>" +
         "5. double click on line to create point<br>" +
-        "6. right-click / double left-click point to delete it<br>";
+        "6. right-click / double left-click point to delete it<br>" +
+        "7. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+        "8. press del to delete<br>";
 
     private static readonly MAG_RADIUS = 10;
 
@@ -186,6 +188,7 @@ export class LayerPolylineEdit extends Layer {
         };
         this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit, () => {
             this.deleteEditing();
+            Selection.deselect(Names.POLYLINE_EDIT);
         });
 
         this.canvas.requestRender();

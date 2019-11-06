@@ -1,9 +1,9 @@
 
-(function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.head.appendChild(r) })(window.document);
 (function (factory) {
     typeof define === 'function' && define.amd ? define(factory) :
     factory();
-}(function () { 'use strict';
+}((function () { 'use strict';
 
     var ScreenRect = /** @class */ (function () {
         function ScreenRect(left, top, width, height) {
@@ -387,13 +387,16 @@
                     var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
                     if (dx !== 0 || dy !== 0) {
                         text.editor.move(dx, dy);
+                        canvas.requestRender();
+                        return true;
                     }
                     if (event.key === "Delete") {
                         if (ondelete)
                             ondelete();
+                        canvas.requestRender();
+                        return true;
                     }
-                    canvas.requestRender();
-                    return true;
+                    return false;
                 };
                 return class_1;
             }(KeyboardListener));
@@ -409,35 +412,42 @@
                     var _a = Ui.getMove(event, scale), dx = _a.dx, dy = _a.dy;
                     if (dx !== 0 || dy !== 0) {
                         text.setPosition(text.x + dx, text.y + dy);
+                        canvas.requestRender();
+                        return true;
                     }
                     if (event.key === "Delete") {
                         if (ondelete)
                             ondelete();
+                        canvas.requestRender();
+                        return true;
                     }
-                    canvas.requestRender();
-                    return true;
+                    return false;
                 };
                 return class_2;
             }(KeyboardListener));
         };
         Ui.getMove = function (event, scale) {
             var dx = 0, dy = 0;
-            if (event.ctrlKey)
+            if (event.shiftKey)
                 scale *= 10;
             switch (event.key) {
                 case 'w':
+                case 'W':
                 case 'ArrowUp':
                     dy -= scale;
                     break;
                 case 'a':
+                case 'A':
                 case 'ArrowLeft':
                     dx -= scale;
                     break;
                 case 's':
+                case 'S':
                 case 'ArrowDown':
                     dy += scale;
                     break;
                 case 'd':
+                case 'D':
                 case 'ArrowRight':
                     dx += scale;
                     break;
@@ -552,6 +562,7 @@
         };
         return Ui;
     }());
+    //# sourceMappingURL=Ui.js.map
 
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
@@ -1886,6 +1897,7 @@
             }(MouseListener));
             this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit, function () {
                 _this.deleteEditing();
+                Selection.deselect(Names.POLYLINE_EDIT);
             });
             this.canvas.requestRender();
         };
@@ -2019,7 +2031,9 @@
             "3. hold alt to drag polyline<br>" +
             "4. hold ctrl+alt to copy and drag polyline<br>" +
             "5. double click on line to create point<br>" +
-            "6. right-click / double left-click point to delete it<br>";
+            "6. right-click / double left-click point to delete it<br>" +
+            "7. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+            "8. press del to delete<br>";
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer));
@@ -2257,6 +2271,7 @@
             }(MouseListener));
             this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, function () {
                 _this.deleteEditing();
+                Selection.deselect(Names.TEXT_EDIT);
             });
             this.canvas.requestRender();
         };
@@ -2322,10 +2337,11 @@
         };
         LayerTextEdit.HINT_ELEMENT_ID = "hint";
         LayerTextEdit.HINT_EDIT_TEXT = "1. hold alt to drag<br>" +
-            "2. hold ctrl+alt to copy and drag <br>";
+            "2. hold ctrl+alt to copy and drag<br>" +
+            "3. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+            "4. press del to delete<br>";
         return LayerTextEdit;
     }(Layer));
-    //# sourceMappingURL=LayerTextEdit.js.map
 
     var LayerTextView = /** @class */ (function (_super) {
         __extends(LayerTextView, _super);
@@ -2552,6 +2568,7 @@
             }(MouseListener));
             this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, function () {
                 _this.deleteCreating();
+                Selection.deselect(Names.POLYLINE_CREATE);
             });
             return this.polylineNew;
         };
@@ -2602,7 +2619,7 @@
                 var newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
                 _this.finishEditing();
                 _this.layerView.addPolyline(newPolyline);
-                Selection.select("polylinecreate", newPolyline);
+                Selection.select(Names.POLYLINE_CREATE, newPolyline);
                 _this.canvas.requestRender();
             });
             // Ui.setVisibility("polylineAreaContainer", this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0);
@@ -2691,7 +2708,9 @@
         LayerPolylineCreate.HINT_NEW_POLYLINE = "1. left click to create point<br>" +
             "2. hold left button to preview point<br>" +
             "3. right click to finish creating<br>" +
-            "4. hold ctrl to help with horizontal/vertical line<br>";
+            "4. hold ctrl to help with horizontal/vertical line<br>" +
+            "5. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+            "6. press del to delete<br>";
         LayerPolylineCreate.MAG_RADIUS = 10;
         return LayerPolylineCreate;
     }(Layer));
@@ -2759,6 +2778,7 @@
             }(MouseListener));
             this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, function () {
                 _this.deleteCreating();
+                Selection.deselect(Names.TEXT_CREATE);
             });
         };
         LayerTextCreate.prototype.finishCreating = function () {
@@ -2802,10 +2822,11 @@
             });
         };
         LayerTextCreate.HINT_ELEMENT_ID = "hint";
-        LayerTextCreate.HINT_NEW_TEXT = "1. left click to create text<br>";
+        LayerTextCreate.HINT_NEW_TEXT = "1. left click to create text<br>" +
+            "2. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
+            "3. press del to delete<br>";
         return LayerTextCreate;
     }(Layer));
-    //# sourceMappingURL=LayerTextCreate.js.map
 
     if (Ui.isMobile()) {
         document.getElementById("panel").style.display = "none";
@@ -3026,5 +3047,5 @@
     new App().start();
     //# sourceMappingURL=App.js.map
 
-}));
+})));
 //# sourceMappingURL=app.js.map

@@ -18,12 +18,15 @@ export class Ui {
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
                     text.editor.move(dx, dy);
+                    canvas.requestRender();
+                    return true;
                 }
                 if (event.key === "Delete") {
                     if (ondelete) ondelete();
+                    canvas.requestRender();
+                    return true;
                 }
-                canvas.requestRender();
-                return true;
+                return false;
             }
         };
     }
@@ -34,32 +37,39 @@ export class Ui {
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
                     text.setPosition(text.x + dx, text.y + dy);
+                    canvas.requestRender();
+                    return true;
                 }
                 if (event.key === "Delete") {
                     if (ondelete) ondelete();
+                    canvas.requestRender();
+                    return true;
                 }
-                canvas.requestRender();
-                return true;
+                return false;
             }
         };
     }
     static getMove(event: KeyboardEvent, scale: number) {
         let dx = 0, dy = 0;
-        if (event.ctrlKey) scale *= 10;
+        if (event.shiftKey) scale *= 10;
         switch (event.key) {
             case 'w':
+            case 'W':
             case 'ArrowUp':
                 dy -= scale;
                 break;
             case 'a':
+            case 'A':
             case 'ArrowLeft':
                 dx -= scale;
                 break;
             case 's':
+            case 'S':
             case 'ArrowDown':
                 dy += scale;
                 break;
             case 'd':
+            case 'D':
             case 'ArrowRight':
                 dx += scale;
                 break;

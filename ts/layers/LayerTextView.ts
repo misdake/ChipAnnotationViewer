@@ -5,7 +5,6 @@ import {MouseListener} from "../MouseListener";
 import {DrawableText} from "../drawable/DrawableText";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
-import {LayerPolylineEdit} from "./LayerPolylineEdit";
 import {Names} from "./Names";
 
 export class LayerTextView extends Layer {
@@ -35,7 +34,7 @@ export class LayerTextView extends Layer {
             }
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.moved) {
-                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio);
                     let x = canvasXY.x, y = canvasXY.y;
                     let selected: DrawableText = null;
                     for (let text of self.texts) {

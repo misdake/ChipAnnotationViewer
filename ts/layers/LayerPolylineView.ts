@@ -35,7 +35,7 @@ export class LayerPolylineView extends Layer {
             onmouseup(event: MouseEvent): boolean {
                 if (event.button == 0 && !this.moved) {
                     let radius = self.camera.screenSizeToCanvas(5);
-                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio);
                     let x = canvasXY.x, y = canvasXY.y;
                     let selected: DrawablePolyline = null;
                     for (let polyline of self.polylines) {

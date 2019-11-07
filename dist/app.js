@@ -14,7 +14,6 @@
         }
         return ScreenRect;
     }());
-    //# sourceMappingURL=ScreenRect.js.map
 
     var Renderer = /** @class */ (function () {
         function Renderer(canvas, canvasElement, context) {
@@ -156,7 +155,6 @@
         };
         return Renderer;
     }());
-    //# sourceMappingURL=Renderer.js.map
 
     var Transform = /** @class */ (function () {
         function Transform() {
@@ -171,7 +169,6 @@
         }
         return Position;
     }());
-    //# sourceMappingURL=Transform.js.map
 
     var Camera = /** @class */ (function () {
         function Camera() {
@@ -250,14 +247,12 @@
         };
         return Camera;
     }());
-    //# sourceMappingURL=Camera.js.map
 
     var Data = /** @class */ (function () {
         function Data() {
         }
         return Data;
     }());
-    //# sourceMappingURL=Data.js.map
 
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation. All rights reserved.
@@ -352,7 +347,6 @@
     function combineColorAlpha(color, alpha) {
         return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
     }
-    //# sourceMappingURL=Color.js.map
 
     var KeyboardListener = /** @class */ (function () {
         function KeyboardListener() {
@@ -368,7 +362,6 @@
         };
         return KeyboardListener;
     }());
-    //# sourceMappingURL=KeyboardListener.js.map
 
     var Ui = /** @class */ (function () {
         function Ui() {
@@ -562,7 +555,6 @@
         };
         return Ui;
     }());
-    //# sourceMappingURL=Ui.js.map
 
     var Canvas = /** @class */ (function () {
         function Canvas(domElement, id) {
@@ -772,8 +764,8 @@
             return data;
         };
         Canvas.prototype.render = function () {
-            this.width = this.canvasElement.clientWidth;
-            this.height = this.canvasElement.clientHeight;
+            this.width = this.canvasElement.clientWidth * window.devicePixelRatio;
+            this.height = this.canvasElement.clientHeight * window.devicePixelRatio;
             if (this.canvasElement.width !== this.width)
                 this.canvasElement.width = this.width;
             if (this.canvasElement.height !== this.height)
@@ -787,7 +779,6 @@
         };
         return Canvas;
     }());
-    //# sourceMappingURL=Canvas.js.map
 
     var NetUtil = /** @class */ (function () {
         function NetUtil() {
@@ -804,7 +795,6 @@
         };
         return NetUtil;
     }());
-    //# sourceMappingURL=NetUtil.js.map
 
     var Layer = /** @class */ (function () {
         function Layer(name, canvas) {
@@ -840,7 +830,6 @@
         };
         return Layer;
     }());
-    //# sourceMappingURL=Layer.js.map
 
     var Drawable = /** @class */ (function () {
         function Drawable() {
@@ -850,7 +839,6 @@
         };
         return Drawable;
     }());
-    //# sourceMappingURL=Drawable.js.map
 
     var DrawableImage = /** @class */ (function (_super) {
         __extends(DrawableImage, _super);
@@ -889,7 +877,6 @@
         };
         return DrawableImage;
     }(Drawable));
-    //# sourceMappingURL=DrawableImage.js.map
 
     var MouseListener = /** @class */ (function () {
         function MouseListener() {
@@ -920,7 +907,6 @@
         };
         return MouseListener;
     }());
-    //# sourceMappingURL=MouseListener.js.map
 
     var Selection = /** @class */ (function () {
         function Selection() {
@@ -979,7 +965,6 @@
         Selection.mapDeselect = {};
         return Selection;
     }());
-    //# sourceMappingURL=Selection.js.map
 
     var Names = /** @class */ (function () {
         function Names() {
@@ -993,7 +978,6 @@
         Names.TEXT_VIEW = "text_view";
         return Names;
     }());
-    //# sourceMappingURL=Names.js.map
 
     var LayerImage = /** @class */ (function (_super) {
         __extends(LayerImage, _super);
@@ -1045,10 +1029,12 @@
                 class_1.prototype.onwheel = function (event) {
                     var camera = self.canvas.getCamera();
                     camera.action();
-                    var point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    var offsetX = event.offsetX * window.devicePixelRatio;
+                    var offsetY = event.offsetY * window.devicePixelRatio;
+                    var point1 = camera.screenXyToCanvas(offsetX, offsetY);
                     camera.changeZoomBy(event.deltaY > 0 ? 1 : -1);
                     camera.action();
-                    var point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    var point2 = camera.screenXyToCanvas(offsetX, offsetY);
                     var dx = point1.x - point2.x;
                     var dy = point1.y - point2.y;
                     camera.moveXy(dx, dy);
@@ -1057,8 +1043,8 @@
                 };
                 class_1.prototype.onmousedown = function (event) {
                     this.down = true;
-                    this.lastX = event.offsetX;
-                    this.lastY = event.offsetY;
+                    this.lastX = event.offsetX * window.devicePixelRatio;
+                    this.lastY = event.offsetY * window.devicePixelRatio;
                     return true;
                 };
                 class_1.prototype.onmouseup = function (event) {
@@ -1069,13 +1055,15 @@
                     if (this.down && event.buttons > 0) {
                         var camera = self.canvas.getCamera();
                         camera.action();
+                        var offsetX = event.offsetX * window.devicePixelRatio;
+                        var offsetY = event.offsetY * window.devicePixelRatio;
                         var point1 = camera.screenXyToCanvas(this.lastX, this.lastY);
-                        var point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var point2 = camera.screenXyToCanvas(offsetX, offsetY);
                         var dx = point1.x - point2.x;
                         var dy = point1.y - point2.y;
                         camera.moveXy(dx, dy);
-                        this.lastX = event.offsetX;
-                        this.lastY = event.offsetY;
+                        this.lastX = offsetX;
+                        this.lastY = offsetY;
                         self.canvas.requestRender();
                         return true;
                     }
@@ -1084,15 +1072,14 @@
                     }
                 };
                 class_1.prototype.onpan = function (event) {
-                    var dx = event.deltaX - this.lastPanX;
-                    var dy = event.deltaY - this.lastPanY;
+                    var dx = event.deltaX * window.devicePixelRatio - this.lastPanX;
+                    var dy = event.deltaY * window.devicePixelRatio - this.lastPanY;
                     var camera = self.canvas.getCamera();
                     var scale = camera.screenSizeToCanvas(1);
                     camera.moveXy(-dx * scale, -dy * scale);
                     self.canvas.requestRender();
-                    console.log("onpan", event.isFirst, event.isFinal, event.deltaX, event.deltaY, dx, dy);
-                    this.lastPanX = event.deltaX;
-                    this.lastPanY = event.deltaY;
+                    this.lastPanX = event.deltaX * window.devicePixelRatio;
+                    this.lastPanY = event.deltaY * window.devicePixelRatio;
                     if (event.isFinal) {
                         this.lastPanX = 0;
                         this.lastPanY = 0;
@@ -1142,7 +1129,6 @@
             "3. mouse wheel to zoom<br>";
         return LayerImage;
     }(Layer));
-    //# sourceMappingURL=LayerImage.js.map
 
     var AABB = /** @class */ (function () {
         function AABB(x1, y1, x2, y2) {
@@ -1163,7 +1149,6 @@
         };
         return AABB;
     }());
-    //# sourceMappingURL=AABB.js.map
 
     var Point = /** @class */ (function () {
         function Point(x, y) {
@@ -1641,7 +1626,6 @@
         };
         return DrawablePolyline;
     }(Drawable));
-    //# sourceMappingURL=DrawablePolyline.js.map
 
     var LayerPolylineView = /** @class */ (function (_super) {
         __extends(LayerPolylineView, _super);
@@ -1674,7 +1658,7 @@
                 class_1.prototype.onmouseup = function (event) {
                     if (event.button == 0 && !this.moved) {
                         var radius = self.camera.screenSizeToCanvas(5);
-                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio);
                         var x = canvasXY.x, y = canvasXY.y;
                         var selected = null;
                         for (var _i = 0, _a = self.polylines; _i < _a.length; _i++) {
@@ -1743,7 +1727,6 @@
         };
         return LayerPolylineView;
     }(Layer));
-    //# sourceMappingURL=LayerPolylineView.js.map
 
     var LayerPolylineEdit = /** @class */ (function (_super) {
         __extends(LayerPolylineEdit, _super);
@@ -2037,7 +2020,6 @@
         LayerPolylineEdit.MAG_RADIUS = 10;
         return LayerPolylineEdit;
     }(Layer));
-    //# sourceMappingURL=LayerPolylineEdit.js.map
 
     var DrawableTextPack = /** @class */ (function () {
         function DrawableTextPack(text, colorName, alphaName, 
@@ -2190,7 +2172,6 @@
         };
         return DrawableText;
     }(Drawable));
-    //# sourceMappingURL=DrawableText.js.map
 
     var LayerTextEdit = /** @class */ (function (_super) {
         __extends(LayerTextEdit, _super);
@@ -2342,7 +2323,6 @@
             "4. press del to delete<br>";
         return LayerTextEdit;
     }(Layer));
-    //# sourceMappingURL=LayerTextEdit.js.map
 
     var LayerTextView = /** @class */ (function (_super) {
         __extends(LayerTextView, _super);
@@ -2374,7 +2354,7 @@
                 };
                 class_1.prototype.onmouseup = function (event) {
                     if (event.button == 0 && !this.moved) {
-                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        var canvasXY = self.camera.screenXyToCanvas(event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio);
                         var x = canvasXY.x, y = canvasXY.y;
                         var selected = null;
                         for (var _i = 0, _a = self.texts; _i < _a.length; _i++) {
@@ -2437,7 +2417,6 @@
         };
         return LayerTextView;
     }(Layer));
-    //# sourceMappingURL=LayerTextView.js.map
 
     var Github = /** @class */ (function () {
         function Github() {
@@ -2460,7 +2439,6 @@
         };
         return Github;
     }());
-    //# sourceMappingURL=GithubUtil.js.map
 
     var Size = /** @class */ (function () {
         function Size(onScreen, onCanvas, ofScreen) {
@@ -2470,7 +2448,6 @@
         }
         return Size;
     }());
-    //# sourceMappingURL=Size.js.map
 
     var LayerPolylineCreate = /** @class */ (function (_super) {
         __extends(LayerPolylineCreate, _super);
@@ -2715,7 +2692,6 @@
         LayerPolylineCreate.MAG_RADIUS = 10;
         return LayerPolylineCreate;
     }(Layer));
-    //# sourceMappingURL=LayerPolylineCreate.js.map
 
     var LayerTextCreate = /** @class */ (function (_super) {
         __extends(LayerTextCreate, _super);
@@ -2828,7 +2804,6 @@
             "3. press del to delete<br>";
         return LayerTextCreate;
     }(Layer));
-    //# sourceMappingURL=LayerTextCreate.js.map
 
     if (Ui.isMobile()) {
         document.getElementById("panel").style.display = "none";

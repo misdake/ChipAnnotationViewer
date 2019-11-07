@@ -224,8 +224,8 @@ export class Canvas {
     }
 
     public render(): void {
-        this.width = this.canvasElement.clientWidth;
-        this.height = this.canvasElement.clientHeight;
+        this.width = this.canvasElement.clientWidth * window.devicePixelRatio;
+        this.height = this.canvasElement.clientHeight * window.devicePixelRatio;
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;
         if (this.canvasElement.height !== this.height) this.canvasElement.height = this.height;
 

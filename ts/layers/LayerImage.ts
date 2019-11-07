@@ -67,10 +67,12 @@ export class LayerImage extends Layer {
             onwheel(event: WheelEvent): boolean {
                 let camera = self.canvas.getCamera();
                 camera.action();
-                let point1 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                let offsetX = event.offsetX * window.devicePixelRatio;
+                let offsetY = event.offsetY * window.devicePixelRatio;
+                let point1 = camera.screenXyToCanvas(offsetX, offsetY);
                 camera.changeZoomBy(event.deltaY > 0 ? 1 : -1);
                 camera.action();
-                let point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                let point2 = camera.screenXyToCanvas(offsetX, offsetY);
                 let dx = point1.x - point2.x;
                 let dy = point1.y - point2.y;
                 camera.moveXy(dx, dy);
@@ -79,8 +81,8 @@ export class LayerImage extends Layer {
             }
             onmousedown(event: MouseEvent): boolean {
                 this.down = true;
-                this.lastX = event.offsetX;
-                this.lastY = event.offsetY;
+                this.lastX = event.offsetX * window.devicePixelRatio;
+                this.lastY = event.offsetY * window.devicePixelRatio;
                 return true;
             }
             onmouseup(event: MouseEvent): boolean {
@@ -91,13 +93,15 @@ export class LayerImage extends Layer {
                 if (this.down && event.buttons > 0) {
                     let camera = self.canvas.getCamera();
                     camera.action();
+                    let offsetX = event.offsetX * window.devicePixelRatio;
+                    let offsetY = event.offsetY * window.devicePixelRatio;
                     let point1 = camera.screenXyToCanvas(this.lastX, this.lastY);
-                    let point2 = camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let point2 = camera.screenXyToCanvas(offsetX, offsetY);
                     let dx = point1.x - point2.x;
                     let dy = point1.y - point2.y;
                     camera.moveXy(dx, dy);
-                    this.lastX = event.offsetX;
-                    this.lastY = event.offsetY;
+                    this.lastX = offsetX;
+                    this.lastY = offsetY;
                     self.canvas.requestRender();
                     return true;
                 } else {
@@ -105,15 +109,14 @@ export class LayerImage extends Layer {
                 }
             }
             onpan(event: HammerInput): boolean {
-                let dx = event.deltaX - this.lastPanX;
-                let dy = event.deltaY - this.lastPanY;
+                let dx = event.deltaX * window.devicePixelRatio - this.lastPanX;
+                let dy = event.deltaY * window.devicePixelRatio - this.lastPanY;
                 let camera = self.canvas.getCamera();
                 let scale = camera.screenSizeToCanvas(1);
                 camera.moveXy(-dx * scale, -dy * scale);
                 self.canvas.requestRender();
-                console.log("onpan", event.isFirst, event.isFinal, event.deltaX, event.deltaY, dx, dy);
-                this.lastPanX = event.deltaX;
-                this.lastPanY = event.deltaY;
+                this.lastPanX = event.deltaX * window.devicePixelRatio;
+                this.lastPanY = event.deltaY * window.devicePixelRatio;
                 if (event.isFinal) {
                     this.lastPanX = 0;
                     this.lastPanY = 0;

@@ -117,33 +117,39 @@ export class Canvas {
         };
 
         this.canvasElement.onkeydown = event => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) break;
+                if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    break;
+                }
             }
         };
         this.canvasElement.onkeyup = event => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) break;
+                if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    break;
+                }
             }
         };
         this.canvasElement.onkeypress = event => {
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) break;
+                if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    break;
+                }
             }
         };
 

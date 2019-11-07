@@ -662,36 +662,39 @@
                 }
             };
             this.canvasElement.onkeydown = function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
                 var length = _this.layers.length;
                 for (var i = length - 1; i >= 0; i--) {
                     var layer = _this.layers[i];
-                    if (layer.keyboardListener && layer.keyboardListener.onkeydown(event))
+                    if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
                         break;
+                    }
                 }
             };
             this.canvasElement.onkeyup = function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
                 var length = _this.layers.length;
                 for (var i = length - 1; i >= 0; i--) {
                     var layer = _this.layers[i];
-                    if (layer.keyboardListener && layer.keyboardListener.onkeyup(event))
+                    if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
                         break;
+                    }
                 }
             };
             this.canvasElement.onkeypress = function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
                 var length = _this.layers.length;
                 for (var i = length - 1; i >= 0; i--) {
                     var layer = _this.layers[i];
-                    if (layer.keyboardListener && layer.keyboardListener.onkeypress(event))
+                    if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
                         break;
+                    }
                 }
             };
             if (Ui.isMobile()) {

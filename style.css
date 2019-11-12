@@ -46,7 +46,7 @@ select {
 #panel {
     display: none;
     float: left;
-    width: 200px;
+    width: 210px;
     height: 100%;
     background: white;
     flex-flow: column;
@@ -117,10 +117,10 @@ select {
     display: flex;
     flex-flow: row;
 }
-a {
+#footer a {
     text-decoration: none;
 }
-a :hover {
+#footer a :hover {
     text-decoration: underline;
 }
 

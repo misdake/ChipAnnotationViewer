@@ -2812,7 +2812,7 @@
         document.getElementById("panel").style.display = "none";
     }
     else {
-        document.getElementById("panel").style.display = "block";
+        document.getElementById("panel").style.display = "flex";
     }
     var canvas = new Canvas(document.getElementById("container"), 'canvas2d');
     canvas.init();
@@ -2972,7 +2972,7 @@
                                 }
                                 list.push(comment);
                                 entries.push(data);
-                                items.push(data.title + " by " + comment.user.login);
+                                items.push(data.title + " @" + comment.user.login);
                                 if (commentId == comment.id) {
                                     startIndex = list.length - 1;
                                     startData = data;
@@ -2983,7 +2983,7 @@
                         catch (e) {
                         }
                     }
-                    items[0] = "(total: " + (items.length - 1) + ")";
+                    items[0] = "(annotation count: " + (items.length - 1) + ")";
                     Ui.bindSelect("dataSelect", items, items[startIndex], function (index) {
                         var comment = list[index];
                         var data = entries[index];

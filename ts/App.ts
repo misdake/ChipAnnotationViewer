@@ -15,7 +15,7 @@ import {LayerTextCreate} from "./layers/LayerTextCreate";
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
 } else {
-    document.getElementById("panel").style.display = "block";
+    document.getElementById("panel").style.display = "flex";
 }
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
@@ -198,7 +198,7 @@ class App {
                             }
                             list.push(comment);
                             entries.push(data);
-                            items.push(`${data.title} by ${comment.user.login}`);
+                            items.push(`${data.title} @${comment.user.login}`);
                             if (commentId == comment.id) {
                                 startIndex = list.length - 1;
                                 startData = data;
@@ -209,7 +209,7 @@ class App {
                     }
                 }
 
-                items[0] = `(total: ${items.length - 1})`;
+                items[0] = `(annotation count: ${items.length - 1})`;
 
                 Ui.bindSelect("dataSelect", items, items[startIndex], index => {
                     let comment = list[index];

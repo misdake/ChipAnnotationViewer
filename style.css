@@ -6,6 +6,7 @@
 body, html {
     background: black;
     height: 100%;
+    overflow: hidden;
 }
 
 select {
@@ -28,13 +29,13 @@ select {
 }
 
 .zoomButton {
-    width: 24px;
-    height: 24px;
+    width: 36px;
+    height: 36px;
 }
 
 .zoomText {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 12px;
+    font-size: 14px;
 }
 
 #imageSource {
@@ -47,8 +48,14 @@ select {
     float: left;
     width: 200px;
     height: 100%;
-    overflow-y: auto;
     background: white;
+    flex-flow: column;
+}
+
+#panelScroll {
+    height: 100%;
+    overflow-y: auto;
+    flex: 1 1 auto;
 }
 
 #container {
@@ -91,4 +98,40 @@ select {
 
 .configText {
     /*margin:20px 5px;*/
+}
+
+#footer {
+    position: relative;
+    font-size: 14px;
+    line-height: 24px;
+    vertical-align: middle;
+    display: flex;
+    flex-flow: row;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+#footer a {
+    cursor: pointer;
+    display: flex;
+    flex-flow: row;
+}
+a {
+    text-decoration: none;
+}
+a :hover {
+    text-decoration: underline;
+}
+
+#footer span {
+    margin-left: 2px;
+    cursor: pointer;
+    line-height: 24px;
+    vertical-align: middle;
+}
+
+.footerIcon {
+    width: 24px;
+    height: 24px;
 }

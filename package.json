@@ -16,8 +16,8 @@
     "typescript": "^3.4.1"
   },
   "scripts": {
-    "develop": "rollup -c rollup.config.develop.js -w",
-    "release": "rollup -c rollup.config.release.js"
+    "build": "webpack --env.production",
+    "dev": "webpack-dev-server"
   },
   "repository": {
     "type": "git",

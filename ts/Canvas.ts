@@ -4,6 +4,9 @@ import {Renderer} from "./Renderer";
 import {Camera} from "./Camera";
 import {Data} from "./data/Data";
 import {Ui} from "./util/Ui";
+import "hammerjs";
+import {html, render} from "lit-html";
+import "elements/ZoomElement"
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -34,7 +37,7 @@ export class Canvas {
         let self = this;
         window.addEventListener('resize', function () {
             self.requestRender();
-        })
+        });
     }
 
     public getCamera(): Camera {
@@ -165,6 +168,8 @@ export class Canvas {
                 }
             });
         }
+
+        render(html`<zoom-element .canvas="${this}" .camera="${this.camera}"></zoom-element>`, document.getElementById("cameraPanel"));
     }
 
     private layers: Layer[];
@@ -241,5 +246,13 @@ export class Canvas {
         for (let layer of this.layers) {
             layer.render(this.renderer);
         }
+        for (let callback of this.afterRenderList) {
+            callback();
+        }
+    }
+
+    private afterRenderList: (() => void)[] = [];
+    public registerAfterRender(callback: () => void) {
+        if (callback) this.afterRenderList.push(callback);
     }
 }

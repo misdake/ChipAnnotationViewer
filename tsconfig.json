@@ -1,16 +1,22 @@
 {
-    "compilerOptions": {
-        "rootDir": "./ts/",
-        "module": "es6",
-        "lib": ["es5", "dom", "es2015.core"],
-        "target": "es5",
-        "sourceMap": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "outDir": "./js/",
-        "types": [
-            "hammerjs"
-        ]
-    }
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "rootDir": "./ts/",
+    "module": "es6",
+    "target": "es6",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "outDir": "./dist/",
+    "moduleResolution": "node",
+    "types": [
+      "hammerjs",
+      "lit-html",
+      "lit-element"
+    ]
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

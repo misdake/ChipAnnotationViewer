@@ -46,17 +46,6 @@ export class LayerImage extends Layer {
             imageSource.innerHTML = map.source;
         }
 
-        Ui.bindButtonOnClick("buttonZoomIn", () => {
-            this.camera.changeZoomBy(-1);
-            this.camera.action();
-            this.canvas.requestRender();
-        });
-        Ui.bindButtonOnClick("buttonZoomOut", () => {
-            this.camera.changeZoomBy(1);
-            this.camera.action();
-            this.canvas.requestRender();
-        });
-
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down = false;
@@ -160,9 +149,6 @@ export class LayerImage extends Layer {
 
     public render(renderer: Renderer): void {
         this.prepare(this.camera, this.canvas);
-
-        let density = this.camera.screenSizeToCanvas(1);
-        Ui.setContent("textZoomInfo", (density > 1 ? "1/" : "") + density + "x");
 
         if (this.imageMatrix) {
             for (let i = 0; i < this.xCount; i++) {

@@ -58,9 +58,7 @@ export class SelectElement extends LitElement {
         this.chip_name_toload = url.searchParams.get("map") || "Fiji";
         this.annotation_id_toload = parseInt(url.searchParams.get("commentId") || "0");
 
-        this.refreshChipList().then(chip_current => {
-            if (chip_current) this.selectedChip(chip_current);
-        });
+        this.refreshChipList();
     }
 
     private selectedChip(chip: Chip) {
@@ -80,13 +78,7 @@ export class SelectElement extends LitElement {
                 this.selectedAnnotation(SelectElement.dummyAnnotation);
                 this.annotation_id_toload = save;
                 this.replaceUrl();
-                this.refreshAnnotationList().then(annotation_current => {
-                    if (annotation_current) {
-                        this.selectedAnnotation(annotation_current);
-                    } else {
-                        this.selectedAnnotation(SelectElement.dummyAnnotation);
-                    }
-                });
+                this.refreshAnnotationList();
             })
         }
     }
@@ -103,26 +95,31 @@ export class SelectElement extends LitElement {
             this.selectedChip(chip);
         }
     }
-    private refreshChipList(): Promise<Chip> {
-        return SelectElement.fetchChipList().then(chips => {
+    private refreshChipList() {
+        SelectElement.fetchChipList().then(chips => {
             let {html, array, current} = SelectElement.showChipList(chips, this.chip_name_toload);
             this.chip_current = current;
             this.chiplist_html = html;
             this.chiplist_array = array;
-            return current;
+            if (current) this.selectedChip(current);
         });
     }
 
     private uiSelectedAnnotation(index: number) {
         this.selectedAnnotation(this.annotationlist_array[index]);
     }
-    private refreshAnnotationList(): Promise<Annotation> {
-        return SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
+    private refreshAnnotationList() {
+        SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
             let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;
             this.annotationlist_html = html;
             this.annotationlist_array = array;
-            return current;
+
+            if (current) {
+                this.selectedAnnotation(current);
+            } else {
+                this.selectedAnnotation(SelectElement.dummyAnnotation);
+            }
         });
     }
 
@@ -248,17 +245,21 @@ export class SelectElement extends LitElement {
     }
 
     render() {
-        let source = this.map_current ? html`<a id="imageSource" target="_blank" href="${this.map_current.source}" style="overflow:hidden">${this.map_current.source}</a>` : html``;
+        let source = this.map_current ? html`<a id="imageSource" target="_blank" href="${this.map_current.source}">${this.map_current.source}</a>` : html``;
 
         return html`
-            <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
-                ${this.chiplist_html}
-            </select>
-            ${source}
-            <br>
-            <select @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
-                ${this.annotationlist_html}
-            </select>
+            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 100%">
+                <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
+                    ${this.chiplist_html}
+                </select>
+                ${source}
+            </div>
+            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                <select @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
+                    ${this.annotationlist_html}
+                </select>
+                <button class="refreshButton" @click="${() => this.refreshAnnotationList()}">\xA0</button>
+            </div>
         `;
     }
 

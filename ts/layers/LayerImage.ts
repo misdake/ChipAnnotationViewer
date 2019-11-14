@@ -39,13 +39,6 @@ export class LayerImage extends Layer {
         this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
         this.currentZoom = -1;
 
-        let imageSource = document.getElementById("imageSource") as HTMLLinkElement;
-        Ui.setVisibility("imageSource", !!map.source, "inline");
-        if (map.source) {
-            imageSource.href = map.source;
-            imageSource.innerHTML = map.source;
-        }
-
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down = false;

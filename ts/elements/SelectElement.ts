@@ -1,12 +1,14 @@
 import {customElement, html, LitElement, property, TemplateResult} from "lit-element";
 import {Chip, Map} from "../data/Map";
 import {NetUtil} from "../util/NetUtil";
-import {Data} from "../data/Data";
+import {Annotation, Data} from "../data/Data";
+import {Github} from "../util/GithubUtil";
 
 @customElement('select-element')
 export class SelectElement extends LitElement {
 
     //↓↓↓↓↓ chip selection box ↓↓↓↓↓
+
     chip_name_toload: string;
 
     @property()
@@ -20,51 +22,86 @@ export class SelectElement extends LitElement {
     @property()
     map_current: Map;
 
+    @property()
+    onSelectMap: (map: Map) => void;
+
     //↑↑↑↑↑ chip selection box ↑↑↑↑↑
 
-    //TODO annotation related
+
     //↓↓↓↓↓ annotation selection box ↓↓↓↓↓
+
+    annotation_id_toload: number;
 
     @property()
     annotationlist_html: TemplateResult[];
-    annotationlist_array: Data[];
+    annotationlist_array: Annotation[];
 
     @property()
-    onSelectAnnotation: (annotation: Data) => void;
+    onSelectAnnotation: (annotation: Annotation) => void;
 
-    annotation_current: Data;
+    @property()
+    annotation_current: Annotation;
+
+    private static dummyAnnotation: Annotation = {id: 0, user: "", content: {title: "", polylines: [], texts: []}};
 
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
+
+    private replaceUrl() {
+        let url = location.pathname + '?map=' + this.chip_current.name;
+        if (this.annotation_current && this.annotation_current.id > 0) url += '&commentId=' + this.annotation_current.id;
+        history.replaceState(null, "", url);
+    }
 
     protected firstUpdated(): void {
         let url_string = window.location.href;
         let url = new URL(url_string);
-        let mapName = url.searchParams.get("map") || "Fiji";
-        this.chip_name_toload = mapName;
-        // let commentIdString = url.searchParams.get("commentId") || "0";
-        // this.currentCommentId = parseInt(commentIdString);
+        this.chip_name_toload = url.searchParams.get("map") || "Fiji";
+        this.annotation_id_toload = parseInt(url.searchParams.get("commentId") || "0");
 
         this.refreshChipList().then(chip_current => {
-            this.selectedChip(chip_current);
+            if (chip_current) this.selectedChip(chip_current);
         });
     }
 
     private selectedChip(chip: Chip) {
-        this.onSelectChip(chip);
+        this.chip_name_toload = chip ? chip.name : "";
         this.chip_current = chip;
+        if (this.onSelectChip) this.onSelectChip(chip);
+        this.annotationlist_html = [];
+        this.annotationlist_array = [];
+        this.annotation_current = null;
+        this.replaceUrl();
 
-        this.map_current = null;
         if (chip) {
-            SelectElement.fetchChip(chip).then(map => {
+            SelectElement.fetchMap(chip).then(map => {
                 this.map_current = map;
+                if (this.onSelectMap) this.onSelectMap(map);
+                let save = this.annotation_id_toload;
+                this.selectedAnnotation(SelectElement.dummyAnnotation);
+                this.annotation_id_toload = save;
+                this.replaceUrl();
+                this.refreshAnnotationList().then(annotation_current => {
+                    if (annotation_current) {
+                        this.selectedAnnotation(annotation_current);
+                    } else {
+                        this.selectedAnnotation(SelectElement.dummyAnnotation);
+                    }
+                });
             })
         }
-
-        //TODO this.annotation_array ... = null;
+    }
+    private selectedAnnotation(annotation: Annotation) {
+        this.annotation_id_toload = annotation ? annotation.id : 0;
+        this.annotation_current = annotation;
+        if (this.onSelectAnnotation) this.onSelectAnnotation(annotation);
+        this.replaceUrl();
     }
 
     private uiSelectedChip(index: number) {
-        this.selectedChip(this.chiplist_array[index]);
+        let chip = this.chiplist_array[index];
+        if (chip) {
+            this.selectedChip(chip);
+        }
     }
     private refreshChipList(): Promise<Chip> {
         return SelectElement.fetchChipList().then(chips => {
@@ -75,6 +112,20 @@ export class SelectElement extends LitElement {
             return current;
         });
     }
+
+    private uiSelectedAnnotation(index: number) {
+        this.selectedAnnotation(this.annotationlist_array[index]);
+    }
+    private refreshAnnotationList(): Promise<Annotation> {
+        return SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
+            let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
+            this.annotation_current = current;
+            this.annotationlist_html = html;
+            this.annotationlist_array = array;
+            return current;
+        });
+    }
+
 
     private static async fetchChipList(): Promise<Chip[]> {
         return new Promise<Chip[]>(resolve => {
@@ -135,7 +186,7 @@ export class SelectElement extends LitElement {
         return {html: selections, array: selection_chip, current: current};
     }
 
-    private static fetchChip(chip: Chip): Promise<Map> {
+    private static fetchMap(chip: Chip): Promise<Map> {
         return new Promise<Map>(resolve => {
             NetUtil.get(chip.url + "/content.json", mapDesc => {
                 let map: Map = JSON.parse(mapDesc) as Map;
@@ -144,15 +195,56 @@ export class SelectElement extends LitElement {
         });
     }
 
-    fetchAnnotationList() {
-
+    private static fetchAnnotationList(map: Map): Promise<Annotation[]> {
+        return new Promise<Annotation[]>((resolve, reject) => {
+            if (map && map.githubRepo && map.githubIssueId) {
+                Github.getComments(map.githubRepo, map.githubIssueId, comments => {
+                    let result: Annotation[] = [];
+                    for (let comment of comments) {
+                        try {
+                            let data: Data = JSON.parse(comment.body);
+                            if (data.polylines != null && data.texts != null) {
+                                if (data.title == null || data.title == "") {
+                                    data.title = "untitled";
+                                }
+                                result.push({id: comment.id, user: comment.user.login, content: data});
+                            }
+                        } catch (e) {
+                        }
+                    }
+                    resolve(result);
+                });
+            } else {
+                reject();
+            }
+        });
     }
-    showAnnotationList() {
+    private static showAnnotationList(annotations: Annotation[], annotation_current_id: number): { html: TemplateResult[], array: Annotation[], current: Annotation } {
+        let options: TemplateResult[] = [];
+        let array: Annotation[] = [];
 
-    }
+        options.push(html`<option>(annotation count: ${annotations.length})</option>`);
+        array.push(SelectElement.dummyAnnotation);
 
-    selectedAnnotation() {
+        let current: Annotation = null;
+        for (let annotation of annotations) {
+            let data = annotation.content;
+            if (data.polylines != null && data.texts != null) {
+                if (data.title == null || data.title == "") {
+                    data.title = "untitled";
+                }
 
+                if (annotation_current_id === annotation.id) {
+                    current = annotation;
+                    options.push(html`<option selected>${data.title} @${annotation.user}</option>`);
+                } else {
+                    options.push(html`<option>${data.title} @${annotation.user}</option>`);
+                }
+                array.push(annotation);
+            }
+        }
+
+        return {html: options, array: array, current: current}
     }
 
     render() {
@@ -164,7 +256,9 @@ export class SelectElement extends LitElement {
             </select>
             ${source}
             <br>
-<!--            <select id="dataSelect"></select>-->
+            <select @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
+                ${this.annotationlist_html}
+            </select>
         `;
     }
 

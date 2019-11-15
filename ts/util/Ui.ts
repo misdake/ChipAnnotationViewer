@@ -106,23 +106,6 @@ export class Ui {
             onchange(checkbox.checked);
         };
     }
-
-    static bindSelect(id: string, options: string[], initialValue: string, onchange: (index: number, newValue: string) => void) {
-        let select = <HTMLSelectElement>document.getElementById(id);
-        select.options.length = 0;
-        for (let map of options) {
-            select.add(new Option(map, map));
-        }
-
-        let index = options.indexOf(initialValue);
-        if (index > 0) {
-            select.options[index].selected = true;
-        }
-        select.onchange = ev => {
-            onchange(select.selectedIndex, select.options[select.selectedIndex].value);
-        };
-    }
-
     static bindValue(id: string, initialValue: string, onchange: (newValue: string) => void) {
         let element = <HTMLInputElement>document.getElementById(id);
         element.value = initialValue;

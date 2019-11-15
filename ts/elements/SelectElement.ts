@@ -109,6 +109,8 @@ export class SelectElement extends LitElement {
         this.selectedAnnotation(this.annotationlist_array[index]);
     }
     private refreshAnnotationList() {
+        this.annotationlist_html = [];
+        this.annotationlist_array = [];
         SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
             let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;

@@ -7,11 +7,11 @@ import {Annotation} from "./data/Data";
 import {Ui} from "./util/Ui";
 import {LayerTextEdit} from "./layers/LayerTextEdit";
 import {LayerTextView} from "./layers/LayerTextView";
-import {Github} from "./util/GithubUtil";
 import {LayerPolylineCreate} from "./layers/LayerPolylineCreate";
 import {LayerTextCreate} from "./layers/LayerTextCreate";
 import {html, render} from "lit-html";
 import "elements/SelectElement"
+import "elements/TitleElement"
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -64,7 +64,6 @@ class App {
     private chip: Chip;
     private map: Map;
     private annotation: Annotation;
-    issueLink = "";
 
     public start() {
         render(html`
@@ -74,52 +73,34 @@ class App {
                 .onSelectAnnotation=${(annotation: Annotation) => this.onSelectAnnotation(annotation)}
             ></select-element>
         `, document.getElementById("selectPanel"));
+        this.refresh();
+    }
+
+    private refresh() {
+        render(html`
+            <title-element 
+                .canvas="${canvas}"
+                .map="${this.map}"
+                .annotation="${this.annotation}"
+            ></title-element>
+        `, document.getElementById("annotationTitle"));
     }
 
     onSelectChip(chip: Chip) {
         this.chip = chip;
+        this.refresh();
     }
+
     onSelectMap(map: Map) {
         this.map = map;
+        this.refresh();
         canvas.loadMap(map);
         canvas.requestRender();
-
-        this.issueLink = Github.getIssueLink(map.githubRepo, map.githubIssueId);
-
-        Ui.bindButtonOnClick("buttonSave", () => {
-            layerTextEdit.finishEditing();
-            layerPolylineEdit.finishEditing();
-
-            let data = canvas.save();
-            data.title = (document.getElementById("dataTitle") as HTMLInputElement).value;
-            if (data.title == null || data.title == "") {
-                data.title = "untitled";
-            }
-
-            let dataString = JSON.stringify(data);
-            navigator.clipboard.writeText(dataString).then(() => {
-                if (this.issueLink) {
-                    window.open(this.issueLink, '_blank');
-                }
-            });
-        });
-        Ui.bindValue("dataTitle", "", newValue => {
-        });
-
-        // Ui.bindButtonOnClick("buttonRefreshData", () => {
-            // this.loadGithubComment(map, this.currentCommentId); //TODO
-        // });
     }
 
     onSelectAnnotation(annotation: Annotation) {
         this.annotation = annotation;
-        Ui.bindValue("dataTitle", annotation.content.title, newValue => {
-        });
-        if (annotation.id > 0) {
-            this.issueLink = Github.getCommentLink(this.map.githubRepo, this.map.githubIssueId, annotation.id);
-        } else {
-            this.issueLink = Github.getIssueLink(this.map.githubRepo, this.map.githubIssueId);
-        }
+        this.refresh();
 
         canvas.loadData(annotation.content);
         canvas.requestRender();

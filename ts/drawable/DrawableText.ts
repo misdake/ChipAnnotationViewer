@@ -114,7 +114,7 @@ export class DrawableText extends Drawable {
             this._text,
             this.color.name,
             this.alpha.name,
-            this.fontSize.clone(),
+            Size.clone(this.fontSize),
             this._x + offsetX,
             this._y + offsetY,
         )
@@ -125,7 +125,7 @@ export class DrawableText extends Drawable {
             this._text,
             this.color.name,
             this.alpha.name,
-            this.fontSize.clone(),
+            Size.clone(this.fontSize),
             this._x,
             this._y,
         )

@@ -7,13 +7,12 @@
   "devDependencies": {
     "@types/hammerjs": "^2.0.36",
     "rollup": "^1.7.3",
-    "rollup-plugin-babel-minify": "^8.0.0",
-    "rollup-plugin-livereload": "^1.0.0",
-    "rollup-plugin-serve": "^1.0.1",
-    "rollup-plugin-typescript2": "^0.20.1",
     "ts-loader": "^5.3.3",
     "tslib": "^1.9.3",
-    "typescript": "^3.4.1"
+    "typescript": "^3.4.1",
+    "webpack": "^4.38.0",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2"
   },
   "scripts": {
     "build": "webpack --env.production",

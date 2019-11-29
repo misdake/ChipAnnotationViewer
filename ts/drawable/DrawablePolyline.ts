@@ -383,9 +383,6 @@ export class DrawablePolylineStyle {
     get onCanvas(): number {
         return this._lineWidth.onCanvas;
     }
-    get ofScreen(): number {
-        return this._lineWidth.ofScreen;
-    }
 
     public pack(): DrawablePolylinePack {
         return new DrawablePolylinePack(
@@ -418,9 +415,6 @@ export class DrawablePolylineStyle {
     }
     set onCanvas(onCanvas: number) {
         this._lineWidth.onCanvas = onCanvas;
-    }
-    set ofScreen(ofScreen: number) {
-        this._lineWidth.ofScreen = ofScreen;
     }
 
     public setFillColor(fillColor: ColorEntry, fillAlpha: AlphaEntry) {

@@ -77,13 +77,6 @@ export class Ui {
         return {dx: dx, dy: dy};
     }
 
-    static copyToClipboard(inputId: string) {
-        let input = document.getElementById(inputId) as HTMLInputElement;
-        input.select();
-        document.execCommand("Copy");
-        input.blur();
-    }
-
     static setContent(id: string, content: string) {
         let element = document.getElementById(id);
         element.innerHTML = content;

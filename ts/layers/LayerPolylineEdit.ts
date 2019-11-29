@@ -317,10 +317,6 @@ export class LayerPolylineEdit extends Layer {
             polyline.style.onCanvas = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("polylineTextSizeOfScreen", polyline.style.ofScreen * 1000, newValue => {
-            polyline.style.ofScreen = newValue * 0.001;
-            this.canvas.requestRender();
-        });
 
         Ui.bindColor("polylineContainerStrokeColor", "polylineContainerStrokeAlpha", polyline.style.strokeColor, polyline.style.strokeAlpha, (newColor, newAlpha) => {
             polyline.style.setStrokeColor(newColor, newAlpha);

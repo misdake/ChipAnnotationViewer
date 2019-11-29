@@ -36,8 +36,7 @@ export class Renderer {
         if (!lineWidth) return 1;
         let onScreen = lineWidth.onScreen;
         let onCanvas = camera.canvasSizeToScreen(lineWidth.onCanvas);
-        let ofScreenSize = lineWidth.ofScreen * Math.min(this.canvasElement.width, this.canvasElement.height);
-        return onScreen + onCanvas + ofScreenSize;
+        return onScreen + onCanvas;
     }
 
 

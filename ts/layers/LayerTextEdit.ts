@@ -1,7 +1,7 @@
 import {Layer} from "../Layer";
 import {DrawableText} from "../drawable/DrawableText";
 import {Canvas} from "../Canvas";
-import {MouseListener} from "../MouseListener";
+import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
@@ -57,7 +57,7 @@ export class LayerTextEdit extends Layer {
             private dragX: number = 0;
             private dragY: number = 0;
 
-            onmousedown(event: MouseEvent): boolean {
+            onmousedown(event: MouseIn): boolean {
                 if (event.button == 0) { //left button down => test drag point
                     this.down = true;
                     this.drag = false;
@@ -78,7 +78,7 @@ export class LayerTextEdit extends Layer {
                 }
                 return false;
             }
-            onmouseup(event: MouseEvent): boolean {
+            onmouseup(event: MouseIn): boolean {
                 let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
                 this.drag = false;
 
@@ -88,7 +88,7 @@ export class LayerTextEdit extends Layer {
                 }
                 return false;
             }
-            onmousemove(event: MouseEvent): boolean {
+            onmousemove(event: MouseIn): boolean {
                 if (this.down && this.drag) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     self.textEdit.setPosition(position.x - this.dragX, position.y - this.dragY);

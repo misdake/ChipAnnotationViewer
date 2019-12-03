@@ -3,7 +3,7 @@ import {Map} from "../data/Map";
 import {DrawablePolyline, DrawablePolylinePack} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
-import {MouseListener} from "../MouseListener";
+import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
@@ -77,7 +77,7 @@ export class LayerPolylineCreate extends Layer {
                     self.polylineNew.editor.setPoint(-1, result.x, result.y);
                 }
             }
-            onmousedown(event: MouseEvent): boolean {
+            onmousedown(event: MouseIn): boolean {
                 if (event.button == 0 && !this.down) { //left button down => add point
                     this.down = true;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -89,7 +89,7 @@ export class LayerPolylineCreate extends Layer {
                 }
                 return false;
             }
-            onmouseup(event: MouseEvent): boolean {
+            onmouseup(event: MouseIn): boolean {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -110,7 +110,7 @@ export class LayerPolylineCreate extends Layer {
                 }
                 return false;
             }
-            onmousemove(event: MouseEvent): boolean {
+            onmousemove(event: MouseIn): boolean {
                 if (this.down) { //left button is down => show modification
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     this.preview(position, event.ctrlKey);

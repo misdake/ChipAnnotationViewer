@@ -2,7 +2,7 @@ import {Layer} from "../Layer";
 import {Map} from "../data/Map";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
 import {Canvas} from "../Canvas";
-import {MouseListener} from "../MouseListener";
+import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
@@ -71,7 +71,7 @@ export class LayerPolylineEdit extends Layer {
             private dragShapeX: number = -1;
             private dragShapeY: number = -1;
 
-            onmousedown(event: MouseEvent): boolean {
+            onmousedown(event: MouseIn): boolean {
                 this.dragPointIndex = null;
 
                 if (event.button == 0) { //left button down => test drag point
@@ -100,7 +100,7 @@ export class LayerPolylineEdit extends Layer {
                 }
                 return false;
             }
-            onmouseup(event: MouseEvent): boolean {
+            onmouseup(event: MouseIn): boolean {
                 let wasDragging: boolean = this.dragPointIndex != null || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
 
                 this.dragPointIndex = null;
@@ -131,7 +131,7 @@ export class LayerPolylineEdit extends Layer {
                 }
                 return false;
             }
-            ondblclick(event: MouseEvent): boolean { //double click => remove point on selection or add point on segment
+            ondblclick(event: MouseIn): boolean { //double click => remove point on selection or add point on segment
                 if (event.button == 0) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
@@ -157,7 +157,7 @@ export class LayerPolylineEdit extends Layer {
 
                 return false;
             }
-            onmousemove(event: MouseEvent): boolean {
+            onmousemove(event: MouseIn): boolean {
                 if (this.down) { //left button is down => drag
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 

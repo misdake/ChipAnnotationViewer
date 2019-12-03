@@ -6,7 +6,6 @@
   "dependencies": {},
   "devDependencies": {
     "@types/hammerjs": "^2.0.36",
-    "rollup": "^1.7.3",
     "ts-loader": "^5.3.3",
     "tslib": "^1.9.3",
     "typescript": "^3.4.1",

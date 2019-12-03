@@ -47,7 +47,37 @@ export class Canvas {
     public init(): void {
         this.layers = [];
 
+        let convertMouseEvent = (event: MouseEvent) => {
+            return {
+                button: event.button,
+                buttons: event.buttons,
+                offsetX: event.offsetX * window.devicePixelRatio,
+                offsetY: event.offsetY * window.devicePixelRatio,
+                movementX: event.movementX * window.devicePixelRatio,
+                movementY: event.movementY * window.devicePixelRatio,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+                shiftKey: event.shiftKey,
+            }
+        };
+        let convertWheelEvent = (event: WheelEvent) => {
+            return {
+                button: event.button,
+                buttons: event.buttons,
+                offsetX: event.offsetX * window.devicePixelRatio,
+                offsetY: event.offsetY * window.devicePixelRatio,
+                movementX: event.movementX * window.devicePixelRatio,
+                movementY: event.movementY * window.devicePixelRatio,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+                shiftKey: event.shiftKey,
+                deltaX: event.deltaX,
+                deltaY: event.deltaY,
+            }
+        };
+
         this.canvasElement.onclick = event => {
+            let e = convertMouseEvent(event);
             this.canvasElement.focus();
             event.preventDefault();
             event.stopPropagation();
@@ -55,67 +85,73 @@ export class Canvas {
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onclick(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onclick(e)) break;
             }
         };
         this.canvasElement.ondblclick = event => {
+            let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.ondblclick(event)) break;
+                if (layer.mouseListener && layer.mouseListener.ondblclick(e)) break;
             }
         };
         this.canvasElement.onwheel = event => {
+            let e = convertWheelEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onwheel(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onwheel(e)) break;
             }
         };
         this.canvasElement.onmousedown = event => {
+            let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmousedown(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onmousedown(e)) break;
             }
         };
         this.canvasElement.onmouseup = event => {
+            let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmouseup(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onmouseup(e)) break;
             }
         };
         this.canvasElement.onmousemove = event => {
+            let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmousemove(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onmousemove(e)) break;
             }
         };
         this.canvasElement.onmouseout = event => {
+            let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
             let length = this.layers.length;
             for (let i = length - 1; i >= 0; i--) {
                 let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmouseout(event)) break;
+                if (layer.mouseListener && layer.mouseListener.onmouseout(e)) break;
             }
         };
 
@@ -160,6 +196,8 @@ export class Canvas {
             let hammer = new Hammer(this.canvasElement);
             hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
             hammer.on("pan", (event: HammerInput) => {
+                event.deltaX *= window.devicePixelRatio;
+                event.deltaY *= window.devicePixelRatio;
                 event.preventDefault();
                 let length = this.layers.length;
                 for (let i = length - 1; i >= 0; i--) {

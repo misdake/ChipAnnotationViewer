@@ -2,7 +2,7 @@ import {Layer} from "../Layer";
 import {DrawableText, DrawableTextPack} from "../drawable/DrawableText";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
-import {MouseListener} from "../MouseListener";
+import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
@@ -57,14 +57,14 @@ export class LayerTextCreate extends Layer {
         this._mouseListener = new class extends MouseListener {
             private down: boolean = false;
 
-            onmousedown(event: MouseEvent): boolean {
+            onmousedown(event: MouseIn): boolean {
                 if (event.button == 0) {
                     this.down = true;
                     return true;
                 }
                 return false;
             }
-            onmouseup(event: MouseEvent): boolean {
+            onmouseup(event: MouseIn): boolean {
                 if (event.button == 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
@@ -77,7 +77,7 @@ export class LayerTextCreate extends Layer {
                     return false;
                 }
             }
-            onmousemove(event: MouseEvent): boolean {
+            onmousemove(event: MouseIn): boolean {
                 return (event.buttons & 1) && this.down;
 
             }

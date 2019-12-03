@@ -1,5 +1,5 @@
 import {AlphaEntry, ColorEntry} from "./Color";
-import {KeyboardListener} from "../KeyboardListener";
+import {KeyboardIn, KeyboardListener} from "../KeyboardListener";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
 import {DrawableText} from "../drawable/DrawableText";
@@ -13,7 +13,7 @@ export class Ui {
 
     static createPolylineKeyboardListener(canvas: Canvas, camera: Camera, text: DrawablePolyline, ondelete: () => void) {
         return new class extends KeyboardListener {
-            public onkeydown(event: KeyboardEvent): boolean {
+            public onkeydown(event: KeyboardIn): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
@@ -32,7 +32,7 @@ export class Ui {
     }
     static createTextKeyboardListener(canvas: Canvas, camera: Camera, text: DrawableText, ondelete: () => void) {
         return new class extends KeyboardListener {
-            public onkeydown(event: KeyboardEvent): boolean {
+            public onkeydown(event: KeyboardIn): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
@@ -49,7 +49,7 @@ export class Ui {
             }
         };
     }
-    static getMove(event: KeyboardEvent, scale: number) {
+    static getMove(event: KeyboardIn, scale: number) {
         let dx = 0, dy = 0;
         if (event.shiftKey) scale *= 10;
         switch (event.key) {

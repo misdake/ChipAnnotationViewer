@@ -2,7 +2,7 @@ import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../drawable/DrawablePolyline";
-import {MouseListener} from "../MouseListener";
+import {MouseIn, MouseListener} from "../MouseListener";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Names} from "./Names";
@@ -28,14 +28,14 @@ export class LayerPolylineView extends Layer {
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private moved = false;
-            onmousedown(event: MouseEvent): boolean {
+            onmousedown(event: MouseIn): boolean {
                 this.moved = false;
                 return false;
             }
-            onmouseup(event: MouseEvent): boolean {
+            onmouseup(event: MouseIn): boolean {
                 if (event.button == 0 && !this.moved) {
                     let radius = self.camera.screenSizeToCanvas(5);
-                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX * window.devicePixelRatio, event.offsetY * window.devicePixelRatio);
+                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
                     let selected: DrawablePolyline = null;
                     for (let polyline of self.polylines) {
@@ -57,7 +57,7 @@ export class LayerPolylineView extends Layer {
                     return false;
                 }
             }
-            onmousemove(event: MouseEvent): boolean {
+            onmousemove(event: MouseIn): boolean {
                 if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
                     this.moved = true;
                 }

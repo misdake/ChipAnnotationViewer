@@ -5,6 +5,7 @@ import {Camera} from "../Camera";
 import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
+import {html, TemplateResult} from "lit-html";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -429,6 +430,17 @@ export class DrawablePolylineStyle {
     }
 }
 
+export class DrawablePolylineEditUi {
+    private readonly polyline: DrawablePolyline;
+    constructor(polyline : DrawablePolyline) {
+        this.polyline = polyline;
+    }
+
+    render() : TemplateResult {
+        return html`<polylineedit-element .polyline=${this.polyline}></polylineedit-element>`;
+    }
+}
+
 export class DrawablePolyline extends Drawable {
     private readonly points: Point[];
 
@@ -439,12 +451,16 @@ export class DrawablePolyline extends Drawable {
         this.picker = new DrawablePolylinePicker(this, this.points);
         this.editor = new DrawablePolylineEditor(this, this.points);
         this.calculator = new DrawablePolylineCalculator(this, this.points);
+
+        this.ui = new DrawablePolylineEditUi(this);
     }
 
     public readonly style: DrawablePolylineStyle;
     public readonly picker: DrawablePolylinePicker;
     public readonly editor: DrawablePolylineEditor;
     public readonly calculator: DrawablePolylineCalculator;
+
+    public readonly ui: DrawablePolylineEditUi;
 
     public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
         let points = [];

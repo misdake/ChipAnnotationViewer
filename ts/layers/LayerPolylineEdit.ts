@@ -32,11 +32,11 @@ export class LayerPolylineEdit extends Layer {
     public constructor(canvas: Canvas) {
         super(Names.POLYLINE_EDIT, canvas);
         let self = this;
-        Selection.register(Names.POLYLINE_EDIT, (item: Drawable) => {
-            this.startEditingPolyline(item as DrawablePolyline);
-        }, () => {
-            self.finishEditing();
-        });
+        // Selection.register(Names.POLYLINE_EDIT, (item: Drawable) => {
+        //     this.startEditingPolyline(item as DrawablePolyline);
+        // }, () => {
+        //     self.finishEditing();
+        // });
     }
 
     public loadMap(map: Map): void {

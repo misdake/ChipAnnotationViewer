@@ -12,6 +12,10 @@ import {LayerTextCreate} from "./layers/LayerTextCreate";
 import {html, render} from "lit-html";
 import "elements/SelectElement"
 import "elements/TitleElement"
+import "editable/DrawablePolylineEditElement"
+import {Selection} from "./layers/Selection";
+import {Names} from "./layers/Names";
+import {DrawablePolyline} from "./editable/DrawablePolyline";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -38,27 +42,27 @@ canvas.addLayer(layerTextView);
 canvas.addLayer(layerTextEdit);
 canvas.addLayer(layerTextCreate);
 
-Ui.bindButtonOnClick("buttonNewPolyline", () => {
-    layerTextEdit.finishEditing();
-    layerPolylineCreate.createPolylineAndEdit();
-});
-Ui.bindButtonOnClick("polylineButtonDelete", () => {
-    layerPolylineEdit.deleteEditing();
-    layerPolylineCreate.deleteCreating();
-    layerTextEdit.finishEditing();
-    layerPolylineEdit.finishEditing();
-});
-Ui.bindButtonOnClick("buttonNewText", () => {
-    layerPolylineEdit.finishEditing();
-    layerTextCreate.createTextAndEdit()
-});
-Ui.bindButtonOnClick("textButtonDelete", () => {
-    layerPolylineEdit.finishEditing();
-    layerTextCreate.deleteCreating();
-    layerTextCreate.finishCreating();
-    layerTextEdit.deleteEditing();
-    layerTextEdit.finishEditing();
-});
+// Ui.bindButtonOnClick("buttonNewPolyline", () => {
+//     layerTextEdit.finishEditing();
+//     layerPolylineCreate.createPolylineAndEdit();
+// });
+// Ui.bindButtonOnClick("polylineButtonDelete", () => {
+//     layerPolylineEdit.deleteEditing();
+//     layerPolylineCreate.deleteCreating();
+//     layerTextEdit.finishEditing();
+//     layerPolylineEdit.finishEditing();
+// });
+// Ui.bindButtonOnClick("buttonNewText", () => {
+//     layerPolylineEdit.finishEditing();
+//     layerTextCreate.createTextAndEdit()
+// });
+// Ui.bindButtonOnClick("textButtonDelete", () => {
+//     layerPolylineEdit.finishEditing();
+//     layerTextCreate.deleteCreating();
+//     layerTextCreate.finishCreating();
+//     layerTextEdit.deleteEditing();
+//     layerTextEdit.finishEditing();
+// });
 
 class App {
     private chip: Chip;
@@ -74,6 +78,12 @@ class App {
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
+
+        Selection.register(Names.POLYLINE_EDIT, (item: DrawablePolyline) => {
+            render(item.ui.render(), document.getElementById("panelPolylineSelected"));
+        }, () => {
+            render(html``, document.getElementById("panelPolylineSelected"));
+        });
     }
 
     private refresh() {

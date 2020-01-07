@@ -1,5 +1,5 @@
-import {DrawablePolylinePack} from "../drawable/DrawablePolyline";
-import {DrawableTextPack} from "../drawable/DrawableText";
+import {DrawablePolylinePack} from "../editable/DrawablePolyline";
+import {DrawableTextPack} from "../editable/DrawableText";
 
 export class Annotation {
     id: number;

@@ -2,8 +2,8 @@ import {AlphaEntry, ColorEntry} from "./Color";
 import {KeyboardIn, KeyboardListener} from "../KeyboardListener";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
-import {DrawableText} from "../drawable/DrawableText";
-import {DrawablePolyline} from "../drawable/DrawablePolyline";
+import {DrawableText} from "../editable/DrawableText";
+import {DrawablePolyline} from "../editable/DrawablePolyline";
 
 export class Ui {
 

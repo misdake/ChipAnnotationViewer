@@ -2,7 +2,7 @@ import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {MouseIn, MouseListener} from "../MouseListener";
-import {DrawableText} from "../drawable/DrawableText";
+import {DrawableText} from "../editable/DrawableText";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Names} from "./Names";

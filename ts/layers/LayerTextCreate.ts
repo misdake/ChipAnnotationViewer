@@ -1,5 +1,5 @@
 import {Layer} from "../Layer";
-import {DrawableText, DrawableTextPack} from "../drawable/DrawableText";
+import {DrawableText, DrawableTextPack} from "../editable/DrawableText";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
 import {MouseIn, MouseListener} from "../MouseListener";

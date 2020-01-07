@@ -1,4 +1,4 @@
-import {Drawable} from "./Drawable";
+import {Drawable} from "../drawable/Drawable";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";

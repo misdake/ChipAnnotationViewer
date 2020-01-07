@@ -1,6 +1,6 @@
 import {Layer} from "../Layer";
 import {Map} from "../data/Map";
-import {DrawablePolyline, DrawablePolylinePack} from "../drawable/DrawablePolyline";
+import {DrawablePolyline, DrawablePolylinePack} from "../editable/DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
 import {MouseIn, MouseListener} from "../MouseListener";

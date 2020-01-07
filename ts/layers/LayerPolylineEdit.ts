@@ -1,6 +1,6 @@
 import {Layer} from "../Layer";
 import {Map} from "../data/Map";
-import {DrawablePolyline} from "../drawable/DrawablePolyline";
+import {DrawablePolyline} from "../editable/DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";

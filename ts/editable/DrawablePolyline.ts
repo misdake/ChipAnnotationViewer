@@ -1,4 +1,4 @@
-import {Drawable} from "./Drawable";
+import {Drawable} from "../drawable/Drawable";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
@@ -15,7 +15,7 @@ export class Point {
     public y: number;
 }
 
-export class PointSegmentResult {
+class PointSegmentResult {
     constructor(position: Point, p1Index: number, p2Index: number, distance: number) {
         this.position = position;
         this.p1Index = p1Index;

@@ -3,7 +3,7 @@ import {Camera} from "./Camera";
 import {Transform} from "./util/Transform";
 import {Size} from "./util/Size";
 import {ScreenRect} from "./util/ScreenRect";
-import {Point} from "./drawable/DrawablePolyline";
+import {Point} from "./editable/DrawablePolyline";
 
 export class Renderer {
     private canvas: Canvas;

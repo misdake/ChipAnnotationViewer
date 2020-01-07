@@ -1,7 +1,7 @@
 import {Layer} from "../Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
-import {DrawablePolyline} from "../drawable/DrawablePolyline";
+import {DrawablePolyline} from "../editable/DrawablePolyline";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";

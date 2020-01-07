@@ -8,6 +8,6 @@ export class Size {
     }
 
     static clone(size: Size): Size {
-        return new Size(size.onScreen, size.onCanvas, size.ofScreen);
+        return new Size(size.onScreen, size.onCanvas);
     }
 }

@@ -34,7 +34,7 @@ export class LayerTextCreate extends Layer {
     public loadData(data: Data): void {
         this.layerView = this.canvas.findLayer(Names.TEXT_VIEW) as LayerTextView;
         this.finishCreating();
-        Ui.setVisibility("panelTextSelected", false);
+        // Ui.setVisibility("panelTextSelected", false);
     }
 
     public createTextAndEdit() {
@@ -90,7 +90,7 @@ export class LayerTextCreate extends Layer {
     }
 
     public finishCreating(): void {
-        Ui.setVisibility("panelTextSelected", false);
+        // Ui.setVisibility("panelTextSelected", false);
 
         this._mouseListener = null;
         this._keyboardListener = null;
@@ -109,7 +109,7 @@ export class LayerTextCreate extends Layer {
     }
 
     private bindTextConfigUi(text: DrawableText) {
-        Ui.setVisibility("panelTextSelected", true);
+        // Ui.setVisibility("panelTextSelected", true);
 
         Ui.bindButtonOnClick("textButtonCopy", () => {
         });

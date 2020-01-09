@@ -5,6 +5,8 @@ import {Camera} from "../Camera";
 import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
+import {Map} from "../data/Map";
+import {html, TemplateResult} from "lit-html";
 
 export class DrawableTextPack {
     public constructor(text: string, colorName: string, alphaName: string,
@@ -107,7 +109,7 @@ export class DrawableText extends Drawable {
             this._text,
             this.color.name,
             this.alpha.name,
-            Size.clone(this.fontSize),
+            this.fontSize.clone(),
             this._x + offsetX,
             this._y + offsetY,
         )
@@ -118,7 +120,7 @@ export class DrawableText extends Drawable {
             this._text,
             this.color.name,
             this.alpha.name,
-            Size.clone(this.fontSize),
+            this.fontSize.clone(),
             this._x,
             this._y,
         )
@@ -161,5 +163,9 @@ export class DrawableText extends Drawable {
         this._canvasAABB.x2 = this.x + this.canvasWidth;
         this._canvasAABB.y2 = this.y + this.canvasHeight;
         return this._canvasAABB;
+    }
+
+    public renderUi(canvas: Canvas): TemplateResult {
+        return html`<textedit-element .text=${this} .canvas=${canvas}></textedit-element>`;
     }
 }

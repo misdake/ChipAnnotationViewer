@@ -390,7 +390,7 @@ export class DrawablePolylineStyle {
         return new DrawablePolylinePack(
             null,
             this._closed,
-            Size.clone(this._lineWidth),
+            this._lineWidth.clone(),
 
             this._fill,
             this._fillColor.name,

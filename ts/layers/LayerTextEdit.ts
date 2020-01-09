@@ -27,16 +27,16 @@ export class LayerTextEdit extends Layer {
         super(Names.TEXT_EDIT, canvas);
         let self = this;
         Selection.register(Names.TEXT_EDIT, (item: Drawable) => {
-            self.startEditingText(item as DrawableText);
+            // self.startEditingText(item as DrawableText);
         }, () => {
-            self.finishEditing();
+            // self.finishEditing();
         });
     }
 
     public loadData(data: Data): void {
         this.layerView = this.canvas.findLayer(Names.TEXT_VIEW) as LayerTextView;
         this.finishEditing();
-        Ui.setVisibility("panelTextSelected", false);
+        // Ui.setVisibility("panelTextSelected", false);
     }
 
     public startEditingText(text: DrawableText): void {
@@ -108,7 +108,7 @@ export class LayerTextEdit extends Layer {
     }
 
     public finishEditing(): void {
-        Ui.setVisibility("panelTextSelected", false);
+        // Ui.setVisibility("panelTextSelected", false);
 
         if (this.textEdit) {
             if (this.textEdit.text.length == 0) {
@@ -143,7 +143,7 @@ export class LayerTextEdit extends Layer {
     }
 
     private bindTextConfigUi(text: DrawableText) {
-        Ui.setVisibility("panelTextSelected", true);
+        // Ui.setVisibility("panelTextSelected", true);
 
         Ui.bindButtonOnClick("textButtonCopy", () => {
             let offset = this.canvas.getCamera().screenSizeToCanvas(10);

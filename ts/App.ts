@@ -13,9 +13,11 @@ import {html, render} from "lit-html";
 import "elements/SelectElement"
 import "elements/TitleElement"
 import "editable/DrawablePolylineEditElement"
+import "editable/DrawableTextEditElement"
 import {Selection} from "./layers/Selection";
 import {Names} from "./layers/Names";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
+import {DrawableText} from "./editable/DrawableText";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -83,6 +85,12 @@ class App {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
+        });
+
+        Selection.register(Names.TEXT_EDIT, (item: DrawableText) => {
+            render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
+        }, () => {
+            render(html``, document.getElementById("panelTextSelected"));
         });
     }
 

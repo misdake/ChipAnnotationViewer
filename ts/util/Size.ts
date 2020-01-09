@@ -7,7 +7,7 @@ export class Size {
         this.onCanvas = onCanvas ? onCanvas : 0;
     }
 
-    static clone(size: Size): Size {
-        return new Size(size.onScreen, size.onCanvas);
+    clone(): Size {
+        return new Size(this.onScreen, this.onCanvas);
     }
 }

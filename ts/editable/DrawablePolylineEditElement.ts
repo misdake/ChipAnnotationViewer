@@ -1,11 +1,15 @@
 import {customElement, html, LitElement, property} from "lit-element";
 import {DrawablePolyline} from "./DrawablePolyline";
+import {Canvas} from "../Canvas";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
 
     @property()
     polyline: DrawablePolyline;
+
+    @property()
+    canvas: Canvas;
 
     deletePolyline() {
         //TODO
@@ -21,16 +25,20 @@ export class PolylineEdit extends LitElement {
     }
 
     rotateCCW() {
-        //TODO
+        this.polyline.editor.rotateCCW();
+        this.canvas.requestRender();
     }
     rotateCW() {
-        //TODO
+        this.polyline.editor.rotateCW();
+        this.canvas.requestRender();
     }
     flipX() {
-        //TODO
+        this.polyline.editor.flipX();
+        this.canvas.requestRender();
     }
     flipY() {
-        //TODO
+        this.polyline.editor.flipY();
+        this.canvas.requestRender();
     }
 
     private onStyleCheck = (ev: Event) => {

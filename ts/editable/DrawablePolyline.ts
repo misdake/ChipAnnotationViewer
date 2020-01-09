@@ -432,19 +432,21 @@ export class DrawablePolylineStyle {
 
 export class DrawablePolylineEditUi {
     private readonly polyline: DrawablePolyline;
-    constructor(polyline : DrawablePolyline) {
+    private readonly canvas: Canvas;
+    constructor(polyline: DrawablePolyline, canvas: Canvas) {
         this.polyline = polyline;
+        this.canvas = canvas;
     }
 
     render() : TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline}></polylineedit-element>`;
+        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${this.canvas}></polylineedit-element>`;
     }
 }
 
 export class DrawablePolyline extends Drawable {
     private readonly points: Point[];
 
-    public constructor(pack: DrawablePolylinePack) {
+    public constructor(pack: DrawablePolylinePack, canvas: Canvas) {
         super();
         this.points = pack.points;
         this.style = new DrawablePolylineStyle(pack);
@@ -452,7 +454,7 @@ export class DrawablePolyline extends Drawable {
         this.editor = new DrawablePolylineEditor(this, this.points);
         this.calculator = new DrawablePolylineCalculator(this, this.points);
 
-        this.ui = new DrawablePolylineEditUi(this);
+        this.ui = new DrawablePolylineEditUi(this, canvas);
     }
 
     public readonly style: DrawablePolylineStyle;

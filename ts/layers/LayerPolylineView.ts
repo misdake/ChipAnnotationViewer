@@ -20,7 +20,7 @@ export class LayerPolylineView extends Layer {
 
         if (data.polylines) {
             for (let pack of data.polylines) {
-                this.polylines.push(new DrawablePolyline(pack))
+                this.polylines.push(new DrawablePolyline(pack, this.canvas))
             }
         }
 

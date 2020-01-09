@@ -47,7 +47,7 @@ export class LayerPolylineEdit extends Layer {
         this.layerView = this.canvas.findLayer(Names.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineEdit = null;
         this.finishEditing();
-        Ui.setVisibility("panelPolylineSelected", false);
+        // Ui.setVisibility("panelPolylineSelected", false);
     }
 
     public startEditingPolyline(polyline: DrawablePolyline): void {
@@ -88,7 +88,7 @@ export class LayerPolylineEdit extends Layer {
                     let shape = polyline.picker.pickShape(position.x, position.y);
                     if (pointIndex == null && shape && event.altKey) {
                         if (event.ctrlKey) {
-                            let copied = new DrawablePolyline(polyline.clone());
+                            let copied = new DrawablePolyline(polyline.clone(), self.canvas);
                             self.layerView.addPolyline(copied);
                         }
                         this.dragShape = true;
@@ -195,7 +195,8 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public finishEditing(): void {
-        Ui.setVisibility("panelPolylineSelected", false);
+        // Ui.setVisibility("panelPolylineSelected", false);
+        Selection.deselectAny();
 
         if (this.polylineEdit) {
             this.polylineEdit = null;
@@ -230,11 +231,11 @@ export class LayerPolylineEdit extends Layer {
     }
 
     private bindPolylineConfigUi(polyline: DrawablePolyline) {
-        Ui.setVisibility("panelPolylineSelected", true);
+        // Ui.setVisibility("panelPolylineSelected", true);
 
         Ui.bindButtonOnClick("polylineButtonCopy", () => {
             let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
+            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset), this.canvas);
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);

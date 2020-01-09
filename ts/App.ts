@@ -80,7 +80,7 @@ class App {
         this.refresh();
 
         Selection.register(Names.POLYLINE_EDIT, (item: DrawablePolyline) => {
-            render(item.ui.render(), document.getElementById("panelPolylineSelected"));
+            render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
         });

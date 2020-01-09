@@ -6,6 +6,7 @@ import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
+import {Map} from "../data/Map";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -432,21 +433,19 @@ export class DrawablePolylineStyle {
 
 export class DrawablePolylineEditUi {
     private readonly polyline: DrawablePolyline;
-    private readonly canvas: Canvas;
-    constructor(polyline: DrawablePolyline, canvas: Canvas) {
+    constructor(polyline: DrawablePolyline) {
         this.polyline = polyline;
-        this.canvas = canvas;
     }
 
-    render() : TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${this.canvas}></polylineedit-element>`;
+    render(canvas: Canvas, map: Map): TemplateResult {
+        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .map=${map}></polylineedit-element>`;
     }
 }
 
 export class DrawablePolyline extends Drawable {
     private readonly points: Point[];
 
-    public constructor(pack: DrawablePolylinePack, canvas: Canvas) {
+    public constructor(pack: DrawablePolylinePack) {
         super();
         this.points = pack.points;
         this.style = new DrawablePolylineStyle(pack);
@@ -454,7 +453,7 @@ export class DrawablePolyline extends Drawable {
         this.editor = new DrawablePolylineEditor(this, this.points);
         this.calculator = new DrawablePolylineCalculator(this, this.points);
 
-        this.ui = new DrawablePolylineEditUi(this, canvas);
+        this.ui = new DrawablePolylineEditUi(this);
     }
 
     public readonly style: DrawablePolylineStyle;

@@ -88,7 +88,7 @@ export class LayerPolylineEdit extends Layer {
                     let shape = polyline.picker.pickShape(position.x, position.y);
                     if (pointIndex == null && shape && event.altKey) {
                         if (event.ctrlKey) {
-                            let copied = new DrawablePolyline(polyline.clone(), self.canvas);
+                            let copied = new DrawablePolyline(polyline.clone());
                             self.layerView.addPolyline(copied);
                         }
                         this.dragShape = true;
@@ -235,7 +235,7 @@ export class LayerPolylineEdit extends Layer {
 
         Ui.bindButtonOnClick("polylineButtonCopy", () => {
             let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset), this.canvas);
+            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);

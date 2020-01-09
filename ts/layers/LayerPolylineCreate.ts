@@ -54,7 +54,7 @@ export class LayerPolylineCreate extends Layer {
             [], true, new Size(2),
             true, "white", "25",
             true, "white", "75",
-        ), this.canvas);
+        ));
 
         Selection.select(Names.POLYLINE_CREATE, this.polylineNew);
     }
@@ -180,7 +180,7 @@ export class LayerPolylineCreate extends Layer {
 
         Ui.bindButtonOnClick("polylineButtonCopy", () => {
             let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset), this.canvas);
+            let newPolyline = new DrawablePolyline(polyline.clone(offset, offset));
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);

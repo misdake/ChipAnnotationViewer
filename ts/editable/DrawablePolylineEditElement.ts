@@ -1,6 +1,7 @@
 import {customElement, html, LitElement, property} from "lit-element";
 import {DrawablePolyline} from "./DrawablePolyline";
 import {Canvas} from "../Canvas";
+import {Map} from "../data/Map";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
@@ -10,6 +11,8 @@ export class PolylineEdit extends LitElement {
 
     @property()
     canvas: Canvas;
+    @property()
+    map: Map;
 
     deletePolyline() {
         //TODO
@@ -21,7 +24,25 @@ export class PolylineEdit extends LitElement {
     @property()
     area: string = "";
     calcArea() {
-        //TODO
+        let width = this.map.widthMillimeter;
+        let height = this.map.heightMillimeter;
+        let unit = this.polyline.style.fill ? "mm^2" : "mm";
+        if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
+            width = this.map.width;
+            height = this.map.height;
+            unit = "pixels"
+        }
+        if (this.polyline.style.fill) {
+            let area = this.polyline.calculator.area();
+            let areaMM2 = area / this.map.width / this.map.height * width * height;
+            areaMM2 = Math.round(areaMM2 * 100) / 100;
+            this.area = areaMM2 + unit;
+        } else {
+            let length = this.polyline.calculator.length();
+            let lengthMM = length * Math.sqrt(width * height / this.map.width / this.map.height);
+            lengthMM = Math.round(lengthMM * 100) / 100;
+            this.area = lengthMM + unit;
+        }
     }
 
     rotateCCW() {
@@ -41,11 +62,16 @@ export class PolylineEdit extends LitElement {
         this.canvas.requestRender();
     }
 
-    private onStyleCheck = (ev: Event) => {
-        //TODO
+    private onStyleCheck = (ev: Event, options: { fill?: boolean, stroke?: boolean, closed?: boolean }) => {
+        if (options.fill !== undefined) this.polyline.style.fill = options.fill;
+        if (options.stroke !== undefined) this.polyline.style.stroke = options.stroke;
+        if (options.closed !== undefined) this.polyline.style.closed = options.closed;
+        this.canvas.requestRender();
     };
-    private onSizeInput = (ev: Event) => {
-        //TODO
+    private onSizeInput = (ev: Event, options: { screen?: string, canvas?: string }) => {
+        if (options.screen !== undefined) this.polyline.style.onScreen = parseInt(options.screen);
+        if (options.canvas !== undefined) this.polyline.style.onCanvas = parseInt(options.canvas);
+        this.canvas.requestRender();
     };
 
     render() {
@@ -65,9 +91,9 @@ export class PolylineEdit extends LitElement {
 
             <br>
 
-            <input class="configCheckbox" type="checkbox" @change=${this.onStyleCheck} ?checked="${this.polyline.style.fill}" >fill<br>
-            <input class="configCheckbox" type="checkbox" @change=${this.onStyleCheck} ?checked="${this.polyline.style.stroke}" >stroke<br>
-            <input class="configCheckbox" type="checkbox" @change=${this.onStyleCheck} ?checked="${this.polyline.style.closed}" >closed<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {fill: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.fill}" >fill<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {stroke: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.stroke}" >stroke<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {closed: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.closed}" >closed<br>
 
 <!--            <div>strokeColor</div>-->
 <!--            <div class="configColorAlphaContainer">-->
@@ -80,8 +106,8 @@ export class PolylineEdit extends LitElement {
 <!--                <span class="configAlphaContainer" id="polylineContainerFillAlpha"></span><br>-->
 <!--            </div>-->
 
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onScreen}" @input=${this.onSizeInput}>pixel onScreen<br>
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onCanvas}" @input=${this.onSizeInput}>pixel onCanvas<br>
+            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
+            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
         `;
     }
 

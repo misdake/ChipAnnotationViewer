@@ -10,7 +10,7 @@ import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
-import {Layers} from "./Layers";
+import {LayerName, Layers} from "./Layers";
 
 export class LayerPolylineCreate extends Layer {
 
@@ -30,8 +30,8 @@ export class LayerPolylineCreate extends Layer {
     private layerView: LayerPolylineView;
 
     public constructor(canvas: Canvas) {
-        super(Layers.POLYLINE_CREATE, canvas);
-        Selection.register(Layers.POLYLINE_CREATE, () => {
+        super(LayerName.POLYLINE_CREATE, canvas);
+        Selection.register(LayerName.POLYLINE_CREATE, () => {
             this.startCreatingPolyline();
         }, () => {
             this.finishEditing();
@@ -43,7 +43,7 @@ export class LayerPolylineCreate extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(Layers.POLYLINE_VIEW) as LayerPolylineView;
+        this.layerView = this.canvas.findLayer(LayerName.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineNew = null;
         this.finishEditing();
         // Ui.setVisibility("panelPolylineSelected", false);
@@ -56,7 +56,7 @@ export class LayerPolylineCreate extends Layer {
             true, "white", "75",
         ));
 
-        Selection.select(Layers.POLYLINE_CREATE, this.polylineNew);
+        Selection.select(LayerName.POLYLINE_CREATE, this.polylineNew);
     }
 
     private startCreatingPolyline() {
@@ -102,7 +102,7 @@ export class LayerPolylineCreate extends Layer {
                         self.finishEditing();
                         if (self.layerView.containPolyline(newPolyline)) {
                             //pass it to polyline edit
-                            Selection.select(Layers.POLYLINE_EDIT, newPolyline);
+                            Selection.select(LayerName.POLYLINE_EDIT, newPolyline);
                         }
                     }
                     this.moved = false;
@@ -124,7 +124,7 @@ export class LayerPolylineCreate extends Layer {
         };
         this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, () => {
             this.deleteCreating();
-            Selection.deselect(Layers.POLYLINE_CREATE);
+            Selection.deselect(LayerName.POLYLINE_CREATE);
         });
 
         return this.polylineNew;
@@ -184,7 +184,7 @@ export class LayerPolylineCreate extends Layer {
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);
-            Selection.select(Layers.POLYLINE_CREATE, newPolyline);
+            Selection.select(LayerName.POLYLINE_CREATE, newPolyline);
 
             this.canvas.requestRender();
         });

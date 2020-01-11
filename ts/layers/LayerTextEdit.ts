@@ -8,7 +8,7 @@ import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
-import {Layers} from "./Layers";
+import {LayerName} from "./Layers";
 
 export class LayerTextEdit extends Layer {
 
@@ -24,9 +24,9 @@ export class LayerTextEdit extends Layer {
     private layerView: LayerTextView;
 
     public constructor(canvas: Canvas) {
-        super(Layers.TEXT_EDIT, canvas);
+        super(LayerName.TEXT_EDIT, canvas);
         let self = this;
-        Selection.register(Layers.TEXT_EDIT, (item: Drawable) => {
+        Selection.register(LayerName.TEXT_EDIT, (item: Drawable) => {
             // self.startEditingText(item as DrawableText);
         }, () => {
             // self.finishEditing();
@@ -34,7 +34,7 @@ export class LayerTextEdit extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(Layers.TEXT_VIEW) as LayerTextView;
+        this.layerView = this.canvas.findLayer(LayerName.TEXT_VIEW) as LayerTextView;
         this.finishEditing();
         // Ui.setVisibility("panelTextSelected", false);
     }
@@ -101,7 +101,7 @@ export class LayerTextEdit extends Layer {
 
         this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, () => {
             this.deleteEditing();
-            Selection.deselect(Layers.TEXT_EDIT);
+            Selection.deselect(LayerName.TEXT_EDIT);
         });
 
         this.canvas.requestRender();

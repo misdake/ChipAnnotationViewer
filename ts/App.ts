@@ -10,7 +10,7 @@ import "editable/DrawableTextEditElement"
 import {Selection} from "./layers/Selection";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
-import {Layers} from "./layers/Layers";
+import {LayerName, Layers} from "./layers/Layers";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -60,13 +60,13 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
-        Selection.register(Layers.POLYLINE_EDIT, (item: DrawablePolyline) => {
+        Selection.register(LayerName.POLYLINE_EDIT, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
         });
 
-        Selection.register(Layers.TEXT_EDIT, (item: DrawableText) => {
+        Selection.register(LayerName.TEXT_EDIT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));

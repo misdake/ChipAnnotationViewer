@@ -1,15 +1,16 @@
 import {Drawable} from "../drawable/Drawable";
+import {LayerName} from "./Layers";
 
 export class Selection {
 
     private static listDeselect: (() => void)[] = [];
-    private static mapSelect: { [key: string]: ((item: Drawable) => void)[] } = {};
-    private static mapDeselect: { [key: string]: (() => void)[] } = {};
+    private static mapSelect: { [key: number]: ((item: Drawable) => void)[] } = {};
+    private static mapDeselect: { [key: number]: (() => void)[] } = {};
 
     private static selected: Drawable;
-    private static selectedType: string;
+    private static selectedType: LayerName;
 
-    public static register(typeName: string, onselect: (item: Drawable) => void, ondeselect: () => void) {
+    public static register(typeName: LayerName, onselect: (item: Drawable) => void, ondeselect: () => void) {
         if (typeName) {
             if (onselect) {
                 this.mapSelect[typeName] = this.mapSelect[typeName] || [];
@@ -30,7 +31,7 @@ export class Selection {
         }
     }
 
-    public static deselect(typeName: string) {
+    public static deselect(typeName: LayerName) {
         if (this.selectedType == typeName) {
             let ondeselect = this.mapDeselect[typeName];
             if (ondeselect) {
@@ -46,7 +47,7 @@ export class Selection {
             this.selected = null;
         }
     }
-    public static select(typeName: string, item: Drawable) {
+    public static select(typeName: LayerName, item: Drawable) {
         this.deselectAny();
         this.selected = item;
         this.selectedType = typeName;

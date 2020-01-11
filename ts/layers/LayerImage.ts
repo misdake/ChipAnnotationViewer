@@ -7,7 +7,7 @@ import {DrawableImage} from "../drawable/DrawableImage";
 import {MouseIn, MouseListener, WheelIn} from "../MouseListener";
 import {Ui} from "../util/Ui";
 import {Selection} from "./Selection";
-import {Layers} from "./Layers";
+import {LayerName} from "./Layers";
 
 export class LayerImage extends Layer {
 
@@ -22,7 +22,7 @@ export class LayerImage extends Layer {
     private baseFolder: string;
 
     public constructor(canvas: Canvas) {
-        super(Layers.IMAGE, canvas);
+        super(LayerName.IMAGE, canvas);
         Selection.register(null, null, () => {
             Ui.setContent(LayerImage.HINT_ELEMENT_ID, LayerImage.HINT_VIEW);
         });

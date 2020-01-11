@@ -7,6 +7,7 @@ import {Ui} from "./util/Ui";
 import "hammerjs";
 import {html, render} from "lit-html";
 import "elements/ZoomElement"
+import {LayerName} from "./layers/Layers";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -219,7 +220,7 @@ export class Canvas {
         this.layers.push(...layers);
     }
 
-    public findLayer(name: string): Layer {
+    public findLayer(name: LayerName): Layer {
         for (const layer of this.layers) {
             if (layer.name == name) {
                 return layer;

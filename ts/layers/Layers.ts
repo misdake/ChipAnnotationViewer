@@ -8,15 +8,17 @@ import {LayerTextCreate} from "./LayerTextCreate";
 import {LayerTextEdit} from "./LayerTextEdit";
 import {Layer} from "./Layer";
 
-export class Layers {
+export enum LayerName {
+    IMAGE,
+    POLYLINE_CREATE,
+    POLYLINE_EDIT,
+    POLYLINE_VIEW,
+    TEXT_CREATE,
+    TEXT_EDIT,
+    TEXT_VIEW,
+}
 
-    static readonly IMAGE = "image";
-    static readonly POLYLINE_CREATE = "polyline_create";
-    static readonly POLYLINE_EDIT = "polyline_edit";
-    static readonly POLYLINE_VIEW = "polyline_view";
-    static readonly TEXT_CREATE = "text_create";
-    static readonly TEXT_EDIT = "text_edit";
-    static readonly TEXT_VIEW = "text_view";
+export class Layers {
 
     public static create(canvas: Canvas): Layer[] {
         return [

@@ -1,4 +1,4 @@
-import {Layer} from "./Layer";
+import {Layer} from "./layers/Layer";
 import {Map} from "./data/Map";
 import {Renderer} from "./Renderer";
 import {Camera} from "./Camera";

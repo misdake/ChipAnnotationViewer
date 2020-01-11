@@ -1,4 +1,4 @@
-import {Layer} from "../Layer";
+import {Layer} from "./Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {MouseIn, MouseListener} from "../MouseListener";

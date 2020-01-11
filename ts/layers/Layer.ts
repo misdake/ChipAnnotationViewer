@@ -1,10 +1,10 @@
-import {Map} from "./data/Map";
-import {Canvas} from "./Canvas";
-import {Camera} from "./Camera";
-import {Renderer} from "./Renderer";
-import {MouseListener} from "./MouseListener";
-import {KeyboardListener} from "./KeyboardListener";
-import {Data} from "./data/Data";
+import {Map} from "../data/Map";
+import {Canvas} from "../Canvas";
+import {Camera} from "../Camera";
+import {Renderer} from "../Renderer";
+import {MouseListener} from "../MouseListener";
+import {KeyboardListener} from "../KeyboardListener";
+import {Data} from "../data/Data";
 
 export class Layer {
 

@@ -1,4 +1,4 @@
-import {Layer} from "../Layer";
+import {Layer} from "./Layer";
 import {DrawableText} from "../editable/DrawableText";
 import {Canvas} from "../Canvas";
 import {MouseIn, MouseListener} from "../MouseListener";

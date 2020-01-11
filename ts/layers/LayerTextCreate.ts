@@ -1,4 +1,4 @@
-import {Layer} from "../Layer";
+import {Layer} from "./Layer";
 import {DrawableText, DrawableTextPack} from "../editable/DrawableText";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";

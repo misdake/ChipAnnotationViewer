@@ -9,7 +9,7 @@ import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
-import {Names} from "./Names";
+import {Layers} from "./Layers";
 
 export class LayerTextCreate extends Layer {
 
@@ -23,8 +23,8 @@ export class LayerTextCreate extends Layer {
     private layerView: LayerTextView;
 
     public constructor(canvas: Canvas) {
-        super(Names.TEXT_CREATE, canvas);
-        Selection.register(Names.TEXT_CREATE, (item: Drawable) => {
+        super(Layers.TEXT_CREATE, canvas);
+        Selection.register(Layers.TEXT_CREATE, (item: Drawable) => {
             this.startCreatingText();
         }, () => {
             this.finishCreating();
@@ -32,7 +32,7 @@ export class LayerTextCreate extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(Names.TEXT_VIEW) as LayerTextView;
+        this.layerView = this.canvas.findLayer(Layers.TEXT_VIEW) as LayerTextView;
         this.finishCreating();
         // Ui.setVisibility("panelTextSelected", false);
     }
@@ -44,7 +44,7 @@ export class LayerTextCreate extends Layer {
             "white", "100", new Size(5, 50),
             0, 0
         ));
-        Selection.select(Names.TEXT_CREATE, this.textNew);
+        Selection.select(Layers.TEXT_CREATE, this.textNew);
     }
 
     private startCreatingText() {
@@ -70,7 +70,7 @@ export class LayerTextCreate extends Layer {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     self.textNew.setPosition(position.x, position.y);
                     self.layerView.addText(self.textNew);
-                    Selection.select(Names.TEXT_EDIT, self.textNew);
+                    Selection.select(Layers.TEXT_EDIT, self.textNew);
                     self.canvas.requestRender();
                     return true;
                 } else {
@@ -85,7 +85,7 @@ export class LayerTextCreate extends Layer {
 
         this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, () => {
             this.deleteCreating();
-            Selection.deselect(Names.TEXT_CREATE);
+            Selection.deselect(Layers.TEXT_CREATE);
         });
     }
 

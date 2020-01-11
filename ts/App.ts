@@ -1,23 +1,16 @@
 import {Canvas} from "./Canvas";
 import {Chip, Map} from "./data/Map";
-import {LayerImage} from "./layers/LayerImage";
-import {LayerPolylineView} from "./layers/LayerPolylineView";
-import {LayerPolylineEdit} from "./layers/LayerPolylineEdit";
 import {Annotation} from "./data/Data";
 import {Ui} from "./util/Ui";
-import {LayerTextEdit} from "./layers/LayerTextEdit";
-import {LayerTextView} from "./layers/LayerTextView";
-import {LayerPolylineCreate} from "./layers/LayerPolylineCreate";
-import {LayerTextCreate} from "./layers/LayerTextCreate";
 import {html, render} from "lit-html";
 import "elements/SelectElement"
 import "elements/TitleElement"
 import "editable/DrawablePolylineEditElement"
 import "editable/DrawableTextEditElement"
 import {Selection} from "./layers/Selection";
-import {Names} from "./layers/Names";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
+import {Layers} from "./layers/Layers";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -28,21 +21,7 @@ if (Ui.isMobile()) {
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
-let layerImage = new LayerImage(canvas);
-let layerPolylineView = new LayerPolylineView(canvas);
-let layerPolylineCreate = new LayerPolylineCreate(canvas);
-let layerPolylineEdit = new LayerPolylineEdit(canvas);
-let layerTextView = new LayerTextView(canvas);
-let layerTextCreate = new LayerTextCreate(canvas);
-let layerTextEdit = new LayerTextEdit(canvas);
-
-canvas.addLayer(layerImage);
-canvas.addLayer(layerPolylineView);
-canvas.addLayer(layerPolylineEdit);
-canvas.addLayer(layerPolylineCreate);
-canvas.addLayer(layerTextView);
-canvas.addLayer(layerTextEdit);
-canvas.addLayer(layerTextCreate);
+canvas.addLayers(...Layers.create(canvas));
 
 // Ui.bindButtonOnClick("buttonNewPolyline", () => {
 //     layerTextEdit.finishEditing();
@@ -81,13 +60,13 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
-        Selection.register(Names.POLYLINE_EDIT, (item: DrawablePolyline) => {
+        Selection.register(Layers.POLYLINE_EDIT, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
         });
 
-        Selection.register(Names.TEXT_EDIT, (item: DrawableText) => {
+        Selection.register(Layers.TEXT_EDIT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));

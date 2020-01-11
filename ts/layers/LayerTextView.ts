@@ -5,14 +5,14 @@ import {MouseIn, MouseListener} from "../MouseListener";
 import {DrawableText} from "../editable/DrawableText";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
-import {Names} from "./Names";
+import {Layers} from "./Layers";
 
 export class LayerTextView extends Layer {
 
     private texts: DrawableText[] = [];
 
     public constructor(canvas: Canvas) {
-        super(Names.TEXT_VIEW, canvas);
+        super(Layers.TEXT_VIEW, canvas);
     }
 
     public loadData(data: Data): void {
@@ -42,11 +42,11 @@ export class LayerTextView extends Layer {
                         if (pick) selected = text;
                     }
                     if (selected) {
-                        Selection.select(Names.TEXT_EDIT, selected);
+                        Selection.select(Layers.TEXT_EDIT, selected);
                         return true;
                     }
-                    Selection.deselect(Names.TEXT_CREATE);
-                    Selection.deselect(Names.TEXT_EDIT);
+                    Selection.deselect(Layers.TEXT_CREATE);
+                    Selection.deselect(Layers.TEXT_EDIT);
                     return false;
                 } else {
                     return false;

@@ -215,6 +215,9 @@ export class Canvas {
     public addLayer(layer: Layer): void {
         this.layers.push(layer);
     }
+    public addLayers(...layers: Layer[]): void {
+        this.layers.push(...layers);
+    }
 
     public findLayer(name: string): Layer {
         for (const layer of this.layers) {

@@ -9,7 +9,7 @@ import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
-import {Names} from "./Names";
+import {Layers} from "./Layers";
 
 export class LayerPolylineEdit extends Layer {
     private static readonly HINT_ELEMENT_ID = "hint";
@@ -30,9 +30,9 @@ export class LayerPolylineEdit extends Layer {
     private layerView: LayerPolylineView;
 
     public constructor(canvas: Canvas) {
-        super(Names.POLYLINE_EDIT, canvas);
+        super(Layers.POLYLINE_EDIT, canvas);
         let self = this;
-        // Selection.register(Names.POLYLINE_EDIT, (item: Drawable) => {
+        // Selection.register(Layers.POLYLINE_EDIT, (item: Drawable) => {
         //     this.startEditingPolyline(item as DrawablePolyline);
         // }, () => {
         //     self.finishEditing();
@@ -44,7 +44,7 @@ export class LayerPolylineEdit extends Layer {
     }
 
     public loadData(data: Data): void {
-        this.layerView = this.canvas.findLayer(Names.POLYLINE_VIEW) as LayerPolylineView;
+        this.layerView = this.canvas.findLayer(Layers.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineEdit = null;
         this.finishEditing();
         // Ui.setVisibility("panelPolylineSelected", false);
@@ -188,7 +188,7 @@ export class LayerPolylineEdit extends Layer {
         };
         this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineEdit, () => {
             this.deleteEditing();
-            Selection.deselect(Names.POLYLINE_EDIT);
+            Selection.deselect(Layers.POLYLINE_EDIT);
         });
 
         this.canvas.requestRender();

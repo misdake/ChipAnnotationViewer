@@ -8,6 +8,8 @@ import "hammerjs";
 import {html, render} from "lit-html";
 import "elements/ZoomElement"
 import {LayerName} from "./layers/Layers";
+import {Editor} from "./editors/Editor";
+import {EditorName} from "./editors/Editors";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -46,8 +48,6 @@ export class Canvas {
     }
 
     public init(): void {
-        this.layers = [];
-
         let convertMouseEvent = (event: MouseEvent) => {
             return {
                 button: event.button,
@@ -211,7 +211,9 @@ export class Canvas {
         render(html`<zoom-element .canvas="${this}" .camera="${this.camera}"></zoom-element>`, document.getElementById("cameraPanel"));
     }
 
-    private layers: Layer[];
+    //layers
+
+    private layers: Layer[] = [];
 
     public addLayer(layer: Layer): void {
         this.layers.push(layer);
@@ -228,6 +230,30 @@ export class Canvas {
         }
         return null;
     }
+
+    //editors
+
+    private editors: Editor[] = [];
+
+    public addEditor(editor: Editor): void {
+        this.editors.push(editor);
+    }
+    public addEditors(...editors: Editor[]): void {
+        this.editors.push(...editors);
+    }
+
+    public findEditor(name: EditorName): Editor {
+        for (const editor of this.editors) {
+            if (editor.name == name) {
+                return editor;
+            }
+        }
+        return null;
+    }
+
+
+
+
 
     public getWidth(): number {
         return this.width;
@@ -271,7 +297,7 @@ export class Canvas {
     public save(): Data {
         let data = new Data();
         for (let layer of this.layers) {
-            layer.saveData(data);
+            // layer.saveData(data); //TODO save from Env
         }
         return data;
     }

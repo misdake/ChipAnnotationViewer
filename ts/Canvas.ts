@@ -77,6 +77,8 @@ export class Canvas {
             }
         };
 
+        //TODO move mouse/keyboard listener to editors, also in reverse order
+
         this.canvasElement.onclick = event => {
             let e = convertMouseEvent(event);
             this.canvasElement.focus();
@@ -195,7 +197,7 @@ export class Canvas {
 
         if (Ui.isMobile()) {
             let hammer = new Hammer(this.canvasElement);
-            hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+            hammer.get('pan').set({direction: Hammer.DIRECTION_ALL});
             hammer.on("pan", (event: HammerInput) => {
                 event.deltaX *= window.devicePixelRatio;
                 event.deltaY *= window.devicePixelRatio;
@@ -252,17 +254,6 @@ export class Canvas {
     }
 
 
-
-
-
-    public getWidth(): number {
-        return this.width;
-    }
-
-    public getHeight(): number {
-        return this.height;
-    }
-
     private renderNext = false;
     public requestRender(): void {
         if (this.renderNext) return;
@@ -274,24 +265,27 @@ export class Canvas {
         })
     }
 
+
     private map: Map = null;
     private data: Data = null;
     public loadMap(map: Map): void {
         if (!this.map || this.map.name != map.name) {
+            this.map = map;
+            //TODO initialize editors?
             this.camera.load(this, map);
             for (let layer of this.layers) {
                 layer.loadMap(map);
             }
         }
-        this.map = map;
     }
     public loadData(data: Data): void {
         if (this.data != data) {
+            this.data = data;
+            //TODO initialize editors?
             for (let layer of this.layers) {
                 layer.loadData(data);
             }
         }
-        this.data = data;
     }
 
     public save(): Data {
@@ -300,6 +294,38 @@ export class Canvas {
             // layer.saveData(data); //TODO save from Env
         }
         return data;
+    }
+
+    private currentEditors: Editor[] = [];
+    public enterEditors(...editors: EditorName[]) {
+        if (this.currentEditors.length) this.exitEditors();
+
+        let map: { [key: number]: Editor } = {};
+        for (let e of this.editors) {
+            map[e.name] = e;
+        }
+
+        for (let editor of editors) {
+            let e = map[editor];
+            if (e) {
+                this.currentEditors.push(e);
+            }
+        }
+    }
+    public exitEditors() {
+        for (let e of this.currentEditors) {
+            e.exit();
+        }
+        this.currentEditors = [];
+    }
+
+
+    public getWidth(): number {
+        return this.width;
+    }
+
+    public getHeight(): number {
+        return this.height;
     }
 
     public render(): void {

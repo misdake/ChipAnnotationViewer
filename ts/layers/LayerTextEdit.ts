@@ -1,7 +1,7 @@
 import {Layer} from "./Layer";
 import {DrawableText} from "../editable/DrawableText";
 import {Canvas} from "../Canvas";
-import {MouseIn, MouseListener} from "../MouseListener";
+import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
@@ -33,7 +33,10 @@ export class LayerTextEdit extends Layer {
         });
     }
 
-    public loadData(data: Data): void {
+    loadMap(map: Map): void {
+    }
+
+    loadData(data: Data): void {
         this.layerView = this.canvas.findLayer(LayerName.TEXT_VIEW) as LayerTextView;
         this.finishEditing();
         // Ui.setVisibility("panelTextSelected", false);
@@ -49,60 +52,59 @@ export class LayerTextEdit extends Layer {
         Ui.setContent(LayerTextEdit.HINT_ELEMENT_ID, LayerTextEdit.HINT_EDIT_TEXT);
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
-        let self = this;
-
-        this._mouseListener = new class extends MouseListener {
-            private down: boolean = false;
-            private drag: boolean = false;
-            private dragX: number = 0;
-            private dragY: number = 0;
-
-            onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) { //left button down => test drag point
-                    this.down = true;
-                    this.drag = false;
-
-                    //test
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                    if (pick && event.altKey) { //start dragging
-                        if (event.ctrlKey) {
-                            let copied = new DrawableText(text.clone(0, 0));
-                            self.layerView.addText(copied);
-                        }
-                        this.drag = true;
-                        this.dragX = position.x - text.x;
-                        this.dragY = position.y - text.y;
-                        return event.altKey;
-                    }
-                }
-                return false;
-            }
-            onmouseup(event: MouseIn): boolean {
-                let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
-                this.drag = false;
-
-                if (event.button == 0) { //left button up => nothing
-                    this.down = false;
-                    return !passEvent;
-                }
-                return false;
-            }
-            onmousemove(event: MouseIn): boolean {
-                if (this.down && this.drag) {
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.textEdit.setPosition(position.x - this.dragX, position.y - this.dragY);
-                    self.canvas.requestRender();
-                    return true;
-                }
-                return false;
-            }
-        };
-
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, () => {
-            this.deleteEditing();
-            Selection.deselect(LayerName.TEXT_EDIT);
-        });
+        // let self = this;
+        // this._mouseListener = new class extends MouseListener {
+        //     private down: boolean = false;
+        //     private drag: boolean = false;
+        //     private dragX: number = 0;
+        //     private dragY: number = 0;
+        //
+        //     onmousedown(event: MouseIn): boolean {
+        //         if (event.button == 0) { //left button down => test drag point
+        //             this.down = true;
+        //             this.drag = false;
+        //
+        //             //test
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
+        //             if (pick && event.altKey) { //start dragging
+        //                 if (event.ctrlKey) {
+        //                     let copied = new DrawableText(text.clone(0, 0));
+        //                     self.layerView.addText(copied);
+        //                 }
+        //                 this.drag = true;
+        //                 this.dragX = position.x - text.x;
+        //                 this.dragY = position.y - text.y;
+        //                 return event.altKey;
+        //             }
+        //         }
+        //         return false;
+        //     }
+        //     onmouseup(event: MouseIn): boolean {
+        //         let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
+        //         this.drag = false;
+        //
+        //         if (event.button == 0) { //left button up => nothing
+        //             this.down = false;
+        //             return !passEvent;
+        //         }
+        //         return false;
+        //     }
+        //     onmousemove(event: MouseIn): boolean {
+        //         if (this.down && this.drag) {
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             self.textEdit.setPosition(position.x - this.dragX, position.y - this.dragY);
+        //             self.canvas.requestRender();
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        // };
+        //
+        // this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textEdit, () => {
+        //     this.deleteEditing();
+        //     Selection.deselect(LayerName.TEXT_EDIT);
+        // });
 
         this.canvas.requestRender();
     }
@@ -117,8 +119,8 @@ export class LayerTextEdit extends Layer {
             this.textEdit = null;
             this.canvas.requestRender();
         }
-        this._mouseListener = null;
-        this._keyboardListener = null;
+        // this._mouseListener = null;
+        // this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {
@@ -175,4 +177,8 @@ export class LayerTextEdit extends Layer {
             this.canvas.requestRender();
         });
     }
+
+    unload(): void {
+    }
+
 }

@@ -79,136 +79,136 @@ export class Canvas {
 
         //TODO move mouse/keyboard listener to editors, also in reverse order
 
-        this.canvasElement.onclick = event => {
-            let e = convertMouseEvent(event);
-            this.canvasElement.focus();
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onclick(e)) break;
-            }
-        };
-        this.canvasElement.ondblclick = event => {
-            let e = convertMouseEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.ondblclick(e)) break;
-            }
-        };
-        this.canvasElement.onwheel = event => {
-            let e = convertWheelEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onwheel(e)) break;
-            }
-        };
-        this.canvasElement.onmousedown = event => {
-            let e = convertMouseEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmousedown(e)) break;
-            }
-        };
-        this.canvasElement.onmouseup = event => {
-            let e = convertMouseEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmouseup(e)) break;
-            }
-        };
-        this.canvasElement.onmousemove = event => {
-            let e = convertMouseEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmousemove(e)) break;
-            }
-        };
-        this.canvasElement.onmouseout = event => {
-            let e = convertMouseEvent(event);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.mouseListener && layer.mouseListener.onmouseout(e)) break;
-            }
-        };
-
-        this.canvasElement.onkeydown = event => {
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-                    break;
-                }
-            }
-        };
-        this.canvasElement.onkeyup = event => {
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-                    break;
-                }
-            }
-        };
-        this.canvasElement.onkeypress = event => {
-            let length = this.layers.length;
-            for (let i = length - 1; i >= 0; i--) {
-                let layer = this.layers[i];
-                if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    event.stopImmediatePropagation();
-                    break;
-                }
-            }
-        };
-
-        if (Ui.isMobile()) {
-            let hammer = new Hammer(this.canvasElement);
-            hammer.get('pan').set({direction: Hammer.DIRECTION_ALL});
-            hammer.on("pan", (event: HammerInput) => {
-                event.deltaX *= window.devicePixelRatio;
-                event.deltaY *= window.devicePixelRatio;
-                event.preventDefault();
-                let length = this.layers.length;
-                for (let i = length - 1; i >= 0; i--) {
-                    let layer = this.layers[i];
-                    if (layer.mouseListener && layer.mouseListener.onpan(event)) break;
-                }
-            });
-        }
+        // this.canvasElement.onclick = event => {
+        //     let e = convertMouseEvent(event);
+        //     this.canvasElement.focus();
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onclick(e)) break;
+        //     }
+        // };
+        // this.canvasElement.ondblclick = event => {
+        //     let e = convertMouseEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.ondblclick(e)) break;
+        //     }
+        // };
+        // this.canvasElement.onwheel = event => {
+        //     let e = convertWheelEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onwheel(e)) break;
+        //     }
+        // };
+        // this.canvasElement.onmousedown = event => {
+        //     let e = convertMouseEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onmousedown(e)) break;
+        //     }
+        // };
+        // this.canvasElement.onmouseup = event => {
+        //     let e = convertMouseEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onmouseup(e)) break;
+        //     }
+        // };
+        // this.canvasElement.onmousemove = event => {
+        //     let e = convertMouseEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onmousemove(e)) break;
+        //     }
+        // };
+        // this.canvasElement.onmouseout = event => {
+        //     let e = convertMouseEvent(event);
+        //     event.preventDefault();
+        //     event.stopPropagation();
+        //     event.stopImmediatePropagation();
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.mouseListener && layer.mouseListener.onmouseout(e)) break;
+        //     }
+        // };
+        //
+        // this.canvasElement.onkeydown = event => {
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.keyboardListener && layer.keyboardListener.onkeydown(event)) {
+        //             event.preventDefault();
+        //             event.stopPropagation();
+        //             event.stopImmediatePropagation();
+        //             break;
+        //         }
+        //     }
+        // };
+        // this.canvasElement.onkeyup = event => {
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.keyboardListener && layer.keyboardListener.onkeyup(event)) {
+        //             event.preventDefault();
+        //             event.stopPropagation();
+        //             event.stopImmediatePropagation();
+        //             break;
+        //         }
+        //     }
+        // };
+        // this.canvasElement.onkeypress = event => {
+        //     let length = this.layers.length;
+        //     for (let i = length - 1; i >= 0; i--) {
+        //         let layer = this.layers[i];
+        //         if (layer.keyboardListener && layer.keyboardListener.onkeypress(event)) {
+        //             event.preventDefault();
+        //             event.stopPropagation();
+        //             event.stopImmediatePropagation();
+        //             break;
+        //         }
+        //     }
+        // };
+        //
+        // if (Ui.isMobile()) {
+        //     let hammer = new Hammer(this.canvasElement);
+        //     hammer.get('pan').set({direction: Hammer.DIRECTION_ALL});
+        //     hammer.on("pan", (event: HammerInput) => {
+        //         event.deltaX *= window.devicePixelRatio;
+        //         event.deltaY *= window.devicePixelRatio;
+        //         event.preventDefault();
+        //         let length = this.layers.length;
+        //         for (let i = length - 1; i >= 0; i--) {
+        //             let layer = this.layers[i];
+        //             if (layer.mouseListener && layer.mouseListener.onpan(event)) break;
+        //         }
+        //     });
+        // }
 
         render(html`<zoom-element .canvas="${this}" .camera="${this.camera}"></zoom-element>`, document.getElementById("cameraPanel"));
     }

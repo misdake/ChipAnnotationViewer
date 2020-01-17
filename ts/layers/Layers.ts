@@ -24,11 +24,11 @@ export class Layers {
         return [
             new LayerImage(canvas),
             new LayerPolylineView(canvas),
-            new LayerPolylineCreate(canvas),
-            new LayerPolylineEdit(canvas),
+            // new LayerPolylineCreate(canvas),
+            // new LayerPolylineEdit(canvas),
             new LayerTextView(canvas),
-            new LayerTextCreate(canvas),
-            new LayerTextEdit(canvas),
+            // new LayerTextCreate(canvas),
+            // new LayerTextEdit(canvas),
         ];
     }
 

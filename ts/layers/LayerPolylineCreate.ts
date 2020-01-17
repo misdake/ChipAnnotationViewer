@@ -3,14 +3,12 @@ import {Map} from "../data/Map";
 import {DrawablePolyline, DrawablePolylinePack} from "../editable/DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {Size} from "../util/Size";
-import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
-import {Position} from "../util/Transform";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
-import {LayerName, Layers} from "./Layers";
+import {LayerName} from "./Layers";
 
 export class LayerPolylineCreate extends Layer {
 
@@ -65,67 +63,67 @@ export class LayerPolylineCreate extends Layer {
 
         Ui.setContent(LayerPolylineCreate.HINT_ELEMENT_ID, LayerPolylineCreate.HINT_NEW_POLYLINE);
 
-        this._mouseListener = new class extends MouseListener {
-            private down: boolean = false;
-            private moved: boolean = false;
-
-            private preview(position: Position, magnetic: boolean): void {
-                self.polylineNew.editor.setPoint(-1, position.x, position.y);
-                if (magnetic) {
-                    let radius = self.camera.screenSizeToCanvas(LayerPolylineCreate.MAG_RADIUS);
-                    let result = self.polylineNew.calculator.alignPoint(-1, radius);
-                    self.polylineNew.editor.setPoint(-1, result.x, result.y);
-                }
-            }
-            onmousedown(event: MouseIn): boolean {
-                if (event.button == 0 && !this.down) { //left button down => add point
-                    this.down = true;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.polylineNew.editor.addPoint(position.x, position.y);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.button == 2) {
-                    this.moved = false;
-                }
-                return false;
-            }
-            onmouseup(event: MouseIn): boolean {
-                if (event.button == 0) { //left button up => update last point
-                    this.down = false;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position, event.ctrlKey);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.button == 2) {
-                    if (!this.moved) {
-                        let newPolyline = self.polylineNew;
-                        self.finishEditing();
-                        if (self.layerView.containPolyline(newPolyline)) {
-                            //pass it to polyline edit
-                            Selection.select(LayerName.POLYLINE_EDIT, newPolyline);
-                        }
-                    }
-                    this.moved = false;
-                    return true;
-                }
-                return false;
-            }
-            onmousemove(event: MouseIn): boolean {
-                if (this.down) { //left button is down => show modification
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    this.preview(position, event.ctrlKey);
-                    self.canvas.requestRender();
-                    return true;
-                } else if (event.buttons & 2) {
-                    this.moved = true;
-                }
-                return false;
-            }
-        };
-        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, () => {
-            this.deleteCreating();
-            Selection.deselect(LayerName.POLYLINE_CREATE);
-        });
+        // this._mouseListener = new class extends MouseListener {
+        //     private down: boolean = false;
+        //     private moved: boolean = false;
+        //
+        //     private preview(position: Position, magnetic: boolean): void {
+        //         self.polylineNew.editor.setPoint(-1, position.x, position.y);
+        //         if (magnetic) {
+        //             let radius = self.camera.screenSizeToCanvas(LayerPolylineCreate.MAG_RADIUS);
+        //             let result = self.polylineNew.calculator.alignPoint(-1, radius);
+        //             self.polylineNew.editor.setPoint(-1, result.x, result.y);
+        //         }
+        //     }
+        //     onmousedown(event: MouseIn): boolean {
+        //         if (event.button == 0 && !this.down) { //left button down => add point
+        //             this.down = true;
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             self.polylineNew.editor.addPoint(position.x, position.y);
+        //             self.canvas.requestRender();
+        //             return true;
+        //         } else if (event.button == 2) {
+        //             this.moved = false;
+        //         }
+        //         return false;
+        //     }
+        //     onmouseup(event: MouseIn): boolean {
+        //         if (event.button == 0) { //left button up => update last point
+        //             this.down = false;
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             this.preview(position, event.ctrlKey);
+        //             self.canvas.requestRender();
+        //             return true;
+        //         } else if (event.button == 2) {
+        //             if (!this.moved) {
+        //                 let newPolyline = self.polylineNew;
+        //                 self.finishEditing();
+        //                 if (self.layerView.containPolyline(newPolyline)) {
+        //                     //pass it to polyline edit
+        //                     Selection.select(LayerName.POLYLINE_EDIT, newPolyline);
+        //                 }
+        //             }
+        //             this.moved = false;
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        //     onmousemove(event: MouseIn): boolean {
+        //         if (this.down) { //left button is down => show modification
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             this.preview(position, event.ctrlKey);
+        //             self.canvas.requestRender();
+        //             return true;
+        //         } else if (event.buttons & 2) {
+        //             this.moved = true;
+        //         }
+        //         return false;
+        //     }
+        // };
+        // this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, self.polylineNew, () => {
+        //     this.deleteCreating();
+        //     Selection.deselect(LayerName.POLYLINE_CREATE);
+        // });
 
         return this.polylineNew;
     }
@@ -147,8 +145,8 @@ export class LayerPolylineCreate extends Layer {
             this.polylineNew = null;
             this.canvas.requestRender();
         }
-        this._mouseListener = null;
-        this._keyboardListener = null;
+        // this._mouseListener = null;
+        // this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {
@@ -273,4 +271,8 @@ export class LayerPolylineCreate extends Layer {
             this.canvas.requestRender();
         });
     }
+
+    unload(): void {
+    }
+
 }

@@ -1,10 +1,9 @@
 import {Layer} from "./Layer";
+import {Map} from "../data/Map";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../editable/DrawablePolyline";
-import {MouseIn, MouseListener} from "../MouseListener";
 import {Data} from "../data/Data";
-import {Selection} from "./Selection";
 import {LayerName} from "./Layers";
 
 export class LayerPolylineView extends Layer {
@@ -15,7 +14,10 @@ export class LayerPolylineView extends Layer {
         super(LayerName.POLYLINE_VIEW, canvas);
     }
 
-    public loadData(data: Data): void {
+    loadMap(map: Map): void {
+    }
+
+    loadData(data: Data): void {
         this.polylines = [];
 
         if (data.polylines) {
@@ -25,45 +27,45 @@ export class LayerPolylineView extends Layer {
         }
 
         //listen to mouse click to select polyline
-        let self = this;
-        this._mouseListener = new class extends MouseListener {
-            private moved = false;
-            onmousedown(event: MouseIn): boolean {
-                this.moved = false;
-                return false;
-            }
-            onmouseup(event: MouseIn): boolean {
-                if (event.button == 0 && !this.moved) {
-                    let radius = self.camera.screenSizeToCanvas(5);
-                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    let x = canvasXY.x, y = canvasXY.y;
-                    let selected: DrawablePolyline = null;
-                    for (let polyline of self.polylines) {
-                        let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
-                        let pickLine = polyline.picker.pickLine(x, y, radius);
-                        let pickShape = polyline.picker.pickShape(x, y);
-                        if (pickPointIndex != null || pickLine || pickShape) {
-                            selected = polyline;
-                        }
-                    }
-                    if (selected) {
-                        Selection.select(LayerName.POLYLINE_EDIT, selected);
-                        return true;
-                    }
-                    Selection.deselect(LayerName.POLYLINE_CREATE);
-                    Selection.deselect(LayerName.POLYLINE_EDIT);
-                    return false;
-                } else {
-                    return false;
-                }
-            }
-            onmousemove(event: MouseIn): boolean {
-                if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
-                    this.moved = true;
-                }
-                return false;
-            }
-        };
+        // let self = this;
+        // this._mouseListener = new class extends MouseListener {
+        //     private moved = false;
+        //     onmousedown(event: MouseIn): boolean {
+        //         this.moved = false;
+        //         return false;
+        //     }
+        //     onmouseup(event: MouseIn): boolean {
+        //         if (event.button == 0 && !this.moved) {
+        //             let radius = self.camera.screenSizeToCanvas(5);
+        //             let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             let x = canvasXY.x, y = canvasXY.y;
+        //             let selected: DrawablePolyline = null;
+        //             for (let polyline of self.polylines) {
+        //                 let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
+        //                 let pickLine = polyline.picker.pickLine(x, y, radius);
+        //                 let pickShape = polyline.picker.pickShape(x, y);
+        //                 if (pickPointIndex != null || pickLine || pickShape) {
+        //                     selected = polyline;
+        //                 }
+        //             }
+        //             if (selected) {
+        //                 Selection.select(LayerName.POLYLINE_EDIT, selected);
+        //                 return true;
+        //             }
+        //             Selection.deselect(LayerName.POLYLINE_CREATE);
+        //             Selection.deselect(LayerName.POLYLINE_EDIT);
+        //             return false;
+        //         } else {
+        //             return false;
+        //         }
+        //     }
+        //     onmousemove(event: MouseIn): boolean {
+        //         if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+        //             this.moved = true;
+        //         }
+        //         return false;
+        //     }
+        // };
     }
 
     public addPolyline(polyline: DrawablePolyline) {
@@ -91,14 +93,12 @@ export class LayerPolylineView extends Layer {
     }
 
     public render(renderer: Renderer): void {
-        super.render(renderer);
         for (const polyline of this.polylines) {
             polyline.render(this.canvas, renderer, this.camera);
         }
     }
 
     public unload(): void {
-        super.unload();
     }
 
 }

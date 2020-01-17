@@ -1,8 +1,8 @@
 import {Layer} from "./Layer";
 import {DrawableText, DrawableTextPack} from "../editable/DrawableText";
 import {Canvas} from "../Canvas";
+import {Map} from "../data/Map";
 import {Size} from "../util/Size";
-import {MouseIn, MouseListener} from "../MouseListener";
 import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
@@ -31,6 +31,9 @@ export class LayerTextCreate extends Layer {
         });
     }
 
+    loadMap(map: Map): void {
+    }
+
     public loadData(data: Data): void {
         this.layerView = this.canvas.findLayer(LayerName.TEXT_VIEW) as LayerTextView;
         this.finishCreating();
@@ -54,46 +57,46 @@ export class LayerTextCreate extends Layer {
 
         Ui.setContent(LayerTextCreate.HINT_ELEMENT_ID, LayerTextCreate.HINT_NEW_TEXT);
 
-        this._mouseListener = new class extends MouseListener {
-            private down: boolean = false;
-
-            onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) {
-                    this.down = true;
-                    return true;
-                }
-                return false;
-            }
-            onmouseup(event: MouseIn): boolean {
-                if (event.button == 0) { //left button up => update last point
-                    this.down = false;
-                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.textNew.setPosition(position.x, position.y);
-                    self.layerView.addText(self.textNew);
-                    Selection.select(LayerName.TEXT_EDIT, self.textNew);
-                    self.canvas.requestRender();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            onmousemove(event: MouseIn): boolean {
-                return (event.buttons & 1) && this.down;
-
-            }
-        };
-
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, () => {
-            this.deleteCreating();
-            Selection.deselect(LayerName.TEXT_CREATE);
-        });
+        // this._mouseListener = new class extends MouseListener {
+        //     private down: boolean = false;
+        //
+        //     onmousedown(event: MouseIn): boolean {
+        //         if (event.button == 0) {
+        //             this.down = true;
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        //     onmouseup(event: MouseIn): boolean {
+        //         if (event.button == 0) { //left button up => update last point
+        //             this.down = false;
+        //             let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+        //             self.textNew.setPosition(position.x, position.y);
+        //             self.layerView.addText(self.textNew);
+        //             Selection.select(LayerName.TEXT_EDIT, self.textNew);
+        //             self.canvas.requestRender();
+        //             return true;
+        //         } else {
+        //             return false;
+        //         }
+        //     }
+        //     onmousemove(event: MouseIn): boolean {
+        //         return (event.buttons & 1) && this.down;
+        //
+        //     }
+        // };
+        //
+        // this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, self.textNew, () => {
+        //     this.deleteCreating();
+        //     Selection.deselect(LayerName.TEXT_CREATE);
+        // });
     }
 
     public finishCreating(): void {
         // Ui.setVisibility("panelTextSelected", false);
 
-        this._mouseListener = null;
-        this._keyboardListener = null;
+        // this._mouseListener = null;
+        // this._keyboardListener = null;
     }
 
     public render(renderer: Renderer): void {
@@ -133,4 +136,8 @@ export class LayerTextCreate extends Layer {
             this.canvas.requestRender();
         });
     }
+
+    unload(): void {
+    }
+
 }

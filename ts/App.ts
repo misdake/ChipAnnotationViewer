@@ -11,6 +11,7 @@ import {Selection} from "./layers/Selection";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
 import {LayerName, Layers} from "./layers/Layers";
+import {EditorName, Editors} from "./editors/Editors";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -22,6 +23,9 @@ let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
 canvas.addLayers(...Layers.create(canvas));
+canvas.addEditors(...Editors.create(canvas));
+
+canvas.enterEditors(EditorName.CAMERA_CONTROL);
 
 // Ui.bindButtonOnClick("buttonNewPolyline", () => {
 //     layerTextEdit.finishEditing();

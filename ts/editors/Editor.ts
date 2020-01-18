@@ -7,7 +7,7 @@ import {KeyboardListener} from "../KeyboardListener";
 import {Data} from "../data/Data";
 import {EditorName} from "./Editors";
 
-export class Editor {
+export abstract class Editor {
 
     public readonly name: EditorName;
 
@@ -29,16 +29,10 @@ export class Editor {
         this.camera = canvas.getCamera();
     }
 
-    public enter(map: Map, data: Data): void {
+    public abstract enter(map: Map, data: Data): void;
 
-    }
+    public abstract exit(): void;
 
-    public exit(): void {
-
-    }
-
-    public render(renderer: Renderer): void {
-
-    }
+    public abstract render(renderer: Renderer): void;
 
 }

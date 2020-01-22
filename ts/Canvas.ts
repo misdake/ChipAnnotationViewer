@@ -341,6 +341,9 @@ export class Canvas {
         for (let layer of this.layers) {
             layer.render(this.renderer);
         }
+        for (let editor of this.currentEditors) {
+            editor.render(this.renderer);
+        }
         for (let callback of this.afterRenderList) {
             callback();
         }

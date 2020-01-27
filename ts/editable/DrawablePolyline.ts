@@ -321,7 +321,7 @@ export class DrawablePolylineCalculator {
 export class DrawablePolylineStyle {
     public constructor(pack: DrawablePolylinePack) {
         this._closed = pack.closed;
-        this._lineWidth = pack.lineWidth;
+        this._lineWidth = new Size(pack.lineWidth.onScreen, pack.lineWidth.onCanvas);
 
         this._fill = pack.fill;
         this._fillColor = ColorEntry.findByName(pack.fillColorName);

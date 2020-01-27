@@ -33,28 +33,6 @@ Selection.register(null, () => {
     canvas.requestRender();
 });
 
-// Ui.bindButtonOnClick("buttonNewPolyline", () => {
-//     layerTextEdit.finishEditing();
-//     layerPolylineCreate.createPolylineAndEdit();
-// });
-// Ui.bindButtonOnClick("polylineButtonDelete", () => {
-//     layerPolylineEdit.deleteEditing();
-//     layerPolylineCreate.deleteCreating();
-//     layerTextEdit.finishEditing();
-//     layerPolylineEdit.finishEditing();
-// });
-// Ui.bindButtonOnClick("buttonNewText", () => {
-//     layerPolylineEdit.finishEditing();
-//     layerTextCreate.createTextAndEdit()
-// });
-// Ui.bindButtonOnClick("textButtonDelete", () => {
-//     layerPolylineEdit.finishEditing();
-//     layerTextCreate.deleteCreating();
-//     layerTextCreate.finishCreating();
-//     layerTextEdit.deleteEditing();
-//     layerTextEdit.finishEditing();
-// });
-
 class App {
     private chip: Chip;
     private map: Map;
@@ -72,14 +50,18 @@ class App {
 
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
     }
 

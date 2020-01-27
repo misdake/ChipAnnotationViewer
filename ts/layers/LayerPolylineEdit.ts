@@ -22,7 +22,6 @@ export class LayerPolylineEdit extends Layer {
         "7. WSAD ↑↓←→ to move, hold shift to speed up<br>" +
         "8. press del to delete<br>";
 
-    private static readonly MAG_RADIUS = 10;
 
     private map: Map;
     private polylineEdit: DrawablePolyline = null;

@@ -2,10 +2,12 @@ import {Canvas} from "../Canvas";
 import {EditorCameraControl} from "./EditorCameraControl";
 import {Editor} from "./Editor";
 import {EditorSelect} from "./EditorSelect";
+import {EditorPolylineEdit} from "./EditorPolylineEdit";
 
 export enum EditorName {
-    CAMERA_CONTROL,
+    CAMERA_CONTROL = 1,
     SELECT,
+    POLYLINE_EDIT,
 }
 
 export class Editors {
@@ -14,6 +16,7 @@ export class Editors {
         return [
             new EditorCameraControl(canvas),
             new EditorSelect(canvas),
+            new EditorPolylineEdit(canvas),
         ];
     }
 

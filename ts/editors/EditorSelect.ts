@@ -6,6 +6,7 @@ import {DrawablePolyline} from "../editable/DrawablePolyline";
 import {Selection, SelectType} from "../layers/Selection";
 import {Env} from "../Env";
 import {Renderer} from "../Renderer";
+import {DrawableText} from "../editable/DrawableText";
 
 export class EditorSelect extends Editor {
 
@@ -23,22 +24,23 @@ export class EditorSelect extends Editor {
             }
             onmouseup(event: MouseIn): boolean {
                 if (event.button == 0 && !this.moved) {
-                    let radius = self.camera.screenSizeToCanvas(5);
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
-                    let selected: DrawablePolyline = null;
-                    for (let polyline of env.polylines) {
-                        let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
-                        let pickLine = polyline.picker.pickLine(x, y, radius);
-                        let pickShape = polyline.picker.pickShape(x, y);
-                        if (pickPointIndex != null || pickLine || pickShape) {
-                            selected = polyline;
-                        }
-                    }
-                    if (selected) {
-                        Selection.select(SelectType.POLYLINE, selected);
+
+                    //text first
+                    let text = EditorSelect.pickText(x, y, env);
+                    if (text) {
+                        Selection.select(SelectType.TEXT, text);
                         return true;
                     }
+
+                    //polyline next
+                    let polyline = EditorSelect.pickPolyline(x, y, env);
+                    if (polyline) {
+                        Selection.select(SelectType.POLYLINE, polyline);
+                        return true;
+                    }
+
                     Selection.deselectAny();
                     return false;
                 } else {
@@ -58,6 +60,36 @@ export class EditorSelect extends Editor {
         this._mouseListener = null;
     }
 
+
+    //pick
+
+    private static pickPolyline(x: number, y: number, env: Env): DrawablePolyline {
+        let radius = env.camera.screenSizeToCanvas(5);
+        let picked: DrawablePolyline = null;
+        for (let polyline of env.polylines) {
+            let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
+            let pickLine = polyline.picker.pickLine(x, y, radius);
+            let pickShape = polyline.picker.pickShape(x, y);
+            if (pickPointIndex != null || pickLine || pickShape) {
+                picked = polyline;
+            }
+        }
+        return picked;
+    }
+
+    private static pickText(x: number, y: number, env: Env): DrawableText {
+        let radius = env.camera.screenSizeToCanvas(5);
+        let picked: DrawableText = null;
+        for (let text of env.texts) {
+            let pick = text.pick(x, y, radius);
+            if (pick) picked = text;
+        }
+        return picked;
+    }
+
+
+    //render
+
     render(env: Env): void {
         let {item: item, type: type} = Selection.getSelected();
         switch (type) {
@@ -65,6 +97,7 @@ export class EditorSelect extends Editor {
                 this.drawSelectedPolyline(<DrawablePolyline>item, env.renderer);
                 break;
             case SelectType.TEXT:
+                this.drawSelectedText(<DrawableText>item, env.renderer);
                 break;
         }
     }
@@ -80,6 +113,17 @@ export class EditorSelect extends Editor {
         polyline.editor.forEachPoint((x, y) => {
             drawPointCircle(x, y, renderer);
         });
+    }
+
+    private drawSelectedText(text: DrawableText, renderer: Renderer) {
+        renderer.setColor(text.colorString);
+        let aabb = text.validateCanvasAABB(this.camera, renderer);
+        let p1 = this.camera.canvasToScreen(aabb.x1, aabb.y1);
+        let p2 = this.camera.canvasToScreen(aabb.x2, aabb.y2);
+        renderer.drawRect(
+            p1.x - 5, p1.y - 5, p2.x + 5, p2.y + 5,
+            false, true, 2
+        );
     }
 
 }

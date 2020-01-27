@@ -27,6 +27,12 @@ canvas.addEditors(...Editors.create(canvas));
 
 canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
 
+Selection.register(null, () => {
+    canvas.requestRender();
+}, () => {
+    canvas.requestRender();
+});
+
 // Ui.bindButtonOnClick("buttonNewPolyline", () => {
 //     layerTextEdit.finishEditing();
 //     layerPolylineCreate.createPolylineAndEdit();

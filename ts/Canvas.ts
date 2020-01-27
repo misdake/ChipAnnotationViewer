@@ -38,7 +38,7 @@ export class Canvas {
         this.width = this.canvasElement.clientWidth;
         this.height = this.canvasElement.clientHeight;
 
-        this.env.loadCanvas(this);
+        this.env.loadCanvas(this, this.renderer);
 
         window.addEventListener('resize', () => {
             this.requestRender();
@@ -353,7 +353,7 @@ export class Canvas {
             layer.render(this.renderer);
         }
         for (let editor of this.currentEditors) {
-            editor.render(this.renderer);
+            editor.render(this.env);
         }
         for (let callback of this.afterRenderList) {
             callback();

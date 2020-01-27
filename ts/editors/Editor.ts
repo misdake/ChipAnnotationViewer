@@ -1,6 +1,5 @@
 import {Canvas} from "../Canvas";
 import {Camera} from "../Camera";
-import {Renderer} from "../Renderer";
 import {MouseListener} from "../MouseListener";
 import {KeyboardListener} from "../KeyboardListener";
 import {EditorName} from "./Editors";
@@ -32,6 +31,6 @@ export abstract class Editor {
 
     public abstract exit(): void;
 
-    public abstract render(renderer: Renderer): void;
+    public abstract render(env: Env): void;
 
 }

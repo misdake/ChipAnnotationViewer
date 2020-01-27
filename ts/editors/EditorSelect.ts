@@ -1,11 +1,11 @@
 import {Editor} from "./Editor";
-import {Renderer} from "../Renderer";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
 import {DrawablePolyline} from "../editable/DrawablePolyline";
 import {Selection, SelectType} from "../layers/Selection";
 import {Env} from "../Env";
+import {Renderer} from "../Renderer";
 
 export class EditorSelect extends Editor {
 
@@ -58,7 +58,28 @@ export class EditorSelect extends Editor {
         this._mouseListener = null;
     }
 
-    render(renderer: Renderer): void {
+    render(env: Env): void {
+        let {item: item, type: type} = Selection.getSelected();
+        switch (type) {
+            case SelectType.POLYLINE:
+                this.drawSelectedPolyline(<DrawablePolyline>item, env.renderer);
+                break;
+            case SelectType.TEXT:
+                break;
+        }
+    }
+
+    private drawSelectedPolyline(polyline: DrawablePolyline, renderer: Renderer) {
+        let drawPointCircle = (x: number, y: number, renderer: Renderer) => {
+            let position = this.camera.canvasToScreen(x, y);
+            renderer.setColor("rgba(255,255,255,1)");
+            renderer.drawCircle(position.x, position.y, 5, false, true, 1);
+            renderer.setColor("rgba(0,0,0,0.5)");
+            renderer.drawCircle(position.x, position.y, 4, true, false);
+        };
+        polyline.editor.forEachPoint((x, y) => {
+            drawPointCircle(x, y, renderer);
+        });
     }
 
 }

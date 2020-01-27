@@ -8,6 +8,7 @@ export enum SelectType {
 
 export class Selection {
 
+    private static listSelect: ((item: Drawable) => void)[] = [];
     private static listDeselect: (() => void)[] = [];
     private static mapSelect: { [key: number]: ((item: Drawable) => void)[] } = {};
     private static mapDeselect: { [key: number]: (() => void)[] } = {};
@@ -26,7 +27,8 @@ export class Selection {
                 this.mapDeselect[typeName].push(ondeselect);
             }
         } else {
-            this.listDeselect.push(ondeselect);
+            if (onselect) this.listSelect.push(onselect);
+            if (ondeselect) this.listDeselect.push(ondeselect);
         }
     }
 
@@ -61,6 +63,9 @@ export class Selection {
             for (let func of onselect) {
                 func(item);
             }
+        }
+        for (let func of this.listSelect) {
+            func(item);
         }
     }
 

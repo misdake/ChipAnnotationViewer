@@ -4,6 +4,7 @@ import {Map} from "./data/Map";
 import {Data} from "./data/Data";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
+import {Renderer} from "./Renderer";
 
 export class Env {
 
@@ -11,10 +12,12 @@ export class Env {
 
     canvas: Canvas;
     camera: Camera;
+    renderer: Renderer;
 
-    loadCanvas(canvas: Canvas) {
+    loadCanvas(canvas: Canvas, renderer: Renderer) {
         this.canvas = canvas;
         this.camera = canvas.getCamera();
+        this.renderer = renderer;
     }
 
     //after selected map

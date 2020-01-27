@@ -1,7 +1,4 @@
 import {Editor} from "./Editor";
-import {Data} from "../data/Data";
-import {Map} from "../data/Map";
-import {Renderer} from "../Renderer";
 import {MouseIn, MouseListener, WheelIn} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -87,7 +84,7 @@ export class EditorCameraControl extends Editor {
         this._mouseListener = null;
     }
 
-    render(renderer: Renderer): void {
+    render(env: Env): void {
     }
 
 }

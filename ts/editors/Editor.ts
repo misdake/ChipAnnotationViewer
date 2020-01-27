@@ -1,11 +1,10 @@
-import {Map} from "../data/Map";
 import {Canvas} from "../Canvas";
 import {Camera} from "../Camera";
 import {Renderer} from "../Renderer";
 import {MouseListener} from "../MouseListener";
 import {KeyboardListener} from "../KeyboardListener";
-import {Data} from "../data/Data";
 import {EditorName} from "./Editors";
+import {Env} from "../Env";
 
 export abstract class Editor {
 
@@ -23,13 +22,13 @@ export abstract class Editor {
         return this._keyboardListener;
     }
 
-    public constructor(name: EditorName, canvas: Canvas) {
+    protected constructor(name: EditorName, canvas: Canvas) {
         this.name = name;
         this.canvas = canvas;
         this.camera = canvas.getCamera();
     }
 
-    public abstract enter(map: Map, data: Data): void;
+    public abstract enter(env: Env): void;
 
     public abstract exit(): void;
 

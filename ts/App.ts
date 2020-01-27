@@ -7,10 +7,10 @@ import "elements/SelectElement"
 import "elements/TitleElement"
 import "editable/DrawablePolylineEditElement"
 import "editable/DrawableTextEditElement"
-import {Selection} from "./layers/Selection";
+import {Selection, SelectType} from "./layers/Selection";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
-import {LayerName, Layers} from "./layers/Layers";
+import {Layers} from "./layers/Layers";
 import {EditorName, Editors} from "./editors/Editors";
 
 if (Ui.isMobile()) {
@@ -25,7 +25,7 @@ canvas.init();
 canvas.addLayers(...Layers.create(canvas));
 canvas.addEditors(...Editors.create(canvas));
 
-canvas.enterEditors(EditorName.CAMERA_CONTROL);
+canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
 
 // Ui.bindButtonOnClick("buttonNewPolyline", () => {
 //     layerTextEdit.finishEditing();
@@ -64,13 +64,13 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
-        Selection.register(LayerName.POLYLINE_EDIT, (item: DrawablePolyline) => {
+        Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
         });
 
-        Selection.register(LayerName.TEXT_EDIT, (item: DrawableText) => {
+        Selection.register(SelectType.TEXT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));

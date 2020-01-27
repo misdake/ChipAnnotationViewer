@@ -1,25 +1,49 @@
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
 import {Map} from "./data/Map";
-import {Annotation, Data} from "./data/Data";
+import {Data} from "./data/Data";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
 
 export class Env {
+
+    //after load
+
     canvas: Canvas;
     camera: Camera;
 
-    map: Map;
-    annotation: Annotation;
+    loadCanvas(canvas: Canvas) {
+        this.canvas = canvas;
+        this.camera = canvas.getCamera();
+    }
 
+    //after selected map
+
+    map: Map;
+    data: Data;
     polylines: DrawablePolyline[];
     texts: DrawableText[];
 
-
-    loadMap() {
-
+    loadMap(map: Map) {
+        this.map = map;
     }
-    loadAnnotation() {
+
+    loadData(data: Data) {
+        this.data = data;
+
+        this.polylines = [];
+        this.texts = [];
+
+        if (data.polylines) {
+            for (let pack of data.polylines) {
+                this.polylines.push(new DrawablePolyline(pack))
+            }
+        }
+        if (data.texts) {
+            for (let pack of data.texts) {
+                this.texts.push(new DrawableText(pack))
+            }
+        }
 
     }
 

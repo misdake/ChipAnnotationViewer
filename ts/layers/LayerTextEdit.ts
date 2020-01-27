@@ -6,9 +6,10 @@ import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
-import {Selection} from "./Selection";
+import {Selection, SelectType} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerTextEdit extends Layer {
 
@@ -26,17 +27,17 @@ export class LayerTextEdit extends Layer {
     public constructor(canvas: Canvas) {
         super(LayerName.TEXT_EDIT, canvas);
         let self = this;
-        Selection.register(LayerName.TEXT_EDIT, (item: Drawable) => {
+        Selection.register(SelectType.TEXT, (item: Drawable) => {
             // self.startEditingText(item as DrawableText);
         }, () => {
             // self.finishEditing();
         });
     }
 
-    loadMap(map: Map): void {
+    loadMap(env : Env): void {
     }
 
-    loadData(data: Data): void {
+    loadData(env : Env): void {
         this.layerView = this.canvas.findLayer(LayerName.TEXT_VIEW) as LayerTextView;
         this.finishEditing();
         // Ui.setVisibility("panelTextSelected", false);

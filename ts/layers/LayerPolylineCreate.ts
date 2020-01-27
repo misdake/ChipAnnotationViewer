@@ -7,8 +7,9 @@ import {Renderer} from "../Renderer";
 import {LayerPolylineView} from "./LayerPolylineView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
-import {Selection} from "./Selection";
+import {Selection, SelectType} from "./Selection";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerPolylineCreate extends Layer {
 
@@ -29,18 +30,18 @@ export class LayerPolylineCreate extends Layer {
 
     public constructor(canvas: Canvas) {
         super(LayerName.POLYLINE_CREATE, canvas);
-        Selection.register(LayerName.POLYLINE_CREATE, () => {
+        Selection.register(SelectType.POLYLINE, () => {
             this.startCreatingPolyline();
         }, () => {
             this.finishEditing();
         });
     }
 
-    public loadMap(map: Map): void {
-        this.map = map;
+    public loadMap(env : Env): void {
+        this.map = env.map;
     }
 
-    public loadData(data: Data): void {
+    public loadData(env : Env): void {
         this.layerView = this.canvas.findLayer(LayerName.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineNew = null;
         this.finishEditing();
@@ -54,7 +55,7 @@ export class LayerPolylineCreate extends Layer {
             true, "white", "75",
         ));
 
-        Selection.select(LayerName.POLYLINE_CREATE, this.polylineNew);
+        Selection.select(SelectType.POLYLINE, this.polylineNew);
     }
 
     private startCreatingPolyline() {
@@ -182,7 +183,7 @@ export class LayerPolylineCreate extends Layer {
 
             this.finishEditing();
             this.layerView.addPolyline(newPolyline);
-            Selection.select(LayerName.POLYLINE_CREATE, newPolyline);
+            Selection.select(SelectType.POLYLINE, newPolyline);
 
             this.canvas.requestRender();
         });

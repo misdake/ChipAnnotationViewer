@@ -7,9 +7,10 @@ import {Renderer} from "../Renderer";
 import {LayerTextView} from "./LayerTextView";
 import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
-import {Selection} from "./Selection";
+import {Selection, SelectType} from "./Selection";
 import {Drawable} from "../drawable/Drawable";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerTextCreate extends Layer {
 
@@ -24,17 +25,17 @@ export class LayerTextCreate extends Layer {
 
     public constructor(canvas: Canvas) {
         super(LayerName.TEXT_CREATE, canvas);
-        Selection.register(LayerName.TEXT_CREATE, (item: Drawable) => {
+        Selection.register(SelectType.TEXT, (item: Drawable) => {
             this.startCreatingText();
         }, () => {
             this.finishCreating();
         });
     }
 
-    loadMap(map: Map): void {
+    loadMap(env : Env): void {
     }
 
-    public loadData(data: Data): void {
+    public loadData(env : Env): void {
         this.layerView = this.canvas.findLayer(LayerName.TEXT_VIEW) as LayerTextView;
         this.finishCreating();
         // Ui.setVisibility("panelTextSelected", false);
@@ -47,7 +48,7 @@ export class LayerTextCreate extends Layer {
             "white", "100", new Size(5, 50),
             0, 0
         ));
-        Selection.select(LayerName.TEXT_CREATE, this.textNew);
+        Selection.select(SelectType.TEXT, this.textNew);
     }
 
     private startCreatingText() {

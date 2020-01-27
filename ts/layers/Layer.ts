@@ -1,9 +1,8 @@
-import {Map} from "../data/Map";
 import {Canvas} from "../Canvas";
 import {Camera} from "../Camera";
 import {Renderer} from "../Renderer";
-import {Data} from "../data/Data";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export abstract class Layer {
 
@@ -18,9 +17,9 @@ export abstract class Layer {
         this.camera = canvas.getCamera();
     }
 
-    public abstract loadMap(map: Map): void;
+    public abstract loadMap(env: Env): void;
 
-    public abstract loadData(data: Data): void;
+    public abstract loadData(env: Env): void;
 
     public abstract render(renderer: Renderer): void;
 

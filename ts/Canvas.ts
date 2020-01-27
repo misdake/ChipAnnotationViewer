@@ -10,6 +10,7 @@ import "elements/ZoomElement"
 import {LayerName} from "./layers/Layers";
 import {Editor} from "./editors/Editor";
 import {EditorName} from "./editors/Editors";
+import {Env} from "./Env";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -37,9 +38,10 @@ export class Canvas {
         this.width = this.canvasElement.clientWidth;
         this.height = this.canvasElement.clientHeight;
 
-        let self = this;
-        window.addEventListener('resize', function () {
-            self.requestRender();
+        this.env.loadCanvas(this);
+
+        window.addEventListener('resize', () => {
+            this.requestRender();
         });
     }
 
@@ -76,8 +78,6 @@ export class Canvas {
                 deltaY: event.deltaY,
             }
         };
-
-        //TODO move mouse/keyboard listener to editors, also in reverse order
 
         this.canvasElement.onclick = event => {
             let e = convertMouseEvent(event);
@@ -268,23 +268,34 @@ export class Canvas {
 
     private map: Map = null;
     private data: Data = null;
+
+    private env: Env = new Env();
+
     public loadMap(map: Map): void {
         if (!this.map || this.map.name != map.name) {
             this.map = map;
-            //TODO initialize editors?
             this.camera.load(this, map);
+
+            this.env.loadMap(map);
+
             for (let layer of this.layers) {
-                layer.loadMap(map);
+                layer.loadMap(this.env);
             }
+
+            //TODO load data?
         }
     }
     public loadData(data: Data): void {
         if (this.data != data) {
             this.data = data;
-            //TODO initialize editors?
+
+            this.env.loadData(data);
+
             for (let layer of this.layers) {
-                layer.loadData(data);
+                layer.loadData(this.env);
             }
+
+            //TODO clear editors? clear selection?
         }
     }
 
@@ -309,7 +320,7 @@ export class Canvas {
             let e = map[editor];
             if (e) {
                 this.currentEditors.push(e);
-                e.enter(this.map, this.data); //TODO replace map/data with Env
+                e.enter(this.env);
             }
         }
     }

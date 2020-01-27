@@ -5,6 +5,7 @@ import {Renderer} from "../Renderer";
 import {MouseIn, MouseListener, WheelIn} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
+import {Env} from "../Env";
 
 export class EditorCameraControl extends Editor {
 
@@ -12,7 +13,7 @@ export class EditorCameraControl extends Editor {
         super(EditorName.CAMERA_CONTROL, canvas);
     }
 
-    enter(map: Map, data: Data): void {
+    enter(env: Env): void {
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down = false;

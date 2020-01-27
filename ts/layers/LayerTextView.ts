@@ -5,6 +5,7 @@ import {Renderer} from "../Renderer";
 import {DrawableText} from "../editable/DrawableText";
 import {Data} from "../data/Data";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerTextView extends Layer {
 
@@ -14,17 +15,11 @@ export class LayerTextView extends Layer {
         super(LayerName.TEXT_VIEW, canvas);
     }
 
-    loadMap(map: Map): void {
+    loadMap(env : Env): void {
     }
 
-    loadData(data: Data): void {
-        this.texts = [];
-
-        if (data.texts) {
-            for (let pack of data.texts) {
-                this.texts.push(new DrawableText(pack))
-            }
-        }
+    loadData(env : Env): void {
+        this.texts = env.texts;
 
         //listen to mouse click to select text
         // let self = this;

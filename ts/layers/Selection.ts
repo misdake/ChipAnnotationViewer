@@ -1,5 +1,10 @@
 import {Drawable} from "../drawable/Drawable";
-import {LayerName} from "./Layers";
+
+export enum SelectType {
+    POLYLINE = 1,
+    TEXT,
+    //TODO multiple?
+}
 
 export class Selection {
 
@@ -7,10 +12,10 @@ export class Selection {
     private static mapSelect: { [key: number]: ((item: Drawable) => void)[] } = {};
     private static mapDeselect: { [key: number]: (() => void)[] } = {};
 
-    private static selected: Drawable;
-    private static selectedType: LayerName;
+    private static selected: Drawable | Drawable[];
+    private static selectedType: SelectType;
 
-    public static register(typeName: LayerName, onselect: (item: Drawable) => void, ondeselect: () => void) {
+    public static register(typeName: SelectType, onselect: (item: Drawable) => void, ondeselect: () => void) {
         if (typeName) {
             if (onselect) {
                 this.mapSelect[typeName] = this.mapSelect[typeName] || [];
@@ -31,7 +36,7 @@ export class Selection {
         }
     }
 
-    public static deselect(typeName: LayerName) {
+    public static deselect(typeName: SelectType) {
         if (this.selectedType == typeName) {
             let ondeselect = this.mapDeselect[typeName];
             if (ondeselect) {
@@ -47,7 +52,7 @@ export class Selection {
             this.selected = null;
         }
     }
-    public static select(typeName: LayerName, item: Drawable) {
+    public static select(typeName: SelectType, item: Drawable) {
         this.deselectAny();
         this.selected = item;
         this.selectedType = typeName;
@@ -57,6 +62,10 @@ export class Selection {
                 func(item);
             }
         }
+    }
+
+    public static getSelected(): { item: Drawable | Drawable[], type: SelectType } {
+        return {item: this.selected, type: this.selectedType};
     }
 
 }

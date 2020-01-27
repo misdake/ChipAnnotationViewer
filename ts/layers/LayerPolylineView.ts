@@ -5,6 +5,7 @@ import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../editable/DrawablePolyline";
 import {Data} from "../data/Data";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerPolylineView extends Layer {
 
@@ -14,17 +15,11 @@ export class LayerPolylineView extends Layer {
         super(LayerName.POLYLINE_VIEW, canvas);
     }
 
-    loadMap(map: Map): void {
+    loadMap(env: Env): void {
     }
 
-    loadData(data: Data): void {
-        this.polylines = [];
-
-        if (data.polylines) {
-            for (let pack of data.polylines) {
-                this.polylines.push(new DrawablePolyline(pack))
-            }
-        }
+    loadData(env: Env): void {
+        this.polylines = env.polylines;
 
         //listen to mouse click to select polyline
         // let self = this;

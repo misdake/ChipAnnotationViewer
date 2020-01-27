@@ -8,6 +8,7 @@ import {Ui} from "../util/Ui";
 import {Data} from "../data/Data";
 import {Selection} from "./Selection";
 import {LayerName} from "./Layers";
+import {Env} from "../Env";
 
 export class LayerPolylineEdit extends Layer {
     private static readonly HINT_ELEMENT_ID = "hint";
@@ -37,11 +38,11 @@ export class LayerPolylineEdit extends Layer {
         // });
     }
 
-    public loadMap(map: Map): void {
-        this.map = map;
+    public loadMap(env : Env): void {
+        this.map = env.map;
     }
 
-    public loadData(data: Data): void {
+    public loadData(env : Env): void {
         this.layerView = this.canvas.findLayer(LayerName.POLYLINE_VIEW) as LayerPolylineView;
         this.polylineEdit = null;
         this.finishEditing();

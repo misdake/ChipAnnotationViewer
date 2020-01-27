@@ -9,6 +9,7 @@ import {Ui} from "../util/Ui";
 import {Selection} from "./Selection";
 import {LayerName} from "./Layers";
 import {Data} from "../data/Data";
+import {Env} from "../Env";
 
 export class LayerImage extends Layer {
 
@@ -30,7 +31,8 @@ export class LayerImage extends Layer {
         Ui.setContent(LayerImage.HINT_ELEMENT_ID, LayerImage.HINT_VIEW);
     }
 
-    public loadMap(map: Map): void {
+    public loadMap(env : Env): void {
+        let map = env.map;
         this.map = map;
         this.maxLevel = map.maxLevel;
 
@@ -109,7 +111,7 @@ export class LayerImage extends Layer {
         // };
     }
 
-    loadData(data: Data): void {
+    loadData(env : Env): void {
     }
 
     private currentZoom: number;

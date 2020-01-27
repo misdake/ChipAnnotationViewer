@@ -58,7 +58,7 @@ class App {
 
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);

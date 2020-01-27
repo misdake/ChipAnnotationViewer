@@ -43,7 +43,7 @@ export class DrawableText extends Drawable {
         this.color = ColorEntry.findByName(pack.colorName);
         this.alpha = AlphaEntry.findByName(pack.alphaName);
         this.colorString = combineColorAlpha(this.color, this.alpha);
-        this.fontSize = pack.fontSize;
+        this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
         this._x = pack.x;
         this._y = pack.y;
     }

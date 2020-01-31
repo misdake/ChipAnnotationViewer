@@ -8,10 +8,11 @@ import "elements/TitleElement"
 import "editable/DrawablePolylineEditElement"
 import "editable/DrawableTextEditElement"
 import {Selection, SelectType} from "./layers/Selection";
-import {DrawablePolyline} from "./editable/DrawablePolyline";
+import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
 import {Layers} from "./layers/Layers";
 import {EditorName, Editors} from "./editors/Editors";
+import {Size} from "./util/Size";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -33,6 +34,16 @@ Selection.register(null, () => {
     canvas.requestRender();
 });
 
+document.getElementById("buttonCreatePolyline").onclick = () => {
+    let polyline = new DrawablePolyline(new DrawablePolylinePack(
+        [], true, new Size(2),
+        true, "white", "25",
+        true, "white", "75",
+    ));
+    canvas.env.polylines.push(polyline);
+    Selection.select(SelectType.POLYLINE_CREATE, polyline);
+};
+
 class App {
     private chip: Chip;
     private map: Map;
@@ -51,6 +62,14 @@ class App {
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
+        }, () => {
+            render(html``, document.getElementById("panelPolylineSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        });
+
+        Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
+            render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
         }, () => {
             render(html``, document.getElementById("panelPolylineSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);

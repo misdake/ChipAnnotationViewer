@@ -29,7 +29,7 @@ export abstract class Editor {
 
     public abstract enter(env: Env): void;
 
-    public abstract exit(): void;
+    public abstract exit(env: Env): void;
 
     public abstract render(env: Env): void;
 

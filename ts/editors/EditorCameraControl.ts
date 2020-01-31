@@ -80,8 +80,7 @@ export class EditorCameraControl extends Editor {
         };
     }
 
-    exit(): void {
-        this._mouseListener = null;
+    exit(env: Env): void {
     }
 
     render(env: Env): void {

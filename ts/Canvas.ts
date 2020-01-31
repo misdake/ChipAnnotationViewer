@@ -269,7 +269,7 @@ export class Canvas {
     private map: Map = null;
     private data: Data = null;
 
-    private env: Env = new Env();
+    public readonly env: Env = new Env();
 
     public loadMap(map: Map): void {
         if (!this.map || this.map.name != map.name) {
@@ -326,7 +326,7 @@ export class Canvas {
     }
     public exitEditors() {
         for (let e of this.currentEditors) {
-            e.exit();
+            e.exit(this.env);
         }
         this.currentEditors = [];
     }

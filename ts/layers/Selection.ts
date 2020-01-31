@@ -2,6 +2,7 @@ import {Drawable} from "../drawable/Drawable";
 
 export enum SelectType {
     POLYLINE = 1,
+    POLYLINE_CREATE,
     TEXT,
     //TODO multiple?
 }

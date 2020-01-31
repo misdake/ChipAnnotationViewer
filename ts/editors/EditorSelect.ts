@@ -56,8 +56,7 @@ export class EditorSelect extends Editor {
         };
     }
 
-    exit(): void {
-        this._mouseListener = null;
+    exit(env: Env): void {
     }
 
 
@@ -94,6 +93,7 @@ export class EditorSelect extends Editor {
         let {item: item, type: type} = Selection.getSelected();
         switch (type) {
             case SelectType.POLYLINE:
+            case SelectType.POLYLINE_CREATE:
                 this.drawSelectedPolyline(<DrawablePolyline>item, env.renderer);
                 break;
             case SelectType.TEXT:

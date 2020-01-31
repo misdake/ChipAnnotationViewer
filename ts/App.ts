@@ -9,7 +9,7 @@ import "editable/DrawablePolylineEditElement"
 import "editable/DrawableTextEditElement"
 import {Selection, SelectType} from "./layers/Selection";
 import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
-import {DrawableText} from "./editable/DrawableText";
+import {DrawableText, DrawableTextPack} from "./editable/DrawableText";
 import {Layers} from "./layers/Layers";
 import {EditorName, Editors} from "./editors/Editors";
 import {Size} from "./util/Size";
@@ -42,6 +42,16 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     ));
     canvas.env.polylines.push(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
+};
+
+document.getElementById("buttonCreateText").onclick = () => {
+    let text = new DrawableText(new DrawableTextPack(
+        "text",
+        "white", "100", new Size(5, 50),
+        0, 0
+    ));
+    canvas.env.texts.push(text);
+    Selection.select(SelectType.TEXT_CREATE, text);
 };
 
 class App {
@@ -78,6 +88,14 @@ class App {
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
             render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
+        }, () => {
+            render(html``, document.getElementById("panelTextSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        });
+
+        Selection.register(SelectType.TEXT_CREATE, (item: DrawableText) => {
+            render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_CREATE);
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);

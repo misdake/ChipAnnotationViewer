@@ -4,6 +4,7 @@ export enum SelectType {
     POLYLINE = 1,
     POLYLINE_CREATE,
     TEXT,
+    TEXT_CREATE,
     //TODO multiple?
 }
 

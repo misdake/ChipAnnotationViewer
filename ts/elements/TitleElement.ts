@@ -17,8 +17,6 @@ export class TitleElement extends LitElement {
     private uploadAnnotation() {
         if (!this.map || !this.annotation) return;
 
-        //TODO layerTextEdit.finishEditing();
-        //TODO layerPolylineEdit.finishEditing();
         let data = this.canvas.save();
         data.title = (document.getElementById("inputTitle") as HTMLInputElement).value;
         if (data.title == null || data.title == "") {

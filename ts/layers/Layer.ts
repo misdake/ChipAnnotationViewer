@@ -3,6 +3,7 @@ import {Camera} from "../Camera";
 import {Renderer} from "../Renderer";
 import {LayerName} from "./Layers";
 import {Env} from "../Env";
+import {Data} from "../data/Data";
 
 export abstract class Layer {
 
@@ -25,4 +26,7 @@ export abstract class Layer {
 
     public abstract unload(): void;
 
+    public saveData(data: Data): void {
+
+    }
 }

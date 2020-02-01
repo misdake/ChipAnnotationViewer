@@ -33,6 +33,7 @@ export class TextEdit extends LitElement {
     }
 
     private editText = (content: string) => {
+        if (!content.length) content = "text";
         this.text.text = content;
         this.canvas.requestRender();
     };

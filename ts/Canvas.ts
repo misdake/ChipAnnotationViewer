@@ -281,8 +281,6 @@ export class Canvas {
             for (let layer of this.layers) {
                 layer.loadMap(this.env);
             }
-
-            //TODO load data?
         }
     }
     public loadData(data: Data): void {
@@ -294,15 +292,13 @@ export class Canvas {
             for (let layer of this.layers) {
                 layer.loadData(this.env);
             }
-
-            //TODO clear editors? clear selection?
         }
     }
 
     public save(): Data {
         let data = new Data();
         for (let layer of this.layers) {
-            // layer.saveData(data); //TODO save from Env
+            layer.saveData(data);
         }
         return data;
     }

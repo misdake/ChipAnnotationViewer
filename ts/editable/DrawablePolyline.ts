@@ -126,8 +126,12 @@ export class DrawablePolylinePicker {
         }
         return minResult;
     }
-    public pickShape(canvasX: number, canvasY: number): boolean {
-        return this.polyline.style.fill && DrawablePolylinePicker.testPointPolygon(this.points, canvasX, canvasY);
+    public pickShape(canvasX: number, canvasY: number, radius: number): boolean {
+        if (this.polyline.style.fill) {
+            return DrawablePolylinePicker.testPointPolygon(this.points, canvasX, canvasY);
+        } else {
+            return !!this.pickLine(canvasX, canvasY, radius);
+        }
     }
 }
 
@@ -463,6 +467,13 @@ export class DrawablePolyline extends Drawable {
 
     public readonly ui: DrawablePolylineEditUi;
 
+    public check(): boolean {
+        if (this.style.fill || this.style.closed) {
+            return this.editor.pointCount() >= 3;
+        } else {
+            return this.editor.pointCount() >= 2;
+        }
+    }
     public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
         let points = [];
         for (const point of this.points) {
@@ -472,7 +483,7 @@ export class DrawablePolyline extends Drawable {
         pack.points = points;
         return pack;
     }
-    public pack() : DrawablePolylinePack {
+    public pack(): DrawablePolylinePack {
         let pack = this.style.pack();
         pack.points = this.points;
         return pack;

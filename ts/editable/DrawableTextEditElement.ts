@@ -24,7 +24,12 @@ export class TextEdit extends LitElement {
         this.canvas.requestRender();
     }
     copyText() {
-        //TODO
+        let layerView = <LayerTextView>this.canvas.findLayer(LayerName.TEXT_VIEW);
+        let offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        let newText = new DrawableText(this.text.clone(offset, offset));
+        layerView.addText(newText);
+        Selection.select(SelectType.TEXT, newText);
+        this.canvas.requestRender();
     }
 
     private editText = (content: string) => {
@@ -48,8 +53,14 @@ export class TextEdit extends LitElement {
 
             <div>color</div>
             <coloralpha-element
-                .setColor=${(color: ColorEntry) => { this.text.setColorAlpha(color, this.text.alpha); this.canvas.requestRender(); }}
-                .setAlpha=${(alpha: AlphaEntry) => { this.text.setColorAlpha(this.text.color, alpha); this.canvas.requestRender(); }}
+                .setColor=${(color: ColorEntry) => {
+            this.text.setColorAlpha(color, this.text.alpha);
+            this.canvas.requestRender();
+        }}
+                .setAlpha=${(alpha: AlphaEntry) => {
+            this.text.setColorAlpha(this.text.color, alpha);
+            this.canvas.requestRender();
+        }}
             ></coloralpha-element>
 
             <input class="configText" type="number" min=0 style="width:5em" value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>

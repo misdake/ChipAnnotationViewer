@@ -27,7 +27,13 @@ export class PolylineEdit extends LitElement {
         this.canvas.requestRender();
     }
     copyPolyline() {
-        //TODO
+        if (!this.polyline.check()) return;
+        let layerView = <LayerPolylineView>this.canvas.findLayer(LayerName.POLYLINE_VIEW);
+        let offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        let newPolyline = new DrawablePolyline(this.polyline.clone(offset, offset));
+        layerView.addPolyline(newPolyline);
+        Selection.select(SelectType.POLYLINE, newPolyline);
+        this.canvas.requestRender();
     }
 
     @property()

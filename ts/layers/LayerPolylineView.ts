@@ -20,47 +20,6 @@ export class LayerPolylineView extends Layer {
 
     loadData(env: Env): void {
         this.polylines = env.polylines;
-
-        //listen to mouse click to select polyline
-        // let self = this;
-        // this._mouseListener = new class extends MouseListener {
-        //     private moved = false;
-        //     onmousedown(event: MouseIn): boolean {
-        //         this.moved = false;
-        //         return false;
-        //     }
-        //     onmouseup(event: MouseIn): boolean {
-        //         if (event.button == 0 && !this.moved) {
-        //             let radius = self.camera.screenSizeToCanvas(5);
-        //             let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-        //             let x = canvasXY.x, y = canvasXY.y;
-        //             let selected: DrawablePolyline = null;
-        //             for (let polyline of self.polylines) {
-        //                 let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
-        //                 let pickLine = polyline.picker.pickLine(x, y, radius);
-        //                 let pickShape = polyline.picker.pickShape(x, y);
-        //                 if (pickPointIndex != null || pickLine || pickShape) {
-        //                     selected = polyline;
-        //                 }
-        //             }
-        //             if (selected) {
-        //                 Selection.select(LayerName.POLYLINE_EDIT, selected);
-        //                 return true;
-        //             }
-        //             Selection.deselect(LayerName.POLYLINE_CREATE);
-        //             Selection.deselect(LayerName.POLYLINE_EDIT);
-        //             return false;
-        //         } else {
-        //             return false;
-        //         }
-        //     }
-        //     onmousemove(event: MouseIn): boolean {
-        //         if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
-        //             this.moved = true;
-        //         }
-        //         return false;
-        //     }
-        // };
     }
 
     public addPolyline(polyline: DrawablePolyline) {

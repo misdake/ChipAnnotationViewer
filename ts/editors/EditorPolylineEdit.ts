@@ -50,7 +50,7 @@ export class EditorPolylineEdit extends Editor {
                         return true;
                     }
 
-                    let shape = polyline.picker.pickShape(position.x, position.y);
+                    let shape = polyline.picker.pickShape(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pointIndex == null && shape && event.altKey) {
                         if (event.ctrlKey) {
                             let copied = new DrawablePolyline(polyline.clone());

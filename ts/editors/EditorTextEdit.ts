@@ -15,8 +15,6 @@ export class EditorTextEdit extends Editor {
         super(EditorName.TEXT_EDIT, canvas);
     }
 
-    private static readonly MAG_RADIUS = 10;
-
     enter(env: Env): void {
         let layerView = <LayerTextView>env.canvas.findLayer(LayerName.TEXT_VIEW);
 

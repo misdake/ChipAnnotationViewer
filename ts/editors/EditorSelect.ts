@@ -68,7 +68,7 @@ export class EditorSelect extends Editor {
         for (let polyline of env.polylines) {
             let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
             let pickLine = polyline.picker.pickLine(x, y, radius);
-            let pickShape = polyline.picker.pickShape(x, y);
+            let pickShape = polyline.picker.pickShape(x, y, radius);
             if (pickPointIndex != null || pickLine || pickShape) {
                 picked = polyline;
             }

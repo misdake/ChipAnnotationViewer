@@ -21,6 +21,7 @@ export class EditorPolylineCreate extends Editor {
     private static readonly MAG_RADIUS = 10;
 
     enter(env: Env): void {
+        this.selected = undefined;
         let layerView = <LayerPolylineView>env.canvas.findLayer(LayerName.POLYLINE_VIEW);
 
         let {item: item, type: type} = Selection.getSelected();
@@ -63,8 +64,8 @@ export class EditorPolylineCreate extends Editor {
                     return true;
                 } else if (event.button == 2) {
                     if (!this.moved) {
-                        let valid = EditorPolylineCreate.check(polyline);
-                        if (valid) {
+                        if (polyline.check()) {
+                            self.selected = undefined;
                             //pass it to polyline edit
                             setTimeout(() => {
                                 Selection.select(SelectType.POLYLINE, polyline);
@@ -95,18 +96,8 @@ export class EditorPolylineCreate extends Editor {
         });
     }
 
-    private static check(polyline: DrawablePolyline): boolean {
-        if (polyline.style.fill || polyline.style.closed) {
-            return polyline.editor.pointCount() >= 3;
-        } else {
-            return polyline.editor.pointCount() >= 2;
-        }
-    }
-
     exit(env: Env): void {
-        let valid = EditorPolylineCreate.check(this.selected);
-
-        if (!valid) {
+        if (this.selected) {
             let layerView = <LayerPolylineView>env.canvas.findLayer(LayerName.POLYLINE_VIEW);
             layerView.deletePolyline(this.selected);
             Selection.deselect(SelectType.POLYLINE_CREATE);

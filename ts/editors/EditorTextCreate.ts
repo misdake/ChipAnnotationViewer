@@ -18,6 +18,7 @@ export class EditorTextCreate extends Editor {
     private selected: DrawableText;
 
     enter(env: Env): void {
+        this.selected = undefined;
         let layerView = <LayerTextView>env.canvas.findLayer(LayerName.TEXT_VIEW);
 
         let {item: item, type: type} = Selection.getSelected();

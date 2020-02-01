@@ -79,11 +79,11 @@ select {
 }
 
 .configColorAlphaContainer {
-    margin: 5px;
+    margin: 5px 10px;
 }
 
 .colorAlphaContainerSplit {
-    width: 40px;
+    width: 20px;
     display: inline-block;
 }
 
@@ -92,14 +92,14 @@ select {
     height: 24px;
     border-radius: 12px;
     border: 2px black solid;
-    margin: 2px 0;
+    margin: 2px 2px;
 }
 
 .configAlphaButton {
     width: 12px;
     height: 24px;
     border: 2px black solid;
-    margin: 2px 0;
+    margin: 2px 2px;
 }
 
 .configCheckbox {

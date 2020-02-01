@@ -1,7 +1,11 @@
 import {customElement, html, LitElement, property} from "lit-element";
 import {DrawableText} from "./DrawableText";
 import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
+import {AlphaEntry, ColorEntry} from "../util/Color";
+import "elements/ColorAlphaElement"
+import {Selection, SelectType} from "../layers/Selection";
+import {LayerTextView} from "../layers/LayerTextView";
+import {LayerName} from "../layers/Layers";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
@@ -13,7 +17,11 @@ export class TextEdit extends LitElement {
     canvas: Canvas;
 
     deleteText() {
-        //TODO
+        let layerView = <LayerTextView>this.canvas.findLayer(LayerName.TEXT_VIEW);
+        layerView.deleteText(this.text);
+        Selection.deselect(SelectType.TEXT);
+        Selection.deselect(SelectType.TEXT_CREATE);
+        this.canvas.requestRender();
     }
     copyText() {
         //TODO
@@ -38,11 +46,11 @@ export class TextEdit extends LitElement {
             text<br>
             <input class="configText" type="text" style="width:10em" value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
 
-<!--            <div>color</div>-->
-<!--            <div class="configColorAlphaContainer">-->
-<!--                <span class="configColorContainer" id="textContainerColor"></span><span class="colorAlphaContainerSplit"></span>-->
-<!--                <span class="configAlphaContainer" id="textContainerAlpha"></span><br>-->
-<!--            </div>-->
+            <div>color</div>
+            <coloralpha-element
+                .setColor=${(color: ColorEntry) => { this.text.setColorAlpha(color, this.text.alpha); this.canvas.requestRender(); }}
+                .setAlpha=${(alpha: AlphaEntry) => { this.text.setColorAlpha(this.text.color, alpha); this.canvas.requestRender(); }}
+            ></coloralpha-element>
 
             <input class="configText" type="number" min=0 style="width:5em" value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
             <input class="configText" type="number" min=0 style="width:5em" value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>

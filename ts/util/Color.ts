@@ -11,7 +11,7 @@ export class ColorEntry {
         return this.list[0];
     }
 
-    public static list = [
+    public static readonly list = [
         new ColorEntry("red", 255, 0, 0),
         new ColorEntry("green", 0, 255, 0),
         new ColorEntry("blue", 0, 0, 255),
@@ -44,7 +44,7 @@ export class AlphaEntry {
         return this.list[0];
     }
 
-    public static list = [
+    public static readonly list = [
         new AlphaEntry("15", "rgb(217,217,217)", 0.15),
         new AlphaEntry("25", "rgb(191,191,191)", 0.25),
         new AlphaEntry("50", "rgb(127,127,127)", 0.50),

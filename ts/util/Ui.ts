@@ -1,4 +1,3 @@
-import {AlphaEntry, ColorEntry} from "./Color";
 import {KeyboardIn, KeyboardListener} from "../KeyboardListener";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";

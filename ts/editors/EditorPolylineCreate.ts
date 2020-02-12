@@ -102,6 +102,7 @@ export class EditorPolylineCreate extends Editor {
         };
         this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, polyline, () => {
             layerView.deletePolyline(polyline);
+            this.selected = undefined;
             Selection.deselect(SelectType.POLYLINE_CREATE);
             env.canvas.requestRender();
         });
@@ -111,6 +112,7 @@ export class EditorPolylineCreate extends Editor {
         if (this.selected) {
             let layerView = <LayerPolylineView>env.canvas.findLayer(LayerName.POLYLINE_VIEW);
             layerView.deletePolyline(this.selected);
+            this.selected = undefined;
             Selection.deselect(SelectType.POLYLINE_CREATE);
             env.canvas.requestRender();
         }

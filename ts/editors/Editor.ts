@@ -9,11 +9,12 @@ export enum UsageType {
     NONE,
     MOUSE,
     KEYBOARD,
+    _LAST
 }
 
 export interface Usage {
     content: string;
-    overwrite: UsageType;
+    type: UsageType;
 }
 
 export abstract class Editor {
@@ -38,8 +39,8 @@ export abstract class Editor {
         this.camera = canvas.getCamera();
     }
 
-    public static usage(content: string, overwrite?: UsageType): Usage {
-        return {content: content, overwrite: overwrite};
+    public static usage(content: string, type: UsageType = UsageType.NONE): Usage {
+        return {content: content, type: type};
     }
     public abstract usages(): Usage[];
 

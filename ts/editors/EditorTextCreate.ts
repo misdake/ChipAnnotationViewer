@@ -50,7 +50,6 @@ export class EditorTextCreate extends Editor {
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     text.setPosition(position.x, position.y);
-                    layerView.addText(text);
                     self.selected = undefined;
                     Selection.select(SelectType.TEXT, text);
                     self.canvas.requestRender();
@@ -66,6 +65,7 @@ export class EditorTextCreate extends Editor {
 
         this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, text, () => {
             layerView.deleteText(text);
+            this.selected = undefined;
             Selection.deselect(SelectType.TEXT_CREATE);
             env.canvas.requestRender();
         });
@@ -75,6 +75,7 @@ export class EditorTextCreate extends Editor {
         if (this.selected) {
             let layerView = <LayerTextView>env.canvas.findLayer(LayerName.TEXT_VIEW);
             layerView.deleteText(this.selected);
+            this.selected = undefined;
             Selection.deselect(SelectType.TEXT_CREATE);
             env.canvas.requestRender();
         }

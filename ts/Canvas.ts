@@ -8,7 +8,7 @@ import "hammerjs";
 import {html, render} from "lit-html";
 import "elements/ZoomElement"
 import {LayerName} from "./layers/Layers";
-import {Editor} from "./editors/Editor";
+import {Editor, UsageType} from "./editors/Editor";
 import {EditorName} from "./editors/Editors";
 import {Env} from "./Env";
 
@@ -312,15 +312,37 @@ export class Canvas {
             map[e.name] = e;
         }
 
-        //TODO update usages
+
+        let usages: { [key: number]: string[] } = {};
 
         for (let editor of editors) {
             let e = map[editor];
             if (e) {
                 this.currentEditors.push(e);
                 e.enter(this.env);
+
+                let localUsages: { [key: number]: string[] } = {};
+                for (let usage of e.usages()) {
+                    let array = localUsages[usage.type] || [];
+                    array.push(usage.content);
+                    localUsages[usage.type] = array;
+                    usages[usage.type] = array;
+                }
             }
         }
+
+        let html = "";
+        let usageCount = 0;
+        for (let key = 0; key < UsageType._LAST; key++) {
+            let array: string[] = usages[key];
+            if (array) {
+                for (let content of array) {
+                    usageCount++;
+                    html += `${usageCount}. ${content}<br>`;
+                }
+            }
+        }
+        document.getElementById("hint").innerHTML = html;
     }
     public exitEditors() {
         for (let e of this.currentEditors) {

@@ -312,6 +312,8 @@ export class Canvas {
             map[e.name] = e;
         }
 
+        //TODO update usages
+
         for (let editor of editors) {
             let e = map[editor];
             if (e) {

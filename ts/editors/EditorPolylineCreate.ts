@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage, UsageType} from "./Editor";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -14,6 +14,17 @@ export class EditorPolylineCreate extends Editor {
 
     constructor(canvas: Canvas) {
         super(EditorName.POLYLINE_CREATE, canvas);
+    }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("left click to create point", UsageType.MOUSE),
+            Editor.usage("hold left button to preview point", UsageType.MOUSE),
+            Editor.usage("right click to finish creating", UsageType.MOUSE),
+            Editor.usage("hold ctrl to help with horizontal/vertical line", UsageType.MOUSE),
+            Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
+            Editor.usage("press del to delete", UsageType.KEYBOARD),
+        ];
     }
 
     private selected: DrawablePolyline;

@@ -7,7 +7,8 @@ import {Env} from "../Env";
 
 export enum UsageType {
     NONE,
-    MOUSE
+    MOUSE,
+    KEYBOARD,
 }
 
 export interface Usage {

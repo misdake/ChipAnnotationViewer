@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage} from "./Editor";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -12,6 +12,12 @@ export class EditorSelect extends Editor {
 
     constructor(canvas: Canvas) {
         super(EditorName.SELECT, canvas);
+    }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("left click polygon/text to select"),
+        ];
     }
 
     enter(env: Env): void {

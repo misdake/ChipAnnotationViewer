@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage, UsageType} from "./Editor";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -14,6 +14,28 @@ export class EditorPolylineEdit extends Editor {
     constructor(canvas: Canvas) {
         super(EditorName.POLYLINE_EDIT, canvas);
     }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("hold left button to drag points", UsageType.MOUSE),
+            Editor.usage("hold ctrl to help with horizontal/vertical line", UsageType.MOUSE),
+            Editor.usage("hold alt to drag polyline", UsageType.MOUSE),
+            Editor.usage("hold ctrl+alt to copy and drag polyline", UsageType.MOUSE),
+            Editor.usage("double click on line to create point", UsageType.MOUSE),
+            Editor.usage("right-click / double left-click point to delete it", UsageType.MOUSE),
+            Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
+            Editor.usage("press del to delete", UsageType.KEYBOARD),
+        ];
+    }
+
+    // hold left button to drag points
+    // hold ctrl to help with horizontal/vertical line
+    // hold alt to drag polyline
+    // hold ctrl+alt to copy and drag polyline
+    // double click on line to create point
+    // right-click / double left-click point to delete it
+    // WSAD ↑↓←→ to move, hold shift to speed up
+    // press del to delete
 
     private static readonly MAG_RADIUS = 10;
 

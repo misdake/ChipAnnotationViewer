@@ -5,6 +5,16 @@ import {KeyboardListener} from "../KeyboardListener";
 import {EditorName} from "./Editors";
 import {Env} from "../Env";
 
+export enum UsageType {
+    NONE,
+    MOUSE
+}
+
+export interface Usage {
+    content: string;
+    overwrite: UsageType;
+}
+
 export abstract class Editor {
 
     public readonly name: EditorName;
@@ -26,6 +36,11 @@ export abstract class Editor {
         this.canvas = canvas;
         this.camera = canvas.getCamera();
     }
+
+    public static usage(content: string, overwrite?: UsageType): Usage {
+        return {content: content, overwrite: overwrite};
+    }
+    public abstract usages(): Usage[];
 
     public abstract enter(env: Env): void;
 

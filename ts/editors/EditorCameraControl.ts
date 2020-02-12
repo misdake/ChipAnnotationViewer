@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage, UsageType} from "./Editor";
 import {MouseIn, MouseListener, WheelIn} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -8,6 +8,14 @@ export class EditorCameraControl extends Editor {
 
     constructor(canvas: Canvas) {
         super(EditorName.CAMERA_CONTROL, canvas);
+    }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("hold mouse button to drag", UsageType.MOUSE),
+            Editor.usage("left click polygon/text to select", UsageType.MOUSE),
+            Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
+        ];
     }
 
     enter(env: Env): void {

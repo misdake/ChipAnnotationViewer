@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage, UsageType} from "./Editor";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -13,6 +13,12 @@ export class EditorTextCreate extends Editor {
 
     constructor(canvas: Canvas) {
         super(EditorName.TEXT_CREATE, canvas);
+    }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("left click to create text", UsageType.MOUSE),
+        ];
     }
 
     private selected: DrawableText;

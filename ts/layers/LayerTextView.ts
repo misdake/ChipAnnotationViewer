@@ -1,6 +1,5 @@
 import {Layer} from "./Layer";
 import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
 import {Renderer} from "../Renderer";
 import {DrawableText} from "../editable/DrawableText";
 import {Data} from "../data/Data";

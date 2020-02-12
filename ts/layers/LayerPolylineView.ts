@@ -1,5 +1,4 @@
 import {Layer} from "./Layer";
-import {Map} from "../data/Map";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline} from "../editable/DrawablePolyline";

@@ -1,4 +1,4 @@
-import {Editor} from "./Editor";
+import {Editor, Usage, UsageType} from "./Editor";
 import {MouseIn, MouseListener} from "../MouseListener";
 import {EditorName} from "./Editors";
 import {Canvas} from "../Canvas";
@@ -13,6 +13,14 @@ export class EditorTextEdit extends Editor {
 
     constructor(canvas: Canvas) {
         super(EditorName.TEXT_EDIT, canvas);
+    }
+
+    usages(): Usage[] {
+        return [
+            Editor.usage("hold ctrl+alt to copy and drag", UsageType.MOUSE),
+            Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up"),
+            Editor.usage("press del to delete"),
+        ];
     }
 
     enter(env: Env): void {

@@ -250,17 +250,17 @@ export class SelectElement extends LitElement {
         let source = this.map_current ? html`<a id="imageSource" target="_blank" href="${this.map_current.source}">${this.map_current.source}</a>` : html``;
 
         return html`
-            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 100%">
+            <div style="max-width: 100%">
                 <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.chiplist_html}
                 </select>
-                ${source}
-            </div>
-            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
                 <select @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.annotationlist_html}
                 </select>
                 <button class="refreshButton" @click="${() => this.refreshAnnotationList()}">\xA0</button>
+            </div>
+            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                ${source}
             </div>
         `;
     }

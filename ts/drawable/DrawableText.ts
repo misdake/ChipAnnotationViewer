@@ -77,19 +77,12 @@ export class DrawableText extends Drawable {
     get onCanvas(): number {
         return this.fontSize.onCanvas;
     }
-    get ofScreen(): number {
-        return this.fontSize.ofScreen;
-    }
     set onScreen(onScreen: number) {
         this.fontSize.onScreen = onScreen;
         this.invalidate();
     }
     set onCanvas(onCanvas: number) {
         this.fontSize.onCanvas = onCanvas;
-        this.invalidate();
-    }
-    set ofScreen(ofScreen: number) {
-        this.fontSize.ofScreen = ofScreen;
         this.invalidate();
     }
 

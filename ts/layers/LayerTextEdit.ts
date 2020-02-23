@@ -169,10 +169,6 @@ export class LayerTextEdit extends Layer {
             text.onCanvas = newValue;
             this.canvas.requestRender();
         });
-        Ui.bindNumber("textTextSizeOfScreen", text.ofScreen * 1000, newValue => {
-            text.ofScreen = newValue * 0.001;
-            this.canvas.requestRender();
-        });
 
         Ui.bindColor("textContainerColor", "textContainerAlpha", text.color, text.alpha, (newColor, newAlpha) => {
             text.setColorAlpha(newColor, newAlpha);

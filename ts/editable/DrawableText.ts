@@ -5,13 +5,15 @@ import {Camera} from "../Camera";
 import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
-import {Map} from "../data/Map";
 import {html, TemplateResult} from "lit-html";
+import {Primitive, PrimitivePack} from "./Primitive";
+import {EditableColor, EditableDeleteClone, EditableMove} from "./Editable";
+import {LayerTextView} from "../layers/LayerTextView";
+import {LayerName} from "../layers/Layers";
+import {Selection, SelectType} from "../layers/Selection";
 
-export class DrawableTextPack {
-    public constructor(text: string, colorName: string, alphaName: string,
-                       // anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline,
-                       fontSize: Size, x: number, y: number) {
+export class DrawableTextPack implements PrimitivePack {
+    public constructor(text: string, colorName: string, alphaName: string, fontSize: Size, x: number, y: number) {
         this.text = text;
         this.colorName = colorName;
         this.alphaName = alphaName;
@@ -27,7 +29,11 @@ export class DrawableTextPack {
     y: number;
 }
 
-export class DrawableText extends Drawable {
+export class DrawableText implements EditableDeleteClone, EditableMove, EditableColor, Drawable, Primitive {
+    isEditableMove = true;
+    isEditableDeleteClone = true;
+    isEditableColor = true;
+
     private _text: string = "";
     private _x: number;
     private _y: number;
@@ -38,7 +44,6 @@ export class DrawableText extends Drawable {
     protected readonly fontSize: Size;
 
     public constructor(pack: DrawableTextPack) {
-        super();
         this._text = pack.text;
         this.color = ColorEntry.findByName(pack.colorName);
         this.alpha = AlphaEntry.findByName(pack.alphaName);
@@ -98,12 +103,22 @@ export class DrawableText extends Drawable {
         this.invalidate();
     }
 
+    //Editable
+    public move(dx: number, dy: number): void {
+        this.setPosition(this._x + dx, this._y + dy);
+    }
     public setColorAlpha(color: ColorEntry, alpha: AlphaEntry) {
         this.color = color;
         this.alpha = alpha;
         this.colorString = combineColorAlpha(this.color, this.alpha);
     }
-
+    public deleteOnCanvas(canvas: Canvas): void {
+        let layerView = <LayerTextView>canvas.findLayer(LayerName.TEXT_VIEW);
+        layerView.deleteText(this);
+        Selection.deselect(SelectType.TEXT);
+        Selection.deselect(SelectType.TEXT_CREATE);
+        canvas.requestRender();
+    }
     public clone(offsetX: number, offsetY: number): DrawableTextPack {
         return new DrawableTextPack(
             this._text,
@@ -113,6 +128,13 @@ export class DrawableText extends Drawable {
             this._x + offsetX,
             this._y + offsetY,
         )
+    }
+    public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): void {
+        let layerView = <LayerTextView>canvas.findLayer(LayerName.TEXT_VIEW);
+        let newText = new DrawableText(this.clone(offsetX, offsetY));
+        layerView.addText(newText);
+        Selection.select(SelectType.TEXT, newText);
+        canvas.requestRender();
     }
 
     public pack(): DrawableTextPack {

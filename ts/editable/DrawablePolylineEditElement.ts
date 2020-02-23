@@ -4,9 +4,6 @@ import {Canvas} from "../Canvas";
 import {Map} from "../data/Map";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import "elements/ColorAlphaElement"
-import {LayerName} from "../layers/Layers";
-import {Selection, SelectType} from "../layers/Selection";
-import {LayerPolylineView} from "../layers/LayerPolylineView";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
@@ -20,20 +17,11 @@ export class PolylineEdit extends LitElement {
     map: Map;
 
     deletePolyline() {
-        let layerView = <LayerPolylineView>this.canvas.findLayer(LayerName.POLYLINE_VIEW);
-        layerView.deletePolyline(this.polyline);
-        Selection.deselect(SelectType.POLYLINE);
-        Selection.deselect(SelectType.POLYLINE_CREATE);
-        this.canvas.requestRender();
+        this.polyline.deleteOnCanvas(this.canvas);
     }
     copyPolyline() {
-        if (!this.polyline.check()) return;
-        let layerView = <LayerPolylineView>this.canvas.findLayer(LayerName.POLYLINE_VIEW);
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        let newPolyline = new DrawablePolyline(this.polyline.clone(offset, offset));
-        layerView.addPolyline(newPolyline);
-        Selection.select(SelectType.POLYLINE, newPolyline);
-        this.canvas.requestRender();
+        this.polyline.cloneOnCanvas(this.canvas, offset, offset);
     }
 
     @property()

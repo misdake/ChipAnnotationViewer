@@ -7,6 +7,11 @@ import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
 import {Map} from "../data/Map";
+import {Primitive, PrimitivePack} from "./Primitive";
+import {EditableColor, EditableDeleteClone, EditableMove} from "./Editable";
+import {LayerPolylineView} from "../layers/LayerPolylineView";
+import {LayerName} from "../layers/Layers";
+import {Selection, SelectType} from "../layers/Selection";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -30,7 +35,7 @@ class PointSegmentResult {
     distance: number;
 }
 
-export class DrawablePolylinePack {
+export class DrawablePolylinePack implements PrimitivePack {
     public constructor(points: Point[], closed: boolean, lineWidth: Size,
                        fill: boolean, fillColorName: string, fillAlphaName: string,
                        stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
@@ -446,11 +451,14 @@ export class DrawablePolylineEditUi {
     }
 }
 
-export class DrawablePolyline extends Drawable {
+export class DrawablePolyline implements EditableDeleteClone, EditableColor, EditableMove, Drawable, Primitive {
+    isEditableMove = true;
+    isEditableDeleteClone = true;
+    isEditableColor = true;
+
     private readonly points: Point[];
 
     public constructor(pack: DrawablePolylinePack) {
-        super();
         this.points = pack.points;
         this.style = new DrawablePolylineStyle(pack);
         this.picker = new DrawablePolylinePicker(this, this.points);
@@ -474,6 +482,26 @@ export class DrawablePolyline extends Drawable {
             return this.editor.pointCount() >= 2;
         }
     }
+    public pack(): DrawablePolylinePack {
+        let pack = this.style.pack();
+        pack.points = this.points;
+        return pack;
+    }
+
+    //Editable
+    public move(dx: number, dy: number): void {
+        this.editor.move(dx, dy);
+    }
+    public setColorAlpha(color: ColorEntry, alpha: AlphaEntry): void {
+        this.style.setFillColor(color, alpha);
+    }
+    public deleteOnCanvas(canvas: Canvas): void {
+        let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
+        layerView.deletePolyline(this);
+        Selection.deselect(SelectType.POLYLINE);
+        Selection.deselect(SelectType.POLYLINE_CREATE);
+        canvas.requestRender();
+    }
     public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
         let points = [];
         for (const point of this.points) {
@@ -483,10 +511,13 @@ export class DrawablePolyline extends Drawable {
         pack.points = points;
         return pack;
     }
-    public pack(): DrawablePolylinePack {
-        let pack = this.style.pack();
-        pack.points = this.points;
-        return pack;
+    public cloneOnCanvas(canvas:Canvas, offsetX: number, offsetY: number): void {
+        if (!this.check()) return;
+        let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
+        let newPolyline = new DrawablePolyline(this.clone(offsetX, offsetY));
+        layerView.addPolyline(newPolyline);
+        Selection.select(SelectType.POLYLINE, newPolyline);
+        canvas.requestRender();
     }
 
     public invalidate() {

@@ -25,22 +25,6 @@ export class EditorSelect extends Editor {
     enter(env: Env): void {
         let self = this;
 
-        let pickAny = (x: number, y: number) => {
-            //text first
-            let text = EditorSelect.pickText(x, y, env);
-            if (text) {
-                return {item: text, type: SelectType.TEXT};
-            }
-
-            //polyline next
-            let polyline = EditorSelect.pickPolyline(x, y, env);
-            if (polyline) {
-                return {item: polyline, type: SelectType.POLYLINE};
-            }
-
-            return {item: undefined, type: undefined};
-        };
-
         this._mouseListener = new class extends MouseListener {
             private moved = false;
             onmousedown(event: MouseIn): boolean {
@@ -52,7 +36,7 @@ export class EditorSelect extends Editor {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
-                    let {item, type} = pickAny(x, y);
+                    let {item, type} = self.pickAny(x, y, env);
                     if (item) {
                         if (!event.ctrlKey) {
                             Selection.select(type, item);
@@ -139,6 +123,22 @@ export class EditorSelect extends Editor {
         }
         return picked;
     }
+
+    public pickAny(x: number, y: number, env: Env) : {item: Drawable, type: SelectType}{
+        //text first
+        let text = EditorSelect.pickText(x, y, env);
+        if (text) {
+            return {item: text, type: SelectType.TEXT};
+        }
+
+        //polyline next
+        let polyline = EditorSelect.pickPolyline(x, y, env);
+        if (polyline) {
+            return {item: polyline, type: SelectType.POLYLINE};
+        }
+
+        return {item: undefined, type: undefined};
+    };
 
 
     //render

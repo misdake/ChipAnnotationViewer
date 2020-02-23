@@ -521,7 +521,6 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
         let newPolyline = new DrawablePolyline(this.clone(offsetX, offsetY));
         layerView.addPolyline(newPolyline);
-        Selection.select(SelectType.POLYLINE, newPolyline);
         canvas.requestRender();
     }
 

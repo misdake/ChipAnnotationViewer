@@ -4,6 +4,7 @@ import {Canvas} from "../Canvas";
 import {Map} from "../data/Map";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import "elements/ColorAlphaElement"
+import {Selection, SelectType} from "../layers/Selection";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
@@ -22,6 +23,7 @@ export class PolylineEdit extends LitElement {
     copyPolyline() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
         this.polyline.cloneOnCanvas(this.canvas, offset, offset);
+        Selection.select(SelectType.POLYLINE, this.polyline);
     }
 
     @property()

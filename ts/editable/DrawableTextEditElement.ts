@@ -4,8 +4,6 @@ import {Canvas} from "../Canvas";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import "elements/ColorAlphaElement"
 import {Selection, SelectType} from "../layers/Selection";
-import {LayerTextView} from "../layers/LayerTextView";
-import {LayerName} from "../layers/Layers";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
@@ -22,6 +20,7 @@ export class TextEdit extends LitElement {
     copyText() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
         this.text.cloneOnCanvas(this.canvas, offset, offset);
+        Selection.select(SelectType.TEXT, this.text);
     }
 
     private editText = (content: string) => {

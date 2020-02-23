@@ -1,7 +1,7 @@
 import {KeyboardIn, KeyboardListener} from "../KeyboardListener";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
-import {EditableMove} from "../editable/Editable";
+import {EditableDeleteClone, EditableMove} from "../editable/Editable";
 
 export class Ui {
 
@@ -9,7 +9,7 @@ export class Ui {
         return (/Mobi|Android/i.test(navigator.userAgent));
     }
 
-    static createKeyboardListener(canvas: Canvas, camera: Camera, drawable: EditableMove, ondelete: () => void) {
+    static createKeyboardListener(canvas: Canvas, camera: Camera, drawable: EditableMove & EditableDeleteClone, ondelete: () => void) {
         return new class extends KeyboardListener {
             public onkeydown(event: KeyboardIn): boolean {
                 let scale = camera.screenSizeToCanvas(1);

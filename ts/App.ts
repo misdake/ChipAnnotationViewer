@@ -102,7 +102,7 @@ class App {
         });
 
         Selection.register(SelectType.MULTIPLE, (item: DrawableText) => {
-            // render(item.renderUi(canvas), document.getElementById("panelTextSelected")); //TODO
+            // render(item.renderUi(canvas), document.getElementById("panelTextSelected")); //TODO add select multiple ui
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelTextSelected"));

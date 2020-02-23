@@ -66,8 +66,7 @@ export class EditorPolylineEdit extends Editor {
                     let shape = polyline.picker.pickShape(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pointIndex == null && shape && event.altKey) {
                         if (event.ctrlKey) {
-                            let copied = new DrawablePolyline(polyline.clone());
-                            layerView.addPolyline(copied);
+                            polyline.cloneOnCanvas(env.canvas, 0, 0);
                         }
                         this.dragShape = true;
                         this.dragShapeX = position.x;

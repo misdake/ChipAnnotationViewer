@@ -55,9 +55,6 @@ export class EditorMultiple extends Editor {
                 Selection.deselect(SelectType.MULTIPLE);
                 canvas.requestRender();
             },
-            clone(offsetX: number, offsetY: number): PrimitivePack {
-                return undefined; //unused
-            },
             cloneOnCanvas: (canvas: Canvas, offsetX: number, offsetY: number) => {
                 let list: (Drawable & EditablePick)[] = [];
                 for (let drawable of drawables) {
@@ -66,8 +63,6 @@ export class EditorMultiple extends Editor {
                         if (d) list.push(<Drawable & EditablePick>d);
                     }
                 }
-                drawables.length = 0;
-                drawables.push(...list);
                 canvas.requestRender();
                 return list;
             },
@@ -97,7 +92,7 @@ export class EditorMultiple extends Editor {
                     if (item && drawables.indexOf(item) >= 0) { // mouse down on select => good
 
                         if (event.ctrlKey) {
-                            editable.cloneOnCanvas(env.canvas, 0, 0);
+                            editable.cloneOnCanvas(env.canvas, 0, 0); //create clones at where they were
                         }
 
                         this.drag = true;

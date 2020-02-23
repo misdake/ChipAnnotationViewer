@@ -23,6 +23,6 @@ export interface EditableColor {
 export interface EditableDeleteClone {
     isEditableDeleteClone: boolean;
     deleteOnCanvas(canvas: Canvas): void;
-    clone(offsetX: number, offsetY: number): PrimitivePack;
+    // clone(offsetX: number, offsetY: number): PrimitivePack;
     cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number) : Drawable | Drawable[];
 }

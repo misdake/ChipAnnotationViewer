@@ -48,8 +48,7 @@ export class EditorTextEdit extends Editor {
                     let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pick && event.altKey) { //start dragging
                         if (event.ctrlKey) {
-                            let copied = new DrawableText(text.clone(0, 0));
-                            layerView.addText(copied);
+                            text.cloneOnCanvas(env.canvas, 0, 0);
                         }
                         this.drag = true;
                         this.dragX = position.x - text.x;

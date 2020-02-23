@@ -507,7 +507,7 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         Selection.deselect(SelectType.POLYLINE_CREATE);
         canvas.requestRender();
     }
-    public clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
+    private clone(offsetX: number = 0, offsetY: number = 0): DrawablePolylinePack {
         let points = [];
         for (const point of this.points) {
             points.push(new Point(point.x + offsetX, point.y + offsetY));

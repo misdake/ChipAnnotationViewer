@@ -121,7 +121,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         Selection.deselect(SelectType.TEXT_CREATE);
         canvas.requestRender();
     }
-    public clone(offsetX: number, offsetY: number): DrawableTextPack {
+    private clone(offsetX: number, offsetY: number): DrawableTextPack {
         return new DrawableTextPack(
             this._text,
             this.color.name,

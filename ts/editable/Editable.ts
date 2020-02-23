@@ -2,6 +2,7 @@ import {AlphaEntry, ColorEntry} from "../util/Color";
 import {PrimitivePack} from "./Primitive";
 import {Canvas} from "../Canvas";
 import {SelectType} from "../layers/Selection";
+import {Drawable} from "../drawable/Drawable";
 
 export interface EditablePick {
     isEditablePick: boolean;
@@ -23,5 +24,5 @@ export interface EditableDeleteClone {
     isEditableDeleteClone: boolean;
     deleteOnCanvas(canvas: Canvas): void;
     clone(offsetX: number, offsetY: number): PrimitivePack;
-    cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number) : void;
+    cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number) : Drawable | Drawable[];
 }

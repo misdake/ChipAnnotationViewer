@@ -516,12 +516,13 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         pack.points = points;
         return pack;
     }
-    public cloneOnCanvas(canvas:Canvas, offsetX: number, offsetY: number): void {
-        if (!this.check()) return;
+    public cloneOnCanvas(canvas:Canvas, offsetX: number, offsetY: number): Drawable {
+        if (!this.check()) return undefined;
         let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
         let newPolyline = new DrawablePolyline(this.clone(offsetX, offsetY));
         layerView.addPolyline(newPolyline);
         canvas.requestRender();
+        return newPolyline;
     }
 
     public invalidate() {

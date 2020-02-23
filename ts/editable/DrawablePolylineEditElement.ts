@@ -80,13 +80,6 @@ export class PolylineEdit extends LitElement {
     };
 
     render() {
-//         render(html`
-//     <coloralpha-element
-//         .setColor=${(color: ColorEntry) => console.log(color)}
-//         .setAlpha=${(alpha: AlphaEntry) => console.log(alpha)}
-//     ></coloralpha-element>
-// `, document.getElementById("coloralpha"));
-
         return html`
             <button class="configButton" @click=${() => this.deletePolyline()}>delete polyline</button><br>
             <button class="configButton" @click=${() => this.copyPolyline()}>copy polyline</button><br>
@@ -110,24 +103,24 @@ export class PolylineEdit extends LitElement {
             <div>strokeColor</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-            this.polyline.style.setStrokeColor(color, this.polyline.style.strokeAlpha);
-            this.canvas.requestRender();
-        }}
+                    this.polyline.style.setStrokeColor(color, this.polyline.style.strokeAlpha);
+                    this.canvas.requestRender();
+                }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-            this.polyline.style.setStrokeColor(this.polyline.style.strokeColor, alpha);
-            this.canvas.requestRender();
-        }}
+                    this.polyline.style.setStrokeColor(this.polyline.style.strokeColor, alpha);
+                    this.canvas.requestRender();
+                }}
             ></coloralpha-element>
             <div>fillColor</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-            this.polyline.style.setFillColor(color, this.polyline.style.fillAlpha);
-            this.canvas.requestRender();
-        }}
+                    this.polyline.style.setFillColor(color, this.polyline.style.fillAlpha);
+                    this.canvas.requestRender();
+                }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-            this.polyline.style.setFillColor(this.polyline.style.fillColor, alpha);
-            this.canvas.requestRender();
-        }}
+                    this.polyline.style.setFillColor(this.polyline.style.fillColor, alpha);
+                    this.canvas.requestRender();
+                }}
             ></coloralpha-element>
 
             <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>

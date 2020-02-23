@@ -131,11 +131,12 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
             this._y + offsetY,
         )
     }
-    public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): void {
+    public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): Drawable {
         let layerView = <LayerTextView>canvas.findLayer(LayerName.TEXT_VIEW);
         let newText = new DrawableText(this.clone(offsetX, offsetY));
         layerView.addText(newText);
         canvas.requestRender();
+        return newText;
     }
 
     public pack(): DrawableTextPack {

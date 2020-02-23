@@ -6,7 +6,7 @@ import {Env} from "../Env";
 import {Selection, SelectType} from "../layers/Selection";
 import {Ui} from "../util/Ui";
 import {Drawable} from "../drawable/Drawable";
-import {EditableColor, EditableDeleteClone, EditableMove} from "../editable/Editable";
+import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "../editable/Editable";
 import {EditorSelect} from "./EditorSelect";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import {PrimitivePack} from "../editable/Primitive";
@@ -33,7 +33,7 @@ export class EditorMultiple extends Editor {
 
         let {item: item, type: type} = Selection.getSelected();
         if (type !== SelectType.MULTIPLE) return;
-        let drawables = <Drawable[]>item;
+        let drawables = <(Drawable & EditablePick)[]>item;
 
         let editable: EditableDeleteClone & EditableMove & EditableColor = {
             isEditableMove: true,
@@ -52,22 +52,28 @@ export class EditorMultiple extends Editor {
                         (<EditableDeleteClone><unknown>drawable).deleteOnCanvas(canvas);
                     }
                 }
-                //TODO deselect multiple
+                Selection.deselect(SelectType.MULTIPLE);
+                canvas.requestRender();
             },
             clone(offsetX: number, offsetY: number): PrimitivePack {
-                return undefined; //TODO
+                return undefined; //unused
             },
             cloneOnCanvas: (canvas: Canvas, offsetX: number, offsetY: number) => {
+                let list: (Drawable & EditablePick)[] = [];
                 for (let drawable of drawables) {
                     if (drawable.hasOwnProperty("isEditableMove")) {
-                        (<EditableDeleteClone><unknown>drawable).cloneOnCanvas(canvas, offsetX, offsetY);
+                        let d = (<EditableDeleteClone><unknown>drawable).cloneOnCanvas(canvas, offsetX, offsetY);
+                        if (d) list.push(<Drawable & EditablePick>d);
                     }
                 }
-                //TODO select multiple
+                drawables.length = 0;
+                drawables.push(...list);
+                canvas.requestRender();
+                return list;
             },
             setColorAlpha: (color: ColorEntry, alpha: AlphaEntry) => {
                 //TODO
-            }
+            },
         };
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
@@ -87,10 +93,13 @@ export class EditorMultiple extends Editor {
 
                     if (!event.altKey) return false;
 
-                    //TODO test ctrlKey to clone
-
-                    let {item} = editorSelect.pickAny(position.x, position.y, env);
+                    let {item} = editorSelect.pickAny(position.x, position.y, env, drawables);
                     if (item && drawables.indexOf(item) >= 0) { // mouse down on select => good
+
+                        if (event.ctrlKey) {
+                            editable.cloneOnCanvas(env.canvas, 0, 0);
+                        }
+
                         this.drag = true;
                         this.dragX = position.x;
                         this.dragY = position.y;

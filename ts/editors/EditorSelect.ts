@@ -9,6 +9,7 @@ import {Renderer} from "../Renderer";
 import {DrawableText} from "../editable/DrawableText";
 import {Drawable} from "../drawable/Drawable";
 import {EditablePick} from "../editable/Editable";
+import {Camera} from "../Camera";
 
 export class EditorSelect extends Editor {
 
@@ -50,12 +51,15 @@ export class EditorSelect extends Editor {
                                 return true;
 
                             } else if (currentType === SelectType.MULTIPLE) { //multiple selected
-                                let array = <Drawable[]>current.item;
+                                let array = <(Drawable & EditablePick)[]>current.item;
                                 let index = array.indexOf(item);
                                 if (index >= 0) { //deselecting existing
                                     array.splice(index, 1); //remove this
                                     if (array.length === 0) { //deselected everything
                                         Selection.deselectAny();
+                                        return true;
+                                    } else if (array.length === 1) { //only one left
+                                        Selection.select(array[0].pickType, array[0]);
                                         return true;
                                     } else { //update current array
                                         Selection.select(SelectType.MULTIPLE, array);
@@ -100,10 +104,10 @@ export class EditorSelect extends Editor {
 
     //pick
 
-    private static pickPolyline(x: number, y: number, env: Env): DrawablePolyline {
-        let radius = env.camera.screenSizeToCanvas(5);
+    private static pickPolyline(x: number, y: number, camera: Camera, polylines: DrawablePolyline[]): DrawablePolyline {
+        let radius = camera.screenSizeToCanvas(5);
         let picked: DrawablePolyline = null;
-        for (let polyline of env.polylines) {
+        for (let polyline of polylines) {
             let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
             let pickLine = polyline.picker.pickLine(x, y, radius);
             let pickShape = polyline.picker.pickShape(x, y, radius);
@@ -114,25 +118,40 @@ export class EditorSelect extends Editor {
         return picked;
     }
 
-    private static pickText(x: number, y: number, env: Env): DrawableText {
-        let radius = env.camera.screenSizeToCanvas(5);
+    private static pickText(x: number, y: number, camera: Camera, texts: DrawableText[]): DrawableText {
+        let radius = camera.screenSizeToCanvas(5);
         let picked: DrawableText = null;
-        for (let text of env.texts) {
+        for (let text of texts) {
             let pick = text.pick(x, y, radius);
             if (pick) picked = text;
         }
         return picked;
     }
 
-    public pickAny(x: number, y: number, env: Env) : {item: Drawable, type: SelectType}{
+    public pickAny(x: number, y: number, env: Env, candidates?: EditablePick[]): { item: Drawable & EditablePick, type: SelectType } {
+        let texts = env.texts;
+        let polylines = env.polylines;
+        if (candidates) {
+            polylines = [];
+            texts = [];
+            for (let d of candidates) {
+                if (d.pickType === SelectType.POLYLINE) {
+                    polylines.push(<DrawablePolyline>d);
+                }
+                if (d.pickType === SelectType.TEXT) {
+                    texts.push(<DrawableText>d);
+                }
+            }
+        }
+
         //text first
-        let text = EditorSelect.pickText(x, y, env);
+        let text = EditorSelect.pickText(x, y, env.camera, texts);
         if (text) {
             return {item: text, type: SelectType.TEXT};
         }
 
         //polyline next
-        let polyline = EditorSelect.pickPolyline(x, y, env);
+        let polyline = EditorSelect.pickPolyline(x, y, env.camera, polylines);
         if (polyline) {
             return {item: polyline, type: SelectType.POLYLINE};
         }

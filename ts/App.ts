@@ -7,12 +7,15 @@ import "elements/SelectElement"
 import "elements/TitleElement"
 import "editable/DrawablePolylineEditElement"
 import "editable/DrawableTextEditElement"
+import "editable/DrawableMultipleEditElement"
 import {Selection, SelectType} from "./layers/Selection";
 import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
 import {DrawableText, DrawableTextPack} from "./editable/DrawableText";
 import {Layers} from "./layers/Layers";
 import {EditorName, Editors} from "./editors/Editors";
 import {Size} from "./util/Size";
+import {Drawable} from "./drawable/Drawable";
+import {MultipleEdit} from "./editable/DrawableMultipleEditElement";
 
 if (Ui.isMobile()) {
     document.getElementById("panel").style.display = "none";
@@ -70,42 +73,42 @@ class App {
         this.refresh();
 
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
+            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
         }, () => {
-            render(html``, document.getElementById("panelPolylineSelected"));
+            render(html``, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelPolylineSelected"));
+            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
         }, () => {
-            render(html``, document.getElementById("panelPolylineSelected"));
+            render(html``, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
+            render(item.renderUi(canvas), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
         }, () => {
-            render(html``, document.getElementById("panelTextSelected"));
+            render(html``, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
         Selection.register(SelectType.TEXT_CREATE, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelTextSelected"));
+            render(item.renderUi(canvas), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_CREATE);
         }, () => {
-            render(html``, document.getElementById("panelTextSelected"));
+            render(html``, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
-        Selection.register(SelectType.MULTIPLE, (item: DrawableText) => {
-            // render(item.renderUi(canvas), document.getElementById("panelTextSelected")); //TODO add select multiple ui
+        Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
+            render(MultipleEdit.renderUi(canvas), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
-            render(html``, document.getElementById("panelTextSelected"));
+            render(html``, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
     }

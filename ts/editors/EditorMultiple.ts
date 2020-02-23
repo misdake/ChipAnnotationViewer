@@ -6,10 +6,8 @@ import {Env} from "../Env";
 import {Selection, SelectType} from "../layers/Selection";
 import {Ui} from "../util/Ui";
 import {Drawable} from "../drawable/Drawable";
-import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "../editable/Editable";
+import {EditableColor, EditableDeleteClone, EditableMove, editableMultiple, EditablePick} from "../editable/Editable";
 import {EditorSelect} from "./EditorSelect";
-import {AlphaEntry, ColorEntry} from "../util/Color";
-import {PrimitivePack} from "../editable/Primitive";
 
 export class EditorMultiple extends Editor {
 
@@ -27,49 +25,13 @@ export class EditorMultiple extends Editor {
     }
 
     enter(env: Env): void {
-        // let layerPolyline = <LayerPolylineView>env.canvas.findLayer(LayerName.POLYLINE_VIEW);
-        // let layerText = <LayerPolylineView>env.canvas.findLayer(LayerName.TEXT_VIEW);
         let editorSelect = <EditorSelect>env.canvas.findEditor(EditorName.SELECT);
 
         let {item: item, type: type} = Selection.getSelected();
         if (type !== SelectType.MULTIPLE) return;
-        let drawables = <(Drawable & EditablePick)[]>item;
+        let drawables = <(Drawable & EditablePick & EditableColor)[]>item;
 
-        let editable: EditableDeleteClone & EditableMove & EditableColor = {
-            isEditableMove: true,
-            isEditableDeleteClone: true,
-            isEditableColor: true,
-            move: (dx: number, dy: number) => {
-                for (let drawable of drawables) {
-                    if (drawable.hasOwnProperty("isEditableMove")) {
-                        (<EditableMove><unknown>drawable).move(dx, dy);
-                    }
-                }
-            },
-            deleteOnCanvas: (canvas: Canvas) => {
-                for (let drawable of drawables) {
-                    if (drawable.hasOwnProperty("isEditableMove")) {
-                        (<EditableDeleteClone><unknown>drawable).deleteOnCanvas(canvas);
-                    }
-                }
-                Selection.deselect(SelectType.MULTIPLE);
-                canvas.requestRender();
-            },
-            cloneOnCanvas: (canvas: Canvas, offsetX: number, offsetY: number) => {
-                let list: (Drawable & EditablePick)[] = [];
-                for (let drawable of drawables) {
-                    if (drawable.hasOwnProperty("isEditableMove")) {
-                        let d = (<EditableDeleteClone><unknown>drawable).cloneOnCanvas(canvas, offsetX, offsetY);
-                        if (d) list.push(<Drawable & EditablePick>d);
-                    }
-                }
-                canvas.requestRender();
-                return list;
-            },
-            setColorAlpha: (color: ColorEntry, alpha: AlphaEntry) => {
-                //TODO
-            },
-        };
+        let editable: EditableDeleteClone & EditableMove & EditableColor = editableMultiple(drawables);
 
         //start listening to mouse events: drag point, remove point on double click, add point on double click
         let self = this;
@@ -89,7 +51,7 @@ export class EditorMultiple extends Editor {
                     if (!event.altKey) return false;
 
                     let {item} = editorSelect.pickAny(position.x, position.y, env, drawables);
-                    if (item && drawables.indexOf(item) >= 0) { // mouse down on select => good
+                    if (item && drawables.indexOf(<(Drawable & EditablePick & EditableColor)>item) >= 0) { // mouse down on select => good
 
                         if (event.ctrlKey) {
                             editable.cloneOnCanvas(env.canvas, 0, 0); //create clones at where they were

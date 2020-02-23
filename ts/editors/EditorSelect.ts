@@ -20,6 +20,7 @@ export class EditorSelect extends Editor {
     usages(): Usage[] {
         return [
             Editor.usage("left click polygon/text to select"),
+            Editor.usage("hold ctrl and left click to multi-select"),
         ];
     }
 

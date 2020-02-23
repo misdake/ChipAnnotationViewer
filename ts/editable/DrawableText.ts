@@ -110,8 +110,8 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.setPosition(this._x + dx, this._y + dy);
     }
     public setColorAlpha(color: ColorEntry, alpha: AlphaEntry) {
-        this.color = color;
-        this.alpha = alpha;
+        if (color) this.color = color;
+        if (alpha) this.alpha = alpha;
         this.colorString = combineColorAlpha(this.color, this.alpha);
     }
     public deleteOnCanvas(canvas: Canvas): void {

@@ -18,7 +18,7 @@ export class Selection {
     private static selected: Drawable | Drawable[];
     private static selectedType: SelectType;
 
-    public static register(typeName: SelectType, onselect: (item: Drawable) => void, ondeselect: () => void) {
+    public static register(typeName: SelectType, onselect: (item: Drawable | Drawable[]) => void, ondeselect: () => void) {
         if (typeName) {
             if (onselect) {
                 this.mapSelect[typeName] = this.mapSelect[typeName] || [];

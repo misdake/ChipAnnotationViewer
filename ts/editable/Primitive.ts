@@ -1,4 +1,4 @@
-export interface Primitive {
+export interface Primitive { //implements Drawable/Editable*
 
 }
 

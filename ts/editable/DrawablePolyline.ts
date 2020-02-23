@@ -429,13 +429,13 @@ export class DrawablePolylineStyle {
     }
 
     public setFillColor(fillColor: ColorEntry, fillAlpha: AlphaEntry) {
-        this._fillColor = fillColor;
-        this._fillAlpha = fillAlpha;
+        if (fillColor) this._fillColor = fillColor;
+        if (fillAlpha) this._fillAlpha = fillAlpha;
         this._fillString = combineColorAlpha(this._fillColor, this._fillAlpha);
     }
     public setStrokeColor(strokeColor: ColorEntry, strokeAlpha: AlphaEntry) {
-        this._strokeColor = strokeColor;
-        this._strokeAlpha = strokeAlpha;
+        if (strokeColor) this._strokeColor = strokeColor;
+        if (strokeAlpha) this._strokeAlpha = strokeAlpha;
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
     }
 }

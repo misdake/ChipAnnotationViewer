@@ -46,11 +46,11 @@ export class TextEdit extends LitElement {
             <div>color</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-                    this.text.setColorAlpha(color, this.text.alpha);
+                    this.text.setColorAlpha(color, undefined);
                     this.canvas.requestRender();
                 }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                    this.text.setColorAlpha(this.text.color, alpha);
+                    this.text.setColorAlpha(undefined, alpha);
                     this.canvas.requestRender();
                 }}
             ></coloralpha-element>

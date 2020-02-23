@@ -8,7 +8,7 @@ import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
 import {Map} from "../data/Map";
 import {Primitive, PrimitivePack} from "./Primitive";
-import {EditableColor, EditableDeleteClone, EditableMove} from "./Editable";
+import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
 import {LayerPolylineView} from "../layers/LayerPolylineView";
 import {LayerName} from "../layers/Layers";
 import {Selection, SelectType} from "../layers/Selection";
@@ -451,7 +451,9 @@ export class DrawablePolylineEditUi {
     }
 }
 
-export class DrawablePolyline implements EditableDeleteClone, EditableColor, EditableMove, Drawable, Primitive {
+export class DrawablePolyline implements EditablePick, EditableDeleteClone, EditableColor, EditableMove, Drawable, Primitive {
+    pickType = SelectType.POLYLINE;
+    isEditablePick = true;
     isEditableMove = true;
     isEditableDeleteClone = true;
     isEditableColor = true;
@@ -489,6 +491,9 @@ export class DrawablePolyline implements EditableDeleteClone, EditableColor, Edi
     }
 
     //Editable
+    public pick(x: number, y: number, radius: number): boolean {
+        return this.picker.pickShape(x, y, radius);
+    }
     public move(dx: number, dy: number): void {
         this.editor.move(dx, dy);
     }

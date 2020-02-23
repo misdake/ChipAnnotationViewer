@@ -1,6 +1,13 @@
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import {PrimitivePack} from "./Primitive";
 import {Canvas} from "../Canvas";
+import {SelectType} from "../layers/Selection";
+
+export interface EditablePick {
+    isEditablePick: boolean;
+    pickType : SelectType;
+    pick(x:number, y:number, radius: number): boolean;
+}
 
 export interface EditableMove {
     isEditableMove: boolean;

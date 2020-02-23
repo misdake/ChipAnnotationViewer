@@ -7,7 +7,7 @@ import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
 import {Primitive, PrimitivePack} from "./Primitive";
-import {EditableColor, EditableDeleteClone, EditableMove} from "./Editable";
+import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
 import {LayerTextView} from "../layers/LayerTextView";
 import {LayerName} from "../layers/Layers";
 import {Selection, SelectType} from "../layers/Selection";
@@ -29,7 +29,9 @@ export class DrawableTextPack implements PrimitivePack {
     y: number;
 }
 
-export class DrawableText implements EditableDeleteClone, EditableMove, EditableColor, Drawable, Primitive {
+export class DrawableText implements EditablePick, EditableDeleteClone, EditableMove, EditableColor, Drawable, Primitive {
+    pickType = SelectType.TEXT;
+    isEditablePick = true;
     isEditableMove = true;
     isEditableDeleteClone = true;
     isEditableColor = true;

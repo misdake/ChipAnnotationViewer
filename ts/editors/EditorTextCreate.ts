@@ -63,7 +63,7 @@ export class EditorTextCreate extends Editor {
             }
         };
 
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, text, () => {
+        this._keyboardListener = Ui.createKeyboardListener(self.canvas, self.camera, text, () => {
             layerView.deleteText(text);
             this.selected = undefined;
             Selection.deselect(SelectType.TEXT_CREATE);

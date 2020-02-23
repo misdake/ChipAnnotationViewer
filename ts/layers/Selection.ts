@@ -5,14 +5,14 @@ export enum SelectType {
     POLYLINE_CREATE,
     TEXT,
     TEXT_CREATE,
-    //TODO multiple?
+    MULTIPLE,
 }
 
 export class Selection {
 
-    private static listSelect: ((item: Drawable) => void)[] = [];
+    private static listSelect: ((item: Drawable | Drawable[]) => void)[] = [];
     private static listDeselect: (() => void)[] = [];
-    private static mapSelect: { [key: number]: ((item: Drawable) => void)[] } = {};
+    private static mapSelect: { [key: number]: ((item: Drawable | Drawable[]) => void)[] } = {};
     private static mapDeselect: { [key: number]: (() => void)[] } = {};
 
     private static selected: Drawable | Drawable[];
@@ -41,7 +41,7 @@ export class Selection {
     }
 
     public static deselect(typeName: SelectType) {
-        if (this.selectedType == typeName) {
+        if (this.selectedType === typeName) {
             let ondeselect = this.mapDeselect[typeName];
             if (ondeselect) {
                 for (let func of ondeselect) {
@@ -52,12 +52,17 @@ export class Selection {
                 func();
             }
 
+            // console.log("deselect", typeName);
+
             this.selectedType = null;
             this.selected = null;
         }
     }
-    public static select(typeName: SelectType, item: Drawable) {
-        this.deselectAny();
+    public static select(typeName: SelectType, item: Drawable | Drawable[]) {
+        if (this.selectedType !== typeName) this.deselectAny();
+
+        // console.log("select", typeName, item);
+
         this.selected = item;
         this.selectedType = typeName;
         let onselect = this.mapSelect[typeName];

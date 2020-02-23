@@ -100,6 +100,14 @@ class App {
             render(html``, document.getElementById("panelTextSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
+
+        Selection.register(SelectType.MULTIPLE, (item: DrawableText) => {
+            // render(item.renderUi(canvas), document.getElementById("panelTextSelected")); //TODO
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
+        }, () => {
+            render(html``, document.getElementById("panelTextSelected"));
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        });
     }
 
     private refresh() {

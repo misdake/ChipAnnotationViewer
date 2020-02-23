@@ -80,7 +80,7 @@ export class EditorTextEdit extends Editor {
             }
         };
 
-        this._keyboardListener = Ui.createTextKeyboardListener(self.canvas, self.camera, text, () => {
+        this._keyboardListener = Ui.createKeyboardListener(self.canvas, self.camera, text, () => {
             layerView.deleteText(text);
             Selection.deselect(SelectType.TEXT);
             env.canvas.requestRender();

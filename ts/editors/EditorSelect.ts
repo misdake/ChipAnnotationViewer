@@ -7,6 +7,8 @@ import {Selection, SelectType} from "../layers/Selection";
 import {Env} from "../Env";
 import {Renderer} from "../Renderer";
 import {DrawableText} from "../editable/DrawableText";
+import {Drawable} from "../drawable/Drawable";
+import {EditablePick} from "../editable/Editable";
 
 export class EditorSelect extends Editor {
 
@@ -22,6 +24,23 @@ export class EditorSelect extends Editor {
 
     enter(env: Env): void {
         let self = this;
+
+        let pickAny = (x: number, y: number) => {
+            //text first
+            let text = EditorSelect.pickText(x, y, env);
+            if (text) {
+                return {item: text, type: SelectType.TEXT};
+            }
+
+            //polyline next
+            let polyline = EditorSelect.pickPolyline(x, y, env);
+            if (polyline) {
+                return {item: polyline, type: SelectType.POLYLINE};
+            }
+
+            return {item: undefined, type: undefined};
+        };
+
         this._mouseListener = new class extends MouseListener {
             private moved = false;
             onmousedown(event: MouseIn): boolean {
@@ -33,18 +52,47 @@ export class EditorSelect extends Editor {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
-                    //text first
-                    let text = EditorSelect.pickText(x, y, env);
-                    if (text) {
-                        Selection.select(SelectType.TEXT, text);
-                        return true;
-                    }
+                    let {item, type} = pickAny(x, y);
+                    if (item) {
+                        if (!event.ctrlKey) {
+                            Selection.select(type, item);
+                            return true;
+                        } else {
+                            let current = Selection.getSelected();
+                            let currentType = current.type;
 
-                    //polyline next
-                    let polyline = EditorSelect.pickPolyline(x, y, env);
-                    if (polyline) {
-                        Selection.select(SelectType.POLYLINE, polyline);
-                        return true;
+                            if (!currentType) { //nothing selected
+                                Selection.select(type, item);
+                                return true;
+
+                            } else if (currentType === SelectType.MULTIPLE) { //multiple selected
+                                let array = <Drawable[]>current.item;
+                                let index = array.indexOf(item);
+                                if (index >= 0) { //deselecting existing
+                                    array.splice(index, 1); //remove this
+                                    if (array.length === 0) { //deselected everything
+                                        Selection.deselectAny();
+                                        return true;
+                                    } else { //update current array
+                                        Selection.select(SelectType.MULTIPLE, array);
+                                        return true;
+                                    }
+                                } else { //select new
+                                    array.push(item);
+                                    Selection.select(SelectType.MULTIPLE, array);
+                                    return true;
+                                }
+
+                            } else {
+                                if (current.item !== item) { //selected a second
+                                    Selection.select(SelectType.MULTIPLE, [<Drawable>current.item, item]);
+                                    return true;
+                                } else { //deselected that
+                                    Selection.deselectAny();
+                                    return true;
+                                }
+                            }
+                        }
                     }
 
                     Selection.deselectAny();
@@ -104,6 +152,18 @@ export class EditorSelect extends Editor {
                 break;
             case SelectType.TEXT:
                 this.drawSelectedText(<DrawableText>item, env.renderer);
+                break;
+            case SelectType.MULTIPLE:
+                for (let drawable of (<EditablePick[]><unknown>item)) {
+                    switch (drawable.pickType) {
+                        case SelectType.POLYLINE:
+                            this.drawSelectedPolyline(<DrawablePolyline>drawable, env.renderer);
+                            break;
+                        case SelectType.TEXT:
+                            this.drawSelectedText(<DrawableText>drawable, env.renderer);
+                            break;
+                    }
+                }
                 break;
         }
     }

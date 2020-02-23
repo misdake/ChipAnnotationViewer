@@ -28,15 +28,6 @@ export class EditorPolylineEdit extends Editor {
         ];
     }
 
-    // hold left button to drag points
-    // hold ctrl to help with horizontal/vertical line
-    // hold alt to drag polyline
-    // hold ctrl+alt to copy and drag polyline
-    // double click on line to create point
-    // right-click / double left-click point to delete it
-    // WSAD ↑↓←→ to move, hold shift to speed up
-    // press del to delete
-
     private static readonly MAG_RADIUS = 10;
 
     enter(env: Env): void {
@@ -173,7 +164,7 @@ export class EditorPolylineEdit extends Editor {
                 return false;
             }
         };
-        this._keyboardListener = Ui.createPolylineKeyboardListener(self.canvas, self.camera, polyline, () => {
+        this._keyboardListener = Ui.createKeyboardListener(self.canvas, self.camera, polyline, () => {
             layerView.deletePolyline(polyline);
             Selection.deselect(SelectType.POLYLINE);
             env.canvas.requestRender();

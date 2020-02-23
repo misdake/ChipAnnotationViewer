@@ -1,8 +1,7 @@
 import {KeyboardIn, KeyboardListener} from "../KeyboardListener";
 import {Camera} from "../Camera";
 import {Canvas} from "../Canvas";
-import {DrawableText} from "../editable/DrawableText";
-import {DrawablePolyline} from "../editable/DrawablePolyline";
+import {EditableMove} from "../editable/Editable";
 
 export class Ui {
 
@@ -10,32 +9,13 @@ export class Ui {
         return (/Mobi|Android/i.test(navigator.userAgent));
     }
 
-    static createPolylineKeyboardListener(canvas: Canvas, camera: Camera, text: DrawablePolyline, ondelete: () => void) {
+    static createKeyboardListener(canvas: Canvas, camera: Camera, drawable: EditableMove, ondelete: () => void) {
         return new class extends KeyboardListener {
             public onkeydown(event: KeyboardIn): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
-                    text.editor.move(dx, dy);
-                    canvas.requestRender();
-                    return true;
-                }
-                if (event.key === "Delete") {
-                    if (ondelete) ondelete();
-                    canvas.requestRender();
-                    return true;
-                }
-                return false;
-            }
-        };
-    }
-    static createTextKeyboardListener(canvas: Canvas, camera: Camera, text: DrawableText, ondelete: () => void) {
-        return new class extends KeyboardListener {
-            public onkeydown(event: KeyboardIn): boolean {
-                let scale = camera.screenSizeToCanvas(1);
-                let {dx, dy} = Ui.getMove(event, scale);
-                if (dx !== 0 || dy !== 0) {
-                    text.setPosition(text.x + dx, text.y + dy);
+                    drawable.move(dx, dy);
                     canvas.requestRender();
                     return true;
                 }

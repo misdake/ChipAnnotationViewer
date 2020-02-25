@@ -193,46 +193,60 @@ export class DrawablePolylineEditor {
         }
         this.polyline.invalidate();
     }
-    public flipX() {
-        let minX = Math.min();
-        let maxX = Math.max();
-        for (const point of this.points) {
-            minX = Math.min(minX, point.x);
-            maxX = Math.max(maxX, point.x);
+    public flipX(centerX?: number) {
+        if (centerX === undefined) {
+            let minX = Math.min();
+            let maxX = Math.max();
+            for (const point of this.points) {
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+            }
+            centerX = (minX + maxX) / 2;
         }
-        let xx = minX + maxX;
+        let xx = centerX * 2;
         for (const point of this.points) {
             point.x = xx - point.x;
         }
     }
-    public flipY() {
-        let minY = Math.min();
-        let maxY = Math.max();
-        for (const point of this.points) {
-            minY = Math.min(minY, point.y);
-            maxY = Math.max(maxY, point.y);
+    public flipY(centerY?: number) {
+        if (centerY === undefined) {
+            let minY = Math.min();
+            let maxY = Math.max();
+            for (const point of this.points) {
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+            centerY = (minY + maxY) / 2;
         }
-        let yy = minY + maxY;
+        let yy = centerY * 2;
         for (const point of this.points) {
             point.y = yy - point.y;
         }
     }
-    public rotateCW() {
-        let center = this.polyline.calculator.aabbCenter();
+    public rotateCW(centerX?: number, centerY?: number) {
+        if(centerX === undefined || centerY === undefined) {
+            let center = this.polyline.calculator.aabbCenter();
+            centerX = center.x;
+            centerY = center.y;
+        }
         for (const point of this.points) {
-            let dx = point.x - center.x;
-            let dy = point.y - center.y;
-            point.x = center.x - dy;
-            point.y = center.y + dx;
+            let dx = point.x - centerX;
+            let dy = point.y - centerY;
+            point.x = centerX - dy;
+            point.y = centerY + dx;
         }
     }
-    public rotateCCW() {
-        let center = this.polyline.calculator.aabbCenter();
+    public rotateCCW(centerX?: number, centerY?: number) {
+        if(centerX === undefined || centerY === undefined) {
+            let center = this.polyline.calculator.aabbCenter();
+            centerX = center.x;
+            centerY = center.y;
+        }
         for (const point of this.points) {
-            let dx = point.x - center.x;
-            let dy = point.y - center.y;
-            point.x = center.x + dy;
-            point.y = center.y - dx;
+            let dx = point.x - centerX;
+            let dy = point.y - centerY;
+            point.x = centerX + dy;
+            point.y = centerY - dx;
         }
     }
 }
@@ -496,6 +510,21 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
     }
     public move(dx: number, dy: number): void {
         this.editor.move(dx, dy);
+    }
+    public aabb(): AABB {
+        return this.calculator.aabb();
+    }
+    public flipX(centerX: number): void {
+        this.editor.flipX(centerX);
+    }
+    public flipY(centerY: number): void {
+        this.editor.flipY(centerY);
+    }
+    public rotateCCW(centerX: number, centerY: number): void {
+        this.editor.rotateCCW(centerX, centerY);
+    }
+    public rotateCW(centerX: number, centerY: number): void {
+        this.editor.rotateCW(centerX, centerY);
     }
     public setColorAlpha(color: ColorEntry, alpha: AlphaEntry): void {
         this.style.setFillColor(color, alpha);

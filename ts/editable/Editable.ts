@@ -2,6 +2,7 @@ import {AlphaEntry, ColorEntry} from "../util/Color";
 import {Canvas} from "../Canvas";
 import {Selection, SelectType} from "../layers/Selection";
 import {Drawable} from "../drawable/Drawable";
+import {AABB} from "../util/AABB";
 
 export interface EditablePick {
     isEditablePick: boolean;
@@ -12,7 +13,12 @@ export interface EditablePick {
 export interface EditableMove {
     isEditableMove: boolean;
     move(dx: number, dy: number): void;
-    //TODO AABB & flip/rotate
+
+    aabb(): AABB;
+    rotateCW(centerX: number, centerY: number): void;
+    rotateCCW(centerX: number, centerY: number): void;
+    flipX(centerX: number): void;
+    flipY(centerY: number): void;
 }
 
 export interface EditableColor {
@@ -26,7 +32,8 @@ export interface EditableDeleteClone {
     cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): Drawable | Drawable[];
 }
 
-export function editableMultiple(drawables: Drawable[]): EditableDeleteClone & EditableMove & EditableColor {
+export function editableMultiple(input: Drawable[]): EditableDeleteClone & EditableMove & EditableColor {
+    let drawables = <(EditableDeleteClone & EditableMove & EditableColor)[]><unknown>input;
     return {
         isEditableMove: true,
         isEditableDeleteClone: true,
@@ -34,14 +41,25 @@ export function editableMultiple(drawables: Drawable[]): EditableDeleteClone & E
         move: (dx: number, dy: number) => {
             for (let drawable of drawables) {
                 if (drawable.hasOwnProperty("isEditableMove")) {
-                    (<EditableMove><unknown>drawable).move(dx, dy);
+                    drawable.move(dx, dy);
                 }
             }
+        },
+        aabb(): AABB {
+            return AABB.combineAll(drawables.map(i => i.aabb()));
+        }, flipX(centerX: number): void {
+            for (let drawable of drawables) drawable.flipX(centerX);
+        }, flipY(centerY: number): void {
+            for (let drawable of drawables) drawable.flipY(centerY);
+        }, rotateCCW(centerX: number, centerY: number): void {
+            for (let drawable of drawables) drawable.rotateCCW(centerX, centerY);
+        }, rotateCW(centerX: number, centerY: number): void {
+            for (let drawable of drawables) drawable.rotateCW(centerX, centerY);
         },
         deleteOnCanvas: (canvas: Canvas) => {
             for (let drawable of drawables) {
                 if (drawable.hasOwnProperty("isEditableMove")) {
-                    (<EditableDeleteClone><unknown>drawable).deleteOnCanvas(canvas);
+                    drawable.deleteOnCanvas(canvas);
                 }
             }
             Selection.deselect(SelectType.MULTIPLE);
@@ -51,7 +69,7 @@ export function editableMultiple(drawables: Drawable[]): EditableDeleteClone & E
             let list: (Drawable & EditablePick)[] = [];
             for (let drawable of drawables) {
                 if (drawable.hasOwnProperty("isEditableMove")) {
-                    let d = (<EditableDeleteClone><unknown>drawable).cloneOnCanvas(canvas, offsetX, offsetY);
+                    let d = drawable.cloneOnCanvas(canvas, offsetX, offsetY);
                     if (d) list.push(<Drawable & EditablePick>d);
                 }
             }
@@ -60,8 +78,8 @@ export function editableMultiple(drawables: Drawable[]): EditableDeleteClone & E
         },
         setColorAlpha: (color: ColorEntry, alpha: AlphaEntry) => {
             for (let drawable of drawables) {
-                (<EditableColor><unknown>drawable).setColorAlpha(color, alpha);
+                drawable.setColorAlpha(color, alpha);
             }
-        },
+        }
     };
 }

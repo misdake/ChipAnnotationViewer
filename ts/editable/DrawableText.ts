@@ -109,6 +109,31 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     public move(dx: number, dy: number): void {
         this.setPosition(this._x + dx, this._y + dy);
     }
+    public aabb(): AABB {
+        return new AABB(this._x, this._y, this._x, this._y);
+    }
+    public flipX(centerX: number): void {
+        this._x = centerX * 2 - this._x;
+        this.invalidate();
+    }
+    public flipY(centerY: number): void {
+        this._y = centerY * 2 - this._y;
+        this.invalidate();
+    }
+    public rotateCCW(centerX: number, centerY: number): void {
+        let dx = this._x - centerX;
+        let dy = this._y - centerY;
+        this._x = centerX + dy;
+        this._y = centerY - dx;
+        this.invalidate();
+    }
+    public rotateCW(centerX: number, centerY: number): void {
+        let dx = this._x - centerX;
+        let dy = this._y - centerY;
+        this._x = centerX - dy;
+        this._y = centerY + dx;
+        this.invalidate();
+    }
     public setColorAlpha(color: ColorEntry, alpha: AlphaEntry) {
         if (color) this.color = color;
         if (alpha) this.alpha = alpha;

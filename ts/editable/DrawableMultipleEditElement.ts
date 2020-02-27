@@ -50,7 +50,6 @@ export class MultipleEdit extends LitElement {
     render() {
         let drawables = <Drawable[]>Selection.getSelected().item;
         let editable = editableMultiple(drawables);
-        console.log("render");
 
         return html`
             <button class="configButton" @click=${() => this.delete(editable)}>delete selected</button><br>

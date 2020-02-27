@@ -91,8 +91,41 @@ export class EditorSelect extends Editor {
                 }
             }
             onmousemove(event: MouseIn): boolean {
-                if ((event.buttons & 1) && (event.movementX != 0 && event.movementY != 0)) {
+                if (event.buttons & 1) {
                     this.moved = true;
+
+                    if (event.ctrlKey) {
+                        let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                        let x = canvasXY.x, y = canvasXY.y;
+
+                        let current = Selection.getSelected();
+                        let currentType = current.type;
+
+                        let exclude: (Drawable & EditablePick)[] = [];
+                        switch (currentType) {
+                            case SelectType.POLYLINE:
+                            case SelectType.TEXT:
+                                exclude = [<(Drawable & EditablePick)>current.item];
+                                break;
+                            case SelectType.MULTIPLE:
+                                exclude = <(Drawable & EditablePick)[]>current.item;
+                                break;
+                        }
+
+                        let picked = self.pickAll(x, y, env, undefined, exclude);
+
+                        if (picked.length) {
+                            if(exclude.length === 0 && picked.length === 1) {
+                                let item = picked[0];
+                                Selection.select(item.pickType, item);
+                            } else {
+                                exclude.push(...picked); //try to change the original array for MULTIPLE, so EditorMultiple will continue to work.
+                                Selection.select(SelectType.MULTIPLE, exclude);
+                            }
+                        }
+
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -128,6 +161,35 @@ export class EditorSelect extends Editor {
         }
         return picked;
     }
+
+    public pickAll(x: number, y: number, env: Env, candidates?: EditablePick[], exclude?: EditablePick[]): (Drawable & EditablePick)[] {
+        let texts = env.texts;
+        let polylines = env.polylines;
+        if (candidates) {
+            polylines = [];
+            texts = [];
+            for (let d of candidates) {
+                if (d.pickType === SelectType.POLYLINE) {
+                    polylines.push(<DrawablePolyline>d);
+                }
+                if (d.pickType === SelectType.TEXT) {
+                    texts.push(<DrawableText>d);
+                }
+            }
+        }
+
+        let result = [];
+        let radius = env.camera.screenSizeToCanvas(5);
+
+        for (let text of texts) if (text.pick(x, y, radius)) result.push(text);
+        for (let polyline of polylines) if (polyline.pick(x, y, radius)) result.push(polyline);
+
+        if (exclude) {
+            result = result.filter(value => exclude.indexOf(value) < 0);
+        }
+
+        return result;
+    };
 
     public pickAny(x: number, y: number, env: Env, candidates?: EditablePick[]): { item: Drawable & EditablePick, type: SelectType } {
         let texts = env.texts;

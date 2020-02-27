@@ -17,8 +17,8 @@ export class EditorMultiple extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("hold alt to drag", UsageType.MOUSE),
-            Editor.usage("hold ctrl+alt to copy and drag", UsageType.MOUSE),
+            Editor.usage("hold alt to drag selected", UsageType.MOUSE),
+            Editor.usage("hold ctrl+alt to copy and drag selected", UsageType.MOUSE),
             Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
             Editor.usage("press del to delete", UsageType.KEYBOARD),
         ];

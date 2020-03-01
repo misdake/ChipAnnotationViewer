@@ -1,11 +1,11 @@
 import {Drawable} from "../drawable/Drawable";
 
 export enum SelectType {
-    POLYLINE = 1,
-    POLYLINE_CREATE,
-    TEXT,
-    TEXT_CREATE,
-    MULTIPLE,
+    POLYLINE = 1, // => Drawable
+    POLYLINE_CREATE, // => Drawable
+    TEXT, // => Drawable
+    TEXT_CREATE, // => Drawable
+    MULTIPLE, // => Drawable[]. modify array content to change selected instead of Select(MULTIPLE, new_array)
 }
 
 export class Selection {

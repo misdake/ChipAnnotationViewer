@@ -2,7 +2,7 @@ import {customElement, html, LitElement, property} from "lit-element";
 import {Canvas} from "../Canvas";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import "elements/ColorAlphaElement"
-import {Selection, SelectType} from "../layers/Selection";
+import {Selection} from "../layers/Selection";
 import {Drawable} from "../drawable/Drawable";
 import {EditableColor, EditableDeleteClone, EditableMove, editableMultiple} from "./Editable";
 import {TemplateResult} from "lit-html";
@@ -22,8 +22,9 @@ export class MultipleEdit extends LitElement {
     }
     copy(editable: EditableDeleteClone) {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        let list = editable.cloneOnCanvas(this.canvas, offset, offset);
-        Selection.select(SelectType.MULTIPLE, list);
+        let list = <Drawable[]>editable.cloneOnCanvas(this.canvas, offset, offset);
+        let current = <Drawable[]>Selection.getSelected().item;
+        current.splice(0, current.length, ...list);
     }
 
     rotateCCW(editable: EditableDeleteClone & EditableMove & EditableColor) {

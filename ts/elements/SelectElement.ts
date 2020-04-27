@@ -47,7 +47,7 @@ export class SelectElement extends LitElement {
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
 
     private replaceUrl() {
-        let url = location.pathname + '?map=' + this.chip_current.name;
+        let url = location.pathname + '?map=' + encodeURIComponent(this.chip_current.name);
         if (this.annotation_current && this.annotation_current.id > 0) url += '&commentId=' + this.annotation_current.id;
         history.replaceState(null, "", url);
     }
@@ -55,7 +55,7 @@ export class SelectElement extends LitElement {
     protected firstUpdated(): void {
         let url_string = window.location.href;
         let url = new URL(url_string);
-        this.chip_name_toload = url.searchParams.get("map") || "Fiji";
+        this.chip_name_toload = (url.searchParams.get("map") && decodeURIComponent(url.searchParams.get("map")) )|| "Fiji";
         this.annotation_id_toload = parseInt(url.searchParams.get("commentId") || "0");
 
         this.refreshChipList();

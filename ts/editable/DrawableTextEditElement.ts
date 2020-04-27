@@ -41,7 +41,7 @@ export class TextEdit extends LitElement {
             <button class="configButton" @click=${() => this.copyText()}>copy text</button><br>
 
             text<br>
-            <input class="configText" type="text" style="width:10em" value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
+            <input class="configText" type="text" style="width:10em" .value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
 
             <div>color</div>
             <coloralpha-element

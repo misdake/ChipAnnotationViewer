@@ -171,7 +171,11 @@ export class Renderer {
         this.context.textAlign = anchorX;
         this.context.textBaseline = anchorY;
         this.context.font = fontSize + "px Arial";
+
+        this.context.shadowColor = "black";
+        this.context.shadowBlur = fontSize * 0.2;
         this.context.fillText(text, x, y);
+        this.context.shadowBlur = 0;
     }
 
     //text

@@ -27,12 +27,14 @@ export class TextEdit extends LitElement {
         if (!content.length) content = "text";
         this.text.text = content;
         this.canvas.requestRender();
+        this.performUpdate();
     };
 
     private onSizeInput = (ev: Event, options: { screen?: string, canvas?: string }) => {
         if (options.screen !== undefined) this.text.onScreen = parseInt(options.screen);
         if (options.canvas !== undefined) this.text.onCanvas = parseInt(options.canvas);
         this.canvas.requestRender();
+        this.performUpdate();
     };
 
     render() {
@@ -55,8 +57,8 @@ export class TextEdit extends LitElement {
                 }}
             ></coloralpha-element>
 
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
+            <input class="configText" type="number" min=0 style="width:5em" .value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
+            <input class="configText" type="number" min=0 style="width:5em" .value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
         `;
     }
 

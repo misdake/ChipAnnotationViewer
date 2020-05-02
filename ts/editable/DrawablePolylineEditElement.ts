@@ -72,11 +72,13 @@ export class PolylineEdit extends LitElement {
         if (options.stroke !== undefined) this.polyline.style.stroke = options.stroke;
         if (options.closed !== undefined) this.polyline.style.closed = options.closed;
         this.canvas.requestRender();
+        this.performUpdate();
     };
     private onSizeInput = (ev: Event, options: { screen?: string, canvas?: string }) => {
         if (options.screen !== undefined) this.polyline.style.onScreen = parseInt(options.screen);
         if (options.canvas !== undefined) this.polyline.style.onCanvas = parseInt(options.canvas);
         this.canvas.requestRender();
+        this.performUpdate();
     };
 
     render() {
@@ -96,9 +98,9 @@ export class PolylineEdit extends LitElement {
 
             <br>
 
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {fill: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.fill}" >fill<br>
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {stroke: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.stroke}" >stroke<br>
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {closed: (<HTMLInputElement>ev.target).checked})} ?checked="${this.polyline.style.closed}" >closed<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {fill: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.fill}" >fill<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {stroke: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.stroke}" >stroke<br>
+            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {closed: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.closed}" >closed<br>
 
             <div>strokeColor</div>
             <coloralpha-element
@@ -123,8 +125,8 @@ export class PolylineEdit extends LitElement {
                 }}
             ></coloralpha-element>
 
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
-            <input class="configText" type="number" min=0 style="width:5em" value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
+            <input class="configText" type="number" min=0 style="width:5em" .value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
+            <input class="configText" type="number" min=0 style="width:5em" .value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
         `;
     }
 

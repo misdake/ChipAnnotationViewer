@@ -156,15 +156,25 @@ export class Renderer {
     //text
 
     public measureText(camera: Camera, text: string, fontSize: Size) {
+        let lines = text.split('^^');
         let size = this.calculateLineWidth(camera, fontSize);
         this.context.font = size + "px Arial";
-        let textMetrics = this.context.measureText(text);
-        return [textMetrics.width, size];
+        let maxWidth = 0;
+        for (let line of lines) {
+            let textMetrics = this.context.measureText(line);
+            maxWidth = Math.max(textMetrics.width, maxWidth);
+        }
+        return {width: maxWidth, totalHeight: size * lines.length, fontSize: size};
     }
 
     public renderText(camera: Camera, text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
         let position = camera.canvasToScreen(x, y);
-        this.drawText(text, fontSize, position.x, position.y, anchorX, anchorY);
+        let lines = text.split("^^");
+        let offsetY = (lines.length - 1) * fontSize / 2;
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            this.drawText(line, fontSize, position.x, position.y + (i * fontSize) - offsetY, anchorX, anchorY);
+        }
     }
 
     public drawText(text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {

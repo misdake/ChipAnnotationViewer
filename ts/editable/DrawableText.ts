@@ -65,6 +65,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     private canvasHeight: number = 0;
     private screenWidth: number = 0;
     private screenHeight: number = 0;
+    private screenFontSize: number = 0;
 
     get text(): string {
         return this._text;
@@ -180,7 +181,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.validate(camera, renderer);
         let inScreen = camera.canvasAABBInScreen(this._canvasAABB);
         if (inScreen) {
-            renderer.renderText(camera, this._text, this.screenHeight, this._x, this._y, "center", "middle");
+            renderer.renderText(camera, this._text, this.screenFontSize, this._x, this._y, "center", "middle");
         }
     }
 
@@ -188,13 +189,14 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         if (!this.sizeValid || this.canvasZoom != camera.getZoom()) {
             this.sizeValid = true;
 
-            let wh = renderer.measureText(camera, this._text, this.fontSize);
+            let {width, totalHeight, fontSize} = renderer.measureText(camera, this._text, this.fontSize);
             let ratio = camera.screenSizeToCanvas(1);
             this.canvasZoom = camera.getZoom();
-            this.canvasWidth = wh[0] * ratio / 2;
-            this.canvasHeight = wh[1] * ratio / 2;
-            this.screenWidth = wh[0];
-            this.screenHeight = wh[1];
+            this.canvasWidth = width * ratio / 2;
+            this.canvasHeight = totalHeight * ratio / 2;
+            this.screenWidth = width;
+            this.screenHeight = totalHeight;
+            this.screenFontSize = fontSize;
 
             this.calcCanvasAABB();
         }

@@ -337,7 +337,7 @@ export class DrawablePolylineCalculator {
             if (Math.abs(last.x - xy.x) <= radius) newX = last.x;
             if (Math.abs(last.y - xy.y) <= radius) newY = last.y;
         }
-        return new Point(newX, newY);
+        return (newX === xy.x && newY === xy.y) ? undefined : new Point(newX, newY);
     }
 }
 

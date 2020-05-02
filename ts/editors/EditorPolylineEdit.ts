@@ -143,7 +143,13 @@ export class EditorPolylineEdit extends Editor {
                         if (event.ctrlKey) {
                             let radius = self.camera.screenSizeToCanvas(EditorPolylineEdit.MAG_RADIUS);
                             let result = polyline.calculator.alignPoint(this.dragPointIndex, radius);
-                            polyline.editor.setPoint(this.dragPointIndex, result.x, result.y);
+                            if (!result) {
+                                let p = polyline.editor.getPoint(this.dragPointIndex);
+                                result = layerView.tryAlignPoint(p, polyline, radius);
+                            }
+                            if (result) {
+                                polyline.editor.setPoint(this.dragPointIndex, result.x, result.y);
+                            }
                         }
 
                         self.canvas.requestRender();

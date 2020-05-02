@@ -1,7 +1,7 @@
 import {Layer} from "./Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
-import {DrawablePolyline} from "../editable/DrawablePolyline";
+import {DrawablePolyline, Point} from "../editable/DrawablePolyline";
 import {Data} from "../data/Data";
 import {LayerName} from "./Layers";
 import {Env} from "../Env";
@@ -36,6 +36,23 @@ export class LayerPolylineView extends Layer {
     }
     public containPolyline(polyline: DrawablePolyline): boolean {
         return this.polylines.indexOf(polyline) >= 0;
+    }
+
+    public tryAlignPoint(point: Point, fromPolyline: DrawablePolyline, radius: number): Point | undefined {
+        let r = radius;
+        let p = undefined;
+        for (let polyline of this.polylines) {
+            if (polyline !== fromPolyline) {
+                polyline.editor.forEachPoint((x, y) => {
+                    let d = Math.hypot(x - point.x, y - point.y);
+                    if (d < r) {
+                        p = new Point(x, y);
+                        r = d;
+                    }
+                });
+            }
+        }
+        return p;
     }
 
     public saveData(data: Data): void {

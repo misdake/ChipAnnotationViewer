@@ -30,7 +30,14 @@ export class ZoomElement extends LitElement {
     private zoomText: string = "\xA0";
     private refreshText() {
         let density = this.camera.screenSizeToCanvas(1);
-        let newText = (density > 1 ? "1/" : "") + density + "x";
+        let newText = "";
+        if(density === 1) {
+            newText = "1x";
+        } else if(density>1) {
+            newText = `1/${density}x`;
+        } else {
+            newText = `${1/density}x`;
+        }
         if (this.zoomText !== newText) {
             this.zoomText = newText;
         }

@@ -39,11 +39,12 @@ export class LayerImage extends Layer {
 
     private prepare(camera: Camera, canvas: Canvas) {
         let zoom = camera.getZoom();
+        zoom = Math.max(zoom, 0); //support zoom<0 use zoom=0 image
 
         if (this.currentZoom === zoom) return;
         this.currentZoom = zoom;
 
-        let targetSize = this.map.tileSize << zoom;
+        let targetSize = this.map.tileSize * Math.pow(2, zoom);
 
         let levelData = this.map.levels[zoom];
         this.xCount = levelData.xMax;

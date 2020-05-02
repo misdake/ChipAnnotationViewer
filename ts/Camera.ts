@@ -22,7 +22,7 @@ export class Camera {
 
     public load(canvas: Canvas, map: Map) {
         this.canvas = canvas;
-        this.zoomMin = 0;
+        this.zoomMin = -2;
         this.zoomMax = map.maxLevel;
         this.zoom = map.maxLevel;
         this.checkZoom();
@@ -69,7 +69,7 @@ export class Camera {
         this.checkXy();
         this.checkZoom();
 
-        let scale = 1.0 / (1 << this.zoom);
+        let scale = 1.0 / Math.pow(2, this.zoom);
         this.scale = scale;
         this.tx = this.canvas.getWidth() / 2 - this.position.x * scale;
         this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;

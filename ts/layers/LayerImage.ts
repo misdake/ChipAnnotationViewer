@@ -44,6 +44,14 @@ export class LayerImage extends Layer {
         if (this.currentZoom === zoom) return;
         this.currentZoom = zoom;
 
+        if (this.imageMatrix) {
+            for (let line of this.imageMatrix) {
+                for (let image of line) {
+                    image.tryUnload();
+                }
+            }
+        }
+
         let targetSize = this.map.tileSize * Math.pow(2, zoom);
 
         let levelData = this.map.levels[zoom];

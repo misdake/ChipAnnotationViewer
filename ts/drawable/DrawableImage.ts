@@ -6,7 +6,7 @@ import {Transform} from "../util/Transform";
 
 export class DrawableImage implements Drawable {
 
-    private readonly img: HTMLImageElement;
+    private img: HTMLImageElement;
 
     private readonly w: number;
     private readonly h: number;
@@ -48,6 +48,14 @@ export class DrawableImage implements Drawable {
             if (this.loaded) {
                 renderer.drawImage(this.img, rect);
             }
+        }
+    }
+
+    public tryUnload() {
+        if (this.img) {
+            this.img.src = '';
+            this.img.onload = undefined;
+            this.img = undefined;
         }
     }
 

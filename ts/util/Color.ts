@@ -18,6 +18,7 @@ export class ColorEntry {
         new ColorEntry("cyan", 0, 255, 255),
         new ColorEntry("purple", 255, 0, 255),
         new ColorEntry("yellow", 255, 255, 0),
+        new ColorEntry("orange", 255, 127, 0),
         new ColorEntry("gray", 127, 127, 127),
         new ColorEntry("white", 255, 255, 255),
     ];

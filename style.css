@@ -83,7 +83,7 @@ select {
 }
 
 .colorAlphaContainerSplit {
-    width: 20px;
+    width: 0px;
     display: inline-block;
 }
 
@@ -99,7 +99,7 @@ select {
     width: 12px;
     height: 24px;
     border: 2px black solid;
-    margin: 2px 2px;
+    margin: 2px 0 2px 2px;
 }
 
 .configCheckbox {

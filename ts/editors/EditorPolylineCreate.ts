@@ -50,10 +50,13 @@ export class EditorPolylineCreate extends Editor {
                 polyline.editor.setPoint(-1, position.x, position.y);
                 if (magnetic) {
                     let radius = self.camera.screenSizeToCanvas(EditorPolylineCreate.MAG_RADIUS);
-                    let result = polyline.calculator.alignPoint(-1, radius);
+                    let result = undefined;
                     if (!result) {
                         let p = polyline.editor.getPoint(-1);
                         result = layerView.tryAlignPoint(p, polyline, radius);
+                    }
+                    if (!result) {
+                        result = polyline.calculator.alignPoint(-1, radius);
                     }
                     if (result) {
                         polyline.editor.setPoint(-1, result.x, result.y);

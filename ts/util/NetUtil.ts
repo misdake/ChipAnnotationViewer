@@ -9,4 +9,11 @@ export class NetUtil {
         request.open("GET", url, true);
         request.send();
     }
+
+    public static count(chip: string, comment: number) {
+        console.log("count", chip, comment)
+        let url = `https://api.countapi.xyz/hit/chipannotationviewer/${chip}_${comment}`;
+        NetUtil.get(url, text => {
+        });
+    }
 }

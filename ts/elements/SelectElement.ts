@@ -106,7 +106,9 @@ export class SelectElement extends LitElement {
     }
 
     private uiSelectedAnnotation(index: number) {
-        this.selectedAnnotation(this.annotationlist_array[index]);
+        let annotation = this.annotationlist_array[index];
+        this.selectedAnnotation(annotation);
+        NetUtil.count(this.chip_current.name, annotation.id);
     }
     private refreshAnnotationList() {
         this.annotationlist_html = [];
@@ -119,8 +121,10 @@ export class SelectElement extends LitElement {
 
             if (current) {
                 this.selectedAnnotation(current);
+                NetUtil.count(this.chip_current.name, current.id);
             } else {
                 this.selectedAnnotation(SelectElement.dummyAnnotation);
+                NetUtil.count(this.chip_current.name, 0);
             }
         });
     }

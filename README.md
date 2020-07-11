@@ -31,7 +31,7 @@ Current die shots:
     - (Pascal) [GP102](https://misdake.github.io/ChipAnnotationViewer/?map=GP102), [GP104](https://misdake.github.io/ChipAnnotationViewer/?map=GP104), [GP106](https://misdake.github.io/ChipAnnotationViewer/?map=GP106)
     - (Turing) [TU102](https://misdake.github.io/ChipAnnotationViewer/?map=TU102), [TU104](https://misdake.github.io/ChipAnnotationViewer/?map=TU104), [TU106](https://misdake.github.io/ChipAnnotationViewer/?map=TU106), [TU116](https://misdake.github.io/ChipAnnotationViewer/?map=TU116)
 - Console:
-    - (Microsoft) , [Xbox_Series_X](https://misdake.github.io/ChipAnnotationViewer/?map=Xbox_Series_X)
+    - (Microsoft) [Xbox_One](https://misdake.github.io/ChipAnnotationViewer/?map=Xbox_One), [Xbox_Series_X](https://misdake.github.io/ChipAnnotationViewer/?map=Xbox_Series_X)
     - (Sony) [RSX(PS3)](https://misdake.github.io/ChipAnnotationViewer/?map=RSX), [PS4](https://misdake.github.io/ChipAnnotationViewer/?map=PS4), [PS4Pro](https://misdake.github.io/ChipAnnotationViewer/?map=PS4Pro)
 
 Extra links:

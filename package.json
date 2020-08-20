@@ -1,15 +1,12 @@
 {
   "name": "chip-annotation-viewer",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "",
   "main": "app.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/misdake/ChipAnnotationViewer.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/misdake/ChipAnnotationViewer/issues"
   },

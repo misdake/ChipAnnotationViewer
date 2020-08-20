@@ -24,7 +24,9 @@ export class Camera {
         this.canvas = canvas;
         this.zoomMin = -2;
         this.zoomMax = map.maxLevel;
-        this.zoom = map.maxLevel;
+        //zoom in a bit if screen is large enough.
+        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(map.width, map.height)) + map.maxLevel);
+        this.zoom = map.maxLevel - zoomOffset;
         this.checkZoom();
 
         this.position.x = map.width / 2;

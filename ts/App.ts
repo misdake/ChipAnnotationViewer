@@ -106,7 +106,7 @@ class App {
         });
 
         Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
-            render(MultipleEdit.renderUi(canvas), document.getElementById("panelSelected"));
+            render(MultipleEdit.renderUi(canvas, item), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));

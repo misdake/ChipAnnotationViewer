@@ -12,9 +12,11 @@ export class MultipleEdit extends LitElement {
 
     @property()
     canvas: Canvas;
+    @property()
+    items: Drawable[];
 
-    public static renderUi(canvas: Canvas): TemplateResult {
-        return html`<multipleedit-element .canvas=${canvas}></multipleedit-element>`;
+    public static renderUi(canvas: Canvas, items: Drawable[]): TemplateResult {
+        return html`<multipleedit-element .canvas=${canvas} .items=${items}></multipleedit-element>`;
     }
 
     delete(editable: EditableDeleteClone) {

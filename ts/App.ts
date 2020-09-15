@@ -17,8 +17,13 @@ import {Size} from "./util/Size";
 import {Drawable} from "./drawable/Drawable";
 import {MultipleEdit} from "./editable/DrawableMultipleEditElement";
 import {EditablePick} from "./editable/Editable";
+import {EditorCameraControl} from "./editors/EditorCameraControl";
 
-if (Ui.isMobile()) {
+let url_string = window.location.href;
+let url = new URL(url_string);
+let isReadOnly = !!url.searchParams.get("readonly");
+
+if (Ui.isMobile() || isReadOnly) {
     document.getElementById("panel").style.display = "none";
 } else {
     document.getElementById("panel").style.display = "flex";
@@ -28,7 +33,7 @@ let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
 canvas.addLayers(...Layers.create(canvas));
-canvas.addEditors(...Editors.create(canvas));
+canvas.addEditors(...(isReadOnly ? [new EditorCameraControl(canvas)] : Editors.create(canvas)));
 
 canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
 

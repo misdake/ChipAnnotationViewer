@@ -47,7 +47,7 @@ export class SelectElement extends LitElement {
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
 
     private replaceUrl() {
-        let url = location.pathname + '?map=' + encodeURIComponent(this.chip_current.name);
+        let url = window.location.pathname + '?map=' + encodeURIComponent(this.chip_current.name);
         if (this.annotation_current && this.annotation_current.id > 0) url += '&commentId=' + this.annotation_current.id;
         history.replaceState(null, "", url);
     }

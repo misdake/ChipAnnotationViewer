@@ -36,9 +36,11 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     isEditableDeleteClone = true;
     isEditableColor = true;
 
+    private _sourceText: string = "";
     private _text: string = "";
     private _x: number;
     private _y: number;
+    private _link: string = null;
 
     public color: ColorEntry;
     public alpha: AlphaEntry;
@@ -46,13 +48,14 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     protected readonly fontSize: Size;
 
     public constructor(pack: DrawableTextPack) {
-        this._text = pack.text;
         this.color = ColorEntry.findByName(pack.colorName);
         this.alpha = AlphaEntry.findByName(pack.alphaName);
         this.colorString = combineColorAlpha(this.color, this.alpha);
         this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
         this._x = pack.x;
         this._y = pack.y;
+        this._sourceText = pack.text;
+        this.text = pack.text;
     }
 
     private invalidate() {
@@ -68,7 +71,10 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     private screenFontSize: number = 0;
 
     get text(): string {
-        return this._text;
+        return this._sourceText;
+    }
+    get link(): string {
+        return this._link;
     }
     get x(): number {
         return this._x;
@@ -101,8 +107,29 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this._y = y;
         this.invalidate();
     }
+
+    static readonly MAP_LINK_REGEX = /@map\[(\w+)]/;
+    static readonly COMMENT_LINK_REGEX = /@comment\[(\w+)]\(([0-9]+)\)/;
+
     set text(value: string) {
-        this._text = value;
+        this._sourceText = value;
+
+        //generate link from text
+        this._link = null;
+        let mapLink = DrawableText.MAP_LINK_REGEX.exec(value);
+        let commentLink = DrawableText.COMMENT_LINK_REGEX.exec(value);
+        if (mapLink) this._link = `${window.location.origin}${window.location.pathname}?map=${encodeURIComponent(mapLink[1])}`;
+        if (commentLink) this._link = `${window.location.origin}${window.location.pathname}?map=${encodeURIComponent(commentLink[1])}&commentId=${commentLink[2]}`;
+
+        //remove link from rendering text
+        this._text = this._sourceText;
+        this._text = this._text.replace(DrawableText.MAP_LINK_REGEX, "");
+        this._text = this._text.replace(DrawableText.COMMENT_LINK_REGEX, "");
+
+        if (mapLink || commentLink) {
+            console.log(this._link);
+        }
+
         this.invalidate();
     }
 
@@ -149,7 +176,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
     private clone(offsetX: number, offsetY: number): DrawableTextPack {
         return new DrawableTextPack(
-            this._text,
+            this._sourceText,
             this.color.name,
             this.alpha.name,
             this.fontSize.clone(),
@@ -167,7 +194,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
 
     public pack(): DrawableTextPack {
         return new DrawableTextPack(
-            this._text,
+            this._sourceText,
             this.color.name,
             this.alpha.name,
             this.fontSize.clone(),
@@ -182,6 +209,15 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         let inScreen = camera.canvasAABBInScreen(this._canvasAABB);
         if (inScreen) {
             renderer.renderText(camera, this._text, this.screenFontSize, this._x, this._y, "center", "middle");
+
+            if (this._link) { //draw underline
+                let p1 = camera.canvasToScreen(this._canvasAABB.x1, this._canvasAABB.y1);
+                let p2 = camera.canvasToScreen(this._canvasAABB.x2, this._canvasAABB.y2);
+                renderer.drawRect(
+                    p1.x, p2.y, p2.x, p2.y,
+                    false, true, 2
+                );
+            }
         }
     }
 

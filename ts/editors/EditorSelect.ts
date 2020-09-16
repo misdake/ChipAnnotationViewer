@@ -130,6 +130,21 @@ export class EditorSelect extends Editor {
                 }
                 return false;
             }
+            ondblclick(event: MouseIn): boolean {
+                if (event.button == 0) {
+                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let x = canvasXY.x, y = canvasXY.y;
+                    let {item, type} = self.pickAny(x, y, env);
+                    if (type === SelectType.TEXT) { //double click a text with link to open link
+                        let text = <DrawableText>item;
+                        if (text.link) {
+                            window.open(text.link, "_blank");
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
         };
     }
 

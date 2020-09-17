@@ -1,5 +1,5 @@
 export class NetUtil {
-    public static get(url: string, callback?: (text: string) => void) {
+    public static get(url: string, callback?: (text: string) => void, auth?: string) {
         let request = new XMLHttpRequest();
         request.onreadystatechange = function () {
             if (request.readyState == 4 && request.status == 200) {
@@ -7,6 +7,7 @@ export class NetUtil {
             }
         };
         request.open("GET", url, true);
+        if (auth) request.setRequestHeader("Authorization", auth);
         request.send();
     }
 

@@ -165,6 +165,7 @@ export class SelectElement extends LitElement {
             let chip = sortMap[key];
             let curr_VenderType = `${chip.vendor} ${chip.type}`;
             let curr_Family = `${chip.family}`;
+            let name = chip.listname ? chip.listname : chip.name;
 
             if (last_VenderType !== curr_VenderType && curr_VenderType && curr_VenderType.length) {
                 selections.push(html`<option>${curr_VenderType}</option>`);
@@ -176,9 +177,9 @@ export class SelectElement extends LitElement {
             }
             if (chip_current_name && chip_current_name === chip.name) {
                 current = chip;
-                selections.push(html`<option selected>\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0${chip.name}</option>`);
+                selections.push(html`<option selected>\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0${name}</option>`);
             } else {
-                selections.push(html`<option>\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0${chip.name}</option>`);
+                selections.push(html`<option>\xA0\xA0\xA0\xA0\xA0\xA0\xA0\xA0${name}</option>`);
             }
             selection_chip.push(chip);
 

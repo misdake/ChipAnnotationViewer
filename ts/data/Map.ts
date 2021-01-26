@@ -9,6 +9,7 @@ export class Chip {
     type: string;
     family: string;
     name: string;
+    listname: string; //may be undefined
 
     url: string;
 }

@@ -56,8 +56,7 @@ export class NetUtil {
             localStorage.setItem("today", `${today}`);
         }
 
-        // console.log("count", chip, comment)
-        let url = `https://api.countapi.xyz/hit/chipannotationviewer/${chip}_${comment}`;
+        let url = `https://chipannotation.vercel.app/count/log/${chip}/${comment}`;
         NetUtil.get(url);
     }
 }

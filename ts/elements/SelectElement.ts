@@ -132,7 +132,7 @@ export class SelectElement extends LitElement {
 
     private static async fetchChipList(): Promise<Chip[]> {
         return new Promise<Chip[]>(resolve => {
-            NetUtil.get("https://misdake.github.io/ChipAnnotationData/list.json", text => {
+            NetUtil.get("https://misdake.github.io/ChipAnnotationList/list.json", text => {
                 let chips = JSON.parse(text) as Chip[];
                 resolve(chips);
             });

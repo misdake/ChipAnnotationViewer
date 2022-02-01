@@ -52,7 +52,7 @@ export class NetUtil {
         }
 
         if (!savedDay || today > savedDay) {
-            NetUtil.get(`https://api.countapi.xyz/hit/chipannotationviewer/day_${today}`);
+            NetUtil.get(`https://chipannotation.vercel.app/user/log/0`);
             localStorage.setItem("today", `${today}`);
         }
 

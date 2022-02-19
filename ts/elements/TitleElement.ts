@@ -24,7 +24,10 @@ export class TitleElement extends LitElement {
         }
         let dataString = JSON.stringify(data);
 
-        let auth = Github.getAuth();
+        let auth = Github.getAuth(username => {
+            //if upload and not mine => no auth
+            return !this.annotation.user || username === this.annotation.user;
+        });
 
         if (auth) {
             this.uploadAnnotation_githubapi(dataString);

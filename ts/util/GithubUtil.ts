@@ -2,10 +2,10 @@ import {NetUtil} from "./NetUtil";
 
 export class Github {
 
-    static getAuth() {
+    static getAuth(check?: (username: string) => boolean) {
         let githubUsername = window.localStorage.getItem("github_username");
         let githubToken = window.localStorage.getItem("github_token");
-        if (githubUsername && githubToken) {
+        if (githubUsername && githubToken && (!check || check(githubUsername))) {
             let auth = "Basic " + btoa(`${githubUsername}:${githubToken}`);
             return auth;
         }

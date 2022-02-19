@@ -21,13 +21,13 @@ module.exports = env => {
             extensions: ['.ts', '.js', '.html']
         },
         output: {
-            path: path.resolve(__dirname, '.'),
-            filename: 'dist/app.js'
+            path: path.join(__dirname, 'dist'),
+            filename: 'app.js'
         },
         externals: {},
         devServer: {
             publicPath: "/",
-            contentBase: ".",
+            contentBase: path.join(__dirname, 'dist'),
             open: true,
             hot: true,
             compress: true,

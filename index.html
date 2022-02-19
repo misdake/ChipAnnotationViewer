@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chip Annotation Viewer</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="panel">
+    <div id="panelScroll">
+        <div id="annotationTitle"></div>
+        <br>
+        <br>
+
+        <button id="buttonCreatePolyline" class="configButton">new polyline</button>
+        <button id="buttonCreateText" class="configButton">new text</button>
+
+        <br>
+        <br>
+
+        <div id="panelSelected">
+        </div>
+
+        <br>
+
+        <div id="hint"></div><br>
+
+    </div>
+
+    <div id="footer">
+        <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank"><img src="res/github.png" class="footerIcon" alt=""/><span>repo</span></a>
+        <a href="https://twitter.com/rSkip" target="_blank"><img src="res/twitter.png" class="footerIcon" alt=""/><span>rSkip</span></a>
+        <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank"><img src="res/rss.png" class="footerIcon" alt=""/><span>RSS</span></a>
+    </div>
+</div>
+
+<div id='container'>
+    <div id="selectPanel">
+    </div>
+    <div id="cameraPanel">
+    </div>
+    <div id="toast"></div>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+
+
+</html>

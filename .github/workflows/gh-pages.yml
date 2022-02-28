@@ -31,6 +31,7 @@ jobs:
       - run: npm run build
 
       - name: deploy
+        if: github.event_name != 'pull_request'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,11 +1,11 @@
-import {Layer} from "./Layer";
-import {Camera} from "../Camera";
-import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
-import {Renderer} from "../Renderer";
-import {DrawableImage} from "../drawable/DrawableImage";
-import {LayerName} from "./Layers";
-import {Env} from "../Env";
+import { Layer } from './Layer';
+import { Camera } from '../Camera';
+import { Canvas } from '../Canvas';
+import { Map } from '../data/Map';
+import { Renderer } from '../Renderer';
+import { DrawableImage } from '../drawable/DrawableImage';
+import { LayerName } from './Layers';
+import { Env } from '../Env';
 
 export class LayerImage extends Layer {
 
@@ -49,7 +49,7 @@ export class LayerImage extends Layer {
         if (this.imageMatrix) {
             for (let line of this.imageMatrix) {
                 for (let image of line) {
-                    image.tryUnload();
+                    image.unloadIfNotCached();
                 }
             }
         }
@@ -67,7 +67,7 @@ export class LayerImage extends Layer {
                     this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg",
                     i * targetSize, j * targetSize,
                     targetSize, targetSize,
-                    image => {
+                    _ => {
                         canvas.requestRender();
                     },
                 );

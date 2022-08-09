@@ -1,9 +1,9 @@
-import {Canvas} from "./Canvas";
-import {Camera} from "./Camera";
-import {Transform} from "./util/Transform";
-import {Size} from "./util/Size";
-import {ScreenRect} from "./util/ScreenRect";
-import {Point} from "./editable/DrawablePolyline";
+import { Canvas } from './Canvas';
+import { Camera } from './Camera';
+import { Transform } from './util/Transform';
+import { Size } from './util/Size';
+import { ScreenRect } from './util/ScreenRect';
+import { Point } from './editable/DrawablePolyline';
 
 export class Renderer {
     private canvas: Canvas;
@@ -76,7 +76,7 @@ export class Renderer {
     //---------------------------------------------
     //image
 
-    public testImageVisibility(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number, range: number): ScreenRect {
+    public testImageVisibility(camera: Camera, transform: Transform, width: number, height: number, range: number): ScreenRect {
         //transform to screen space
         let point = camera.canvasToScreen(transform.position.x, transform.position.y);
         let targetW = camera.canvasSizeToScreen(width);
@@ -90,7 +90,7 @@ export class Renderer {
     }
 
     public renderImage(camera: Camera, image: HTMLImageElement, transform: Transform, width: number, height: number) {
-        let rect = this.testImageVisibility(camera, image, transform, width, height, 0);
+        let rect = this.testImageVisibility(camera, transform, width, height, 0);
         this.drawImage(image, rect);
     }
 

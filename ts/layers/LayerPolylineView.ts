@@ -2,7 +2,7 @@ import {Layer} from "./Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {DrawablePolyline, Point} from "../editable/DrawablePolyline";
-import {Data} from "../data/Data";
+import {AnnotationData} from "../data/Annotation";
 import {LayerName} from "./Layers";
 import {Env} from "../Env";
 
@@ -14,7 +14,7 @@ export class LayerPolylineView extends Layer {
         super(LayerName.POLYLINE_VIEW, canvas);
     }
 
-    loadMap(env: Env): void {
+    loadChip(env: Env): void {
     }
 
     loadData(env: Env): void {
@@ -55,7 +55,7 @@ export class LayerPolylineView extends Layer {
         return p;
     }
 
-    public saveData(data: Data): void {
+    public saveData(data: AnnotationData): void {
         data.polylines = [];
         for (const polyline of this.polylines) {
             data.polylines.push(polyline.pack());

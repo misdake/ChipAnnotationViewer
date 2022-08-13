@@ -108,25 +108,25 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.invalidate();
     }
 
-    static readonly MAP_LINK_REGEX = /@map\[(\w+)]/;
-    static readonly COMMENT_LINK_REGEX = /@comment\[(\w+)]\(([0-9]+)\)/;
+    static readonly CHIP_LINK_REGEX = /@(chip|map)\[(\w+)]/;
+    static readonly ANNOTATION_LINK_REGEX = /@(annotation|comment)\[(\w+)]\(([0-9]+)\)/;
 
     set text(value: string) {
         this._sourceText = value;
 
         //generate link from text
         this._link = null;
-        let mapLink = DrawableText.MAP_LINK_REGEX.exec(value);
-        let commentLink = DrawableText.COMMENT_LINK_REGEX.exec(value);
-        if (mapLink) this._link = `${window.location.origin}${window.location.pathname}?map=${encodeURIComponent(mapLink[1])}`;
-        if (commentLink) this._link = `${window.location.origin}${window.location.pathname}?map=${encodeURIComponent(commentLink[1])}&commentId=${commentLink[2]}`;
+        let chipLink = DrawableText.CHIP_LINK_REGEX.exec(value);
+        let annotationLink = DrawableText.ANNOTATION_LINK_REGEX.exec(value);
+        if (chipLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(chipLink[1])}`;
+        if (annotationLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(annotationLink[1])}&annotation=${annotationLink[2]}`;
 
         //remove link from rendering text
         this._text = this._sourceText;
-        this._text = this._text.replace(DrawableText.MAP_LINK_REGEX, "");
-        this._text = this._text.replace(DrawableText.COMMENT_LINK_REGEX, "");
+        this._text = this._text.replace(DrawableText.CHIP_LINK_REGEX, "");
+        this._text = this._text.replace(DrawableText.ANNOTATION_LINK_REGEX, "");
 
-        if (mapLink || commentLink) {
+        if (chipLink || annotationLink) {
             console.log(this._link);
         }
 

@@ -2,7 +2,7 @@ import {Layer} from "./Layer";
 import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {DrawableText} from "../editable/DrawableText";
-import {Data} from "../data/Data";
+import {AnnotationData} from "../data/Annotation";
 import {LayerName} from "./Layers";
 import {Env} from "../Env";
 
@@ -14,7 +14,7 @@ export class LayerTextView extends Layer {
         super(LayerName.TEXT_VIEW, canvas);
     }
 
-    loadMap(env : Env): void {
+    loadChip(env : Env): void {
     }
 
     loadData(env : Env): void {
@@ -35,7 +35,7 @@ export class LayerTextView extends Layer {
         }
     }
 
-    public saveData(data: Data): void {
+    public saveData(data: AnnotationData): void {
         data.texts = [];
         for (const text of this.texts) {
             data.texts.push(text.pack());

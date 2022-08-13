@@ -1,7 +1,7 @@
 import {Canvas} from "./Canvas";
 import {Camera} from "./Camera";
-import {Map} from "./data/Map";
-import {Data} from "./data/Data";
+import {ChipContent} from "./data/Chip";
+import {AnnotationData} from "./data/Annotation";
 import {DrawablePolyline} from "./editable/DrawablePolyline";
 import {DrawableText} from "./editable/DrawableText";
 import {Renderer} from "./Renderer";
@@ -22,16 +22,16 @@ export class Env {
 
     //after selected map
 
-    map: Map;
-    data: Data;
+    chip: ChipContent;
+    data: AnnotationData;
     polylines: DrawablePolyline[];
     texts: DrawableText[];
 
-    loadMap(map: Map) {
-        this.map = map;
+    loadChip(chipContent: ChipContent) {
+        this.chip = chipContent;
     }
 
-    loadData(data: Data) {
+    loadData(data: AnnotationData) {
         this.data = data;
 
         this.polylines = [];

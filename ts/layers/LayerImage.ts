@@ -1,7 +1,7 @@
 import { Layer } from './Layer';
 import { Camera } from '../Camera';
 import { Canvas } from '../Canvas';
-import { Map } from '../data/Map';
+import { ChipContent } from '../data/Chip';
 import { Renderer } from '../Renderer';
 import { DrawableImage } from '../drawable/DrawableImage';
 import { LayerName } from './Layers';
@@ -9,7 +9,7 @@ import { Env } from '../Env';
 
 export class LayerImage extends Layer {
 
-    private map: Map;
+    private chip: ChipContent;
     private maxLevel: number;
     private baseFolder: string;
 
@@ -17,15 +17,15 @@ export class LayerImage extends Layer {
         super(LayerName.IMAGE, canvas);
     }
 
-    public loadMap(env: Env): void {
-        let map = env.map;
-        this.map = map;
-        this.maxLevel = map.maxLevel;
+    public loadChip(env: Env): void {
+        let chip = env.chip;
+        this.chip = chip;
+        this.maxLevel = chip.maxLevel;
 
-        let split = map.githubRepo.indexOf('/');
-        let username = map.githubRepo.substring(0, split);
-        let repo = map.githubRepo.substring(split + 1);
-        this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
+        let split = chip.githubRepo.indexOf('/');
+        let username = chip.githubRepo.substring(0, split);
+        let repo = chip.githubRepo.substring(split + 1);
+        this.baseFolder = `https://${username}.github.io/${repo}/` + this.chip.name;
         this.currentZoom = -1;
     }
 
@@ -38,7 +38,7 @@ export class LayerImage extends Layer {
     private imageMatrix: DrawableImage[][];
 
     private prepare(camera: Camera, canvas: Canvas) {
-        if (!this.map) return;
+        if (!this.chip) return;
 
         let zoom = camera.getZoom();
         zoom = Math.max(zoom, 0); //support zoom<0 use zoom=0 image
@@ -54,9 +54,9 @@ export class LayerImage extends Layer {
             }
         }
 
-        let targetSize = this.map.tileSize * Math.pow(2, zoom);
+        let targetSize = this.chip.tileSize * Math.pow(2, zoom);
 
-        let levelData = this.map.levels[zoom];
+        let levelData = this.chip.levels[zoom];
         this.xCount = levelData.xMax;
         this.yCount = levelData.yMax;
         this.imageMatrix = [];

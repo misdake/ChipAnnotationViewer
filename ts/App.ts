@@ -1,6 +1,6 @@
 import {Canvas} from "./Canvas";
-import {Chip, Map} from "./data/Map";
-import {Annotation} from "./data/Data";
+import {Chip, ChipContent} from "./data/Chip";
+import { Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
 import {Ui} from "./util/Ui";
 import {html, render} from "lit-html";
 import "elements/SelectElement";
@@ -65,21 +65,21 @@ document.getElementById("buttonCreateText").onclick = () => {
 
 class App {
     private chip: Chip;
-    private map: Map;
+    private chipContent: ChipContent;
     private annotation: Annotation;
 
     public start() {
         render(html`
             <select-element 
                 .onSelectChip=${(chip: Chip) => this.onSelectChip(chip)}
-                .onSelectMap=${(map: Map) => this.onSelectMap(map)}
-                .onSelectAnnotation=${(annotation: Annotation) => this.onSelectAnnotation(annotation)}
+                .onSelectChipContent=${(chipContent: ChipContent) => this.onSelectChipContent(chipContent)}
+                .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData) => this.onSelectAnnotation(annotation, data)}
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
 
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
+            render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -87,7 +87,7 @@ class App {
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
+            render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -123,7 +123,7 @@ class App {
         render(html`
             <title-element 
                 .canvas="${canvas}"
-                .map="${this.map}"
+                .chipContent="${this.chipContent}"
                 .annotation="${this.annotation}"
             ></title-element>
         `, document.getElementById("annotationTitle"));
@@ -136,20 +136,21 @@ class App {
         canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
     }
 
-    onSelectMap(map: Map) {
-        this.map = map;
+    onSelectChipContent(chipContent: ChipContent) {
+        this.chipContent = chipContent;
         this.refresh();
-        canvas.loadMap(map);
+        canvas.loadChip(chipContent);
         Selection.deselectAny();
         canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         canvas.requestRender();
     }
 
-    onSelectAnnotation(annotation: Annotation) {
+    onSelectAnnotation(annotation: Annotation, data: AnnotationData) {
         this.annotation = annotation;
         this.refresh();
 
-        canvas.loadData(annotation.content);
+        canvas.loadData(data);
+
         Selection.deselectAny();
         canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         canvas.requestRender();

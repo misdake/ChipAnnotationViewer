@@ -3,7 +3,7 @@ import {Camera} from "../Camera";
 import {Renderer} from "../Renderer";
 import {LayerName} from "./Layers";
 import {Env} from "../Env";
-import {Data} from "../data/Data";
+import {AnnotationData} from "../data/Annotation";
 
 export abstract class Layer {
 
@@ -18,7 +18,7 @@ export abstract class Layer {
         this.camera = canvas.getCamera();
     }
 
-    public abstract loadMap(env: Env): void;
+    public abstract loadChip(env: Env): void;
 
     public abstract loadData(env: Env): void;
 
@@ -26,7 +26,7 @@ export abstract class Layer {
 
     public abstract unload(): void;
 
-    public saveData(data: Data): void {
+    public saveData(data: AnnotationData): void {
 
     }
 }

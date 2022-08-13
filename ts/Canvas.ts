@@ -1,8 +1,8 @@
 import {Layer} from "./layers/Layer";
-import {Map} from "./data/Map";
+import {ChipContent} from "./data/Chip";
 import {Renderer} from "./Renderer";
 import {Camera} from "./Camera";
-import {Data} from "./data/Data";
+import {AnnotationData} from "./data/Annotation";
 import {Ui} from "./util/Ui";
 import "hammerjs";
 import {html, render} from "lit-html";
@@ -266,24 +266,24 @@ export class Canvas {
     }
 
 
-    private map: Map = null;
-    private data: Data = null;
+    private chip: ChipContent = null;
+    private data: AnnotationData = null;
 
     public readonly env: Env = new Env();
 
-    public loadMap(map: Map): void {
-        if (!this.map || this.map.name != map.name) {
-            this.map = map;
-            this.camera.load(this, map);
+    public loadChip(chip: ChipContent): void {
+        if (!this.chip || this.chip.name != chip.name) {
+            this.chip = chip;
+            this.camera.load(this, chip);
 
-            this.env.loadMap(map);
+            this.env.loadChip(chip);
 
             for (let layer of this.layers) {
-                layer.loadMap(this.env);
+                layer.loadChip(this.env);
             }
         }
     }
-    public loadData(data: Data): void {
+    public loadData(data: AnnotationData): void {
         if (this.data != data) {
             this.data = data;
 
@@ -295,8 +295,8 @@ export class Canvas {
         }
     }
 
-    public save(): Data {
-        let data = new Data();
+    public save(): AnnotationData {
+        let data = new AnnotationData();
         for (let layer of this.layers) {
             layer.saveData(data);
         }

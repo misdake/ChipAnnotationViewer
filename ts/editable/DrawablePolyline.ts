@@ -6,7 +6,7 @@ import {Size} from "../util/Size";
 import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
 import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
-import {Map} from "../data/Map";
+import {ChipContent} from "../data/Chip";
 import {Primitive, PrimitivePack} from "./Primitive";
 import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
 import {LayerPolylineView} from "../layers/LayerPolylineView";
@@ -460,8 +460,8 @@ export class DrawablePolylineEditUi {
         this.polyline = polyline;
     }
 
-    render(canvas: Canvas, map: Map): TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .map=${map}></polylineedit-element>`;
+    render(canvas: Canvas, chipContent: ChipContent): TemplateResult {
+        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .chipContent=${chipContent}></polylineedit-element>`;
     }
 }
 

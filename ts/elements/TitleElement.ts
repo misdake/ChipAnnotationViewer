@@ -1,80 +1,55 @@
-import {customElement, html, LitElement, property} from "lit-element";
-import {Annotation} from "../data/Data";
-import {Map} from "../data/Map";
-import {Canvas} from "../Canvas";
-import {Github} from "../util/GithubUtil";
+import { customElement, html, LitElement, property } from 'lit-element';
+import { Annotation } from '../data/Annotation';
+import { ChipContent } from '../data/Chip';
+import { Canvas } from '../Canvas';
+import { AnnotationApi } from '../data/AnnotationApi';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
 
     @property()
-    map: Map;
+    chipContent: ChipContent;
     @property()
     annotation: Annotation;
     @property()
     canvas: Canvas;
 
     private uploadAnnotation() {
-        if (!this.map || !this.annotation) return;
+        if (!this.chipContent || !this.annotation) return;
 
         let data = this.canvas.save();
-        data.title = (document.getElementById("inputTitle") as HTMLInputElement).value;
-        if (data.title == null || data.title == "") {
-            data.title = "untitled";
-        }
+        this.annotation.title = (document.getElementById('inputTitle') as HTMLInputElement).value;
+        if (!this.annotation.title) this.annotation.title = 'untitled';
         let dataString = JSON.stringify(data);
 
-        let auth = Github.getAuth(username => {
-            //if upload and not mine => no auth
-            return !this.annotation.user || username === this.annotation.user;
-        });
-
-        if (auth) {
-            this.uploadAnnotation_githubapi(dataString);
-        } else {
-            this.uploadAnnotation_clipboard(dataString);
-        }
-    }
-
-    private uploadAnnotation_githubapi(dataString: string) {
-        if (this.annotation.id > 0) {
-            Github.updateComment(this.map.githubRepo, this.map.githubIssueId, this.annotation.id, dataString, comment => {
-                console.log("comment", comment);
-                alert("uploaded!");
+        if (this.annotation.aid === 0) {
+            AnnotationApi.createAnnotation(this.chipContent.name, this.annotation.title, dataString).then(r => {
+                Object.assign(this.annotation, r);
+                alert('created!');
+            }).catch(e => {
+                console.log('createAnnotation error:', e);
             });
         } else {
-            Github.createComment(this.map.githubRepo, this.map.githubIssueId, dataString, comment => {
-                console.log("comment", comment);
-                alert("uploaded!");
+            AnnotationApi.updateAnnotation(this.annotation.aid, this.annotation.title, dataString).then(r => {
+                Object.assign(this.annotation, r);
+                alert('updated!');
+            }).catch(e => {
+                console.log('updateAnnotation error:', e);
             });
         }
-    }
-
-    private uploadAnnotation_clipboard(dataString: string) {
-        let issueLink: string;
-        if (this.annotation.id > 0) {
-            issueLink = Github.getCommentLink(this.map.githubRepo, this.map.githubIssueId, this.annotation.id);
-        } else {
-            issueLink = Github.getIssueLink(this.map.githubRepo, this.map.githubIssueId);
-        }
-        navigator.clipboard.writeText(dataString).then(() => {
-            if (issueLink) {
-                window.open(issueLink, '_blank');
-            }
-        });
     }
 
     render() {
-        let title = "";
-        if (this.annotation && this.annotation.content) {
-            title = this.annotation.content.title || "";
+        let title = '';
+        if (this.annotation) {
+            title = this.annotation.title || '';
         }
 
         return html`
             <label for="dataTitle">title</label>
             <input id="inputTitle" class="configText" value="${title}" style="width:10em">
             <br>
-            <button class="configButton" @click="${this.uploadAnnotation}">${this.annotation&&this.annotation.id ? "update" : "create new"} annotation</button>
+            <button class="configButton" @click="${this.uploadAnnotation}">${this.annotation && this.annotation.aid ? 'update' : 'create new'} annotation</button>
             <a href="https://github.com/misdake/ChipAnnotationViewer/blob/master/guide/contribute.md" target="_blank"><-how?</a>
         `;
     }

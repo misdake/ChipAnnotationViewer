@@ -12,7 +12,7 @@ export class EditorCameraControl extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("hold mouse button to view map", UsageType.MOUSE),
+            Editor.usage("hold mouse button and move to view", UsageType.MOUSE),
             Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
         ];
     }

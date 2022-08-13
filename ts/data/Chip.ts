@@ -9,12 +9,12 @@ export class Chip {
     type: string;
     family: string;
     name: string;
-    listname: string; //may be undefined
+    listname?: string; //may be undefined
 
     url: string;
 }
 
-export class Map {
+export class ChipContent {
     source:string;
     githubRepo: string;
     githubIssueId: number;

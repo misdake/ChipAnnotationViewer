@@ -1,7 +1,7 @@
 import {customElement, html, LitElement, property} from "lit-element";
 import {DrawablePolyline} from "./DrawablePolyline";
 import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
+import {ChipContent} from "../data/Chip";
 import {AlphaEntry, ColorEntry} from "../util/Color";
 import "elements/ColorAlphaElement"
 import {Selection, SelectType} from "../layers/Selection";
@@ -15,7 +15,7 @@ export class PolylineEdit extends LitElement {
     @property()
     canvas: Canvas;
     @property()
-    map: Map;
+    chipContent: ChipContent;
 
     deletePolyline() {
         this.polyline.deleteOnCanvas(this.canvas);
@@ -29,22 +29,22 @@ export class PolylineEdit extends LitElement {
     @property()
     area: string = "";
     calcArea() {
-        let width = this.map.widthMillimeter;
-        let height = this.map.heightMillimeter;
+        let width = this.chipContent.widthMillimeter;
+        let height = this.chipContent.heightMillimeter;
         let unit = this.polyline.style.fill ? "mm^2" : "mm";
-        if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
-            width = this.map.width;
-            height = this.map.height;
+        if (!(this.chipContent.widthMillimeter > 0 && this.chipContent.heightMillimeter > 0)) {
+            width = this.chipContent.width;
+            height = this.chipContent.height;
             unit = "pixels"
         }
         if (this.polyline.style.fill) {
             let area = this.polyline.calculator.area();
-            let areaMM2 = area / this.map.width / this.map.height * width * height;
+            let areaMM2 = area / this.chipContent.width / this.chipContent.height * width * height;
             areaMM2 = Math.round(areaMM2 * 100) / 100;
             this.area = areaMM2 + unit;
         } else {
             let length = this.polyline.calculator.length();
-            let lengthMM = length * Math.sqrt(width * height / this.map.width / this.map.height);
+            let lengthMM = length * Math.sqrt(width * height / this.chipContent.width / this.chipContent.height);
             lengthMM = Math.round(lengthMM * 100) / 100;
             this.area = lengthMM + unit;
         }

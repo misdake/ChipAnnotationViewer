@@ -1,4 +1,4 @@
-import {Map} from "./data/Map";
+import {ChipContent} from "./data/Chip";
 import {Canvas} from "./Canvas";
 import {Position} from "./util/Transform";
 import {AABB} from "./util/AABB";
@@ -20,21 +20,21 @@ export class Camera {
     public constructor() {
     }
 
-    public load(canvas: Canvas, map: Map) {
+    public load(canvas: Canvas, chip: ChipContent) {
         this.canvas = canvas;
         this.zoomMin = -2;
-        this.zoomMax = map.maxLevel;
+        this.zoomMax = chip.maxLevel;
         //zoom in a bit if screen is large enough.
-        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(map.width, map.height)) + map.maxLevel);
-        this.zoom = map.maxLevel - zoomOffset;
+        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(chip.width, chip.height)) + chip.maxLevel);
+        this.zoom = chip.maxLevel - zoomOffset;
         this.checkZoom();
 
-        this.position.x = map.width / 2;
-        this.position.y = map.height / 2;
+        this.position.x = chip.width / 2;
+        this.position.y = chip.height / 2;
         this.xMin = 0;
-        this.xMax = map.width;
+        this.xMax = chip.width;
         this.yMin = 0;
-        this.yMax = map.height;
+        this.yMax = chip.height;
     }
     public moveXy(dx: number, dy: number) {
         this.position.x += dx;

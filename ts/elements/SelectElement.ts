@@ -1,8 +1,17 @@
-import {customElement, html, LitElement, property, TemplateResult} from "lit-element";
-import {Chip, Map} from "../data/Map";
-import {NetUtil} from "../util/NetUtil";
-import {Annotation, Data} from "../data/Data";
-import {Github} from "../util/GithubUtil";
+import { customElement, html, LitElement, property, TemplateResult } from 'lit-element';
+import { Chip, ChipContent } from '../data/Chip';
+import { NetUtil } from '../util/NetUtil';
+import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
+import { AnnotationApi } from '../data/AnnotationApi';
+
+function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
+    let r = defaultValue;
+    for (let param of paramNames) {
+        let v = url.searchParams.get(param) && decodeURIComponent(url.searchParams.get(param));
+        if (v) r = v;
+    }
+    return r;
+}
 
 @customElement('select-element')
 export class SelectElement extends LitElement {
@@ -20,10 +29,10 @@ export class SelectElement extends LitElement {
     onSelectChip: (chip: Chip) => void;
 
     @property()
-    map_current: Map;
+    chip_content_current: ChipContent;
 
     @property()
-    onSelectMap: (map: Map) => void;
+    onSelectChipContent: (chipContent: ChipContent) => void;
 
     //↑↑↑↑↑ chip selection box ↑↑↑↑↑
 
@@ -37,64 +46,33 @@ export class SelectElement extends LitElement {
     annotationlist_array: Annotation[];
 
     @property()
-    onSelectAnnotation: (annotation: Annotation) => void;
+    onSelectAnnotation: (annotation: Annotation, data: AnnotationData) => void;
 
     @property()
     annotation_current: Annotation;
+    annotation_content_current: AnnotationContent;
 
-    private static dummyAnnotation: Annotation = {id: 0, user: "", content: {title: "", polylines: [], texts: []}};
+    private static getDummyAnnotation: () => Annotation = () => ({aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0});
 
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
 
     private replaceUrl() {
-        let url = window.location.pathname + '?map=' + encodeURIComponent(this.chip_current.name);
-        if (this.annotation_current && this.annotation_current.id > 0) url += '&commentId=' + this.annotation_current.id;
-        history.replaceState(null, "", url);
+        let url = window.location.pathname + '?chip=' + encodeURIComponent(this.chip_current.name);
+        if (this.annotation_current && this.annotation_current.aid > 0) url += '&annotation=' + this.annotation_current.aid;
+        history.replaceState(null, '', url);
     }
 
     protected firstUpdated(): void {
         let url_string = window.location.href;
         let url = new URL(url_string);
-        this.chip_name_toload = (url.searchParams.get("map") && decodeURIComponent(url.searchParams.get("map")) )|| "Fiji";
-        this.annotation_id_toload = parseInt(url.searchParams.get("commentId") || "0");
+        this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
+        this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'));
 
         this.refreshChipList();
     }
 
-    private selectedChip(chip: Chip) {
-        this.chip_name_toload = chip ? chip.name : "";
-        this.chip_current = chip;
-        if (this.onSelectChip) this.onSelectChip(chip);
-        this.annotationlist_html = [];
-        this.annotationlist_array = [];
-        this.annotation_current = null;
-        this.replaceUrl();
+    //load chip list
 
-        if (chip) {
-            SelectElement.fetchMap(chip).then(map => {
-                this.map_current = map;
-                if (this.onSelectMap) this.onSelectMap(map);
-                let save = this.annotation_id_toload;
-                this.selectedAnnotation(SelectElement.dummyAnnotation);
-                this.annotation_id_toload = save;
-                this.replaceUrl();
-                this.refreshAnnotationList();
-            })
-        }
-    }
-    private selectedAnnotation(annotation: Annotation) {
-        this.annotation_id_toload = annotation ? annotation.id : 0;
-        this.annotation_current = annotation;
-        if (this.onSelectAnnotation) this.onSelectAnnotation(annotation);
-        this.replaceUrl();
-    }
-
-    private uiSelectedChip(index: number) {
-        let chip = this.chiplist_array[index];
-        if (chip) {
-            this.selectedChip(chip);
-        }
-    }
     private refreshChipList() {
         SelectElement.fetchChipList().then(chips => {
             let {html, array, current} = SelectElement.showChipList(chips, this.chip_name_toload);
@@ -104,35 +82,9 @@ export class SelectElement extends LitElement {
             if (current) this.selectedChip(current);
         });
     }
-
-    private uiSelectedAnnotation(index: number) {
-        let annotation = this.annotationlist_array[index];
-        this.selectedAnnotation(annotation);
-        NetUtil.count(this.chip_current.name, annotation.id);
-    }
-    private refreshAnnotationList() {
-        this.annotationlist_html = [];
-        this.annotationlist_array = [];
-        SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
-            let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
-            this.annotation_current = current;
-            this.annotationlist_html = html;
-            this.annotationlist_array = array;
-
-            if (current) {
-                this.selectedAnnotation(current);
-                NetUtil.count(this.chip_current.name, current.id);
-            } else {
-                this.selectedAnnotation(SelectElement.dummyAnnotation);
-                NetUtil.count(this.chip_current.name, 0);
-            }
-        });
-    }
-
-
-    private static async fetchChipList(): Promise<Chip[]> {
+    private static fetchChipList(): Promise<Chip[]> {
         return new Promise<Chip[]>(resolve => {
-            NetUtil.get("https://misdake.github.io/ChipAnnotationList/list.json", text => {
+            NetUtil.get('https://misdake.github.io/ChipAnnotationList/list.json', text => {
                 let chips = JSON.parse(text) as Chip[];
                 resolve(chips);
             });
@@ -144,14 +96,14 @@ export class SelectElement extends LitElement {
         let selections: TemplateResult[] = [];
         let selection_chip: Chip[] = [];
 
-        let sortMap: { [key: string]: Chip } = {};
+        let sortChip: { [key: string]: Chip } = {};
         let sortKeys: string[] = [];
 
         if (chips && chips.length) {
             for (let chip of chips) {
                 let id = `${chip.vendor} ${chip.type} ${chip.family} ${chip.name}`;
                 sortKeys.push(id);
-                sortMap[id] = chip;
+                sortChip[id] = chip;
 
                 name_chip[chip.name] = chip;
             }
@@ -162,7 +114,7 @@ export class SelectElement extends LitElement {
         let last_VenderType = "";
         let last_Family = "";
         for (let key of sortKeys) {
-            let chip = sortMap[key];
+            let chip = sortChip[key];
             let curr_VenderType = `${chip.vendor} ${chip.type}`;
             let curr_Family = `${chip.family}`;
             let name = chip.listname ? chip.listname : chip.name;
@@ -190,69 +142,112 @@ export class SelectElement extends LitElement {
         return {html: selections, array: selection_chip, current: current};
     }
 
-    private static fetchMap(chip: Chip): Promise<Map> {
-        return new Promise<Map>(resolve => {
-            NetUtil.get(chip.url + "/content.json", mapDesc => {
-                let map: Map = JSON.parse(mapDesc) as Map;
-                resolve(map);
+    //select chip
+
+    private uiSelectedChip(index: number) {
+        let chip = this.chiplist_array[index];
+        if (chip) {
+            this.selectedChip(chip);
+        }
+    }
+    private selectedChip(chip: Chip) {
+        this.chip_name_toload = chip ? chip.name : '';
+        this.chip_current = chip;
+        if (this.onSelectChip) this.onSelectChip(chip);
+        this.annotationlist_html = [];
+        this.annotationlist_array = [];
+        this.annotation_current = null;
+        this.replaceUrl();
+
+        if (chip) {
+            SelectElement.fetchChipDetail(chip).then(chipDetail => {
+                this.chip_content_current = chipDetail;
+                if (this.onSelectChipContent) this.onSelectChipContent(chipDetail);
+                let save = this.annotation_id_toload;
+                this.selectedAnnotation(SelectElement.getDummyAnnotation());
+                this.annotation_id_toload = save;
+                this.replaceUrl();
+                this.refreshAnnotationList();
             });
+        }
+    }
+    private refreshAnnotationList() {
+        this.annotationlist_html = [];
+        this.annotationlist_array = [];
+        AnnotationApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
+            let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
+            this.annotation_current = current;
+            this.annotationlist_html = html;
+            this.annotationlist_array = array;
+
+            if (current) {
+                this.selectedAnnotation(current);
+            } else {
+                this.selectedAnnotation(SelectElement.getDummyAnnotation());
+            }
         });
     }
 
-    private static fetchAnnotationList(map: Map): Promise<Annotation[]> {
-        return new Promise<Annotation[]>((resolve, reject) => {
-            if (map && map.githubRepo && map.githubIssueId) {
-                Github.getComments(map.githubRepo, map.githubIssueId, comments => {
-                    let result: Annotation[] = [];
-                    for (let comment of comments) {
-                        try {
-                            let data: Data = JSON.parse(comment.body);
-                            if (data.polylines != null && data.texts != null) {
-                                if (data.title == null || data.title == "") {
-                                    data.title = "untitled";
-                                }
-                                result.push({id: comment.id, user: comment.user.login, content: data});
-                            }
-                        } catch (e) {
-                        }
-                    }
-                    resolve(result);
-                });
-            } else {
-                reject();
-            }
+    //select annotation
+
+    private uiSelectedAnnotation(index: number) {
+        let annotation = this.annotationlist_array[index];
+        this.selectedAnnotation(annotation);
+    }
+    private selectedAnnotation(annotation: Annotation) {
+        this.annotation_id_toload = annotation ? annotation.aid : 0;
+        this.annotation_current = annotation;
+        if (annotation.aid > 0) {
+            //TODO solve async
+            AnnotationApi.getAnnotationContent(annotation.aid).then(content => {
+                let data = JSON.parse(content.content) as AnnotationData;
+                if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+                this.replaceUrl();
+            });
+        } else {
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy());
+            this.replaceUrl();
+        }
+    }
+
+    private static fetchChipDetail(chip: Chip): Promise<ChipContent> {
+        return new Promise<ChipContent>(resolve => {
+            NetUtil.get(chip.url + '/content.json', json => {
+                let chipContent: ChipContent = JSON.parse(json) as ChipContent;
+                resolve(chipContent);
+            });
         });
     }
     private static showAnnotationList(annotations: Annotation[], annotation_current_id: number): { html: TemplateResult[], array: Annotation[], current: Annotation } {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
 
-        options.push(html`<option>(annotation count: ${annotations.length})</option>`);
-        array.push(SelectElement.dummyAnnotation);
+        options.push(html`
+            <option>(annotation count: ${annotations.length})</option>`);
+        array.push(SelectElement.getDummyAnnotation());
 
         let current: Annotation = null;
         for (let annotation of annotations) {
-            let data = annotation.content;
-            if (data.polylines != null && data.texts != null) {
-                if (data.title == null || data.title == "") {
-                    data.title = "untitled";
-                }
-
-                if (annotation_current_id === annotation.id) {
-                    current = annotation;
-                    options.push(html`<option selected>${data.title} @${annotation.user}</option>`);
-                } else {
-                    options.push(html`<option>${data.title} @${annotation.user}</option>`);
-                }
-                array.push(annotation);
+            if (!annotation.title) {
+                annotation.title = 'untitled';
             }
+
+            if (annotation_current_id === annotation.aid) {
+                current = annotation;
+                options.push(html`
+                    <option selected>${annotation.title} @${annotation.userName}</option>`);
+            } else {
+                options.push(html`
+                    <option>${annotation.title} @${annotation.userName}</option>`);
+            }
+            array.push(annotation);
         }
 
         return {html: options, array: array, current: current}
     }
 
     render() {
-        let source = this.map_current ? html`<a id="imageSource" target="_blank" href="${this.map_current.source}">${this.map_current.source}</a>` : html``;
+        let source = this.chip_content_current ? html`<a id="imageSource" target="_blank" href="${this.chip_content_current.source}">${this.chip_content_current.source}</a>` : html``;
 
         return html`
             <div style="max-width: 100%">

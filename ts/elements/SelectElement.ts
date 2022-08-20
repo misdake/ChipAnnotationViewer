@@ -2,7 +2,7 @@ import { customElement, html, LitElement, property, TemplateResult } from 'lit-e
 import { Chip, ChipContent } from '../data/Chip';
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
-import { AnnotationApi } from '../data/AnnotationApi';
+import { ClientApi } from '../data/ClientApi';
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
@@ -174,7 +174,7 @@ export class SelectElement extends LitElement {
     private refreshAnnotationList() {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
-        AnnotationApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
+        ClientApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
             let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;
             this.annotationlist_html = html;
@@ -199,7 +199,7 @@ export class SelectElement extends LitElement {
         this.annotation_current = annotation;
         if (annotation.aid > 0) {
             //TODO solve async
-            AnnotationApi.getAnnotationContent(annotation.aid).then(content => {
+            ClientApi.getAnnotationContent(annotation.aid).then(content => {
                 let data = JSON.parse(content.content) as AnnotationData;
                 if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
                 this.replaceUrl();

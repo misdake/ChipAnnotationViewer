@@ -11,6 +11,8 @@ function getToken() {
     return token && token !== 'undefined' ? token : null;
 }
 
+const openedWindows : Window[] = [];
+
 export class ClientApi {
     private static get<T>(url: string): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -37,7 +39,19 @@ export class ClientApi {
         });
     }
 
-    static getLogin(): Promise<UserInfo> {
+    static openLoginTab() {
+        let newWindow = window.open(`${API_SERVER}/login/github`, '_blank');
+        openedWindows.push(newWindow);
+        newWindow.focus();
+    }
+    static closeAllLoginTabs() {
+        for (let w of openedWindows) {
+            w.close();
+        }
+        openedWindows.length = 0;
+    }
+
+    static getCurrentLogin(): Promise<UserInfo> {
         return ClientApi.get(`${API_SERVER}/login/get`);
     }
 

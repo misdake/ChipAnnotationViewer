@@ -1,31 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <script>
+        const SERVER = "TODO";
+
+        function onToken(token) {
+            // console.log(request.responseText);
+            localStorage.setItem("chipannotation-token", token);
+
+            document.getElementById("message-text").innerText = "Login successful";
+            document.getElementById("load-image").style.display = "none";
+            let text = document.getElementById("countdown-text");
+
+            let countdown = 5;
+            let count = () => {
+                if (countdown === 0) {
+                    clearInterval(interval);
+                    let win = window.open("", "_self");
+                    win.close();
+                    return;
+                }
+                text.style.display = "block";
+                text.innerText = `Closing this page in ${countdown} seconds`;
+                countdown--;
+            };
+            count();
+            let interval = setInterval(count, 1000);
+        }
+
         let url_string = window.location.href;
         let url = new URL(url_string);
 
         let code = url.searchParams.get("code");
-        let token = url.searchParams.get("token");
 
         if (code) {
+            url.searchParams.delete("code");
+            history.replaceState(null, '', url);
             let request = new XMLHttpRequest();
-            request.onreadystatechange = function () {
+            request.onreadystatechange = () => {
                 if (request.readyState === 4 && request.status === 200) {
-                    console.log(request.responseText);
-                    localStorage.setItem("chipannotation-token", request.responseText);
-                    window.close();
+                    onToken(request.responseText);
                 }
             };
-            request.open("GET", `http://localhost:8082/login/github/callback?code=${code}`, true);
+            request.onerror = () => {
+                document.getElementById("message-text").innerText = "Login failed";
+            };
+            request.open("GET", `${SERVER}/login/github/callback?code=${code}`, true);
             request.send();
-        } else if (token) {
-            window.location.href = "index.html";
         } else {
             window.location.href = "index.html";
         }
     </script>
+
 </head>
-<body>
+<body style="width: 100%; height: 100vh; padding: 0; margin: 0;">
+
+<div id="message" style="top: 0; bottom: 0; left: 0; right: 0; margin: auto; width: fit-content; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <h1 id="message-text">Logging in via GitHub ...</h1>
+    <img id="load-image" src="res/loading_spin.svg" alt="loading" style="width: 200px; height: 200px;">
+    <h1 id="countdown-text" style="display: none">Closing this page in 5 seconds</h1>
+</div>
+
 </body>
 </html>

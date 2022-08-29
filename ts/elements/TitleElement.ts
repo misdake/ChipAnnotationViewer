@@ -21,7 +21,7 @@ export class TitleElement extends LitElement {
     userId: number;
 
     private getLogin() {
-        ClientApi.getLogin().then(({userName, userId}) => {
+        ClientApi.getCurrentLogin().then(({userName, userId}) => {
             this.userName = userName;
             this.userId = userId;
         });
@@ -36,6 +36,7 @@ export class TitleElement extends LitElement {
             if (e.key === 'chipannotation-token' && e.newValue) {
                 this.getLogin();
             }
+            ClientApi.closeAllLoginTabs();
         });
     }
 
@@ -72,7 +73,7 @@ export class TitleElement extends LitElement {
     }
 
     private onClickLogin() {
-        window.open(`http://localhost:8082/login/github`, '_blank').focus();
+        ClientApi.openLoginTab();
     }
 
     render() {

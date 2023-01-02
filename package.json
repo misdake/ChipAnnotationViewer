@@ -22,11 +22,11 @@
   },
   "devDependencies": {
     "@types/hammerjs": "^2.0.36",
-    "ts-loader": "^5.3.3",
+    "ts-loader": "^9.4.2",
     "tslib": "^1.9.3",
     "typescript": "^3.4.1",
-    "webpack": "^4.38.0",
-    "webpack-cli": "^3.3.6",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^3.7.2"
   }
 }

@@ -11,7 +11,7 @@ export class LayerImage extends Layer {
 
     private map: Map;
     private maxLevel: number;
-    private baseFolder: string;
+    private baseFolder: string; // without final '/'
 
     public constructor(canvas: Canvas) {
         super(LayerName.IMAGE, canvas);
@@ -22,10 +22,14 @@ export class LayerImage extends Layer {
         this.map = map;
         this.maxLevel = map.maxLevel;
 
-        let split = map.githubRepo.indexOf('/');
-        let username = map.githubRepo.substring(0, split);
-        let repo = map.githubRepo.substring(split + 1);
-        this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
+        if (map.imageRoot) {
+            this.baseFolder = map.imageRoot;
+        } else {
+            let split = map.githubRepo.indexOf('/');
+            let username = map.githubRepo.substring(0, split);
+            let repo = map.githubRepo.substring(split + 1);
+            this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
+        }
         this.currentZoom = -1;
     }
 
@@ -64,7 +68,7 @@ export class LayerImage extends Layer {
             this.imageMatrix[i] = [];
             for (let j = 0; j < this.yCount; j++) {
                 this.imageMatrix[i][j] = new DrawableImage(
-                    this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg",
+                    `${this.baseFolder}/${zoom}/${i}_${j}.jpg`,
                     i * targetSize, j * targetSize,
                     targetSize, targetSize,
                     _ => {

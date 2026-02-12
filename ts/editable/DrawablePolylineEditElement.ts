@@ -3,7 +3,7 @@ import {DrawablePolyline} from "./DrawablePolyline";
 import {Canvas} from "../Canvas";
 import {ChipContent} from "../data/Chip";
 import {AlphaEntry, ColorEntry} from "../util/Color";
-import "elements/ColorAlphaElement"
+import "../elements/ColorAlphaElement"
 import {Selection, SelectType} from "../layers/Selection";
 
 @customElement('polylineedit-element')

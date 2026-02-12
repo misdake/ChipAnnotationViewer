@@ -9,13 +9,14 @@ export class Chip {
     type: string;
     family: string;
     name: string;
-    listname?: string; //may be undefined
+    listname?: string;
 
     url: string;
 }
 
 export class ChipContent {
     source:string;
+    imageRoot?: string;
     githubRepo: string;
     githubIssueId: number;
 

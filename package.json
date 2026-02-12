@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "description": "",
   "main": "app.js",
+  "engines": {
+    "node": "24"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/misdake/ChipAnnotationViewer.git"
@@ -12,8 +15,8 @@
   },
   "homepage": "https://github.com/misdake/ChipAnnotationViewer#readme",
   "scripts": {
-    "build": "webpack --env.production",
-    "dev": "webpack-dev-server"
+    "build": "webpack --mode production",
+    "dev": "webpack serve --mode development"
   },
   "dependencies": {
     "hammerjs": "^2.0.8",
@@ -21,12 +24,11 @@
     "lit-html": "^1.1.2"
   },
   "devDependencies": {
-    "@types/hammerjs": "^2.0.36",
-    "ts-loader": "^5.3.3",
-    "tslib": "^1.9.3",
-    "typescript": "^3.4.1",
-    "webpack": "^4.38.0",
-    "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.7.2"
+    "@types/hammerjs": "^2.0.46",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.105.2",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.3"
   }
 }

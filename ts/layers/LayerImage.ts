@@ -11,7 +11,7 @@ export class LayerImage extends Layer {
 
     private chip: ChipContent;
     private maxLevel: number;
-    private baseFolder: string;
+    private baseFolder: string; // without final '/'
 
     public constructor(canvas: Canvas) {
         super(LayerName.IMAGE, canvas);
@@ -22,10 +22,14 @@ export class LayerImage extends Layer {
         this.chip = chip;
         this.maxLevel = chip.maxLevel;
 
-        let split = chip.githubRepo.indexOf('/');
-        let username = chip.githubRepo.substring(0, split);
-        let repo = chip.githubRepo.substring(split + 1);
-        this.baseFolder = `https://${username}.github.io/${repo}/` + this.chip.name;
+        if (chip.imageRoot) {
+            this.baseFolder = chip.imageRoot;
+        } else {
+            let split = chip.githubRepo.indexOf('/');
+            let username = chip.githubRepo.substring(0, split);
+            let repo = chip.githubRepo.substring(split + 1);
+            this.baseFolder = `https://${username}.github.io/${repo}/` + this.chip.name;
+        }
         this.currentZoom = -1;
     }
 
@@ -64,7 +68,7 @@ export class LayerImage extends Layer {
             this.imageMatrix[i] = [];
             for (let j = 0; j < this.yCount; j++) {
                 this.imageMatrix[i][j] = new DrawableImage(
-                    this.baseFolder + "/" + zoom + "/" + i + "_" + j + ".jpg",
+                    `${this.baseFolder}/${zoom}/${i}_${j}.jpg`,
                     i * targetSize, j * targetSize,
                     targetSize, targetSize,
                     _ => {

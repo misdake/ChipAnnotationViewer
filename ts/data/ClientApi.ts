@@ -75,7 +75,7 @@ export class ClientApi {
     static updateAnnotation(aid: number, title: string, content: string): Promise<Annotation> {
         return ClientApi.post(`${API_SERVER}/annotation/update/${aid}`, {title, content, version: ANNOTATION_CONTENT_VERSION});
     }
-    static deleteComment(aid: number): Promise<boolean> {
+    static deleteAnnotation(aid: number): Promise<boolean> {
         return ClientApi.get(`${API_SERVER}/annotation/delete/${aid}`);
     }
 }

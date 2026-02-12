@@ -11,13 +11,11 @@ module.exports = env => {
             rules: [
                 {
                     test: /\.tsx?$/,
-                    use: 'ts-loader',
-                    exclude: /node_modules/
+                    use: 'ts-loader'
                 }
             ]
         },
         resolve: {
-            modules: ["ts", "node_modules"],
             extensions: ['.ts', '.js', '.html']
         },
         output: {
@@ -26,12 +24,11 @@ module.exports = env => {
         },
         externals: {},
         devServer: {
-            publicPath: "/",
-            contentBase: path.join(__dirname, 'dist'),
+            static: path.join(__dirname, 'dist'),
             open: true,
             hot: true,
             compress: true,
-            port: 9000
+            port: 3000
         },
     };
 };

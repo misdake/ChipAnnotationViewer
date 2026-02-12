@@ -83,7 +83,7 @@ export class TitleElement extends LitElement {
         }
 
         let helloLine = this.userId > 0 ? html`Hello ${this.userName}` : html`
-            <button @click="${this.onClickLogin}">Login</button>`; //TODO 'login via githubt' button
+            <button @click="${this.onClickLogin}">Login</button>`; //TODO 'login via github' button
 
         let auth = this.userId > 0 && (this.annotation.aid === 0 || this.annotation.userId == this.userId);
         let buttonText = `${this.annotation && this.annotation.aid ? 'update' : 'create new'} annotation`;

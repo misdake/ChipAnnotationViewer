@@ -6,7 +6,7 @@ import {Data} from "./data/Data";
 import {Ui} from "./util/Ui";
 import "hammerjs";
 import {html, render} from "lit-html";
-import "elements/ZoomElement"
+import "./elements/ZoomElement"
 import {LayerName} from "./layers/Layers";
 import {Editor, UsageType} from "./editors/Editor";
 import {EditorName} from "./editors/Editors";

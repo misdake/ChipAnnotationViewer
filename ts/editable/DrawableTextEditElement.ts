@@ -2,7 +2,7 @@ import {customElement, html, LitElement, property} from "lit-element";
 import {DrawableText} from "./DrawableText";
 import {Canvas} from "../Canvas";
 import {AlphaEntry, ColorEntry} from "../util/Color";
-import "elements/ColorAlphaElement"
+import "../elements/ColorAlphaElement"
 import {Selection, SelectType} from "../layers/Selection";
 
 @customElement('textedit-element')

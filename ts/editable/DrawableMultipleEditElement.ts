@@ -1,7 +1,7 @@
 import {customElement, html, LitElement, property} from "lit-element";
 import {Canvas} from "../Canvas";
 import {AlphaEntry, ColorEntry} from "../util/Color";
-import "elements/ColorAlphaElement"
+import "../elements/ColorAlphaElement"
 import {Selection} from "../layers/Selection";
 import {Drawable} from "../drawable/Drawable";
 import {EditableColor, EditableDeleteClone, EditableMove, editableMultiple} from "./Editable";

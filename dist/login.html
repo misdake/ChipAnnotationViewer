@@ -4,10 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script>
-        const SERVER = "TODO";
+        const SERVER = "http://localhost:8082";
 
         function onToken(token) {
-            // console.log(request.responseText);
             localStorage.setItem("chipannotation-token", token);
 
             document.getElementById("message-text").innerText = "Login successful";

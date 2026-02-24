@@ -22,6 +22,7 @@ export class TitleElement extends LitElement {
 
     private getLogin() {
         ClientApi.getCurrentLogin().then(({userName, userId}) => {
+            console.log('login:', userName, userId);
             this.userName = userName;
             this.userId = userId;
         });
@@ -85,7 +86,7 @@ export class TitleElement extends LitElement {
         let helloLine = this.userId > 0 ? html`Hello ${this.userName}` : html`
             <button @click="${this.onClickLogin}">Login</button>`; //TODO 'login via github' button
 
-        let auth = this.userId > 0 && (this.annotation.aid === 0 || this.annotation.userId == this.userId);
+        let auth = this.userId > 0 && this.annotation && (this.annotation.aid === 0 || this.annotation.userId == this.userId);
         let buttonText = `${this.annotation && this.annotation.aid ? 'update' : 'create new'} annotation`;
         let uploadLine = auth ? html`
             <button class="configButton" @click="${this.uploadAnnotation}">${buttonText}</button>` : html``;

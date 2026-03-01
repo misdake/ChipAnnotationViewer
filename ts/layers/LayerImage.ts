@@ -18,18 +18,11 @@ export class LayerImage extends Layer {
     }
 
     public loadMap(env: Env): void {
+        let chip = env.chip;
         let map = env.map;
         this.map = map;
         this.maxLevel = map.maxLevel;
-
-        if (map.imageRoot) {
-            this.baseFolder = map.imageRoot;
-        } else {
-            let split = map.githubRepo.indexOf('/');
-            let username = map.githubRepo.substring(0, split);
-            let repo = map.githubRepo.substring(split + 1);
-            this.baseFolder = `https://${username}.github.io/${repo}/` + this.map.name;
-        }
+        this.baseFolder = chip.url;
         this.currentZoom = -1;
     }
 

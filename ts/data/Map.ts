@@ -16,7 +16,6 @@ export class Chip {
 
 export class Map {
     source:string;
-    imageRoot?: string;
     githubRepo: string;
     githubIssueId: number;
 

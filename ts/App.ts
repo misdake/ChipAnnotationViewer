@@ -132,6 +132,7 @@ class App {
     onSelectChip(chip: Chip) {
         this.chip = chip;
         this.refresh();
+        canvas.env.loadChip(chip);
         Selection.deselectAny();
         canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
     }
@@ -139,6 +140,7 @@ class App {
     onSelectMap(map: Map) {
         this.map = map;
         this.refresh();
+        canvas.env.loadMap(map);
         canvas.loadMap(map);
         Selection.deselectAny();
         canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);

@@ -276,8 +276,6 @@ export class Canvas {
             this.map = map;
             this.camera.load(this, map);
 
-            this.env.loadMap(map);
-
             for (let layer of this.layers) {
                 layer.loadMap(this.env);
             }

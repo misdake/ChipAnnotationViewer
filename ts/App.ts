@@ -1,23 +1,23 @@
-import {Canvas} from "./Canvas";
-import {Chip, Map} from "./data/Map";
-import {Annotation} from "./data/Data";
-import {Ui} from "./util/Ui";
-import {html, render} from "lit-html";
+import { Canvas } from "./Canvas";
+import { Chip, Map } from "./data/Map";
+import { Annotation } from "./data/Data";
+import { Ui } from "./util/Ui";
+import { html, render } from "lit-html";
 import "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
 import "./editable/DrawableMultipleEditElement";
-import {Selection, SelectType} from "./layers/Selection";
-import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
-import {DrawableText, DrawableTextPack} from "./editable/DrawableText";
-import {Layers} from "./layers/Layers";
-import {EditorName, Editors} from "./editors/Editors";
-import {Size} from "./util/Size";
-import {Drawable} from "./drawable/Drawable";
-import {MultipleEdit} from "./editable/DrawableMultipleEditElement";
-import {EditablePick} from "./editable/Editable";
-import {EditorCameraControl} from "./editors/EditorCameraControl";
+import { Selection, SelectType } from "./layers/Selection";
+import { DrawablePolyline, DrawablePolylinePack } from "./editable/DrawablePolyline";
+import { DrawableText, DrawableTextPack } from "./editable/DrawableText";
+import { Layers } from "./layers/Layers";
+import { EditorName, Editors } from "./editors/Editors";
+import { Size } from "./util/Size";
+import { Drawable } from "./drawable/Drawable";
+import { MultipleEdit } from "./editable/DrawableMultipleEditElement";
+import { EditablePick } from "./editable/Editable";
+import { EditorCameraControl } from "./editors/EditorCameraControl";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -198,7 +198,7 @@ function interceptKeys(evt: KeyboardEvent) {
 }
 
 interface CopyFormat {
-    content: "ChipAnnotationViewr Copy",
+    content: "ChipAnnotationViewer Copy",
     version1: 2,
     version2: 0,
     polylines: DrawablePolylinePack[],
@@ -206,7 +206,7 @@ interface CopyFormat {
 }
 
 const defaultCopy: CopyFormat = {
-    content: "ChipAnnotationViewr Copy",
+    content: "ChipAnnotationViewer Copy",
     version1: 2,
     version2: 0,
     polylines: [],
@@ -241,7 +241,7 @@ function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectT
     obj.texts = texts.map(text => text.pack());
 
     if (deleteOrigin) {
-        let newPolylines = polylines.filter(polyline => polylines.indexOf(polyline) < 0);
+        let newPolylines = canvas.env.polylines.filter(polyline => polylines.indexOf(polyline) < 0);
         canvas.env.polylines.length = 0;
         canvas.env.polylines.push(...newPolylines);
         let newTexts = canvas.env.texts.filter(text => texts.indexOf(text) < 0);

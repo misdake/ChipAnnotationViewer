@@ -213,7 +213,8 @@ export class SelectElement extends LitElement {
                                 }
                                 result.push({id: comment.id, user: comment.user.login, content: data});
                             }
-                        } catch (e) {
+                        } catch (_e) {
+                            // if anything goes wrong, ignore it, it's not a valid annotation
                         }
                     }
                     resolve(result);

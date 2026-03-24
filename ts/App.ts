@@ -18,6 +18,7 @@ import { Drawable } from "./drawable/Drawable";
 import { MultipleEdit } from "./editable/DrawableMultipleEditElement";
 import { EditablePick } from "./editable/Editable";
 import { EditorCameraControl } from "./editors/EditorCameraControl";
+import packageJson from "../package.json";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -182,33 +183,41 @@ function interceptKeys(evt: KeyboardEvent) {
 
     // @ts-ignore
     evt = evt || window.event; // IE support
-    var c = evt.keyCode;
-    var ctrlDown = evt.ctrlKey || evt.metaKey; // Mac support
+    let ctrlDown = evt.ctrlKey || evt.metaKey; // Mac support
 
     // Check for Alt+Gr (http://en.wikipedia.org/wiki/AltGr_key)
     if (ctrlDown && evt.altKey) return true;
 
     // Check for ctrl+c, v and x
-    else if (ctrlDown && c == 67) return ctrlC(); // c
-    else if (ctrlDown && c == 86) return ctrlV(); // v
-    else if (ctrlDown && c == 88) return ctrlX(); // x
+    else if (ctrlDown && evt.key === 'c') return ctrlC();
+    else if (ctrlDown && evt.key === 'v') return ctrlV();
+    else if (ctrlDown && evt.key === 'x') return ctrlX();
 
     // Otherwise allow
     return true;
 }
 
+const COPY_TY = "ChipAnnotationViewer Copy";
+const COPY_VERSION = packageJson.version;
+
 interface CopyFormat {
-    content: "ChipAnnotationViewer Copy",
-    version1: 2,
-    version2: 0,
-    polylines: DrawablePolylinePack[],
-    texts: DrawableTextPack[],
+    ty: string;
+    version: string;
+    polylines: DrawablePolylinePack[];
+    texts: DrawableTextPack[];
+}
+
+function isValidCopy(c: unknown): c is CopyFormat {
+    return c !== null && c !== undefined
+        && typeof (c as CopyFormat).ty === 'string'
+        && typeof (c as CopyFormat).version === 'string'
+        && (c as CopyFormat).ty === COPY_TY
+        && (c as CopyFormat).version === COPY_VERSION;
 }
 
 const defaultCopy: CopyFormat = {
-    content: "ChipAnnotationViewer Copy",
-    version1: 2,
-    version2: 0,
+    ty: COPY_TY,
+    version: COPY_VERSION,
     polylines: [],
     texts: [],
 };
@@ -280,12 +289,12 @@ function ctrlV() {
     console.log("ctrlV");
 
     navigator.clipboard.readText().then(str => {
-        let c: CopyFormat = undefined;
+        let c: unknown = undefined;
         try {
-            c = JSON.parse(str) as CopyFormat;
+            c = JSON.parse(str);
         } catch (e) {
         }
-        if (c && c.content === defaultCopy.content && c.version1 === defaultCopy.version1 && c.version2 === defaultCopy.version2) {
+        if (c && isValidCopy(c)) {
             let newDrawables: Drawable[] = [];
 
             for (let polyline of c.polylines) {

@@ -167,11 +167,18 @@ function showToast(content: string) {
 
     let element = document.getElementById("toast");
     if (element) {
-        element.style.display = "block";
+        element.classList.remove("hiding");
+        element.classList.add("visible");
         element.innerText = content;
+        element.style.display = "block";
         toastTimeout = setTimeout(() => {
-            element.style.display = "none";
-            element.innerText = "";
+            element.classList.remove("visible");
+            element.classList.add("hiding");
+            setTimeout(() => {
+                element.classList.remove("hiding");
+                element.innerText = "";
+                element.style.display = "none";
+            }, 300);
         }, 2000);
     }
 }

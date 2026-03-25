@@ -27,8 +27,8 @@ html {
 
 select {
     min-width: 150px;
-    height: 36px;
-    padding: 8px 12px;
+    height: 24px;
+    padding: 0;
     background: var(--surface-color);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
@@ -126,8 +126,13 @@ select:focus {
     align-items: center;
 }
 
-#imageSource {
-    display: inline-block;
+.imageSource {
+    margin-left: 4px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.imageSourceLabel {
     color: var(--text-secondary);
     font-size: 12px;
 }

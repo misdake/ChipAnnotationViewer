@@ -57,7 +57,7 @@ export class MultipleEdit extends LitElement {
 
         return html`
             <button class="configButton" @click=${() => this.delete(editable)}>Delete Selected</button><br>
-            <button class="configButton" @click=${() => this.copy(editable)}>Copy Selected</button><br>
+            <button class="configButton" @click=${() => this.copy(editable)}>Clone Selected</button><br>
             
             <button class="iconButton" @click=${() => this.rotateCCW(editable)} title="Rotate CCW">${rotateCCWIcon}</button>
             <button class="iconButton" @click=${() => this.rotateCW(editable)}  title="Rotate CW">${rotateCWIcon}</button>

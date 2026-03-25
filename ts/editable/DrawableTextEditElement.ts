@@ -40,13 +40,15 @@ export class TextEdit extends LitElement {
     render() {
         return html`
             <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button><br>
-            <button class="configButton" @click=${() => this.copyText()}>Copy Text</button><br>
+            <button class="configButton" @click=${() => this.copyText()}>Clone Text</button><br>
 
             Text<br>
             <input class="configText" type="text" style="width:10em" .value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
 
             <div>Color</div>
             <coloralpha-element
+                .currentColor=${this.text.color}
+                .currentAlpha=${this.text.alpha}
                 .setColor=${(color: ColorEntry) => {
                 this.text.setColorAlpha(color, undefined);
                 this.canvas.requestRender();

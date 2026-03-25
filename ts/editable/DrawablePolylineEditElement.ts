@@ -114,6 +114,8 @@ export class PolylineEdit extends LitElement {
 
             <div>Stroke Color</div>
             <coloralpha-element
+                .currentColor=${this.polyline.style.strokeColor}
+                .currentAlpha=${this.polyline.style.strokeAlpha}
                 .setColor=${(color: ColorEntry) => {
                 this.polyline.style.setStrokeColor(color, undefined);
                 this.canvas.requestRender();
@@ -125,6 +127,8 @@ export class PolylineEdit extends LitElement {
             ></coloralpha-element>
             <div>Fill Color</div>
             <coloralpha-element
+                .currentColor=${this.polyline.style.fillColor}
+                .currentAlpha=${this.polyline.style.fillAlpha}
                 .setColor=${(color: ColorEntry) => {
                 this.polyline.style.setFillColor(color, undefined);
                 this.canvas.requestRender();

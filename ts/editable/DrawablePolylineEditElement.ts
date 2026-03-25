@@ -1,10 +1,11 @@
-import {customElement, html, LitElement, property} from "lit-element";
-import {DrawablePolyline} from "./DrawablePolyline";
-import {Canvas} from "../Canvas";
-import {Map} from "../data/Map";
-import {AlphaEntry, ColorEntry} from "../util/Color";
+import { customElement, html, LitElement, property } from "lit-element";
+import { DrawablePolyline } from "./DrawablePolyline";
+import { Canvas } from "../Canvas";
+import { Map } from "../data/Map";
+import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
-import {Selection, SelectType} from "../layers/Selection";
+import { Selection, SelectType } from "../layers/Selection";
+import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
@@ -83,50 +84,65 @@ export class PolylineEdit extends LitElement {
 
     render() {
         return html`
-            <button class="configButton" @click=${() => this.deletePolyline()}>delete polyline</button><br>
-            <button class="configButton" @click=${() => this.copyPolyline()}>copy polyline</button><br>
+            <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button><br>
+            <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button><br>
             <span id="polylineAreaContainer">
-                <button class="configButton" @click=${() => this.calcArea()}>area/length</button>
+                <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
                 <span id="polylineTextArea">${this.area}</span>
                 <br>
             </span>
 
-            <button class="configButton" @click=${() => this.rotateCCW()} >rotate ccw</button>
-            <button class="configButton" @click=${() => this.rotateCW()}  >rotate cw</button>
-            <button class="configButton" @click=${() => this.flipX()}     >flip x</button>
-            <button class="configButton" @click=${() => this.flipY()}     >flip y</button>
+            <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
+            <button class="iconButton" @click=${() => this.rotateCW()}  title="Rotate CW">${rotateCWIcon}</button>
+            <button class="iconButton" @click=${() => this.flipX()}     title="Flip X">${flipXIcon}</button>
+            <button class="iconButton" @click=${() => this.flipY()}     title="Flip Y">${flipYIcon}</button>
 
-            <br>
+            <div class="checkboxRow">
+                <label class="checkboxLabel">
+                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { fill: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.fill}">
+                    Fill
+                </label>
+                <label class="checkboxLabel">
+                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { stroke: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.stroke}">
+                    Stroke
+                </label>
+                <label class="checkboxLabel">
+                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { closed: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.closed}">
+                    Closed
+                </label>
+            </div>
 
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {fill: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.fill}" >fill<br>
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {stroke: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.stroke}" >stroke<br>
-            <input class="configCheckbox" type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, {closed: (<HTMLInputElement>ev.target).checked})} .checked="${this.polyline.style.closed}" >closed<br>
-
-            <div>strokeColor</div>
+            <div>Stroke Color</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-                    this.polyline.style.setStrokeColor(color, undefined);
-                    this.canvas.requestRender();
-                }}
+                this.polyline.style.setStrokeColor(color, undefined);
+                this.canvas.requestRender();
+            }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                    this.polyline.style.setStrokeColor(undefined, alpha);
-                    this.canvas.requestRender();
-                }}
+                this.polyline.style.setStrokeColor(undefined, alpha);
+                this.canvas.requestRender();
+            }}
             ></coloralpha-element>
-            <div>fillColor</div>
+            <div>Fill Color</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-                    this.polyline.style.setFillColor(color, undefined);
-                    this.canvas.requestRender();
-                }}
+                this.polyline.style.setFillColor(color, undefined);
+                this.canvas.requestRender();
+            }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                    this.polyline.style.setFillColor(undefined, alpha);
-                    this.canvas.requestRender();
-                }}
+                this.polyline.style.setFillColor(undefined, alpha);
+                this.canvas.requestRender();
+            }}
             ></coloralpha-element>
 
-            <input class="configText" type="number" min=0 style="width:5em" .value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
-            <input class="configText" type="number" min=0 style="width:5em" .value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
+            <div class="sizeInput">
+                <input type="number" min=0 .value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, { screen: (<HTMLInputElement>ev.target).value })}>
+                <label>Pixel on Screen</label>
+            </div>
+            <div class="sizeInput">
+                <input type="number" min=0 .value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, { canvas: (<HTMLInputElement>ev.target).value })}>
+                <label>Pixel on Canvas</label>
+            </div>
         `;
     }
 

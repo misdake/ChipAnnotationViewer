@@ -4,3 +4,5 @@
 /node_modules
 /.rpt2_cache
 /dist/app.js
+/dist/*.map
+/dist/app.js.LICENSE.txt

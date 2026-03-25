@@ -91,6 +91,8 @@ select:focus {
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     gap: 8px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .zoomButton {
@@ -130,48 +132,114 @@ select:focus {
     font-size: 12px;
 }
 
-#panel {
-    display: none;
-    float: left;
-    width: 240px;
-    height: 100%;
-    background: rgba(30, 41, 59, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    flex-flow: column;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-#panelScroll {
-    height: 100%;
-    overflow-y: auto;
-    flex: 1 1 auto;
-    padding: 10px;
-}
-
-#panelScroll::-webkit-scrollbar {
-    width: 8px;
-}
-
-#panelScroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-}
-
-#panelScroll::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 4px;
-}
-
-#panelScroll::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
-}
-
 #container {
     position: relative;
-    display: flex;
+    width: 100%;
     height: 100%;
+}
+
+#propertyPanel {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 998;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 220px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+#propertyPanel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#propertyPanel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#propertyPanel::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+#creationButtons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
+
+#hint {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 997;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 8px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    max-width: 80%;
+    transition: opacity 0.3s ease;
+}
+
+#hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hintToggleButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    margin: 4px 4px;
+}
+
+.hintToggleButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.hintToggleButton:active {
+    transform: translateY(0);
+}
+
+.hintToggleButton svg {
+    flex-shrink: 0;
+}
+
+.hintToggleButton.hintHidden {
+    background: rgba(100, 116, 139, 0.6);
+}
+
+.hintToggleButton.hintHidden:hover {
+    background: rgba(100, 116, 139, 0.8);
+    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+}
+
+.hintToggleText {
+    font-size: 14px;
 }
 
 .configButton {
@@ -217,6 +285,61 @@ select:focus {
     height: 300px;
 }
 
+.iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 4px;
+}
+
+.iconButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.iconButton:active {
+    transform: translateY(0);
+}
+
+.iconButton svg {
+    width: 20px;
+    height: 20px;
+}
+
+.checkboxRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+.checkboxLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
 .configColorAlphaContainer {
     margin: 8px 0;
     padding: 12px;
@@ -224,9 +347,34 @@ select:focus {
     border-radius: 8px;
 }
 
-.colorAlphaContainerSplit {
-    width: 0;
-    display: inline-block;
+.sizeInput {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.sizeInput label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.sizeInput input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.sizeInput input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .configColorButton {
@@ -303,16 +451,21 @@ input[type="number"]:focus {
 }
 
 #footer {
-    position: relative;
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 997;
     font-size: 14px;
     line-height: 24px;
     vertical-align: middle;
     display: flex;
     flex-flow: row;
-    justify-content: space-around;
+    /* gap: 8px; */
     flex-wrap: wrap;
-    background: rgba(15, 23, 42, 0.8);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #footer a {
@@ -321,7 +474,6 @@ input[type="number"]:focus {
     flex-flow: row;
     align-items: center;
     color: var(--text-secondary);
-    margin: 4px 0;
     padding: 8px 8px;
     border-radius: 20px;
     transition: all 0.2s ease;
@@ -335,7 +487,7 @@ input[type="number"]:focus {
 }
 
 #footer span {
-    margin-left: 2px;
+    margin-left: 6px;
     cursor: pointer;
     line-height: 24px;
     vertical-align: middle;
@@ -344,7 +496,6 @@ input[type="number"]:focus {
 .footerIcon {
     width: 20px;
     height: 20px;
-    margin-right: 8px;
     opacity: 0.8;
 }
 
@@ -430,23 +581,34 @@ input[type="number"]:focus {
 }
 
 @media (max-width: 768px) {
-    #panel {
-        width: 200px;
-    }
-
     .configButton {
-        padding: 10px 16px;
-        font-size: 13px;
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
     #selectPanel,
+    #propertyPanel,
     #cameraPanel {
-        padding: 10px;
+        padding: 8px;
         border-radius: 8px;
+    }
+
+    #propertyPanel {
+        min-width: 180px;
+        max-width: 200px;
     }
 
     .zoomButton {
         width: 36px;
         height: 36px;
+    }
+
+    #footer a span {
+        display: none;
+    }
+
+    #hint {
+        font-size: 12px;
+        padding: 6px 12px;
     }
 }

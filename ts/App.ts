@@ -24,12 +24,6 @@ let url_string = window.location.href;
 let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
 
-if (Ui.isMobile() || isReadOnly) {
-    document.getElementById("panel").style.display = "none";
-} else {
-    document.getElementById("panel").style.display = "flex";
-}
-
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
@@ -78,6 +72,30 @@ class App {
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
+
+        let hintElement = document.getElementById("hint");
+        let hintToggle = document.getElementById("hintToggle") as HTMLButtonElement;
+        let hintIconEye = document.getElementById("hintIconEye") as HTMLElement;
+        let hintIconEyeOff = document.getElementById("hintIconEyeOff") as HTMLElement;
+        if (hintToggle) {
+            hintElement.classList.add("hidden");
+            hintToggle.classList.add("hintHidden");
+            if (hintIconEye) hintIconEye.style.display = "none";
+            if (hintIconEyeOff) hintIconEyeOff.style.display = "block";
+            hintToggle.onclick = () => {
+                hintElement.classList.toggle("hidden");
+                hintToggle.classList.toggle("hintHidden");
+                if (hintIconEye && hintIconEyeOff) {
+                    if (hintElement.classList.contains("hidden")) {
+                        hintIconEye.style.display = "none";
+                        hintIconEyeOff.style.display = "block";
+                    } else {
+                        hintIconEye.style.display = "block";
+                        hintIconEyeOff.style.display = "none";
+                    }
+                }
+            };
+        }
 
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));

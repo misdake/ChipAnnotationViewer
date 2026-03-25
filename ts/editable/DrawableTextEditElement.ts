@@ -1,9 +1,9 @@
-import {customElement, html, LitElement, property} from "lit-element";
-import {DrawableText} from "./DrawableText";
-import {Canvas} from "../Canvas";
-import {AlphaEntry, ColorEntry} from "../util/Color";
+import { customElement, html, LitElement, property } from "lit-element";
+import { DrawableText } from "./DrawableText";
+import { Canvas } from "../Canvas";
+import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
-import {Selection, SelectType} from "../layers/Selection";
+import { Selection, SelectType } from "../layers/Selection";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
@@ -39,26 +39,32 @@ export class TextEdit extends LitElement {
 
     render() {
         return html`
-            <button class="configButton" @click=${() => this.deleteText()}>delete text</button><br>
-            <button class="configButton" @click=${() => this.copyText()}>copy text</button><br>
+            <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button><br>
+            <button class="configButton" @click=${() => this.copyText()}>Copy Text</button><br>
 
-            text<br>
+            Text<br>
             <input class="configText" type="text" style="width:10em" .value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
 
-            <div>color</div>
+            <div>Color</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-                    this.text.setColorAlpha(color, undefined);
-                    this.canvas.requestRender();
-                }}
+                this.text.setColorAlpha(color, undefined);
+                this.canvas.requestRender();
+            }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                    this.text.setColorAlpha(undefined, alpha);
-                    this.canvas.requestRender();
-                }}
+                this.text.setColorAlpha(undefined, alpha);
+                this.canvas.requestRender();
+            }}
             ></coloralpha-element>
 
-            <input class="configText" type="number" min=0 style="width:5em" .value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, {screen: (<HTMLInputElement>ev.target).value})}>pixel onScreen<br>
-            <input class="configText" type="number" min=0 style="width:5em" .value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, {canvas: (<HTMLInputElement>ev.target).value})}>pixel onCanvas<br>
+            <div class="sizeInput">
+                <input type="number" min=0 .value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, { screen: (<HTMLInputElement>ev.target).value })}>
+                <label>Pixel on Screen</label>
+            </div>
+            <div class="sizeInput">
+                <input type="number" min=0 .value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, { canvas: (<HTMLInputElement>ev.target).value })}>
+                <label>Pixel on Canvas</label>
+            </div>
         `;
     }
 

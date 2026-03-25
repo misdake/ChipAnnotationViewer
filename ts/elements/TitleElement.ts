@@ -1,8 +1,8 @@
-import {customElement, html, LitElement, property} from "lit-element";
-import {Annotation} from "../data/Data";
-import {Map} from "../data/Map";
-import {Canvas} from "../Canvas";
-import {Github} from "../util/GithubUtil";
+import { customElement, html, LitElement, property } from "lit-element";
+import { Annotation } from "../data/Data";
+import { Map } from "../data/Map";
+import { Canvas } from "../Canvas";
+import { Github } from "../util/GithubUtil";
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
@@ -20,7 +20,7 @@ export class TitleElement extends LitElement {
         let data = this.canvas.save();
         data.title = (document.getElementById("inputTitle") as HTMLInputElement).value;
         if (data.title == null || data.title == "") {
-            data.title = "untitled";
+            data.title = "Untitled";
         }
         let dataString = JSON.stringify(data);
 
@@ -71,10 +71,10 @@ export class TitleElement extends LitElement {
         }
 
         return html`
-            <label for="dataTitle">title</label>
+            <label for="dataTitle">Title</label>
             <input id="inputTitle" class="configText" value="${title}" style="width:10em">
             <br>
-            <button class="configButton" @click="${this.uploadAnnotation}">${this.annotation&&this.annotation.id ? "update" : "create new"} annotation</button>
+            <button class="configButton" @click="${this.uploadAnnotation}">${this.annotation && this.annotation.id ? "Update" : "Create New"} Annotation</button>
             <a href="https://github.com/misdake/ChipAnnotationViewer/blob/master/guide/contribute.md" target="_blank" class="uploadHelper" title="How to contribute">?</a>
         `;
     }

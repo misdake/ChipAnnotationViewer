@@ -360,7 +360,7 @@ export class EditorSelect extends Editor {
             let y1 = Math.min(p1.y, p2.y);
             let x2 = Math.max(p1.x, p2.x);
             let y2 = Math.max(p1.y, p2.y);
-            env.renderer.setColor("rgba(100, 149, 237, 0.3)");
+            env.renderer.setColor("rgba(100, 149, 237, 0.2)");
             env.renderer.drawRect(x1, y1, x2, y2, true, false);
             env.renderer.setColor("rgba(100, 149, 237, 1)");
             env.renderer.drawRect(x1, y1, x2, y2, false, true);

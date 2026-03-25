@@ -430,9 +430,40 @@ select:focus {
 }
 
 .configText {
-    margin: 8px 0;
+    margin: 4px;
     font-size: 14px;
     color: var(--text-secondary);
+}
+
+.titleInput {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.titleInput label {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.titleInput input[type="text"] {
+    flex: 1;
+    padding: 6px 10px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.titleInput input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 input[type="text"],

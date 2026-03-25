@@ -71,9 +71,10 @@ export class TitleElement extends LitElement {
         }
 
         return html`
-            <label for="dataTitle">Title</label>
-            <input id="inputTitle" class="configText" value="${title}" style="width:10em">
-            <br>
+            <div class="titleInput">
+                <label for="dataTitle">Title:</label>
+                <input id="inputTitle" type="text" class="configText" value="${title}">
+            </div>
             <button class="configButton" @click="${this.uploadAnnotation}">${this.annotation && this.annotation.id ? "Update" : "Create New"} Annotation</button>
             <a href="https://github.com/misdake/ChipAnnotationViewer/blob/master/guide/contribute.md" target="_blank" class="uploadHelper" title="How to contribute">?</a>
         `;

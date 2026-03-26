@@ -32,7 +32,7 @@ export class PolylineEdit extends LitElement {
     calcArea() {
         let width = this.map.widthMillimeter;
         let height = this.map.heightMillimeter;
-        let unit = this.polyline.style.fill ? "mm^2" : "mm";
+        let unit = this.polyline.style.fill ? "mm²" : "mm";
         if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
             width = this.map.width;
             height = this.map.height;

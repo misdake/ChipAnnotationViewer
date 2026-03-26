@@ -45,7 +45,7 @@ export class TextEdit extends LitElement {
             Text<br>
             <input class="configText" type="text" style="width:10em" .value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
 
-            <div>Color</div>
+            <div>Text Color</div>
             <coloralpha-element
                 .currentColor=${this.text.color}
                 .currentAlpha=${this.text.alpha}

@@ -90,10 +90,15 @@ export class EditorSelect extends Editor {
                                     Selection.select(SelectType.MULTIPLE, newArray);
                                 }
                             }
+                        } else {
+                            if (!event.ctrlKey) {
+                                Selection.deselectAny();
+                            }
                         }
 
                         self.dragging = false;
                         self.previewSelection = [];
+                        self.canvas.requestRender();
                         return true;
                     } else {
                         let { item, type } = self.pickAny(x, y, env);

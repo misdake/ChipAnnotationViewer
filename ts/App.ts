@@ -1,7 +1,6 @@
 import { Canvas } from "./Canvas";
 import { Chip, Map } from "./data/Map";
 import { Annotation } from "./data/Data";
-import { Ui } from "./util/Ui";
 import { html, render } from "lit-html";
 import "./elements/SelectElement";
 import "./elements/TitleElement";
@@ -14,7 +13,6 @@ import { Layers } from "./layers/Layers";
 import { EditorName, Editors } from "./editors/Editors";
 import { Size } from "./util/Size";
 import { Drawable } from "./drawable/Drawable";
-import { MultipleEdit } from "./editable/DrawableMultipleEditElement";
 import { EditablePick } from "./editable/Editable";
 import { EditorCameraControl } from "./editors/EditorCameraControl";
 import packageJson from "../package.json";
@@ -96,8 +94,10 @@ class App {
             };
         }
 
+        const panelDivider = html`<div class="panel-divider"></div>`;
+
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.ui.render(canvas, this.map)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -105,7 +105,7 @@ class App {
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.ui.render(canvas, this.map)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -113,7 +113,7 @@ class App {
         });
 
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -121,7 +121,7 @@ class App {
         });
 
         Selection.register(SelectType.TEXT_CREATE, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_CREATE);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -144,7 +144,10 @@ class App {
             const textPanel = texts.length > 0
                 ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
                 : html``;
-            render(html`${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
+            const innerDivider = polylines.length > 0 && texts.length > 0
+                ? html`<div class="panel-divider"></div>`
+                : html``;
+            render(html`${panelDivider}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));

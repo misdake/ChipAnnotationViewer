@@ -160,6 +160,15 @@ select:focus {
     overflow-y: auto;
 }
 
+.ui-panel.dragging {
+    pointer-events: none;
+}
+
+.ui-panel {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 #propertyPanel::-webkit-scrollbar {
     width: 6px;
 }

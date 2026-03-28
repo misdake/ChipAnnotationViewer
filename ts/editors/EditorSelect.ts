@@ -189,12 +189,8 @@ export class EditorSelect extends Editor {
                         }
 
                         for (let polyline of env.polylines) {
-                            let aabb = self.getAABB(polyline);
-                            if (aabb) {
-                                let partiallyContained = !(aabb.x2 < minX || aabb.x1 > maxX || aabb.y2 < minY || aabb.y1 > maxY);
-                                if (partiallyContained) {
-                                    self.previewSelection.push(polyline);
-                                }
+                            if (polyline.calculator.intersectsAABB(minX, minY, maxX, maxY)) {
+                                self.previewSelection.push(polyline);
                             }
                         }
 

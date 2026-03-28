@@ -1,16 +1,16 @@
-import {Layer} from "./layers/Layer";
-import {Map} from "./data/Map";
-import {Renderer} from "./Renderer";
-import {Camera} from "./Camera";
-import {Data} from "./data/Data";
-import {Ui} from "./util/Ui";
+import { Layer } from "./layers/Layer";
+import { Map } from "./data/Map";
+import { Renderer } from "./Renderer";
+import { Camera } from "./Camera";
+import { Data } from "./data/Data";
+import { Ui } from "./util/Ui";
 import "hammerjs";
-import {html, render} from "lit-html";
+import { html, render } from "lit-html";
 import "./elements/ZoomElement"
-import {LayerName} from "./layers/Layers";
-import {Editor, UsageType} from "./editors/Editor";
-import {EditorName} from "./editors/Editors";
-import {Env} from "./Env";
+import { LayerName } from "./layers/Layers";
+import { Editor, UsageType } from "./editors/Editor";
+import { EditorName } from "./editors/Editors";
+import { Env } from "./Env";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -21,6 +21,7 @@ export class Canvas {
 
     private width: number;
     private height: number;
+    private _isDragging: boolean = false;
 
     public constructor(domElement: HTMLElement, id: string) {
         this.domElement = domElement;
@@ -50,6 +51,7 @@ export class Canvas {
     }
 
     public init(): void {
+        let self = this;
         let convertMouseEvent = (event: MouseEvent) => {
             return {
                 button: event.button,
@@ -118,13 +120,39 @@ export class Canvas {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
+            document.querySelectorAll(".ui-panel").forEach(p => p.classList.add("dragging"));
+            self._isDragging = true;
             let length = this.currentEditors.length;
             for (let i = length - 1; i >= 0; i--) {
                 let editor = this.currentEditors[i];
                 if (editor.mouseListener && editor.mouseListener.onmousedown(e)) break;
             }
+
+            let onDocMouseMove = (docEvent: MouseEvent) => {
+                let docE = convertMouseEvent(docEvent);
+                let len = self.currentEditors.length;
+                for (let i = len - 1; i >= 0; i--) {
+                    let editor = self.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onmousemove(docE)) break;
+                }
+            };
+            let onDocMouseUp = (docEvent: MouseEvent) => {
+                document.removeEventListener('mousemove', onDocMouseMove);
+                document.removeEventListener('mouseup', onDocMouseUp);
+                document.querySelectorAll(".ui-panel").forEach(p => p.classList.remove("dragging"));
+                self._isDragging = false;
+                let docE = convertMouseEvent(docEvent);
+                let len = self.currentEditors.length;
+                for (let i = len - 1; i >= 0; i--) {
+                    let editor = self.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onmouseup(docE)) break;
+                }
+            };
+            document.addEventListener('mousemove', onDocMouseMove);
+            document.addEventListener('mouseup', onDocMouseUp);
         };
         this.canvasElement.onmouseup = event => {
+            if (self._isDragging) return;
             let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
@@ -136,6 +164,7 @@ export class Canvas {
             }
         };
         this.canvasElement.onmousemove = event => {
+            if (self._isDragging) return;
             let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
@@ -197,7 +226,7 @@ export class Canvas {
 
         if (Ui.isMobile()) {
             let hammer = new Hammer(this.canvasElement);
-            hammer.get('pan').set({direction: Hammer.DIRECTION_ALL});
+            hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
             hammer.on("pan", (event: HammerInput) => {
                 event.deltaX *= window.devicePixelRatio;
                 event.deltaY *= window.devicePixelRatio;

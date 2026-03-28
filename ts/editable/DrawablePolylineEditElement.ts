@@ -4,6 +4,7 @@ import { Canvas } from "../Canvas";
 import { Map } from "../data/Map";
 import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
+import "../elements/TriStateCheckboxElement"
 import { Selection, SelectType } from "../layers/Selection";
 import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
 
@@ -98,18 +99,21 @@ export class PolylineEdit extends LitElement {
             <button class="iconButton" @click=${() => this.flipY()}     title="Flip Y">${flipYIcon}</button>
 
             <div class="checkboxRow">
-                <label class="checkboxLabel">
-                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { fill: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.fill}">
-                    Fill
-                </label>
-                <label class="checkboxLabel">
-                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { stroke: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.stroke}">
-                    Stroke
-                </label>
-                <label class="checkboxLabel">
-                    <input type="checkbox" @change=${(ev: Event) => this.onStyleCheck(ev, { closed: (<HTMLInputElement>ev.target).checked })} .checked="${this.polyline.style.closed}">
-                    Closed
-                </label>
+                <tristate-checkbox
+                    .state="${this.polyline.style.fill ? 'all' : 'none'}"
+                    label="Fill"
+                    .onChange="${(state: string) => this.onStyleCheck(null, { fill: state === 'all' })}"
+                ></tristate-checkbox>
+                <tristate-checkbox
+                    .state="${this.polyline.style.stroke ? 'all' : 'none'}"
+                    label="Stroke"
+                    .onChange="${(state: string) => this.onStyleCheck(null, { stroke: state === 'all' })}"
+                ></tristate-checkbox>
+                <tristate-checkbox
+                    .state="${this.polyline.style.closed ? 'all' : 'none'}"
+                    label="Closed"
+                    .onChange="${(state: string) => this.onStyleCheck(null, { closed: state === 'all' })}"
+                ></tristate-checkbox>
             </div>
 
             <div>Stroke Color</div>

@@ -25,13 +25,29 @@ export class TextEdit extends LitElement {
         for (const text of this.texts) {
             text.deleteOnCanvas(this.canvas);
         }
+        if (this.texts.length > 1) {
+            Selection.deselectAny();
+        } else {
+            Selection.deselect(SelectType.TEXT);
+        }
     }
     copyText() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        const newTexts: DrawableText[] = [];
         for (const text of this.texts) {
-            text.cloneOnCanvas(this.canvas, offset, offset);
+            const cloned = text.cloneOnCanvas(this.canvas, offset, offset) as DrawableText;
+            if (cloned) newTexts.push(cloned);
         }
-        Selection.select(SelectType.TEXT, this.texts[0]);
+        if (newTexts.length > 0) {
+            if (this.texts.length > 1) {
+                const selected = Selection.getSelected();
+                if (Array.isArray(selected.item)) {
+                    (selected.item as DrawableText[]).splice(0, selected.item.length, ...newTexts);
+                }
+            } else {
+                Selection.select(SelectType.TEXT, newTexts[0]);
+            }
+        }
     }
 
     private getText(): string | undefined {

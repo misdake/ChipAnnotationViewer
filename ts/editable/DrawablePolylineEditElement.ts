@@ -29,13 +29,29 @@ export class PolylineEdit extends LitElement {
         for (const polyline of this.polylines) {
             polyline.deleteOnCanvas(this.canvas);
         }
+        if (this.polylines.length > 1) {
+            Selection.deselectAny();
+        } else {
+            Selection.deselect(SelectType.POLYLINE);
+        }
     }
     copyPolyline() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        const newPolylines: DrawablePolyline[] = [];
         for (const polyline of this.polylines) {
-            polyline.cloneOnCanvas(this.canvas, offset, offset);
+            const cloned = polyline.cloneOnCanvas(this.canvas, offset, offset) as DrawablePolyline;
+            if (cloned) newPolylines.push(cloned);
         }
-        Selection.select(SelectType.POLYLINE, this.polylines[0]);
+        if (newPolylines.length > 0) {
+            if (this.polylines.length > 1) {
+                const selected = Selection.getSelected();
+                if (Array.isArray(selected.item)) {
+                    (selected.item as DrawablePolyline[]).splice(0, selected.item.length, ...newPolylines);
+                }
+            } else {
+                Selection.select(SelectType.POLYLINE, newPolylines[0]);
+            }
+        }
     }
 
     @property()

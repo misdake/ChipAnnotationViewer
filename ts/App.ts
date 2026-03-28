@@ -7,7 +7,6 @@ import "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
-import "./editable/DrawableMultipleEditElement";
 import { Selection, SelectType } from "./layers/Selection";
 import { DrawablePolyline, DrawablePolylinePack } from "./editable/DrawablePolyline";
 import { DrawableText, DrawableTextPack } from "./editable/DrawableText";
@@ -130,7 +129,22 @@ class App {
         });
 
         Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
-            render(MultipleEdit.renderUi(canvas, item), document.getElementById("panelSelected"));
+            const polylines: DrawablePolyline[] = [];
+            const texts: DrawableText[] = [];
+            for (const d of item) {
+                if (d instanceof DrawablePolyline) {
+                    polylines.push(d);
+                } else if (d instanceof DrawableText) {
+                    texts.push(d);
+                }
+            }
+            const polylinePanel = polylines.length > 0
+                ? html`<polylineedit-element .polylines=${polylines} .canvas=${canvas} .map=${this.map}></polylineedit-element>`
+                : html``;
+            const textPanel = texts.length > 0
+                ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
+                : html``;
+            render(html`${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));

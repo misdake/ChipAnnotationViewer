@@ -169,6 +169,12 @@ select:focus {
     -webkit-user-select: none;
 }
 
+.panel-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+}
+
 #propertyPanel::-webkit-scrollbar {
     width: 6px;
 }
@@ -626,6 +632,10 @@ input[type="number"]:focus {
 }
 
 @media (max-width: 768px) {
+    #propertyPanel {
+        display: none;
+    }
+
     .configButton {
         padding: 8px 12px;
         font-size: 12px;

@@ -9,9 +9,29 @@ export class ColorAlphaElement extends LitElement {
     @property()
     private setAlpha: (alpha: AlphaEntry) => void;
     @property()
-    private currentColor: ColorEntry;
+    private currentColor: ColorEntry | undefined = undefined;
     @property()
-    private currentAlpha: AlphaEntry;
+    private currentAlpha: AlphaEntry | undefined = undefined;
+
+    private isSelected(color: ColorEntry): boolean {
+        return this.currentColor !== undefined && this.currentColor.name === color.name;
+    }
+
+    private isAlphaSelected(alpha: AlphaEntry): boolean {
+        return this.currentAlpha !== undefined && this.currentAlpha.value === alpha.value;
+    }
+
+    private getColorButtonClass(color: ColorEntry): string {
+        const selected = this.isSelected(color) ? 'selected' : '';
+        const empty = this.currentColor === undefined ? 'empty' : '';
+        return `configColorButton ${selected} ${empty}`.trim();
+    }
+
+    private getAlphaButtonClass(alpha: AlphaEntry): string {
+        const selected = this.isAlphaSelected(alpha) ? 'selected' : '';
+        const empty = this.currentAlpha === undefined ? 'empty' : '';
+        return `configAlphaButton ${selected} ${empty}`.trim();
+    }
 
     render() {
         return html`
@@ -24,13 +44,16 @@ export class ColorAlphaElement extends LitElement {
                     outline: 3px solid #007bff;
                     outline-offset: -3px;
                 }
+                .configColorButton.empty, .configAlphaButton.empty {
+                    opacity: 0.5;
+                }
             </style>
             <div class="configColorAlphaContainer">
-                ${ColorEntry.list.map(color => html`<button class="configColorButton ${this.currentColor && this.currentColor.name === color.name ? 'selected' : ''}" style="background:${color.name}" @click="${() => { this.currentColor = color; this.setColor(color); }}"></button>`)}
+                ${ColorEntry.list.map(color => html`<button class="${this.getColorButtonClass(color)}" style="background:${color.name}" @click="${() => { this.currentColor = color; this.setColor(color); }}"></button>`)}
                 <br/>
                 ${AlphaEntry.list.map(alpha => {
             let color = 255 * (1 - alpha.value);
-            return html`<button class="configAlphaButton ${this.currentAlpha && this.currentAlpha.value === alpha.value ? 'selected' : ''}" style="background:rgb(${color},${color},${color})" @click="${() => { this.currentAlpha = alpha; this.setAlpha(alpha); }}"></button>`
+            return html`<button class="${this.getAlphaButtonClass(alpha)}" style="background:rgb(${color},${color},${color})" @click="${() => { this.currentAlpha = alpha; this.setAlpha(alpha); }}"></button>`
         })}
             </div>
         `;

@@ -5,27 +5,37 @@ import { Map } from "../data/Map";
 import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
 import "../elements/TriStateCheckboxElement"
+import "../elements/NumberInputElement"
 import { Selection, SelectType } from "../layers/Selection";
 import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
+import { TriState, getTriState, getUnifiedValue } from "../util/MultiSelect";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
 
     @property()
-    polyline: DrawablePolyline;
+    polylines: DrawablePolyline[] = [];
 
     @property()
     canvas: Canvas;
     @property()
     map: Map;
 
+    private get firstPolyline(): DrawablePolyline | undefined {
+        return this.polylines.length > 0 ? this.polylines[0] : undefined;
+    }
+
     deletePolyline() {
-        this.polyline.deleteOnCanvas(this.canvas);
+        for (const polyline of this.polylines) {
+            polyline.deleteOnCanvas(this.canvas);
+        }
     }
     copyPolyline() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        this.polyline.cloneOnCanvas(this.canvas, offset, offset);
-        Selection.select(SelectType.POLYLINE, this.polyline);
+        for (const polyline of this.polylines) {
+            polyline.cloneOnCanvas(this.canvas, offset, offset);
+        }
+        Selection.select(SelectType.POLYLINE, this.polylines[0]);
     }
 
     @property()
@@ -33,52 +43,96 @@ export class PolylineEdit extends LitElement {
     calcArea() {
         let width = this.map.widthMillimeter;
         let height = this.map.heightMillimeter;
-        let unit = this.polyline.style.fill ? "mm²" : "mm";
+        let unit = "mm";
         if (!(this.map.widthMillimeter > 0 && this.map.heightMillimeter > 0)) {
             width = this.map.width;
             height = this.map.height;
             unit = "pixels"
         }
-        if (this.polyline.style.fill) {
-            let area = this.polyline.calculator.area();
-            let areaMM2 = area / this.map.width / this.map.height * width * height;
-            areaMM2 = Math.round(areaMM2 * 100) / 100;
-            this.area = areaMM2 + unit;
-        } else {
-            let length = this.polyline.calculator.length();
-            let lengthMM = length * Math.sqrt(width * height / this.map.width / this.map.height);
-            lengthMM = Math.round(lengthMM * 100) / 100;
-            this.area = lengthMM + unit;
+        let totalValue = 0;
+        for (const polyline of this.polylines) {
+            if (polyline.style.fill) {
+                let area = polyline.calculator.area();
+                let areaMM2 = area / this.map.width / this.map.height * width * height;
+                totalValue += areaMM2;
+                unit = "mm²";
+            } else {
+                let length = polyline.calculator.length();
+                let lengthMM = length * Math.sqrt(width * height / this.map.width / this.map.height);
+                totalValue += lengthMM;
+            }
         }
+        totalValue = Math.round(totalValue * 100) / 100;
+        this.area = totalValue + unit;
     }
 
     rotateCCW() {
-        this.polyline.editor.rotateCCW();
+        for (const polyline of this.polylines) {
+            polyline.editor.rotateCCW();
+        }
         this.canvas.requestRender();
     }
     rotateCW() {
-        this.polyline.editor.rotateCW();
+        for (const polyline of this.polylines) {
+            polyline.editor.rotateCW();
+        }
         this.canvas.requestRender();
     }
     flipX() {
-        this.polyline.editor.flipX();
+        for (const polyline of this.polylines) {
+            polyline.editor.flipX();
+        }
         this.canvas.requestRender();
     }
     flipY() {
-        this.polyline.editor.flipY();
+        for (const polyline of this.polylines) {
+            polyline.editor.flipY();
+        }
         this.canvas.requestRender();
     }
 
-    private onStyleCheck = (ev: Event, options: { fill?: boolean, stroke?: boolean, closed?: boolean }) => {
-        if (options.fill !== undefined) this.polyline.style.fill = options.fill;
-        if (options.stroke !== undefined) this.polyline.style.stroke = options.stroke;
-        if (options.closed !== undefined) this.polyline.style.closed = options.closed;
+    private getFillState(): TriState {
+        return getTriState(this.polylines, p => p.style.fill);
+    }
+    private getStrokeState(): TriState {
+        return getTriState(this.polylines, p => p.style.stroke);
+    }
+    private getClosedState(): TriState {
+        return getTriState(this.polylines, p => p.style.closed);
+    }
+    private getStrokeColor(): ColorEntry | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.strokeColor);
+    }
+    private getStrokeAlpha(): AlphaEntry | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.strokeAlpha);
+    }
+    private getFillColor(): ColorEntry | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.fillColor);
+    }
+    private getFillAlpha(): AlphaEntry | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.fillAlpha);
+    }
+    private getOnScreen(): number | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.onScreen);
+    }
+    private getOnCanvas(): number | undefined {
+        return getUnifiedValue(this.polylines, p => p.style.onCanvas);
+    }
+
+    private onStyleCheck = (options: { fill?: boolean, stroke?: boolean, closed?: boolean }) => {
+        for (const polyline of this.polylines) {
+            if (options.fill !== undefined) polyline.style.fill = options.fill;
+            if (options.stroke !== undefined) polyline.style.stroke = options.stroke;
+            if (options.closed !== undefined) polyline.style.closed = options.closed;
+        }
         this.canvas.requestRender();
         this.performUpdate();
     };
-    private onSizeInput = (ev: Event, options: { screen?: string, canvas?: string }) => {
-        if (options.screen !== undefined) this.polyline.style.onScreen = parseInt(options.screen);
-        if (options.canvas !== undefined) this.polyline.style.onCanvas = parseInt(options.canvas);
+    private onSizeInput = (options: { screen?: string, canvas?: string }) => {
+        for (const polyline of this.polylines) {
+            if (options.screen !== undefined) polyline.style.onScreen = parseInt(options.screen);
+            if (options.canvas !== undefined) polyline.style.onCanvas = parseInt(options.canvas);
+        }
         this.canvas.requestRender();
         this.performUpdate();
     };
@@ -100,55 +154,71 @@ export class PolylineEdit extends LitElement {
 
             <div class="checkboxRow">
                 <tristate-checkbox
-                    .state="${this.polyline.style.fill ? 'all' : 'none'}"
+                    .state="${this.getFillState()}"
                     label="Fill"
-                    .onChange="${(state: string) => this.onStyleCheck(null, { fill: state === 'all' })}"
+                    .onChange="${(state: 'none' | 'all') => this.onStyleCheck({ fill: state === 'all' })}"
                 ></tristate-checkbox>
                 <tristate-checkbox
-                    .state="${this.polyline.style.stroke ? 'all' : 'none'}"
+                    .state="${this.getStrokeState()}"
                     label="Stroke"
-                    .onChange="${(state: string) => this.onStyleCheck(null, { stroke: state === 'all' })}"
+                    .onChange="${(state: 'none' | 'all') => this.onStyleCheck({ stroke: state === 'all' })}"
                 ></tristate-checkbox>
                 <tristate-checkbox
-                    .state="${this.polyline.style.closed ? 'all' : 'none'}"
+                    .state="${this.getClosedState()}"
                     label="Closed"
-                    .onChange="${(state: string) => this.onStyleCheck(null, { closed: state === 'all' })}"
+                    .onChange="${(state: 'none' | 'all') => this.onStyleCheck({ closed: state === 'all' })}"
                 ></tristate-checkbox>
             </div>
 
             <div>Stroke Color</div>
             <coloralpha-element
-                .currentColor=${this.polyline.style.strokeColor}
-                .currentAlpha=${this.polyline.style.strokeAlpha}
+                .currentColor=${this.getStrokeColor()}
+                .currentAlpha=${this.getStrokeAlpha()}
                 .setColor=${(color: ColorEntry) => {
-                this.polyline.style.setStrokeColor(color, undefined);
+                for (const polyline of this.polylines) {
+                    polyline.style.setStrokeColor(color, undefined);
+                }
                 this.canvas.requestRender();
             }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                this.polyline.style.setStrokeColor(undefined, alpha);
+                for (const polyline of this.polylines) {
+                    polyline.style.setStrokeColor(undefined, alpha);
+                }
                 this.canvas.requestRender();
             }}
             ></coloralpha-element>
             <div>Fill Color</div>
             <coloralpha-element
-                .currentColor=${this.polyline.style.fillColor}
-                .currentAlpha=${this.polyline.style.fillAlpha}
+                .currentColor=${this.getFillColor()}
+                .currentAlpha=${this.getFillAlpha()}
                 .setColor=${(color: ColorEntry) => {
-                this.polyline.style.setFillColor(color, undefined);
+                for (const polyline of this.polylines) {
+                    polyline.style.setFillColor(color, undefined);
+                }
                 this.canvas.requestRender();
             }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                this.polyline.style.setFillColor(undefined, alpha);
+                for (const polyline of this.polylines) {
+                    polyline.style.setFillColor(undefined, alpha);
+                }
                 this.canvas.requestRender();
             }}
             ></coloralpha-element>
 
             <div class="sizeInput">
-                <input type="number" min=0 .value="${this.polyline.style.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, { screen: (<HTMLInputElement>ev.target).value })}>
+                <number-input
+                    .value="${this.getOnScreen()}"
+                    .min="${0}"
+                    .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
+                ></number-input>
                 <label>Pixel on Screen</label>
             </div>
             <div class="sizeInput">
-                <input type="number" min=0 .value="${this.polyline.style.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, { canvas: (<HTMLInputElement>ev.target).value })}>
+                <number-input
+                    .value="${this.getOnCanvas()}"
+                    .min="${0}"
+                    .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
+                ></number-input>
                 <label>Pixel on Canvas</label>
             </div>
         `;

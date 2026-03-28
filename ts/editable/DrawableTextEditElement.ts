@@ -3,36 +3,68 @@ import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
 import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
+import "../elements/NumberInputElement"
+import "../elements/TextInputElement"
 import { Selection, SelectType } from "../layers/Selection";
+import { getUnifiedValue } from "../util/MultiSelect";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
 
     @property()
-    text: DrawableText;
+    texts: DrawableText[] = [];
 
     @property()
     canvas: Canvas;
 
+    private get firstText(): DrawableText | undefined {
+        return this.texts.length > 0 ? this.texts[0] : undefined;
+    }
+
     deleteText() {
-        this.text.deleteOnCanvas(this.canvas);
+        for (const text of this.texts) {
+            text.deleteOnCanvas(this.canvas);
+        }
     }
     copyText() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        this.text.cloneOnCanvas(this.canvas, offset, offset);
-        Selection.select(SelectType.TEXT, this.text);
+        for (const text of this.texts) {
+            text.cloneOnCanvas(this.canvas, offset, offset);
+        }
+        Selection.select(SelectType.TEXT, this.texts[0]);
+    }
+
+    private getText(): string | undefined {
+        return getUnifiedValue(this.texts, t => t.text);
+    }
+    private getColor(): ColorEntry | undefined {
+        return getUnifiedValue(this.texts, t => t.color);
+    }
+    private getAlpha(): AlphaEntry | undefined {
+        return getUnifiedValue(this.texts, t => t.alpha);
+    }
+    private getOnScreen(): number | undefined {
+        return getUnifiedValue(this.texts, t => t.onScreen);
+    }
+    private getOnCanvas(): number | undefined {
+        return getUnifiedValue(this.texts, t => t.onCanvas);
     }
 
     private editText = (content: string) => {
-        if (!content.length) content = "text";
-        this.text.text = content;
+        for (const text of this.texts) {
+            if (content.length) {
+                text.text = content;
+            }
+        }
         this.canvas.requestRender();
         this.performUpdate();
     };
 
-    private onSizeInput = (ev: Event, options: { screen?: string, canvas?: string }) => {
-        if (options.screen !== undefined) this.text.onScreen = parseInt(options.screen);
-        if (options.canvas !== undefined) this.text.onCanvas = parseInt(options.canvas);
+    private onSizeInput = (options: { screen?: string, canvas?: string }) => {
+        for (const text of this.texts) {
+            if (options.screen !== undefined) text.onScreen = parseInt(options.screen);
+            if (options.canvas !== undefined) text.onCanvas = parseInt(options.canvas);
+        }
         this.canvas.requestRender();
         this.performUpdate();
     };
@@ -43,28 +75,45 @@ export class TextEdit extends LitElement {
             <button class="configButton" @click=${() => this.copyText()}>Clone Text</button><br>
 
             Text<br>
-            <input class="configText" type="text" style="width:10em" .value="${this.text.text}" @input=${(ev: Event) => this.editText((<HTMLInputElement>ev.target).value)}><br>
+            <text-input
+                .value="${this.getText()}"
+                .placeholder="-"
+                .onChange="${(val: string) => this.editText(val)}"
+            ></text-input>
+            <br>
 
             <div>Text Color</div>
             <coloralpha-element
-                .currentColor=${this.text.color}
-                .currentAlpha=${this.text.alpha}
+                .currentColor=${this.getColor()}
+                .currentAlpha=${this.getAlpha()}
                 .setColor=${(color: ColorEntry) => {
-                this.text.setColorAlpha(color, undefined);
+                for (const text of this.texts) {
+                    text.setColorAlpha(color, undefined);
+                }
                 this.canvas.requestRender();
             }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                this.text.setColorAlpha(undefined, alpha);
+                for (const text of this.texts) {
+                    text.setColorAlpha(undefined, alpha);
+                }
                 this.canvas.requestRender();
             }}
             ></coloralpha-element>
 
             <div class="sizeInput">
-                <input type="number" min=0 .value="${this.text.onScreen}" @input=${(ev: Event) => this.onSizeInput(ev, { screen: (<HTMLInputElement>ev.target).value })}>
+                <number-input
+                    .value="${this.getOnScreen()}"
+                    .min="${0}"
+                    .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
+                ></number-input>
                 <label>Pixel on Screen</label>
             </div>
             <div class="sizeInput">
-                <input type="number" min=0 .value="${this.text.onCanvas}" @input=${(ev: Event) => this.onSizeInput(ev, { canvas: (<HTMLInputElement>ev.target).value })}>
+                <number-input
+                    .value="${this.getOnCanvas()}"
+                    .min="${0}"
+                    .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
+                ></number-input>
                 <label>Pixel on Canvas</label>
             </div>
         `;

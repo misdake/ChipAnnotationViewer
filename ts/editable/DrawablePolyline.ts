@@ -1,17 +1,17 @@
-import {Drawable} from "../drawable/Drawable";
-import {Canvas} from "../Canvas";
-import {Renderer} from "../Renderer";
-import {Camera} from "../Camera";
-import {Size} from "../util/Size";
-import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
-import {AABB} from "../util/AABB";
-import {html, TemplateResult} from "lit-html";
-import {Map} from "../data/Map";
-import {Primitive, PrimitivePack} from "./Primitive";
-import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
-import {LayerPolylineView} from "../layers/LayerPolylineView";
-import {LayerName} from "../layers/Layers";
-import {Selection, SelectType} from "../layers/Selection";
+import { Drawable } from "../drawable/Drawable";
+import { Canvas } from "../Canvas";
+import { Renderer } from "../Renderer";
+import { Camera } from "../Camera";
+import { Size } from "../util/Size";
+import { AlphaEntry, ColorEntry, combineColorAlpha } from "../util/Color";
+import { AABB } from "../util/AABB";
+import { html, TemplateResult } from "lit-html";
+import { Map } from "../data/Map";
+import { Primitive, PrimitivePack } from "./Primitive";
+import { EditableColor, EditableDeleteClone, EditableMove, EditablePick } from "./Editable";
+import { LayerPolylineView } from "../layers/LayerPolylineView";
+import { LayerName } from "../layers/Layers";
+import { Selection, SelectType } from "../layers/Selection";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -37,8 +37,8 @@ class PointSegmentResult {
 
 export class DrawablePolylinePack implements PrimitivePack {
     public constructor(points: Point[], closed: boolean, lineWidth: Size,
-                       fill: boolean, fillColorName: string, fillAlphaName: string,
-                       stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
+        fill: boolean, fillColorName: string, fillAlphaName: string,
+        stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
         this.points = points;
         this.closed = closed;
         this.lineWidth = lineWidth;
@@ -224,7 +224,7 @@ export class DrawablePolylineEditor {
         }
     }
     public rotateCW(centerX?: number, centerY?: number) {
-        if(centerX === undefined || centerY === undefined) {
+        if (centerX === undefined || centerY === undefined) {
             let center = this.polyline.calculator.aabbCenter();
             centerX = center.x;
             centerY = center.y;
@@ -237,7 +237,7 @@ export class DrawablePolylineEditor {
         }
     }
     public rotateCCW(centerX?: number, centerY?: number) {
-        if(centerX === undefined || centerY === undefined) {
+        if (centerX === undefined || centerY === undefined) {
             let center = this.polyline.calculator.aabbCenter();
             centerX = center.x;
             centerY = center.y;
@@ -461,7 +461,7 @@ export class DrawablePolylineEditUi {
     }
 
     render(canvas: Canvas, map: Map): TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .map=${map}></polylineedit-element>`;
+        return html`<polylineedit-element .polylines=${[this.polyline]} .canvas=${canvas} .map=${map}></polylineedit-element>`;
     }
 }
 
@@ -545,7 +545,7 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         pack.points = points;
         return pack;
     }
-    public cloneOnCanvas(canvas:Canvas, offsetX: number, offsetY: number): Drawable {
+    public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): Drawable {
         if (!this.check()) return undefined;
         let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
         let newPolyline = new DrawablePolyline(this.clone(offsetX, offsetY));

@@ -7,7 +7,6 @@ import "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
-import "./editable/DrawableMultipleEditElement";
 import { Selection, SelectType } from "./layers/Selection";
 import { DrawablePolyline, DrawablePolylinePack } from "./editable/DrawablePolyline";
 import { DrawableText, DrawableTextPack } from "./editable/DrawableText";
@@ -23,12 +22,6 @@ import packageJson from "../package.json";
 let url_string = window.location.href;
 let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
-
-if (Ui.isMobile() || isReadOnly) {
-    document.getElementById("panel").style.display = "none";
-} else {
-    document.getElementById("panel").style.display = "flex";
-}
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -79,6 +72,30 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
+        let hintElement = document.getElementById("hint");
+        let hintToggle = document.getElementById("hintToggle") as HTMLButtonElement;
+        let hintIconEye = document.getElementById("hintIconEye") as HTMLElement;
+        let hintIconEyeOff = document.getElementById("hintIconEyeOff") as HTMLElement;
+        if (hintToggle) {
+            hintElement.classList.add("hidden");
+            hintToggle.classList.add("hintHidden");
+            if (hintIconEye) hintIconEye.style.display = "none";
+            if (hintIconEyeOff) hintIconEyeOff.style.display = "block";
+            hintToggle.onclick = () => {
+                hintElement.classList.toggle("hidden");
+                hintToggle.classList.toggle("hintHidden");
+                if (hintIconEye && hintIconEyeOff) {
+                    if (hintElement.classList.contains("hidden")) {
+                        hintIconEye.style.display = "none";
+                        hintIconEyeOff.style.display = "block";
+                    } else {
+                        hintIconEye.style.display = "block";
+                        hintIconEyeOff.style.display = "none";
+                    }
+                }
+            };
+        }
+
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.map), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
@@ -112,7 +129,22 @@ class App {
         });
 
         Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
-            render(MultipleEdit.renderUi(canvas, item), document.getElementById("panelSelected"));
+            const polylines: DrawablePolyline[] = [];
+            const texts: DrawableText[] = [];
+            for (const d of item) {
+                if (d instanceof DrawablePolyline) {
+                    polylines.push(d);
+                } else if (d instanceof DrawableText) {
+                    texts.push(d);
+                }
+            }
+            const polylinePanel = polylines.length > 0
+                ? html`<polylineedit-element .polylines=${polylines} .canvas=${canvas} .map=${this.map}></polylineedit-element>`
+                : html``;
+            const textPanel = texts.length > 0
+                ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
+                : html``;
+            render(html`${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -167,11 +199,18 @@ function showToast(content: string) {
 
     let element = document.getElementById("toast");
     if (element) {
-        element.style.display = "block";
+        element.classList.remove("hiding");
+        element.classList.add("visible");
         element.innerText = content;
+        element.style.display = "block";
         toastTimeout = setTimeout(() => {
-            element.style.display = "none";
-            element.innerText = "";
+            element.classList.remove("visible");
+            element.classList.add("hiding");
+            setTimeout(() => {
+                element.classList.remove("hiding");
+                element.innerText = "";
+                element.style.display = "none";
+            }, 300);
         }, 2000);
     }
 }

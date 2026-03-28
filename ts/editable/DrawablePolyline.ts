@@ -1,17 +1,17 @@
-import {Drawable} from "../drawable/Drawable";
-import {Canvas} from "../Canvas";
-import {Renderer} from "../Renderer";
-import {Camera} from "../Camera";
-import {Size} from "../util/Size";
-import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
-import {AABB} from "../util/AABB";
-import {html, TemplateResult} from "lit-html";
-import {Map} from "../data/Map";
-import {Primitive, PrimitivePack} from "./Primitive";
-import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
-import {LayerPolylineView} from "../layers/LayerPolylineView";
-import {LayerName} from "../layers/Layers";
-import {Selection, SelectType} from "../layers/Selection";
+import { Drawable } from "../drawable/Drawable";
+import { Canvas } from "../Canvas";
+import { Renderer } from "../Renderer";
+import { Camera } from "../Camera";
+import { Size } from "../util/Size";
+import { AlphaEntry, ColorEntry, combineColorAlpha } from "../util/Color";
+import { AABB } from "../util/AABB";
+import { html, TemplateResult } from "lit-html";
+import { Map } from "../data/Map";
+import { Primitive, PrimitivePack } from "./Primitive";
+import { EditableColor, EditableDeleteClone, EditableMove, EditablePick } from "./Editable";
+import { LayerPolylineView } from "../layers/LayerPolylineView";
+import { LayerName } from "../layers/Layers";
+import { Selection, SelectType } from "../layers/Selection";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -37,8 +37,8 @@ class PointSegmentResult {
 
 export class DrawablePolylinePack implements PrimitivePack {
     public constructor(points: Point[], closed: boolean, lineWidth: Size,
-                       fill: boolean, fillColorName: string, fillAlphaName: string,
-                       stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
+        fill: boolean, fillColorName: string, fillAlphaName: string,
+        stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
         this.points = points;
         this.closed = closed;
         this.lineWidth = lineWidth;
@@ -224,7 +224,7 @@ export class DrawablePolylineEditor {
         }
     }
     public rotateCW(centerX?: number, centerY?: number) {
-        if(centerX === undefined || centerY === undefined) {
+        if (centerX === undefined || centerY === undefined) {
             let center = this.polyline.calculator.aabbCenter();
             centerX = center.x;
             centerY = center.y;
@@ -237,7 +237,7 @@ export class DrawablePolylineEditor {
         }
     }
     public rotateCCW(centerX?: number, centerY?: number) {
-        if(centerX === undefined || centerY === undefined) {
+        if (centerX === undefined || centerY === undefined) {
             let center = this.polyline.calculator.aabbCenter();
             centerX = center.x;
             centerY = center.y;
@@ -338,6 +338,96 @@ export class DrawablePolylineCalculator {
             if (Math.abs(last.y - xy.y) <= radius) newY = last.y;
         }
         return (newX === xy.x && newY === xy.y) ? undefined : new Point(newX, newY);
+    }
+
+    public intersectsAABB(minX: number, minY: number, maxX: number, maxY: number): boolean {
+        if (this.points.length === 0) return false;
+
+        const aabbMinX = Math.min(minX, maxX);
+        const aabbMaxX = Math.max(minX, maxX);
+        const aabbMinY = Math.min(minY, maxY);
+        const aabbMaxY = Math.max(minY, maxY);
+
+        for (const point of this.points) {
+            if (point.x >= aabbMinX && point.x <= aabbMaxX && point.y >= aabbMinY && point.y <= aabbMaxY) {
+                return true;
+            }
+        }
+
+        if (this.polyline.style.closed && this.points.length >= 3) {
+            const corners = [
+                new Point(aabbMinX, aabbMinY),
+                new Point(aabbMaxX, aabbMinY),
+                new Point(aabbMaxX, aabbMaxY),
+                new Point(aabbMinX, aabbMaxY)
+            ];
+            for (const corner of corners) {
+                if (this.pointInPolygon(corner)) {
+                    return true;
+                }
+            }
+        }
+
+        const polylineEdges = this.points.length;
+        const closedOffset = this.polyline.style.closed ? 1 : 0;
+
+        for (let i = 0; i < polylineEdges - 1 + closedOffset; i++) {
+            const p1 = this.points[i];
+            const p2 = this.points[(i + 1) % this.points.length];
+
+            if (this.lineIntersectsAABB(p1.x, p1.y, p2.x, p2.y, aabbMinX, aabbMinY, aabbMaxX, aabbMaxY)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private lineIntersectsAABB(x1: number, y1: number, x2: number, y2: number, minX: number, minY: number, maxX: number, maxY: number): boolean {
+        if (x1 >= minX && x1 <= maxX && y1 >= minY && y1 <= maxY) return true;
+        if (x2 >= minX && x2 <= maxX && y2 >= minY && y2 <= maxY) return true;
+
+        const edges = [
+            [minX, minY, maxX, minY],
+            [maxX, minY, maxX, maxY],
+            [maxX, maxY, minX, maxY],
+            [minX, maxY, minX, minY]
+        ];
+
+        for (const edge of edges) {
+            if (this.lineSegmentsIntersect(x1, y1, x2, y2, edge[0], edge[1], edge[2], edge[3])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private lineSegmentsIntersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number): boolean {
+        const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (Math.abs(denom) < 1e-10) return false;
+
+        const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+        const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+
+        return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+    }
+
+    private pointInPolygon(point: Point): boolean {
+        if (this.points.length < 3) return false;
+
+        let inside = false;
+        const n = this.points.length;
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+            const xi = this.points[i].x, yi = this.points[i].y;
+            const xj = this.points[j].x, yj = this.points[j].y;
+
+            if (((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) {
+                inside = !inside;
+            }
+        }
+        return inside;
     }
 }
 
@@ -461,7 +551,7 @@ export class DrawablePolylineEditUi {
     }
 
     render(canvas: Canvas, map: Map): TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .map=${map}></polylineedit-element>`;
+        return html`<polylineedit-element .polylines=${[this.polyline]} .canvas=${canvas} .map=${map}></polylineedit-element>`;
     }
 }
 
@@ -545,7 +635,7 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         pack.points = points;
         return pack;
     }
-    public cloneOnCanvas(canvas:Canvas, offsetX: number, offsetY: number): Drawable {
+    public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): Drawable {
         if (!this.check()) return undefined;
         let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);
         let newPolyline = new DrawablePolyline(this.clone(offsetX, offsetY));

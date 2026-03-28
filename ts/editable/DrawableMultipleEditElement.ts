@@ -1,11 +1,12 @@
-import {customElement, html, LitElement, property} from "lit-element";
-import {Canvas} from "../Canvas";
-import {AlphaEntry, ColorEntry} from "../util/Color";
+import { customElement, html, LitElement, property } from "lit-element";
+import { Canvas } from "../Canvas";
+import { AlphaEntry, ColorEntry } from "../util/Color";
 import "../elements/ColorAlphaElement"
-import {Selection} from "../layers/Selection";
-import {Drawable} from "../drawable/Drawable";
-import {EditableColor, EditableDeleteClone, EditableMove, editableMultiple} from "./Editable";
-import {TemplateResult} from "lit-html";
+import { Selection } from "../layers/Selection";
+import { Drawable } from "../drawable/Drawable";
+import { EditableColor, EditableDeleteClone, EditableMove, editableMultiple } from "./Editable";
+import { TemplateResult } from "lit-html";
+import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
 
 @customElement('multipleedit-element')
 export class MultipleEdit extends LitElement {
@@ -55,24 +56,24 @@ export class MultipleEdit extends LitElement {
         let editable = editableMultiple(drawables);
 
         return html`
-            <button class="configButton" @click=${() => this.delete(editable)}>delete selected</button><br>
-            <button class="configButton" @click=${() => this.copy(editable)}>copy selected</button><br>
+            <button class="configButton" @click=${() => this.delete(editable)}>Delete Selected</button><br>
+            <button class="configButton" @click=${() => this.copy(editable)}>Clone Selected</button><br>
             
-            <button class="configButton" @click=${() => this.rotateCCW(editable)} >rotate ccw</button>
-            <button class="configButton" @click=${() => this.rotateCW(editable)}  >rotate cw</button>
-            <button class="configButton" @click=${() => this.flipX(editable)}     >flip x</button>
-            <button class="configButton" @click=${() => this.flipY(editable)}     >flip y</button>
+            <button class="iconButton" @click=${() => this.rotateCCW(editable)} title="Rotate CCW">${rotateCCWIcon}</button>
+            <button class="iconButton" @click=${() => this.rotateCW(editable)}  title="Rotate CW">${rotateCWIcon}</button>
+            <button class="iconButton" @click=${() => this.flipX(editable)}     title="Flip X">${flipXIcon}</button>
+            <button class="iconButton" @click=${() => this.flipY(editable)}     title="Flip Y">${flipYIcon}</button>
 
-            <div>color</div>
+            <div>Color</div>
             <coloralpha-element
                 .setColor=${(color: ColorEntry) => {
-                    editable.setColorAlpha(color, undefined);
-                    this.canvas.requestRender();
-                }}
+                editable.setColorAlpha(color, undefined);
+                this.canvas.requestRender();
+            }}
                 .setAlpha=${(alpha: AlphaEntry) => {
-                    editable.setColorAlpha(undefined, alpha);
-                    this.canvas.requestRender();
-                }}
+                editable.setColorAlpha(undefined, alpha);
+                this.canvas.requestRender();
+            }}
             ></coloralpha-element>
         `;
     }

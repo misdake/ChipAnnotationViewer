@@ -1,8 +1,8 @@
-import {customElement, html, LitElement, property, TemplateResult} from "lit-element";
-import {Chip, Map} from "../data/Map";
-import {NetUtil} from "../util/NetUtil";
-import {Annotation, Data} from "../data/Data";
-import {Github} from "../util/GithubUtil";
+import { customElement, html, LitElement, property, TemplateResult } from "lit-element";
+import { Chip, Map } from "../data/Map";
+import { NetUtil } from "../util/NetUtil";
+import { Annotation, Data } from "../data/Data";
+import { Github } from "../util/GithubUtil";
 
 @customElement('select-element')
 export class SelectElement extends LitElement {
@@ -42,7 +42,7 @@ export class SelectElement extends LitElement {
     @property()
     annotation_current: Annotation;
 
-    private static dummyAnnotation: Annotation = {id: 0, user: "", content: {title: "", polylines: [], texts: []}};
+    private static dummyAnnotation: Annotation = { id: 0, user: "", content: { title: "", polylines: [], texts: [] } };
 
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
 
@@ -55,7 +55,7 @@ export class SelectElement extends LitElement {
     protected firstUpdated(): void {
         let url_string = window.location.href;
         let url = new URL(url_string);
-        this.chip_name_toload = (url.searchParams.get("map") && decodeURIComponent(url.searchParams.get("map")) )|| "Fiji";
+        this.chip_name_toload = (url.searchParams.get("map") && decodeURIComponent(url.searchParams.get("map"))) || "Fiji";
         this.annotation_id_toload = parseInt(url.searchParams.get("commentId") || "0");
 
         this.refreshChipList();
@@ -97,7 +97,7 @@ export class SelectElement extends LitElement {
     }
     private refreshChipList() {
         SelectElement.fetchChipList().then(chips => {
-            let {html, array, current} = SelectElement.showChipList(chips, this.chip_name_toload);
+            let { html, array, current } = SelectElement.showChipList(chips, this.chip_name_toload);
             this.chip_current = current;
             this.chiplist_html = html;
             this.chiplist_array = array;
@@ -114,7 +114,7 @@ export class SelectElement extends LitElement {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
         SelectElement.fetchAnnotationList(this.map_current).then(annotations => {
-            let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
+            let { html, array, current } = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;
             this.annotationlist_html = html;
             this.annotationlist_array = array;
@@ -187,7 +187,7 @@ export class SelectElement extends LitElement {
             last_Family = curr_Family;
         }
 
-        return {html: selections, array: selection_chip, current: current};
+        return { html: selections, array: selection_chip, current: current };
     }
 
     private static fetchMap(chip: Chip): Promise<Map> {
@@ -211,7 +211,7 @@ export class SelectElement extends LitElement {
                                 if (data.title == null || data.title == "") {
                                     data.title = "untitled";
                                 }
-                                result.push({id: comment.id, user: comment.user.login, content: data});
+                                result.push({ id: comment.id, user: comment.user.login, content: data });
                             }
                         } catch (_e) {
                             // if anything goes wrong, ignore it, it's not a valid annotation
@@ -249,11 +249,11 @@ export class SelectElement extends LitElement {
             }
         }
 
-        return {html: options, array: array, current: current}
+        return { html: options, array: array, current: current }
     }
 
     render() {
-        let source = this.map_current ? html`<a id="imageSource" target="_blank" href="${this.map_current.source}">${this.map_current.source}</a>` : html``;
+        let source = this.map_current ? html`<label class="imageSourceLabel">Source:<a class="imageSource" target="_blank" href="${this.map_current.source}">${this.map_current.source}</a></label>` : html``;
 
         return html`
             <div style="max-width: 100%">

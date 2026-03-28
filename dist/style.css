@@ -3,15 +3,49 @@
     padding: 0;
 }
 
-body, html {
-    background: black;
+:root {
+    --primary-color: #3B82F6;
+    --secondary-color: #60A5FA;
+    --accent-color: #22D3EE;
+    --background-dark: #0F172A;
+    --surface-color: #1E293B;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --border-color: #334155;
+    --success-color: #10B981;
+    --warning-color: #F59E0B;
+}
+
+body,
+html {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     height: 100%;
     overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
 }
 
 select {
     min-width: 150px;
-    height: 20px;
+    height: 24px;
+    padding: 0;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+select:hover {
+    border-color: var(--primary-color);
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .refreshButton {
@@ -19,137 +53,607 @@ select {
     width: 20px;
     height: 20px;
     border: 0;
+    margin-left: 5px;
+    background: transparent url('res/refresh.png');
     background-size: cover;
-    background-image: url('res/refresh.png');
+    transition: transform 0.3s ease;
+}
+
+.refreshButton:hover {
+    transform: rotate(180deg);
 }
 
 #selectPanel {
     position: absolute;
-    top: 5px;
-    left: 5px;
+    top: 15px;
+    left: 15px;
     z-index: 999;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #cameraPanel {
     position: absolute;
-    bottom: 5px;
-    left: 5px;
+    bottom: 15px;
+    left: 15px;
     z-index: 999;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 8px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .zoomButton {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.zoomButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.zoomButton:active {
+    transform: translateY(0);
 }
 
 .zoomText {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
 }
 
-#imageSource {
-    display: inline-block;
-    color: rgba(255, 255, 255, 0.8);
+.imageSource {
+    margin-left: 4px;
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
-#panel {
-    display: none;
-    float: left;
-    width: 210px;
-    height: 100%;
-    background: white;
-    flex-flow: column;
-}
-
-#panelScroll {
-    height: 100%;
-    overflow-y: auto;
-    flex: 1 1 auto;
+.imageSourceLabel {
+    color: var(--text-secondary);
+    font-size: 12px;
 }
 
 #container {
     position: relative;
-    display: flex;
+    width: 100%;
     height: 100%;
 }
 
+#propertyPanel {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 998;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 220px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.ui-panel.dragging {
+    pointer-events: none;
+}
+
+.ui-panel {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#propertyPanel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#propertyPanel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#propertyPanel::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+#creationButtons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
+
+#hint {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 997;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 8px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    max-width: 80%;
+    transition: opacity 0.3s ease;
+}
+
+#hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hintToggleButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    margin: 4px 4px;
+}
+
+.hintToggleButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.hintToggleButton:active {
+    transform: translateY(0);
+}
+
+.hintToggleButton svg {
+    flex-shrink: 0;
+}
+
+.hintToggleButton.hintHidden {
+    background: rgba(100, 116, 139, 0.6);
+}
+
+.hintToggleButton.hintHidden:hover {
+    background: rgba(100, 116, 139, 0.8);
+    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+}
+
+.hintToggleText {
+    font-size: 14px;
+}
+
 .configButton {
-    /*margin:20px 5px;*/
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    margin: 4px 4px;
+}
+
+.configButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.configButton:active {
+    transform: translateY(0);
+}
+
+.configButton::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.configButton:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+.iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 4px;
+}
+
+.iconButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.iconButton:active {
+    transform: translateY(0);
+}
+
+.iconButton svg {
+    width: 20px;
+    height: 20px;
+}
+
+.checkboxRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+.checkboxLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
 }
 
 .configColorAlphaContainer {
-    margin: 5px 10px;
+    margin: 8px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
 }
 
-.colorAlphaContainerSplit {
-    width: 0px;
-    display: inline-block;
+.sizeInput {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.sizeInput label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.sizeInput input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.sizeInput input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .configColorButton {
-    width: 24px;
-    height: 24px;
-    border-radius: 12px;
-    border: 2px black solid;
-    margin: 2px 2px;
+    width: 14px;
+    height: 28px;
+    border: 1px solid transparent;
+    margin: 4px 0 4px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.configColorButton:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .configAlphaButton {
-    width: 12px;
-    height: 24px;
-    border: 2px black solid;
-    margin: 2px 0 2px 2px;
+    width: 14px;
+    height: 28px;
+    border: 1px solid transparent;
+    margin: 4px 0 4px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.configAlphaButton:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .configCheckbox {
-    /*margin:20px 5px;*/
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.configCheckbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
 }
 
 .configText {
-    /*margin:20px 5px;*/
+    margin: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.titleInput {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.titleInput label {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.titleInput input[type="text"] {
+    flex: 1;
+    padding: 6px 10px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.titleInput input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 #footer {
-    position: relative;
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 997;
     font-size: 14px;
     line-height: 24px;
     vertical-align: middle;
     display: flex;
     flex-flow: row;
-    justify-content: space-around;
+    /* gap: 8px; */
     flex-wrap: wrap;
-    margin-bottom: 3px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #footer a {
     cursor: pointer;
     display: flex;
     flex-flow: row;
-}
-#footer a {
+    align-items: center;
+    color: var(--text-secondary);
+    padding: 8px 8px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
     text-decoration: none;
 }
-#footer a :hover {
-    text-decoration: underline;
+
+#footer a:hover {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none !important;
 }
 
 #footer span {
-    margin-left: 2px;
+    margin-left: 6px;
     cursor: pointer;
     line-height: 24px;
     vertical-align: middle;
 }
 
 .footerIcon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+}
+
+.uploadHelper {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.uploadHelper:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 #toast {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 20px;
+    right: 20px;
     font-size: 16px;
     color: white;
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+    display: none;
+}
+
+#toast.visible {
+    display: block;
+}
+
+#toast.hiding {
+    animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    margin: 16px 0;
+}
+
+@media (max-width: 768px) {
+    .configButton {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    #selectPanel,
+    #propertyPanel,
+    #cameraPanel {
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    #propertyPanel {
+        min-width: 180px;
+        max-width: 200px;
+    }
+
+    .zoomButton {
+        width: 36px;
+        height: 36px;
+    }
+
+    #footer a span {
+        display: none;
+    }
+
+    #hint {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
 }

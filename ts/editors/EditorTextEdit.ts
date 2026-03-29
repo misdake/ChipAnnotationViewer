@@ -19,7 +19,7 @@ export class EditorTextEdit extends Editor {
         return [
             Editor.usage("hold ctrl+alt to copy and drag", UsageType.MOUSE),
             Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
-            Editor.usage("press del to delete", UsageType.KEYBOARD),
+            Editor.usage("press delete to delete selected", UsageType.KEYBOARD),
         ];
     }
 

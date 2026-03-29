@@ -1,13 +1,13 @@
-import {Editor, Usage, UsageType} from "./Editor";
-import {MouseIn, MouseListener} from "../MouseListener";
-import {EditorName} from "./Editors";
-import {Canvas} from "../Canvas";
-import {Env} from "../Env";
-import {DrawablePolyline} from "../editable/DrawablePolyline";
-import {Selection, SelectType} from "../layers/Selection";
-import {Ui} from "../util/Ui";
-import {LayerName} from "../layers/Layers";
-import {LayerPolylineView} from "../layers/LayerPolylineView";
+import { Editor, Usage, UsageType } from "./Editor";
+import { MouseIn, MouseListener } from "../MouseListener";
+import { EditorName } from "./Editors";
+import { Canvas } from "../Canvas";
+import { Env } from "../Env";
+import { DrawablePolyline } from "../editable/DrawablePolyline";
+import { Selection, SelectType } from "../layers/Selection";
+import { Ui } from "../util/Ui";
+import { LayerName } from "../layers/Layers";
+import { LayerPolylineView } from "../layers/LayerPolylineView";
 
 export class EditorPolylineEdit extends Editor {
 
@@ -19,12 +19,11 @@ export class EditorPolylineEdit extends Editor {
         return [
             Editor.usage("hold left button to drag points", UsageType.MOUSE),
             Editor.usage("hold ctrl to help with horizontal/vertical line", UsageType.MOUSE),
-            Editor.usage("hold alt to drag polyline", UsageType.MOUSE),
-            Editor.usage("hold ctrl+alt to copy and drag polyline", UsageType.MOUSE),
+            Editor.usage("hold ctrl on polyline and drag to clone polyline", UsageType.MOUSE),
             Editor.usage("double click on line to create point", UsageType.MOUSE),
             Editor.usage("right-click / double left-click point to delete it", UsageType.MOUSE),
             Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
-            Editor.usage("press del to delete", UsageType.KEYBOARD),
+            Editor.usage("press delete to delete selected", UsageType.KEYBOARD),
         ];
     }
 
@@ -33,7 +32,7 @@ export class EditorPolylineEdit extends Editor {
     enter(env: Env): void {
         let layerView = <LayerPolylineView>env.canvas.findLayer(LayerName.POLYLINE_VIEW);
 
-        let {item: item, type: type} = Selection.getSelected();
+        let { item: item, type: type } = Selection.getSelected();
         if (type !== SelectType.POLYLINE) return;
         let polyline = <DrawablePolyline>item;
 

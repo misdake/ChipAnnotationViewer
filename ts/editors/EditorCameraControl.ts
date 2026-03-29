@@ -1,8 +1,8 @@
-import {Editor, Usage, UsageType} from "./Editor";
-import {MouseIn, MouseListener, WheelIn} from "../MouseListener";
-import {EditorName} from "./Editors";
-import {Canvas} from "../Canvas";
-import {Env} from "../Env";
+import { Editor, Usage, UsageType } from "./Editor";
+import { MouseIn, MouseListener, WheelIn } from "../MouseListener";
+import { EditorName } from "./Editors";
+import { Canvas } from "../Canvas";
+import { Env } from "../Env";
 
 export class EditorCameraControl extends Editor {
 
@@ -12,7 +12,7 @@ export class EditorCameraControl extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("hold mouse button to view map", UsageType.MOUSE),
+            Editor.usage("drag right button to view map", UsageType.MOUSE),
             Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
         ];
     }

@@ -50,6 +50,10 @@ export class Canvas {
         return this.camera;
     }
 
+    public getElement(): HTMLCanvasElement {
+        return this.canvasElement;
+    }
+
     public init(): void {
         let self = this;
         let convertMouseEvent = (event: MouseEvent) => {

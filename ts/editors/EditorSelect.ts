@@ -8,7 +8,7 @@ import { Env } from "../Env";
 import { Renderer } from "../Renderer";
 import { DrawableText } from "../editable/DrawableText";
 import { Drawable } from "../drawable/Drawable";
-import { EditablePick } from "../editable/Editable";
+import { EditablePick, EditableMove, EditableDeleteClone, EditableColor, editableMultiple } from "../editable/Editable";
 import { Camera } from "../Camera";
 
 export class EditorSelect extends Editor {
@@ -19,6 +19,14 @@ export class EditorSelect extends Editor {
     private dragCurrentX = 0;
     private dragCurrentY = 0;
     private previewSelection: (Drawable & EditablePick)[] = [];
+    private isDraggingSelected = false;
+    private isBoxSelecting = false;
+    private dragMoveStartX = 0;
+    private dragMoveStartY = 0;
+    private selectedEditable: EditableMove & EditableDeleteClone & EditableColor;
+    private rightClickStartX = 0;
+    private rightClickStartY = 0;
+    private isRightClickDragging = false;
 
     constructor(canvas: Canvas) {
         super(EditorName.SELECT, canvas);
@@ -27,9 +35,37 @@ export class EditorSelect extends Editor {
     usages(): Usage[] {
         return [
             Editor.usage("left click to select"),
-            Editor.usage("hold ctrl and left click to select another"),
-            Editor.usage("left click and drag to select multiple"),
+            Editor.usage("left click on selected to drag and move"),
+            Editor.usage("hold ctrl to add to selection or merge selections"),
+            Editor.usage("right click to deselect all"),
+            Editor.usage("drag on empty area to box select"),
+            Editor.usage("hold ctrl while box selecting to merge with current selection"),
         ];
+    }
+
+    private isPointOnSelectedDrawable(x: number, y: number): boolean {
+        let selected = Selection.getSelected();
+        if (!selected.type) return false;
+        let radius = this.camera.screenSizeToCanvas(5);
+        if (selected.type === SelectType.MULTIPLE) {
+            let items = <(Drawable & EditablePick)[]>selected.item;
+            for (let item of items) {
+                if (item.pick(x, y, radius)) return true;
+            }
+        } else {
+            let item = <Drawable & EditablePick>selected.item;
+            if (item.pick(x, y, radius)) return true;
+        }
+        return false;
+    }
+
+    private getSelectedDrawables(): (Drawable & EditablePick)[] {
+        let selected = Selection.getSelected();
+        if (!selected.type) return [];
+        if (selected.type === SelectType.MULTIPLE) {
+            return <(Drawable & EditablePick)[]>selected.item;
+        }
+        return [<Drawable & EditablePick>selected.item];
     }
 
     enter(env: Env): void {
@@ -38,126 +74,180 @@ export class EditorSelect extends Editor {
         this._mouseListener = new class extends MouseListener {
             onmousedown(event: MouseIn): boolean {
                 if (event.button == 0) {
-                    self.dragging = false;
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    self.dragStartX = canvasXY.x;
-                    self.dragStartY = canvasXY.y;
-                    self.dragCurrentX = canvasXY.x;
-                    self.dragCurrentY = canvasXY.y;
+                    let x = canvasXY.x, y = canvasXY.y;
+
+                    if (self.isPointOnSelectedDrawable(x, y)) {
+                        self.isDraggingSelected = true;
+                        self.isBoxSelecting = false;
+                        self.dragMoveStartX = x;
+                        self.dragMoveStartY = y;
+                        let selected = self.getSelectedDrawables();
+                        self.selectedEditable = editableMultiple(selected);
+
+                        if (event.ctrlKey) {
+                            self.selectedEditable.cloneOnCanvas(self.canvas, 0, 0);
+                            let newSelected = self.getSelectedDrawables();
+                            self.selectedEditable = editableMultiple(newSelected);
+                        }
+
+                        self.canvas.getElement().style.cursor = "grabbing";
+                    } else {
+                        self.isDraggingSelected = false;
+                        self.isBoxSelecting = true;
+                        self.dragging = false;
+                        self.dragStartX = x;
+                        self.dragStartY = y;
+                        self.dragCurrentX = x;
+                        self.dragCurrentY = y;
+                        if (!event.ctrlKey) {
+                            Selection.deselectAny();
+                        }
+                    }
                     return true;
+                }
+                if (event.button == 2) {
+                    self.rightClickStartX = event.offsetX;
+                    self.rightClickStartY = event.offsetY;
+                    return false;
                 }
                 return false;
             }
             onmouseup(event: MouseIn): boolean {
+                if (event.button == 2) {
+                    if (!self.isRightClickDragging && Selection.getSelected().type) {
+                        Selection.deselectAny();
+                    }
+                    self.isRightClickDragging = false;
+                    return false;
+                }
                 if (event.button == 0) {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
-                    if (self.dragging) {
-                        let selected = self.previewSelection;
+                    if (self.isDraggingSelected) {
+                        self.isDraggingSelected = false;
+                        self.selectedEditable = null;
+                        self.canvas.getElement().style.cursor = "";
+                        self.canvas.requestRender();
+                        return true;
+                    }
 
-                        if (selected.length > 0) {
-                            if (!event.ctrlKey) {
-                                if (selected.length === 1) {
-                                    Selection.select(selected[0].pickType, selected[0]);
-                                } else {
-                                    Selection.select(SelectType.MULTIPLE, selected);
-                                }
-                            } else {
-                                let current = Selection.getSelected();
-                                let currentType = current.type;
-                                if (!currentType) {
+                    if (self.isBoxSelecting) {
+                        if (self.dragging) {
+                            let selected = self.previewSelection;
+                            if (selected.length > 0) {
+                                if (!event.ctrlKey) {
                                     if (selected.length === 1) {
                                         Selection.select(selected[0].pickType, selected[0]);
                                     } else {
                                         Selection.select(SelectType.MULTIPLE, selected);
                                     }
-                                } else if (currentType === SelectType.MULTIPLE) {
-                                    let array = <(Drawable & EditablePick)[]>current.item;
-                                    for (let item of selected) {
-                                        if (array.indexOf(item) < 0) {
-                                            array.push(item);
-                                        }
-                                    }
-                                    Selection.select(SelectType.MULTIPLE, array);
                                 } else {
-                                    let newArray: (Drawable & EditablePick)[] = [<Drawable & EditablePick>current.item];
-                                    for (let item of selected) {
-                                        if (newArray.indexOf(item) < 0) {
-                                            newArray.push(item);
+                                    let current = Selection.getSelected();
+                                    let currentType = current.type;
+                                    if (!currentType) {
+                                        if (selected.length === 1) {
+                                            Selection.select(selected[0].pickType, selected[0]);
+                                        } else {
+                                            Selection.select(SelectType.MULTIPLE, selected);
                                         }
+                                    } else if (currentType === SelectType.MULTIPLE) {
+                                        let array = <(Drawable & EditablePick)[]>current.item;
+                                        for (let item of selected) {
+                                            if (array.indexOf(item) < 0) {
+                                                array.push(item);
+                                            }
+                                        }
+                                        Selection.select(SelectType.MULTIPLE, array);
+                                    } else {
+                                        let newArray: (Drawable & EditablePick)[] = [<Drawable & EditablePick>current.item];
+                                        for (let item of selected) {
+                                            if (newArray.indexOf(item) < 0) {
+                                                newArray.push(item);
+                                            }
+                                        }
+                                        Selection.select(SelectType.MULTIPLE, newArray);
                                     }
-                                    Selection.select(SelectType.MULTIPLE, newArray);
                                 }
+                            } else if (!event.ctrlKey) {
+                                Selection.deselectAny();
                             }
                         } else {
-                            if (!event.ctrlKey) {
+                            let { item, type } = self.pickAny(x, y, env);
+                            if (item) {
+                                if (!event.ctrlKey) {
+                                    Selection.select(type, item);
+                                } else {
+                                    let current = Selection.getSelected();
+                                    let currentType = current.type;
+                                    if (!currentType) {
+                                        Selection.select(type, item);
+                                    } else if (currentType === SelectType.MULTIPLE) {
+                                        let array = <(Drawable & EditablePick)[]>current.item;
+                                        let index = array.indexOf(item);
+                                        if (index >= 0) {
+                                            array.splice(index, 1);
+                                            if (array.length === 0) {
+                                                Selection.deselectAny();
+                                            } else if (array.length === 1) {
+                                                Selection.select(array[0].pickType, array[0]);
+                                            } else {
+                                                Selection.select(SelectType.MULTIPLE, array);
+                                            }
+                                        } else {
+                                            array.push(item);
+                                            Selection.select(SelectType.MULTIPLE, array);
+                                        }
+                                    } else {
+                                        if (current.item !== item) {
+                                            Selection.select(SelectType.MULTIPLE, [<Drawable>current.item, item]);
+                                        } else {
+                                            Selection.deselectAny();
+                                        }
+                                    }
+                                }
+                            } else if (!event.ctrlKey) {
                                 Selection.deselectAny();
                             }
                         }
-
+                        self.isBoxSelecting = false;
                         self.dragging = false;
                         self.previewSelection = [];
                         self.canvas.requestRender();
-                        return true;
-                    } else {
-                        let { item, type } = self.pickAny(x, y, env);
-                        if (item) {
-                            if (!event.ctrlKey) {
-                                Selection.select(type, item);
-                                return true;
-                            } else {
-                                let current = Selection.getSelected();
-                                let currentType = current.type;
-
-                                if (!currentType) {
-                                    Selection.select(type, item);
-                                    return true;
-
-                                } else if (currentType === SelectType.MULTIPLE) {
-                                    let array = <(Drawable & EditablePick)[]>current.item;
-                                    let index = array.indexOf(item);
-                                    if (index >= 0) {
-                                        array.splice(index, 1);
-                                        if (array.length === 0) {
-                                            Selection.deselectAny();
-                                            return true;
-                                        } else if (array.length === 1) {
-                                            Selection.select(array[0].pickType, array[0]);
-                                            return true;
-                                        } else {
-                                            Selection.select(SelectType.MULTIPLE, array);
-                                            return true;
-                                        }
-                                    } else {
-                                        array.push(item);
-                                        Selection.select(SelectType.MULTIPLE, array);
-                                        return true;
-                                    }
-
-                                } else {
-                                    if (current.item !== item) {
-                                        Selection.select(SelectType.MULTIPLE, [<Drawable>current.item, item]);
-                                        return true;
-                                    } else {
-                                        Selection.deselectAny();
-                                        return true;
-                                    }
-                                }
-                            }
+                        if (self.getSelectedDrawables().length > 0 && self.isPointOnSelectedDrawable(x, y)) {
+                            self.canvas.getElement().style.cursor = "grab";
+                        } else {
+                            self.canvas.getElement().style.cursor = "";
                         }
-
-                        Selection.deselectAny();
-                        return false;
+                        return true;
                     }
                 }
                 return false;
             }
             onmousemove(event: MouseIn): boolean {
-                if (event.buttons & 1) {
-                    let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
-                    let x = canvasXY.x, y = canvasXY.y;
+                let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                let x = canvasXY.x, y = canvasXY.y;
 
+                if ((event.buttons & 2) && !self.isRightClickDragging) {
+                    let dx = Math.abs(event.offsetX - self.rightClickStartX);
+                    let dy = Math.abs(event.offsetY - self.rightClickStartY);
+                    if (dx > 5 || dy > 5) {
+                        self.isRightClickDragging = true;
+                    }
+                }
+
+                if (self.isDraggingSelected && (event.buttons & 1)) {
+                    let dx = x - self.dragMoveStartX;
+                    let dy = y - self.dragMoveStartY;
+                    self.selectedEditable.move(dx, dy);
+                    self.dragMoveStartX = x;
+                    self.dragMoveStartY = y;
+                    self.canvas.requestRender();
+                    return true;
+                }
+
+                if (self.isBoxSelecting && (event.buttons & 1)) {
                     if (Math.abs(x - self.dragStartX) > 3 || Math.abs(y - self.dragStartY) > 3) {
                         self.dragging = true;
                     }
@@ -198,6 +288,16 @@ export class EditorSelect extends Editor {
                         return true;
                     }
                 }
+
+                if (!self.isBoxSelecting) {
+                    let selected = self.getSelectedDrawables();
+                    if (selected.length > 0 && self.isPointOnSelectedDrawable(x, y)) {
+                        self.canvas.getElement().style.cursor = "grab";
+                    } else {
+                        self.canvas.getElement().style.cursor = "";
+                    }
+                }
+
                 return false;
             }
             ondblclick(event: MouseIn): boolean {

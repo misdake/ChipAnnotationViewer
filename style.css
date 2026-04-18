@@ -1,3 +1,4 @@
+/* Base */
 * {
     margin: 0;
     padding: 0;
@@ -16,23 +17,173 @@
     --warning-color: #F59E0B;
 }
 
-body,
-html {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+html,
+body {
     height: 100%;
     overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: var(--text-primary);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
+#container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.ui-panel {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ui-panel.dragging {
+    pointer-events: none;
+}
+
+/* Shared floating panel shell */
+#selectPanel,
+#cameraPanel,
+#propertyPanel,
+#hint,
+#footer {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Select and camera panels */
+#selectPanel {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 999;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#cameraPanel {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    z-index: 999;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Property panel */
+#propertyPanel {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 998;
+    min-width: 220px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#propertyPanel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#propertyPanel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#propertyPanel::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.panel-divider {
+    height: 1px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hint */
+#hint {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    z-index: 997;
+    max-width: 80%;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+#hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Footer */
+#footer {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    z-index: 997;
+    display: flex;
+    flex-flow: row wrap;
+    border-radius: 24px;
+    font-size: 14px;
+    line-height: 24px;
+    vertical-align: middle;
+}
+
+#footer a {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    padding: 8px;
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+#footer a:hover {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none !important;
+}
+
+#footer span {
+    margin-left: 6px;
+    line-height: 24px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.footerIcon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+}
+
+/* Form controls */
 select {
     min-width: 150px;
     height: 24px;
     padding: 0;
-    background: var(--surface-color);
-    color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
+    background: var(--surface-color);
+    color: var(--text-primary);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -48,58 +199,236 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-.refreshButton {
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-sizing: border-box;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.titleInput {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.titleInput label {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.titleInput input[type="text"] {
+    flex: 1;
+    padding: 6px 10px;
+}
+
+.configText {
+    margin: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.sizeInput {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.sizeInput label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.sizeInput input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.sizeInput input[type="number"]:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.checkboxRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+.checkboxLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.configCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.configCheckbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.configColorAlphaContainer {
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.configColorButton,
+.configAlphaButton {
+    width: 14px;
+    height: 28px;
+    margin: 4px 0 4px 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.configColorButton:hover,
+.configAlphaButton:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Buttons */
+.configButton,
+.hintToggleButton,
+.iconButton {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.configButton,
+.hintToggleButton {
     position: relative;
+    overflow: hidden;
+    margin: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.configButton:hover,
+.hintToggleButton:hover,
+.iconButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.configButton:active,
+.hintToggleButton:active,
+.iconButton:active {
+    transform: translateY(0);
+}
+
+.configButton::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.configButton:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+.hintToggleButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hintToggleButton svg {
+    flex-shrink: 0;
+}
+
+.hintToggleButton.hintHidden {
+    background: rgba(100, 116, 139, 0.6);
+}
+
+.hintToggleButton.hintHidden:hover {
+    background: rgba(100, 116, 139, 0.8);
+    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+}
+
+#hintToggleText {
+    font-size: 14px;
+}
+
+.iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 4px;
+    padding: 0;
+}
+
+.iconButton svg {
     width: 20px;
     height: 20px;
-    border: 0;
-    margin-left: 5px;
-    background: transparent url('res/refresh.png');
-    background-size: cover;
-    transition: transform 0.3s ease;
-}
-
-.refreshButton:hover {
-    transform: rotate(180deg);
-}
-
-#selectPanel {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    z-index: 999;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#cameraPanel {
-    position: absolute;
-    bottom: 15px;
-    left: 15px;
-    z-index: 999;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    gap: 8px;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 .zoomButton {
     width: 40px;
     height: 40px;
-    border-radius: 8px;
     border: none;
+    border-radius: 8px;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     font-size: 18px;
@@ -119,74 +448,26 @@ select:focus {
 }
 
 .zoomText {
+    display: flex;
+    align-items: center;
     color: var(--text-secondary);
     font-size: 14px;
     font-weight: 500;
-    display: flex;
-    align-items: center;
 }
 
-.imageSource {
-    margin-left: 4px;
-    color: var(--text-secondary);
-    font-size: 12px;
-}
-
-.imageSourceLabel {
-    color: var(--text-secondary);
-    font-size: 12px;
-}
-
-#container {
+.refreshButton {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    border: 0;
+    background: transparent url("res/refresh.png");
+    background-size: cover;
+    transition: transform 0.3s ease;
 }
 
-#propertyPanel {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 998;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    min-width: 220px;
-    max-height: calc(100vh - 150px);
-    overflow-y: auto;
-}
-
-.ui-panel.dragging {
-    pointer-events: none;
-}
-
-.ui-panel {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.panel-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 8px 0;
-}
-
-#propertyPanel::-webkit-scrollbar {
-    width: 6px;
-}
-
-#propertyPanel::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-}
-
-#propertyPanel::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 3px;
+.refreshButton:hover {
+    transform: rotate(180deg);
 }
 
 #creationButtons {
@@ -196,370 +477,16 @@ select:focus {
     margin: 10px 0;
 }
 
-#hint {
-    position: absolute;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 997;
-    color: var(--text-secondary);
-    font-size: 13px;
-    padding: 8px 16px;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: 8px;
-    max-width: 80%;
-    transition: opacity 0.3s ease;
-}
-
-#hint.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.hintToggleButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    position: relative;
-    overflow: hidden;
-    margin: 4px 4px;
-}
-
-.hintToggleButton:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-}
-
-.hintToggleButton:active {
-    transform: translateY(0);
-}
-
-.hintToggleButton svg {
-    flex-shrink: 0;
-}
-
-.hintToggleButton.hintHidden {
-    background: rgba(100, 116, 139, 0.6);
-}
-
-.hintToggleButton.hintHidden:hover {
-    background: rgba(100, 116, 139, 0.8);
-    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
-}
-
-.hintToggleText {
-    font-size: 14px;
-}
-
-.configButton {
-    padding: 4px 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    position: relative;
-    overflow: hidden;
-    margin: 4px 4px;
-}
-
-.configButton:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-}
-
-.configButton:active {
-    transform: translateY(0);
-}
-
-.configButton::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s ease, height 0.6s ease;
-}
-
-.configButton:active::after {
-    width: 300px;
-    height: 300px;
-}
-
-.iconButton {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 4px;
-}
-
-.iconButton:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-}
-
-.iconButton:active {
-    transform: translateY(0);
-}
-
-.iconButton svg {
-    width: 20px;
-    height: 20px;
-}
-
-.checkboxRow {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin: 8px 0;
-}
-
-.checkboxLabel {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text-secondary);
-    user-select: none;
-}
-
-.checkboxLabel input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--primary-color);
-    cursor: pointer;
-}
-
-.configColorAlphaContainer {
-    margin: 8px 0;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-}
-
-.sizeInput {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 6px 0;
-}
-
-.sizeInput label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-}
-
-.sizeInput input[type="number"] {
-    width: 60px;
-    padding: 4px 8px;
-    background: var(--surface-color);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 13px;
-    text-align: center;
-}
-
-.sizeInput input[type="number"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.configColorButton {
-    width: 14px;
-    height: 28px;
-    border: 1px solid transparent;
-    margin: 4px 0 4px 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.configColorButton:hover {
-    transform: scale(1.1);
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.configAlphaButton {
-    width: 14px;
-    height: 28px;
-    border: 1px solid transparent;
-    margin: 4px 0 4px 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.configAlphaButton:hover {
-    transform: scale(1.1);
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.configCheckbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 0;
-    cursor: pointer;
-}
-
-.configCheckbox input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary-color);
-    cursor: pointer;
-}
-
-.configText {
-    margin: 4px;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.titleInput {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.titleInput label {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.titleInput input[type="text"] {
-    flex: 1;
-    padding: 6px 10px;
-    background: var(--surface-color);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-}
-
-.titleInput input[type="text"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-input[type="text"],
-input[type="number"] {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--surface-color);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-}
-
-input[type="text"]:focus,
-input[type="number"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-#footer {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    z-index: 997;
-    font-size: 14px;
-    line-height: 24px;
-    vertical-align: middle;
-    display: flex;
-    flex-flow: row;
-    /* gap: 8px; */
-    flex-wrap: wrap;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-#footer a {
-    cursor: pointer;
-    display: flex;
-    flex-flow: row;
-    align-items: center;
-    color: var(--text-secondary);
-    padding: 8px 8px;
-    border-radius: 20px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-#footer a:hover {
-    background: var(--primary-color);
-    color: white;
-    text-decoration: none !important;
-}
-
-#footer span {
-    margin-left: 6px;
-    cursor: pointer;
-    line-height: 24px;
-    vertical-align: middle;
-}
-
-.footerIcon {
-    width: 20px;
-    height: 20px;
-    opacity: 0.8;
-}
-
 .uploadHelper {
     display: inline-flex;
     align-items: center;
     padding: 6px 12px;
-    background: transparent;
     border: 1px solid var(--border-color);
     border-radius: 20px;
+    background: transparent;
     color: var(--text-secondary);
-    text-decoration: none;
     font-size: 13px;
+    text-decoration: none;
     transition: all 0.2s ease;
 }
 
@@ -569,19 +496,46 @@ input[type="number"]:focus {
     background: rgba(59, 130, 246, 0.1);
 }
 
+/* Misc text blocks */
+.imageSourceLabel,
+.imageSource {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.imageSource {
+    margin-left: 4px;
+}
+
+.label {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.separator {
+    height: 1px;
+    margin: 16px 0;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+
+/* Toast */
 #toast {
     position: absolute;
-    bottom: 20px;
     right: 20px;
-    font-size: 16px;
-    color: white;
-    background: linear-gradient(135deg, var(--success-color), #059669);
-    padding: 12px 24px;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-    animation: slideIn 0.3s ease;
+    bottom: 20px;
     z-index: 1000;
     display: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    color: white;
+    font-size: 16px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    animation: slideIn 0.3s ease;
 }
 
 #toast.visible {
@@ -616,29 +570,12 @@ input[type="number"]:focus {
     }
 }
 
-.label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.separator {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-    margin: 16px 0;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
     #propertyPanel {
         display: none;
-    }
-
-    .configButton {
-        padding: 8px 12px;
-        font-size: 12px;
+        min-width: 180px;
+        max-width: 200px;
     }
 
     #selectPanel,
@@ -648,9 +585,9 @@ input[type="number"]:focus {
         border-radius: 8px;
     }
 
-    #propertyPanel {
-        min-width: 180px;
-        max-width: 200px;
+    .configButton {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 
     .zoomButton {
@@ -663,7 +600,7 @@ input[type="number"]:focus {
     }
 
     #hint {
-        font-size: 12px;
         padding: 6px 12px;
+        font-size: 12px;
     }
 }

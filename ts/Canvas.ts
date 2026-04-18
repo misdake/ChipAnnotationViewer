@@ -349,14 +349,13 @@ export class Canvas {
         for (let editor of editors) {
             let e = map[editor];
             if (e) {
-                this.currentEditors.push(e);
+                e.resetRuntimeState();
                 e.enter(this.env);
+                this.currentEditors.push(e);
 
-                let localUsages: { [key: number]: string[] } = {};
                 for (let usage of e.usages()) {
-                    let array = localUsages[usage.type] || [];
+                    let array = usages[usage.type] || [];
                     array.push(usage.content);
-                    localUsages[usage.type] = array;
                     usages[usage.type] = array;
                 }
             }
@@ -378,6 +377,7 @@ export class Canvas {
     public exitEditors() {
         for (let e of this.currentEditors) {
             e.exit(this.env);
+            e.resetRuntimeState();
         }
         this.currentEditors = [];
     }

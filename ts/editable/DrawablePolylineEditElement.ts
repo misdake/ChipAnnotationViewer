@@ -142,7 +142,7 @@ export class PolylineEdit extends LitElement {
             if (options.closed !== undefined) polyline.style.closed = options.closed;
         }
         this.canvas.requestRender();
-        this.performUpdate();
+        this.requestUpdate();
     };
     private onSizeInput = (options: { screen?: string, canvas?: string }) => {
         for (const polyline of this.polylines) {
@@ -150,7 +150,7 @@ export class PolylineEdit extends LitElement {
             if (options.canvas !== undefined) polyline.style.onCanvas = parseInt(options.canvas);
         }
         this.canvas.requestRender();
-        this.performUpdate();
+        this.requestUpdate();
     };
 
     render() {

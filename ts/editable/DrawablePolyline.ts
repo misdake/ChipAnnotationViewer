@@ -445,6 +445,7 @@ export class DrawablePolylineStyle {
         this._strokeColor = ColorEntry.findByName(pack.strokeColorName);
         this._strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
+        this.normalizeRenderableState();
     }
     protected _closed: boolean;
     protected _lineWidth: Size;
@@ -519,9 +520,11 @@ export class DrawablePolylineStyle {
         this._closed = value;
     }
     set fill(value: boolean) {
+        if (!value && !this._stroke) return;
         this._fill = value;
     }
     set stroke(value: boolean) {
+        if (!value && !this._fill) return;
         this._stroke = value;
     }
 
@@ -541,6 +544,10 @@ export class DrawablePolylineStyle {
         if (strokeColor) this._strokeColor = strokeColor;
         if (strokeAlpha) this._strokeAlpha = strokeAlpha;
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
+    }
+
+    private normalizeRenderableState() {
+        if (!this._fill && !this._stroke) this._stroke = true;
     }
 }
 

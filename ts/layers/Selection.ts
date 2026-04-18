@@ -8,29 +8,54 @@ export enum SelectType {
     MULTIPLE, // => Drawable[]. modify array content to change selected instead of Select(MULTIPLE, new_array)
 }
 
+interface SelectionCallbackEntry<T> {
+    id: number;
+    callback: T;
+}
+
 export class Selection {
 
-    private static listSelect: ((item: Drawable | Drawable[]) => void)[] = [];
-    private static listDeselect: (() => void)[] = [];
-    private static mapSelect: { [key: number]: ((item: Drawable | Drawable[]) => void)[] } = {};
-    private static mapDeselect: { [key: number]: (() => void)[] } = {};
+    private static nextRegistrationId = 1;
+
+    private static listSelect: SelectionCallbackEntry<(item: Drawable | Drawable[]) => void>[] = [];
+    private static listDeselect: SelectionCallbackEntry<() => void>[] = [];
+    private static mapSelect: { [key: number]: SelectionCallbackEntry<(item: Drawable | Drawable[]) => void>[] } = {};
+    private static mapDeselect: { [key: number]: SelectionCallbackEntry<() => void>[] } = {};
 
     private static selected: Drawable | Drawable[];
     private static selectedType: SelectType;
 
-    public static register(typeName: SelectType, onselect: (item: Drawable | Drawable[]) => void, ondeselect: () => void) {
+    public static register(typeName: SelectType, onselect: (item: Drawable | Drawable[]) => void, ondeselect: () => void): () => void {
+        const registrationId = this.nextRegistrationId++;
+
         if (typeName) {
             if (onselect) {
                 this.mapSelect[typeName] = this.mapSelect[typeName] || [];
-                this.mapSelect[typeName].push(onselect);
+                this.mapSelect[typeName].push({ id: registrationId, callback: onselect });
             }
             if (ondeselect) {
                 this.mapDeselect[typeName] = this.mapDeselect[typeName] || [];
-                this.mapDeselect[typeName].push(ondeselect);
+                this.mapDeselect[typeName].push({ id: registrationId, callback: ondeselect });
             }
         } else {
-            if (onselect) this.listSelect.push(onselect);
-            if (ondeselect) this.listDeselect.push(ondeselect);
+            if (onselect) this.listSelect.push({ id: registrationId, callback: onselect });
+            if (ondeselect) this.listDeselect.push({ id: registrationId, callback: ondeselect });
+        }
+
+        return () => this.unregister(registrationId);
+    }
+
+    public static unregister(registrationId: number): void {
+        this.listSelect = this.listSelect.filter(item => item.id !== registrationId);
+        this.listDeselect = this.listDeselect.filter(item => item.id !== registrationId);
+
+        for (const key in this.mapSelect) {
+            const type = parseInt(key, 10);
+            this.mapSelect[type] = (this.mapSelect[type] || []).filter(item => item.id !== registrationId);
+        }
+        for (const key in this.mapDeselect) {
+            const type = parseInt(key, 10);
+            this.mapDeselect[type] = (this.mapDeselect[type] || []).filter(item => item.id !== registrationId);
         }
     }
 
@@ -45,11 +70,11 @@ export class Selection {
             let ondeselect = this.mapDeselect[typeName];
             if (ondeselect) {
                 for (let func of ondeselect) {
-                    func();
+                    func.callback();
                 }
             }
             for (let func of this.listDeselect) {
-                func();
+                func.callback();
             }
 
             // console.log("deselect", typeName);
@@ -68,11 +93,11 @@ export class Selection {
         let onselect = this.mapSelect[typeName];
         if (onselect) {
             for (let func of onselect) {
-                func(item);
+                func.callback(item);
             }
         }
         for (let func of this.listSelect) {
-            func(item);
+            func.callback(item);
         }
     }
 

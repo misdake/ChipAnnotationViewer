@@ -44,6 +44,11 @@ export abstract class Editor {
     }
     public abstract usages(): Usage[];
 
+    public resetRuntimeState(): void {
+        this._mouseListener = null;
+        this._keyboardListener = null;
+    }
+
     public abstract enter(env: Env): void;
 
     public abstract exit(env: Env): void;

@@ -57,12 +57,12 @@ export class TriStateCheckboxElement extends LitElement {
     `;
 
     private toggle() {
-        if (this.state === 'all') {
-            this.state = 'none';
+        const nextState: 'none' | 'all' = this.state === 'all' ? 'none' : 'all';
+        if (this.onChange) {
+            this.onChange(nextState);
         } else {
-            this.state = 'all';
+            this.state = nextState;
         }
-        if (this.onChange) this.onChange(this.state);
     }
 
     private getSvg() {

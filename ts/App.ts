@@ -35,7 +35,22 @@ Selection.register(null, () => {
     canvas.requestRender();
 });
 
+type PolylineCreateMode = "polyline" | "rect";
+let polylineCreateMode: PolylineCreateMode = "polyline";
+
 document.getElementById("buttonCreatePolyline").onclick = () => {
+    polylineCreateMode = "polyline";
+    let polyline = new DrawablePolyline(new DrawablePolylinePack(
+        [], true, new Size(2),
+        true, "white", "25",
+        true, "white", "75",
+    ));
+    canvas.env.polylines.push(polyline);
+    Selection.select(SelectType.POLYLINE_CREATE, polyline);
+};
+
+document.getElementById("buttonCreateRect").onclick = () => {
+    polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
         true, "white", "25",
@@ -106,9 +121,11 @@ class App {
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
             render(html`${panelDivider}${item.ui.render(canvas, this.map)}`, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
+            const createEditor = polylineCreateMode === "rect" ? EditorName.RECT_CREATE : EditorName.POLYLINE_CREATE;
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, createEditor);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
+            polylineCreateMode = "polyline";
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 

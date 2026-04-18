@@ -1,5 +1,6 @@
 import { customElement, html, LitElement, property } from "lit-element";
 import { DrawablePolyline } from "./DrawablePolyline";
+import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
 import { Map } from "../data/Map";
 import { AlphaEntry, ColorEntry } from "../util/Color";
@@ -9,12 +10,16 @@ import "../elements/NumberInputElement"
 import { Selection, SelectType } from "../layers/Selection";
 import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
 import { TriState, getTriState, getUnifiedValue } from "../util/MultiSelect";
+import { AABB } from "../util/AABB";
 
 @customElement('polylineedit-element')
 export class PolylineEdit extends LitElement {
 
     @property()
     polylines: DrawablePolyline[] = [];
+
+    @property()
+    linkedDrawables: (DrawablePolyline | DrawableText)[] = [];
 
     @property()
     canvas: Canvas;
@@ -82,27 +87,49 @@ export class PolylineEdit extends LitElement {
         this.area = totalValue + unit;
     }
 
+    private getTransformTargets(): (DrawablePolyline | DrawableText)[] {
+        if (this.linkedDrawables && this.linkedDrawables.length > 0) {
+            return this.linkedDrawables;
+        }
+        return this.polylines;
+    }
+
+    private getSelectionCenter(): { x: number, y: number } | undefined {
+        const targets = this.getTransformTargets();
+        if (!targets || targets.length === 0) return undefined;
+        const aabb = AABB.combineAll(targets.map(item => item.aabb()));
+        return { x: aabb.centerX, y: aabb.centerY };
+    }
+
     rotateCCW() {
-        for (const polyline of this.polylines) {
-            polyline.editor.rotateCCW();
+        const center = this.getSelectionCenter();
+        if (!center) return;
+        for (const item of this.getTransformTargets()) {
+            item.rotateCCW(center.x, center.y);
         }
         this.canvas.requestRender();
     }
     rotateCW() {
-        for (const polyline of this.polylines) {
-            polyline.editor.rotateCW();
+        const center = this.getSelectionCenter();
+        if (!center) return;
+        for (const item of this.getTransformTargets()) {
+            item.rotateCW(center.x, center.y);
         }
         this.canvas.requestRender();
     }
     flipX() {
-        for (const polyline of this.polylines) {
-            polyline.editor.flipX();
+        const center = this.getSelectionCenter();
+        if (!center) return;
+        for (const item of this.getTransformTargets()) {
+            item.flipX(center.x);
         }
         this.canvas.requestRender();
     }
     flipY() {
-        for (const polyline of this.polylines) {
-            polyline.editor.flipY();
+        const center = this.getSelectionCenter();
+        if (!center) return;
+        for (const item of this.getTransformTargets()) {
+            item.flipY(center.y);
         }
         this.canvas.requestRender();
     }

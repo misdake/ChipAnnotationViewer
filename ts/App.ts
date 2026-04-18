@@ -156,7 +156,7 @@ class App {
                 }
             }
             const polylinePanel = polylines.length > 0
-                ? html`<polylineedit-element .polylines=${polylines} .canvas=${canvas} .map=${this.map}></polylineedit-element>`
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${item as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .map=${this.map}></polylineedit-element>`
                 : html``;
             const textPanel = texts.length > 0
                 ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`

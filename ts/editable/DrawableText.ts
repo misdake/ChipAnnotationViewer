@@ -63,7 +63,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
     private _canvasAABB: AABB = new AABB();
     private sizeValid: boolean = false;
-    private canvasZoom: number = -1;
+    private canvasScale: number = -1;
     private canvasWidth: number = 0;
     private canvasHeight: number = 0;
     private screenWidth: number = 0;
@@ -222,12 +222,12 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
 
     private validate(camera: Camera, renderer: Renderer) {
-        if (!this.sizeValid || this.canvasZoom != camera.getZoom()) {
+        if (!this.sizeValid || this.canvasScale != camera.getScale()) {
             this.sizeValid = true;
 
             let { width, totalHeight, fontSize } = renderer.measureText(camera, this._text, this.fontSize);
             let ratio = camera.screenSizeToCanvas(1);
-            this.canvasZoom = camera.getZoom();
+            this.canvasScale = camera.getScale();
             this.canvasWidth = width * ratio / 2;
             this.canvasHeight = totalHeight * ratio / 2;
             this.screenWidth = width;

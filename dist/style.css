@@ -59,6 +59,8 @@ body {
     top: 15px;
     left: 15px;
     z-index: 999;
+    max-width: calc(100vw - 30px);
+    box-sizing: border-box;
     padding: 10px;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -71,6 +73,8 @@ body {
     z-index: 999;
     display: flex;
     gap: 8px;
+    max-width: calc(100vw - 30px);
+    box-sizing: border-box;
     padding: 10px;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -178,6 +182,7 @@ body {
 /* Form controls */
 select {
     min-width: 150px;
+    max-width: 100%;
     height: 24px;
     padding: 0;
     border: 1px solid var(--border-color);
@@ -465,10 +470,13 @@ input[type="number"]:focus {
 .zoomControls {
     display: flex;
     align-items: center;
+    max-width: 100%;
     gap: 8px;
 }
 
 .zoomSlider {
+    flex: 1 1 120px;
+    min-width: 72px;
     width: 150px;
     accent-color: var(--primary-color);
     cursor: pointer;
@@ -627,12 +635,38 @@ input[type="number"]:focus {
         border-radius: 8px;
     }
 
+    #selectPanel,
+    #cameraPanel {
+        left: 8px;
+        max-width: calc(100vw - 16px);
+    }
+
+    #selectPanel > div {
+        display: flex;
+        align-items: center;
+        max-width: 100%;
+        gap: 6px;
+    }
+
+    #selectPanel select {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+        font-size: 12px;
+    }
+
+    #selectPanel .refreshButton {
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+
     .configButton {
         padding: 8px 12px;
         font-size: 12px;
     }
 
     .zoomControls {
+        flex-wrap: wrap;
         gap: 6px;
     }
 
@@ -642,7 +676,8 @@ input[type="number"]:focus {
     }
 
     .zoomSlider {
-        width: 96px;
+        flex: 1 1 86px;
+        width: auto;
     }
 
     .zoomText {

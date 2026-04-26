@@ -4,6 +4,8 @@ import {Position} from "./util/Transform";
 import {AABB} from "./util/AABB";
 
 export class Camera {
+    public static readonly ZOOM_STEP: number = Math.sqrt(2);
+
     private canvas: Canvas;
 
     private scale: number;

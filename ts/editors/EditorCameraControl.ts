@@ -3,6 +3,7 @@ import { MouseIn, MouseListener, WheelIn } from "../MouseListener";
 import { EditorName } from "./Editors";
 import { Canvas } from "../Canvas";
 import { Env } from "../Env";
+import { Camera } from "../Camera";
 
 export class EditorCameraControl extends Editor {
 
@@ -32,7 +33,7 @@ export class EditorCameraControl extends Editor {
             private lastPinchCenterY = 0;
             onwheel(event: WheelIn): boolean {
                 let camera = self.canvas.getCamera();
-                let ratio = Math.pow(1.2, -event.deltaY / 100);
+                let ratio = Math.pow(Camera.ZOOM_STEP, -event.deltaY / 100);
                 camera.changeScaleAroundScreenPoint(ratio, event.offsetX, event.offsetY);
                 self.canvas.requestRender();
                 return true;

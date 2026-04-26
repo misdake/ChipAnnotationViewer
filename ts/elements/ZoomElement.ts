@@ -16,15 +16,24 @@ export class ZoomElement extends LitElement {
     }
 
     private zoomIn() {
-        this.zoomAroundCenter(1.2);
+        this.zoomButtonTo(true);
     }
     private zoomOut() {
-        this.zoomAroundCenter(1 / 1.2);
+        this.zoomButtonTo(false);
     }
-    private zoomAroundCenter(ratio: number) {
-        this.camera.changeScaleAroundScreenPoint(ratio, this.canvas.getWidth() / 2, this.canvas.getHeight() / 2);
+    private zoomButtonTo(zoomIn: boolean) {
+        this.camera.setScaleAroundScreenPoint(this.getNextButtonScale(zoomIn), this.canvas.getWidth() / 2, this.canvas.getHeight() / 2);
         this.camera.action();
         this.canvas.requestRender();
+    }
+    private getNextButtonScale(zoomIn: boolean): number {
+        let exponent = Math.log(this.camera.getScale()) / Math.log(Camera.ZOOM_STEP);
+        let nearest = Math.round(exponent);
+        let isOnStep = Math.abs(exponent - nearest) < 0.000001;
+        let targetExponent = zoomIn
+            ? (isOnStep ? nearest + 1 : Math.ceil(exponent))
+            : (isOnStep ? nearest - 1 : Math.floor(exponent));
+        return Math.pow(Camera.ZOOM_STEP, targetExponent);
     }
     private fitToScreen() {
         this.camera.fitToScreen();
@@ -50,7 +59,7 @@ export class ZoomElement extends LitElement {
     private readonly sliderMin: number = 0;
     private readonly sliderMax: number = 1000;
     private refreshState() {
-        let newText = `${Math.round(this.camera.getScale() * 100)}%`;
+        let newText = this.formatScale(this.camera.getScale());
         let newSliderValue = this.scaleToSlider(this.camera.getScale());
         if (this.zoomText !== newText) {
             this.zoomText = newText;
@@ -58,6 +67,15 @@ export class ZoomElement extends LitElement {
         if (this.sliderValue !== newSliderValue) {
             this.sliderValue = newSliderValue;
         }
+    }
+    private formatScale(scale: number): string {
+        let exponent = Math.log2(scale);
+        let nearest = Math.round(exponent);
+        if (Math.abs(exponent - nearest) < 0.000001) {
+            if (nearest >= 0) return `${Math.pow(2, nearest)}:1`;
+            return `1:${Math.pow(2, -nearest)}`;
+        }
+        return `${Math.round(scale * 100)}%`;
     }
     private scaleToSlider(scale: number): number {
         let min = Math.log(this.camera.getScaleMin());

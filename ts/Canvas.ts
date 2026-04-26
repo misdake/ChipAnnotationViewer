@@ -232,6 +232,8 @@ export class Canvas {
             let hammer = new Hammer(this.canvasElement);
             hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
             hammer.get('pinch').set({ enable: true });
+            hammer.get('pinch').recognizeWith(hammer.get('pan'));
+            hammer.get('pan').recognizeWith(hammer.get('pinch'));
             hammer.on("pan", (event: HammerInput) => {
                 event.deltaX *= window.devicePixelRatio;
                 event.deltaY *= window.devicePixelRatio;

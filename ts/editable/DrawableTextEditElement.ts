@@ -87,8 +87,10 @@ export class TextEdit extends LitElement {
 
     render() {
         return html`
-            <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button><br>
-            <button class="configButton" @click=${() => this.copyText()}>Clone Text</button><br>
+            <div class="actionButtonRow">
+                <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button>
+                <button class="configButton" @click=${() => this.copyText()}>Clone Text</button>
+            </div>
 
             Text<br>
             <text-input

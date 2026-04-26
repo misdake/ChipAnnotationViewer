@@ -182,18 +182,21 @@ export class PolylineEdit extends LitElement {
 
     render() {
         return html`
-            <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button><br>
-            <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button><br>
-            <span id="polylineAreaContainer">
+            <div class="actionButtonRow">
+                <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button>
+                <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button>
+            </div>
+            <div id="polylineAreaContainer">
                 <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
                 <span id="polylineTextArea">${this.area}</span>
-                <br>
-            </span>
+            </div>
 
-            <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
-            <button class="iconButton" @click=${() => this.rotateCW()}  title="Rotate CW">${rotateCWIcon}</button>
-            <button class="iconButton" @click=${() => this.flipX()}     title="Flip X">${flipXIcon}</button>
-            <button class="iconButton" @click=${() => this.flipY()}     title="Flip Y">${flipYIcon}</button>
+            <div class="toolButtonRow">
+                <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
+                <button class="iconButton" @click=${() => this.rotateCW()}  title="Rotate CW">${rotateCWIcon}</button>
+                <button class="iconButton" @click=${() => this.flipX()}     title="Flip X">${flipXIcon}</button>
+                <button class="iconButton" @click=${() => this.flipY()}     title="Flip Y">${flipYIcon}</button>
+            </div>
 
             <div class="checkboxRow">
                 <tristate-checkbox

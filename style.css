@@ -391,6 +391,33 @@ input[type="number"]:focus {
     height: 300px;
 }
 
+.actionButtonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.actionButtonRow .configButton {
+    flex: 1 1 0;
+    min-width: max-content;
+}
+
+#propertyPanel .configButton,
+#propertyPanel .hintToggleButton,
+#propertyPanel .iconButton {
+    margin: 2px;
+}
+
+#polylineAreaContainer,
+.toolButtonRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+}
+
 .hintToggleButton {
     display: inline-flex;
     align-items: center;
@@ -522,22 +549,30 @@ input[type="number"]:focus {
 
 #creationButtons {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
-    margin: 10px 0;
+    margin: 6px 0;
 }
 
 .uploadHelper {
     display: inline-flex;
     align-items: center;
-    padding: 6px 12px;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    box-sizing: border-box;
+    margin-left: 4px;
+    padding: 0;
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: 50%;
     background: transparent;
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
     text-decoration: none;
     transition: all 0.2s ease;
+    vertical-align: middle;
 }
 
 .uploadHelper:hover {
@@ -641,7 +676,7 @@ input[type="number"]:focus {
         max-width: calc(100vw - 16px);
     }
 
-    #selectPanel > div {
+    #selectPanel>div {
         display: flex;
         align-items: center;
         max-width: 100%;

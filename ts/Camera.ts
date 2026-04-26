@@ -6,9 +6,10 @@ import {AABB} from "./util/AABB";
 export class Camera {
     private canvas: Canvas;
 
-    private zoom: number;
-    private zoomMin: number;
-    private zoomMax: number;
+    private scale: number;
+    private scaleMin: number;
+    private scaleMax: number;
+    private maxLevel: number;
 
     private position: Position = new Position(0, 0);
 
@@ -22,19 +23,14 @@ export class Camera {
 
     public load(canvas: Canvas, map: Map) {
         this.canvas = canvas;
-        this.zoomMin = -2;
-        this.zoomMax = map.maxLevel;
-        //zoom in a bit if screen is large enough.
-        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(map.width, map.height)) + map.maxLevel);
-        this.zoom = map.maxLevel - zoomOffset;
-        this.checkZoom();
-
-        this.position.x = map.width / 2;
-        this.position.y = map.height / 2;
+        this.maxLevel = map.maxLevel;
+        this.scaleMax = this.zoomToScale(-2);
+        this.scaleMin = this.zoomToScale(map.maxLevel);
         this.xMin = 0;
         this.xMax = map.width;
         this.yMin = 0;
         this.yMax = map.height;
+        this.fitToScreen();
     }
     public moveXy(dx: number, dy: number) {
         this.position.x += dx;
@@ -47,34 +43,78 @@ export class Camera {
     }
 
     public getZoom(): number {
-        return this.zoom;
+        return this.scaleToZoom(this.scale);
     }
     public changeZoomBy(amount: number) {
-        this.zoom += amount;
-        this.checkZoom();
+        this.setZoomTo(this.getZoom() + amount);
     }
     public setZoomTo(zoom: number) {
-        this.zoom = zoom;
-        this.checkZoom();
+        this.setScaleTo(this.zoomToScale(zoom));
     }
-    private checkZoom() {
-        this.zoom = Math.min(Math.max(this.zoom, this.zoomMin), this.zoomMax);
+    public getScale(): number {
+        return this.scale;
+    }
+    public getScaleMin(): number {
+        return Math.min(this.scaleMin, this.getFitScale());
+    }
+    public getScaleMax(): number {
+        return this.scaleMax;
+    }
+    public changeScaleBy(ratio: number) {
+        this.setScaleTo(this.scale * ratio);
+    }
+    public setScaleTo(scale: number) {
+        this.scale = scale;
+        this.checkScale();
+    }
+    public setScaleAroundScreenPoint(scale: number, x: number, y: number) {
+        this.action();
+        let point1 = this.screenXyToCanvas(x, y);
+        this.setScaleTo(scale);
+        this.action();
+        let point2 = this.screenXyToCanvas(x, y);
+        this.moveXy(point1.x - point2.x, point1.y - point2.y);
+    }
+    public changeScaleAroundScreenPoint(ratio: number, x: number, y: number) {
+        this.setScaleAroundScreenPoint(this.scale * ratio, x, y);
+    }
+    public fitToScreen() {
+        if (!this.canvas) return;
+        this.position.x = (this.xMin + this.xMax) / 2;
+        this.position.y = (this.yMin + this.yMax) / 2;
+        this.setScaleTo(this.getFitScale());
+    }
+    public getTileLevel(): number {
+        return Math.min(Math.max(Math.round(this.getZoom()), 0), this.maxLevel);
+    }
+    private checkScale() {
+        this.scale = Math.min(Math.max(this.scale, this.getScaleMin()), this.scaleMax);
+    }
+    private getFitScale(): number {
+        if (!this.canvas || this.xMax === this.xMin || this.yMax === this.yMin) return this.scaleMin;
+        return Math.min(
+            this.canvas.getWidth() / (this.xMax - this.xMin),
+            this.canvas.getHeight() / (this.yMax - this.yMin),
+        );
+    }
+    private zoomToScale(zoom: number): number {
+        return 1.0 / Math.pow(2, zoom);
+    }
+    private scaleToZoom(scale: number): number {
+        return Math.log2(1.0 / scale);
     }
 
 
-    private scale: number;
     private tx: number;
     private ty: number;
 
     public action() {
         if (!this.canvas) return;
         this.checkXy();
-        this.checkZoom();
+        this.checkScale();
 
-        let scale = 1.0 / Math.pow(2, this.zoom);
-        this.scale = scale;
-        this.tx = this.canvas.getWidth() / 2 - this.position.x * scale;
-        this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;
+        this.tx = this.canvas.getWidth() / 2 - this.position.x * this.scale;
+        this.ty = this.canvas.getHeight() / 2 - this.position.y * this.scale;
     }
 
     public screenXyToCanvas(x: number, y: number): Position {

@@ -52,4 +52,7 @@ export class MouseListener {
     public onpan(event: HammerInput): boolean {
         return false;
     }
+    public onpinch(event: HammerInput): boolean {
+        return false;
+    }
 }

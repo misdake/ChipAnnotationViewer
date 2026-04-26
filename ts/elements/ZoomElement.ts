@@ -36,11 +36,6 @@ export class ZoomElement extends LitElement {
         this.camera.action();
         this.canvas.requestRender();
     }
-    private resetView() {
-        this.camera.resetView();
-        this.camera.action();
-        this.canvas.requestRender();
-    }
     private onSliderInput(event: Event) {
         let value = Number((event.target as HTMLInputElement).value);
         this.camera.setScaleAroundScreenPoint(this.sliderToScale(value), this.canvas.getWidth() / 2, this.canvas.getHeight() / 2);
@@ -97,7 +92,6 @@ export class ZoomElement extends LitElement {
                 <span class="zoomText">${this.zoomText}</span>
                 <button class="viewButton" title="Fit to screen" @click=${() => this.fitToScreen()}>Fit</button>
                 <button class="viewButton" title="Actual size" @click=${() => this.actualSize()}>100%</button>
-                <button class="viewButton" title="Reset view" @click=${() => this.resetView()}>Reset</button>
             </div>
         `;
     }

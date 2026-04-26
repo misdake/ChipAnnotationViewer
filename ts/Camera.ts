@@ -12,8 +12,6 @@ export class Camera {
     private maxLevel: number;
 
     private position: Position = new Position(0, 0);
-    private defaultPosition: Position = new Position(0, 0);
-    private defaultScale: number;
 
     private xMin: number;
     private xMax: number;
@@ -28,20 +26,11 @@ export class Camera {
         this.maxLevel = map.maxLevel;
         this.scaleMax = this.zoomToScale(-2);
         this.scaleMin = this.zoomToScale(map.maxLevel);
-        //zoom in a bit if screen is large enough.
-        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(map.width, map.height)) + map.maxLevel);
-        this.scale = this.zoomToScale(map.maxLevel - zoomOffset);
-        this.checkScale();
-
-        this.position.x = map.width / 2;
-        this.position.y = map.height / 2;
-        this.defaultPosition.x = this.position.x;
-        this.defaultPosition.y = this.position.y;
-        this.defaultScale = this.scale;
         this.xMin = 0;
         this.xMax = map.width;
         this.yMin = 0;
         this.yMax = map.height;
+        this.fitToScreen();
     }
     public moveXy(dx: number, dy: number) {
         this.position.x += dx;
@@ -66,7 +55,7 @@ export class Camera {
         return this.scale;
     }
     public getScaleMin(): number {
-        return this.scaleMin;
+        return Math.min(this.scaleMin, this.getFitScale());
     }
     public getScaleMax(): number {
         return this.scaleMax;
@@ -89,27 +78,24 @@ export class Camera {
     public changeScaleAroundScreenPoint(ratio: number, x: number, y: number) {
         this.setScaleAroundScreenPoint(this.scale * ratio, x, y);
     }
-    public resetView() {
-        this.position.x = this.defaultPosition.x;
-        this.position.y = this.defaultPosition.y;
-        this.scale = this.defaultScale;
-        this.checkXy();
-        this.checkScale();
-    }
     public fitToScreen() {
         if (!this.canvas) return;
         this.position.x = (this.xMin + this.xMax) / 2;
         this.position.y = (this.yMin + this.yMax) / 2;
-        this.setScaleTo(Math.min(
-            this.canvas.getWidth() / (this.xMax - this.xMin),
-            this.canvas.getHeight() / (this.yMax - this.yMin),
-        ));
+        this.setScaleTo(this.getFitScale());
     }
     public getTileLevel(): number {
         return Math.min(Math.max(Math.round(this.getZoom()), 0), this.maxLevel);
     }
     private checkScale() {
-        this.scale = Math.min(Math.max(this.scale, this.scaleMin), this.scaleMax);
+        this.scale = Math.min(Math.max(this.scale, this.getScaleMin()), this.scaleMax);
+    }
+    private getFitScale(): number {
+        if (!this.canvas || this.xMax === this.xMin || this.yMax === this.yMin) return this.scaleMin;
+        return Math.min(
+            this.canvas.getWidth() / (this.xMax - this.xMin),
+            this.canvas.getHeight() / (this.yMax - this.yMin),
+        );
     }
     private zoomToScale(zoom: number): number {
         return 1.0 / Math.pow(2, zoom);

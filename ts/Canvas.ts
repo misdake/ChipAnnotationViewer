@@ -36,8 +36,7 @@ export class Canvas {
         this.camera = new Camera();
         this.renderer = new Renderer(this, this.canvasElement, this.context);
 
-        this.width = this.canvasElement.clientWidth;
-        this.height = this.canvasElement.clientHeight;
+        this.updateSize();
 
         this.env.loadCanvas(this, this.renderer);
 
@@ -318,6 +317,7 @@ export class Canvas {
     public loadMap(map: Map): void {
         if (!this.map || this.map.name != map.name) {
             this.map = map;
+            this.updateSize();
             this.camera.load(this, map);
 
             for (let layer of this.layers) {
@@ -402,12 +402,15 @@ export class Canvas {
         return this.height;
     }
 
-    public render(): void {
+    private updateSize(): void {
         this.width = this.canvasElement.clientWidth * window.devicePixelRatio;
         this.height = this.canvasElement.clientHeight * window.devicePixelRatio;
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;
         if (this.canvasElement.height !== this.height) this.canvasElement.height = this.height;
+    }
 
+    public render(): void {
+        this.updateSize();
         this.camera.action();
 
         this.renderer.clear();

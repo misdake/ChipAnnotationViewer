@@ -231,6 +231,7 @@ export class Canvas {
         if (Ui.isMobile()) {
             let hammer = new Hammer(this.canvasElement);
             hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+            hammer.get('pinch').set({ enable: true });
             hammer.on("pan", (event: HammerInput) => {
                 event.deltaX *= window.devicePixelRatio;
                 event.deltaY *= window.devicePixelRatio;
@@ -239,6 +240,14 @@ export class Canvas {
                 for (let i = length - 1; i >= 0; i--) {
                     let editor = this.currentEditors[i];
                     if (editor.mouseListener && editor.mouseListener.onpan(event)) break;
+                }
+            });
+            hammer.on("pinchstart pinchmove pinchend pinchcancel", (event: HammerInput) => {
+                event.preventDefault();
+                let length = this.currentEditors.length;
+                for (let i = length - 1; i >= 0; i--) {
+                    let editor = this.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onpinch(event)) break;
                 }
             });
         }

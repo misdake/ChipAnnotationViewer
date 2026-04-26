@@ -25,33 +25,29 @@ export class EditorCameraControl extends Editor {
             private lastY = -1;
             private lastPanX = -1;
             private lastPanY = -1;
+            private pinching = false;
+            private pinchStartScale = 1;
             onwheel(event: WheelIn): boolean {
                 let camera = self.canvas.getCamera();
-                camera.action();
-                let offsetX = event.offsetX;
-                let offsetY = event.offsetY;
-                let point1 = camera.screenXyToCanvas(offsetX, offsetY);
-                camera.changeZoomBy(event.deltaY > 0 ? 1 : -1);
-                camera.action();
-                let point2 = camera.screenXyToCanvas(offsetX, offsetY);
-                let dx = point1.x - point2.x;
-                let dy = point1.y - point2.y;
-                camera.moveXy(dx, dy);
+                let ratio = Math.pow(1.2, -event.deltaY / 100);
+                camera.changeScaleAroundScreenPoint(ratio, event.offsetX, event.offsetY);
                 self.canvas.requestRender();
                 return true;
             }
             onmousedown(event: MouseIn): boolean {
+                if (event.button !== 2) return false;
                 this.down = true;
                 this.lastX = event.offsetX;
                 this.lastY = event.offsetY;
                 return true;
             }
             onmouseup(event: MouseIn): boolean {
+                if (event.button !== 2 && !this.down) return false;
                 this.down = false;
                 return true;
             }
             onmousemove(event: MouseIn): boolean {
-                if (this.down && event.buttons > 0) {
+                if (this.down && (event.buttons & 2)) {
                     let camera = self.canvas.getCamera();
                     camera.action();
                     let offsetX = event.offsetX;
@@ -70,6 +66,11 @@ export class EditorCameraControl extends Editor {
                 }
             }
             onpan(event: HammerInput): boolean {
+                if (this.pinching || event.pointers.length > 1) {
+                    this.lastPanX = event.deltaX;
+                    this.lastPanY = event.deltaY;
+                    return false;
+                }
                 let dx = event.deltaX - this.lastPanX;
                 let dy = event.deltaY - this.lastPanY;
                 let camera = self.canvas.getCamera();
@@ -79,6 +80,26 @@ export class EditorCameraControl extends Editor {
                 this.lastPanX = event.deltaX;
                 this.lastPanY = event.deltaY;
                 if (event.isFinal) {
+                    this.lastPanX = 0;
+                    this.lastPanY = 0;
+                }
+                return true;
+            }
+            onpinch(event: HammerInput): boolean {
+                let camera = self.canvas.getCamera();
+                let rect = self.canvas.getElement().getBoundingClientRect();
+                let centerX = (event.center.x - rect.left) * window.devicePixelRatio;
+                let centerY = (event.center.y - rect.top) * window.devicePixelRatio;
+                if (event.type === "pinchstart") {
+                    this.pinching = true;
+                    this.pinchStartScale = camera.getScale();
+                    this.lastPanX = event.deltaX;
+                    this.lastPanY = event.deltaY;
+                }
+                camera.setScaleAroundScreenPoint(this.pinchStartScale * event.scale, centerX, centerY);
+                self.canvas.requestRender();
+                if (event.isFinal || event.type === "pinchend" || event.type === "pinchcancel") {
+                    this.pinching = false;
                     this.lastPanX = 0;
                     this.lastPanY = 0;
                 }

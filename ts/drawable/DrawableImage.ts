@@ -5,7 +5,7 @@ import { Camera } from '../Camera';
 import { Transform } from '../util/Transform';
 import { LRU } from '../util/LRU';
 
-class ImageCacheItem {
+export class ImageCacheItem {
     private _img: HTMLImageElement = undefined;
     private _loaded: boolean = false;
 
@@ -41,7 +41,7 @@ class ImageCacheItem {
     }
 }
 
-const imageCache = new LRU<string, ImageCacheItem>(100);
+export const imageCache = new LRU<string, ImageCacheItem>(100);
 const createImage = (src: string) => {
     return ImageCacheItem.load(src);
 };
@@ -70,6 +70,10 @@ export class DrawableImage implements Drawable {
         if (!this.img) {
             this.img = imageCache.getOrInsert(this.src, createImage);
         }
+    }
+
+    public isLoaded(): boolean {
+        return this.img !== undefined && this.img.loaded;
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {

@@ -96,9 +96,12 @@ export class Renderer {
 
     public drawImage(image: HTMLImageElement, rect: ScreenRect) {
         if (rect) {
-            //actually render image
             this.context.drawImage(image, rect.left, rect.top, rect.width, rect.height);
         }
+    }
+
+    public drawCroppedImage(image: HTMLImageElement, sx: number, sy: number, sw: number, sh: number, dx: number, dy: number, dw: number, dh: number) {
+        this.context.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
 
     //image

@@ -1,7 +1,9 @@
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent } from './Annotation';
 
-const API_SERVER = 'http://localhost:8082';
+declare const __API_SERVER__: string;
+
+const API_SERVER = __API_SERVER__;
 const ANNOTATION_CONTENT_VERSION = 1;
 
 type UserInfo = { userName: string, userId: number };

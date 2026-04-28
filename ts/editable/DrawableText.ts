@@ -1,16 +1,16 @@
-import {Drawable} from "../drawable/Drawable";
-import {Canvas} from "../Canvas";
-import {Renderer} from "../Renderer";
-import {Camera} from "../Camera";
-import {Size} from "../util/Size";
-import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
-import {AABB} from "../util/AABB";
-import {html, TemplateResult} from "lit-html";
-import {Primitive, PrimitivePack} from "./Primitive";
-import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./Editable";
-import {LayerTextView} from "../layers/LayerTextView";
-import {LayerName} from "../layers/Layers";
-import {Selection, SelectType} from "../layers/Selection";
+import { Drawable } from "../drawable/Drawable";
+import { Canvas } from "../Canvas";
+import { Renderer } from "../Renderer";
+import { Camera } from "../Camera";
+import { Size } from "../util/Size";
+import { AlphaEntry, ColorEntry, combineColorAlpha } from "../util/Color";
+import { AABB } from "../util/AABB";
+import { html, TemplateResult } from "lit-html";
+import { Primitive, PrimitivePack } from "./Primitive";
+import { EditableColor, EditableDeleteClone, EditableMove, EditablePick } from "./Editable";
+import { LayerTextView } from "../layers/LayerTextView";
+import { LayerName } from "../layers/Layers";
+import { Selection, SelectType } from "../layers/Selection";
 
 export class DrawableTextPack implements PrimitivePack {
     public constructor(text: string, colorName: string, alphaName: string, fontSize: Size, x: number, y: number) {
@@ -63,7 +63,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
     private _canvasAABB: AABB = new AABB();
     private sizeValid: boolean = false;
-    private canvasZoom: number = -1;
+    private canvasScale: number = -1;
     private canvasWidth: number = 0;
     private canvasHeight: number = 0;
     private screenWidth: number = 0;
@@ -222,12 +222,12 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
 
     private validate(camera: Camera, renderer: Renderer) {
-        if (!this.sizeValid || this.canvasZoom != camera.getZoom()) {
+        if (!this.sizeValid || this.canvasScale != camera.getScale()) {
             this.sizeValid = true;
 
-            let {width, totalHeight, fontSize} = renderer.measureText(camera, this._text, this.fontSize);
+            let { width, totalHeight, fontSize } = renderer.measureText(camera, this._text, this.fontSize);
             let ratio = camera.screenSizeToCanvas(1);
-            this.canvasZoom = camera.getZoom();
+            this.canvasScale = camera.getScale();
             this.canvasWidth = width * ratio / 2;
             this.canvasHeight = totalHeight * ratio / 2;
             this.screenWidth = width;
@@ -253,6 +253,6 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
 
     public renderUi(canvas: Canvas): TemplateResult {
-        return html`<textedit-element .text=${this} .canvas=${canvas}></textedit-element>`;
+        return html`<textedit-element .texts=${[this]} .canvas=${canvas}></textedit-element>`;
     }
 }

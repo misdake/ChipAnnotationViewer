@@ -1,155 +1,738 @@
+/* Base */
 * {
     margin: 0;
     padding: 0;
 }
 
-body, html {
-    background: black;
-    height: 100%;
-    overflow: hidden;
+:root {
+    --primary-color: #3B82F6;
+    --secondary-color: #60A5FA;
+    --accent-color: #22D3EE;
+    --background-dark: #0F172A;
+    --surface-color: #1E293B;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --border-color: #334155;
+    --success-color: #10B981;
+    --warning-color: #F59E0B;
 }
 
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+#container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.ui-panel {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ui-panel.dragging {
+    pointer-events: none;
+}
+
+/* Shared floating panel shell */
+#selectPanel,
+#cameraPanel,
+#propertyPanel,
+#hint,
+#footer {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Select and camera panels */
+#selectPanel {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 999;
+    max-width: calc(100vw - 30px);
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#cameraPanel {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    z-index: 999;
+    display: flex;
+    gap: 8px;
+    max-width: calc(100vw - 30px);
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Property panel */
+#propertyPanel {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 998;
+    min-width: 220px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#propertyPanel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#propertyPanel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+#propertyPanel::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.panel-divider {
+    height: 1px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hint */
+#hint {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    z-index: 997;
+    max-width: 80%;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+#hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Footer */
+#footer {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    z-index: 997;
+    display: flex;
+    flex-flow: row wrap;
+    border-radius: 24px;
+    font-size: 14px;
+    line-height: 24px;
+    vertical-align: middle;
+}
+
+#footer a {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    padding: 8px;
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+#footer a:hover {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none !important;
+}
+
+#footer span {
+    margin-left: 6px;
+    line-height: 24px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.footerIcon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+}
+
+/* Form controls */
 select {
     min-width: 150px;
+    max-width: 100%;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+select:hover {
+    border-color: var(--primary-color);
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-sizing: border-box;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.titleInput {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.titleInput label {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.titleInput input[type="text"] {
+    flex: 1;
+    padding: 6px 10px;
+}
+
+.configText {
+    margin: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.sizeInput {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.sizeInput label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.sizeInput input[type="number"] {
+    width: 60px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.sizeInput input[type="number"]:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.checkboxRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+.checkboxLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.configCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.configCheckbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.configColorAlphaContainer {
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.configColorButton,
+.configAlphaButton {
+    width: 14px;
+    height: 28px;
+    margin: 4px 0 4px 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.configColorButton:hover,
+.configAlphaButton:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Buttons */
+.configButton,
+.hintToggleButton,
+.iconButton {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.configButton,
+.hintToggleButton {
+    position: relative;
+    overflow: hidden;
+    margin: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.configButton:hover,
+.hintToggleButton:hover,
+.iconButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.configButton:active,
+.hintToggleButton:active,
+.iconButton:active {
+    transform: translateY(0);
+}
+
+.configButton::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.configButton:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+.actionButtonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.actionButtonRow .configButton {
+    flex: 1 1 0;
+    min-width: max-content;
+}
+
+#propertyPanel .configButton,
+#propertyPanel .hintToggleButton,
+#propertyPanel .iconButton {
+    margin: 2px;
+}
+
+#polylineAreaContainer,
+.toolButtonRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.hintToggleButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hintToggleButton svg {
+    flex-shrink: 0;
+}
+
+.hintToggleButton.hintHidden {
+    background: rgba(100, 116, 139, 0.6);
+}
+
+.hintToggleButton.hintHidden:hover {
+    background: rgba(100, 116, 139, 0.8);
+    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
+}
+
+#hintToggleText {
+    font-size: 14px;
+}
+
+.iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 4px;
+    padding: 0;
+}
+
+.iconButton svg {
+    width: 20px;
     height: 20px;
+}
+
+.zoomButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.zoomButton img {
+    width: 20px;
+    height: 20px;
+}
+
+.zoomButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.zoomButton:active {
+    transform: translateY(0);
+}
+
+.zoomText {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.zoomControls {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    gap: 8px;
+}
+
+.zoomSlider {
+    flex: 1 1 120px;
+    min-width: 72px;
+    width: 150px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.viewButton {
+    min-width: 44px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.5);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.viewButton:hover {
+    border-color: rgba(96, 165, 250, 0.8);
+    background: rgba(59, 130, 246, 0.25);
+}
+
+.viewButton:active {
+    transform: translateY(1px);
 }
 
 .refreshButton {
     position: relative;
     width: 20px;
     height: 20px;
+    margin-left: 5px;
     border: 0;
+    background: transparent url("res/refresh.png");
     background-size: cover;
-    background-image: url('res/refresh.png');
+    transition: transform 0.3s ease;
 }
 
-#selectPanel {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    z-index: 999;
+.refreshButton:hover {
+    transform: rotate(180deg);
 }
 
-#cameraPanel {
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
-    z-index: 999;
+#creationButtons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 6px 0;
 }
 
-.zoomButton {
-    width: 36px;
-    height: 36px;
+.uploadHelper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    box-sizing: border-box;
+    margin-left: 4px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    vertical-align: middle;
 }
 
-.zoomText {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 14px;
+.uploadHelper:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
 }
 
-#imageSource {
-    display: inline-block;
-    color: rgba(255, 255, 255, 0.8);
+/* Misc text blocks */
+.imageSourceLabel,
+.imageSource {
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
-#panel {
-    display: none;
-    float: left;
-    width: 210px;
-    height: 100%;
-    background: white;
-    flex-flow: column;
+.imageSource {
+    margin-left: 4px;
 }
 
-#panelScroll {
-    height: 100%;
-    overflow-y: auto;
-    flex: 1 1 auto;
+.label {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-#container {
-    position: relative;
-    display: flex;
-    height: 100%;
+.separator {
+    height: 1px;
+    margin: 16px 0;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
 }
 
-.configButton {
-    /*margin:20px 5px;*/
-}
-
-.configColorAlphaContainer {
-    margin: 5px 10px;
-}
-
-.colorAlphaContainerSplit {
-    width: 0px;
-    display: inline-block;
-}
-
-.configColorButton {
-    width: 24px;
-    height: 24px;
-    border-radius: 12px;
-    border: 2px black solid;
-    margin: 2px 2px;
-}
-
-.configAlphaButton {
-    width: 12px;
-    height: 24px;
-    border: 2px black solid;
-    margin: 2px 0 2px 2px;
-}
-
-.configCheckbox {
-    /*margin:20px 5px;*/
-}
-
-.configText {
-    /*margin:20px 5px;*/
-}
-
-#footer {
-    position: relative;
-    font-size: 14px;
-    line-height: 24px;
-    vertical-align: middle;
-    display: flex;
-    flex-flow: row;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin-bottom: 3px;
-}
-
-#footer a {
-    cursor: pointer;
-    display: flex;
-    flex-flow: row;
-}
-#footer a {
-    text-decoration: none;
-}
-#footer a :hover {
-    text-decoration: underline;
-}
-
-#footer span {
-    margin-left: 2px;
-    cursor: pointer;
-    line-height: 24px;
-    vertical-align: middle;
-}
-
-.footerIcon {
-    width: 24px;
-    height: 24px;
-}
-
+/* Toast */
 #toast {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    font-size: 16px;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    display: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--success-color), #059669);
     color: white;
+    font-size: 16px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+#toast.visible {
+    display: block;
+}
+
+#toast.hiding {
+    animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #propertyPanel {
+        display: none;
+        min-width: 180px;
+        max-width: 200px;
+    }
+
+    #selectPanel,
+    #propertyPanel,
+    #cameraPanel {
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    #selectPanel,
+    #cameraPanel {
+        left: 8px;
+        max-width: calc(100vw - 16px);
+    }
+
+    #selectPanel>div {
+        display: flex;
+        align-items: center;
+        max-width: 100%;
+        gap: 6px;
+    }
+
+    #selectPanel select {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+        font-size: 12px;
+    }
+
+    #selectPanel .refreshButton {
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+
+    .configButton {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .zoomControls {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .zoomButton {
+        width: 32px;
+        height: 32px;
+    }
+
+    .zoomSlider {
+        flex: 1 1 86px;
+        width: auto;
+    }
+
+    .zoomText {
+        width: 42px;
+        font-size: 12px;
+    }
+
+    .viewButton {
+        min-width: 38px;
+        height: 30px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+
+    #footer a span {
+        display: none;
+    }
+
+    #hint {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
 }

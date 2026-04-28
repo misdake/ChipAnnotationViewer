@@ -18,6 +18,7 @@ import {Drawable} from "./drawable/Drawable";
 import {MultipleEdit} from "./editable/DrawableMultipleEditElement";
 import {EditablePick} from "./editable/Editable";
 import {EditorCameraControl} from "./editors/EditorCameraControl";
+import packageJson from "../package.json";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -43,7 +44,21 @@ Selection.register(null, () => {
     canvas.requestRender();
 });
 
+type PolylineCreateMode = "polyline" | "rect";
+let polylineCreateMode: PolylineCreateMode = "polyline";
+
 document.getElementById("buttonCreatePolyline").onclick = () => {
+    polylineCreateMode = "polyline";
+    let polyline = new DrawablePolyline(new DrawablePolylinePack(
+        [], true, new Size(2),
+        true, "white", "25",
+        true, "white", "75",
+    ));
+    canvas.env.polylines.push(polyline);
+    Selection.select(SelectType.POLYLINE_CREATE, polyline);
+};
+document.getElementById("buttonCreateRect").onclick = () => {
+    polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
         true, "white", "25",
@@ -78,6 +93,30 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
+        let hintElement = document.getElementById("hint");
+        let hintToggle = document.getElementById("hintToggle") as HTMLButtonElement;
+        let hintIconEye = document.getElementById("hintIconEye") as HTMLElement;
+        let hintIconEyeOff = document.getElementById("hintIconEyeOff") as HTMLElement;
+        if (hintToggle) {
+            hintElement.classList.add("hidden");
+            hintToggle.classList.add("hintHidden");
+            if (hintIconEye) hintIconEye.style.display = "none";
+            if (hintIconEyeOff) hintIconEyeOff.style.display = "block";
+            hintToggle.onclick = () => {
+                hintElement.classList.toggle("hidden");
+                hintToggle.classList.toggle("hintHidden");
+                if (hintIconEye && hintIconEyeOff) {
+                    if (hintElement.classList.contains("hidden")) {
+                        hintIconEye.style.display = "none";
+                        hintIconEyeOff.style.display = "block";
+                    } else {
+                        hintIconEye.style.display = "block";
+                        hintIconEyeOff.style.display = "none";
+                    }
+                }
+            };
+        }
+
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
@@ -88,9 +127,11 @@ class App {
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
             render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_CREATE);
+            const createEditor = polylineCreateMode === "rect" ? EditorName.RECT_CREATE : EditorName.POLYLINE_CREATE;
+            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, createEditor);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
+            polylineCreateMode = "polyline";
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
         });
 
@@ -197,17 +238,18 @@ function interceptKeys(evt: KeyboardEvent) {
 }
 
 interface CopyFormat {
-    content: "ChipAnnotationViewr Copy",
-    version1: 2,
-    version2: 0,
+    ty: string;
+    version: string;
     polylines: DrawablePolylinePack[],
     texts: DrawableTextPack[],
 }
 
+const COPY_TY = "ChipAnnotationViewer Copy";
+const COPY_VERSION = packageJson.version;
+
 const defaultCopy: CopyFormat = {
-    content: "ChipAnnotationViewr Copy",
-    version1: 2,
-    version2: 0,
+    ty: COPY_TY,
+    version: COPY_VERSION,
     polylines: [],
     texts: [],
 };
@@ -240,7 +282,7 @@ function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectT
     obj.texts = texts.map(text => text.pack());
 
     if (deleteOrigin) {
-        let newPolylines = polylines.filter(polyline => polylines.indexOf(polyline) < 0);
+        let newPolylines = canvas.env.polylines.filter(polyline => polylines.indexOf(polyline) < 0);
         canvas.env.polylines.length = 0;
         canvas.env.polylines.push(...newPolylines);
         let newTexts = canvas.env.texts.filter(text => texts.indexOf(text) < 0);
@@ -284,7 +326,7 @@ function ctrlV() {
             c = JSON.parse(str) as CopyFormat;
         } catch (e) {
         }
-        if (c && c.content === defaultCopy.content && c.version1 === defaultCopy.version1 && c.version2 === defaultCopy.version2) {
+        if (c && c.ty === defaultCopy.ty && c.version === defaultCopy.version) {
             let newDrawables: Drawable[] = [];
 
             for (let polyline of c.polylines) {

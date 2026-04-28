@@ -1,13 +1,13 @@
-import {Editor, Usage, UsageType} from "./Editor";
-import {MouseIn, MouseListener} from "../MouseListener";
-import {EditorName} from "./Editors";
-import {Canvas} from "../Canvas";
-import {Env} from "../Env";
-import {Selection, SelectType} from "../layers/Selection";
-import {Ui} from "../util/Ui";
-import {Drawable} from "../drawable/Drawable";
-import {EditableColor, EditableDeleteClone, EditableMove, editableMultiple, EditablePick} from "../editable/Editable";
-import {EditorSelect} from "./EditorSelect";
+import { Editor, Usage, UsageType } from "./Editor";
+import { MouseIn, MouseListener } from "../MouseListener";
+import { EditorName } from "./Editors";
+import { Canvas } from "../Canvas";
+import { Env } from "../Env";
+import { Selection, SelectType } from "../layers/Selection";
+import { Ui } from "../util/Ui";
+import { Drawable } from "../drawable/Drawable";
+import { EditableColor, EditableDeleteClone, EditableMove, editableMultiple, EditablePick } from "../editable/Editable";
+import { EditorSelect } from "./EditorSelect";
 
 export class EditorMultiple extends Editor {
 
@@ -17,17 +17,16 @@ export class EditorMultiple extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("hold alt to drag selected", UsageType.MOUSE),
-            Editor.usage("hold ctrl+alt to copy and drag selected", UsageType.MOUSE),
-            Editor.usage("WSAD ↑↓←→ to move, hold shift to speed up", UsageType.KEYBOARD),
-            Editor.usage("press del to delete", UsageType.KEYBOARD),
+            Editor.usage("WSAD or arrow keys to move selected", UsageType.KEYBOARD),
+            Editor.usage("hold shift to move faster", UsageType.KEYBOARD),
+            Editor.usage("press delete to delete selected", UsageType.KEYBOARD),
         ];
     }
 
     enter(env: Env): void {
         let editorSelect = <EditorSelect>env.canvas.findEditor(EditorName.SELECT);
 
-        let {item: item, type: type} = Selection.getSelected();
+        let { item: item, type: type } = Selection.getSelected();
         if (type !== SelectType.MULTIPLE) return;
         let drawables = <(Drawable & EditablePick & EditableColor)[]>item;
 
@@ -50,7 +49,7 @@ export class EditorMultiple extends Editor {
 
                     if (!event.altKey) return false;
 
-                    let {item} = editorSelect.pickAny(position.x, position.y, env, drawables);
+                    let { item } = editorSelect.pickAny(position.x, position.y, env, drawables);
                     if (item && drawables.indexOf(<(Drawable & EditablePick & EditableColor)>item) >= 0) { // mouse down on select => good
 
                         if (event.ctrlKey) {

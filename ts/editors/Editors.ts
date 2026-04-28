@@ -7,12 +7,14 @@ import {EditorTextEdit} from "./EditorTextEdit";
 import {EditorPolylineCreate} from "./EditorPolylineCreate";
 import {EditorTextCreate} from "./EditorTextCreate";
 import {EditorMultiple} from "./EditorMultiple";
+import { EditorRectCreate } from "./EditorRectCreate";
 
 export enum EditorName {
     CAMERA_CONTROL = 1,
     SELECT,
     POLYLINE_EDIT,
     POLYLINE_CREATE,
+    RECT_CREATE,
     TEXT_EDIT,
     TEXT_CREATE,
     MULTIPLE_EDIT,
@@ -26,6 +28,7 @@ export class Editors {
             new EditorSelect(canvas),
             new EditorPolylineEdit(canvas),
             new EditorPolylineCreate(canvas),
+            new EditorRectCreate(canvas),
             new EditorTextEdit(canvas),
             new EditorTextCreate(canvas),
             new EditorMultiple(canvas),

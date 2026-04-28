@@ -294,6 +294,16 @@ export class DrawablePolylineCalculator {
         let center = new Point((aabb.x1 + aabb.x2) / 2, (aabb.y1 + aabb.y2) / 2);
         return center;
     }
+    public intersectsAABB(aabbOrMinX: AABB | number, minY?: number, maxX?: number, maxY?: number): boolean {
+        let test: AABB;
+        if (aabbOrMinX instanceof AABB) {
+            test = aabbOrMinX;
+        } else {
+            test = new AABB(aabbOrMinX, minY, maxX, maxY);
+        }
+        let self = this.aabb();
+        return !(self.x2 < test.x1 || self.x1 > test.x2 || self.y2 < test.y1 || self.y1 > test.y2);
+    }
 
     public area(): number {
         if (this.points.length < 3) return 0;

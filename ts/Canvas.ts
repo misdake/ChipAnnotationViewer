@@ -21,6 +21,7 @@ export class Canvas {
 
     private width: number;
     private height: number;
+    private _isDragging: boolean = false;
 
     public constructor(domElement: HTMLElement, id: string) {
         this.domElement = domElement;
@@ -35,8 +36,7 @@ export class Canvas {
         this.camera = new Camera();
         this.renderer = new Renderer(this, this.canvasElement, this.context);
 
-        this.width = this.canvasElement.clientWidth;
-        this.height = this.canvasElement.clientHeight;
+        this.updateSize();
 
         this.env.loadCanvas(this, this.renderer);
 
@@ -48,8 +48,12 @@ export class Canvas {
     public getCamera(): Camera {
         return this.camera;
     }
+    public getElement(): HTMLCanvasElement {
+        return this.canvasElement;
+    }
 
     public init(): void {
+        let self = this;
         let convertMouseEvent = (event: MouseEvent) => {
             return {
                 button: event.button,
@@ -118,13 +122,39 @@ export class Canvas {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
+            document.querySelectorAll(".ui-panel").forEach(p => p.classList.add("dragging"));
+            self._isDragging = true;
             let length = this.currentEditors.length;
             for (let i = length - 1; i >= 0; i--) {
                 let editor = this.currentEditors[i];
                 if (editor.mouseListener && editor.mouseListener.onmousedown(e)) break;
             }
+
+            let onDocMouseMove = (docEvent: MouseEvent) => {
+                let docE = convertMouseEvent(docEvent);
+                let len = self.currentEditors.length;
+                for (let i = len - 1; i >= 0; i--) {
+                    let editor = self.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onmousemove(docE)) break;
+                }
+            };
+            let onDocMouseUp = (docEvent: MouseEvent) => {
+                document.removeEventListener('mousemove', onDocMouseMove);
+                document.removeEventListener('mouseup', onDocMouseUp);
+                document.querySelectorAll(".ui-panel").forEach(p => p.classList.remove("dragging"));
+                self._isDragging = false;
+                let docE = convertMouseEvent(docEvent);
+                let len = self.currentEditors.length;
+                for (let i = len - 1; i >= 0; i--) {
+                    let editor = self.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onmouseup(docE)) break;
+                }
+            };
+            document.addEventListener('mousemove', onDocMouseMove);
+            document.addEventListener('mouseup', onDocMouseUp);
         };
         this.canvasElement.onmouseup = event => {
+            if (self._isDragging) return;
             let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
@@ -136,6 +166,7 @@ export class Canvas {
             }
         };
         this.canvasElement.onmousemove = event => {
+            if (self._isDragging) return;
             let e = convertMouseEvent(event);
             event.preventDefault();
             event.stopPropagation();
@@ -198,6 +229,9 @@ export class Canvas {
         if (Ui.isMobile()) {
             let hammer = new Hammer(this.canvasElement);
             hammer.get('pan').set({direction: Hammer.DIRECTION_ALL});
+            hammer.get('pinch').set({enable: true});
+            hammer.get('pinch').recognizeWith(hammer.get('pan'));
+            hammer.get('pan').recognizeWith(hammer.get('pinch'));
             hammer.on("pan", (event: HammerInput) => {
                 event.deltaX *= window.devicePixelRatio;
                 event.deltaY *= window.devicePixelRatio;
@@ -206,6 +240,14 @@ export class Canvas {
                 for (let i = length - 1; i >= 0; i--) {
                     let editor = this.currentEditors[i];
                     if (editor.mouseListener && editor.mouseListener.onpan(event)) break;
+                }
+            });
+            hammer.on("pinchstart pinchmove pinchend pinchcancel", (event: HammerInput) => {
+                event.preventDefault();
+                let length = this.currentEditors.length;
+                for (let i = length - 1; i >= 0; i--) {
+                    let editor = this.currentEditors[i];
+                    if (editor.mouseListener && editor.mouseListener.onpinch(event)) break;
                 }
             });
         }
@@ -360,11 +402,15 @@ export class Canvas {
         return this.height;
     }
 
-    public render(): void {
+    private updateSize(): void {
         this.width = this.canvasElement.clientWidth * window.devicePixelRatio;
         this.height = this.canvasElement.clientHeight * window.devicePixelRatio;
         if (this.canvasElement.width !== this.width) this.canvasElement.width = this.width;
         if (this.canvasElement.height !== this.height) this.canvasElement.height = this.height;
+    }
+
+    public render(): void {
+        this.updateSize();
 
         this.camera.action();
 

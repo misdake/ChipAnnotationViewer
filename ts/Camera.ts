@@ -4,6 +4,7 @@ import {Position} from "./util/Transform";
 import {AABB} from "./util/AABB";
 
 export class Camera {
+    public static readonly ZOOM_STEP: number = Math.sqrt(2);
     private canvas: Canvas;
 
     private zoom: number;
@@ -59,6 +60,44 @@ export class Camera {
     }
     private checkZoom() {
         this.zoom = Math.min(Math.max(this.zoom, this.zoomMin), this.zoomMax);
+    }
+
+    public getScale(): number {
+        return this.scale || (1.0 / Math.pow(2, this.zoom));
+    }
+    public getScaleMin(): number {
+        return Math.min(1.0 / Math.pow(2, this.zoomMax), this.getFitScale());
+    }
+    public getScaleMax(): number {
+        return 1.0 / Math.pow(2, this.zoomMin);
+    }
+    public fitToScreen(): void {
+        if (!this.canvas) return;
+        let targetScale = this.getFitScale();
+        this.zoom = -Math.log2(targetScale);
+        this.checkZoom();
+        this.position.x = (this.xMin + this.xMax) / 2;
+        this.position.y = (this.yMin + this.yMax) / 2;
+        this.checkXy();
+    }
+    public setScaleAroundScreenPoint(scale: number, screenX: number, screenY: number): void {
+        let clamped = Math.min(Math.max(scale, this.getScaleMin()), this.getScaleMax());
+        let pointBefore = this.screenXyToCanvas(screenX, screenY);
+        this.zoom = -Math.log2(clamped);
+        this.checkZoom();
+        this.action();
+        let pointAfter = this.screenXyToCanvas(screenX, screenY);
+        this.moveXy(pointBefore.x - pointAfter.x, pointBefore.y - pointAfter.y);
+    }
+    public getTileLevel(): number {
+        return Math.min(Math.max(Math.round(this.getZoom()), 0), this.zoomMax);
+    }
+    private getFitScale(): number {
+        if (!this.canvas || this.xMax === this.xMin || this.yMax === this.yMin) return 1.0 / Math.pow(2, this.zoomMax);
+        return Math.min(
+            this.canvas.getWidth() / (this.xMax - this.xMin),
+            this.canvas.getHeight() / (this.yMax - this.yMin),
+        );
     }
 
 

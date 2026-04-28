@@ -1,5 +1,5 @@
 export class NetUtil {
-    public static get(url: string, callback?: (text: string) => void, token?: string) {
+    public static get(url: string, callback?: (text: string) => void, token?: string, withCredentials: boolean = false) {
         let request = new XMLHttpRequest();
         request.onreadystatechange = function () {
             if (request.readyState == 4 && request.status == 200) {
@@ -7,11 +7,12 @@ export class NetUtil {
             }
         };
         request.open('GET', url, true);
+        request.withCredentials = withCredentials;
         if (token) request.setRequestHeader('token', token);
         request.send();
     }
 
-    public static post(url: string, bodyObject: any, callback?: (text: string) => void, token?: string) {
+    public static post(url: string, bodyObject: any, callback?: (text: string) => void, token?: string, withCredentials: boolean = false) {
         let request = new XMLHttpRequest();
         request.onreadystatechange = function () {
             if (request.readyState == 4 && request.status >= 200 && request.status < 300) {
@@ -19,6 +20,7 @@ export class NetUtil {
             }
         };
         request.open('POST', url, true);
+        request.withCredentials = withCredentials;
         if (token) request.setRequestHeader('token', token);
         request.setRequestHeader('content-type', 'application/json');
         request.send(JSON.stringify(bodyObject));

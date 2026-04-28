@@ -242,6 +242,14 @@ input[type="number"]:focus {
     padding: 6px 10px;
 }
 
+.loginInput {
+    margin-bottom: 4px;
+}
+
+.loginControl {
+    flex: 1;
+}
+
 .configText {
     margin: 4px;
     color: var(--text-secondary);
@@ -389,6 +397,70 @@ input[type="number"]:focus {
 .configButton:active::after {
     width: 300px;
     height: 300px;
+}
+
+.userMenu {
+    margin: 0;
+}
+
+.userMenuRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-start;
+}
+
+.userMenuName {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.userMenuToggle {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: rgba(30, 41, 59, 0.9);
+    color: var(--text-primary);
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.userMenuToggle:hover {
+    border-color: var(--primary-color);
+}
+
+.userMenuDropdown {
+    margin-top: 6px;
+}
+
+#propertyPanel #userLogoutInline {
+    margin-left: auto;
+    margin: 0;
+    padding: 1px 6px;
+    font-size: 12px;
+    line-height: 16px;
+    border-radius: 6px;
+    min-height: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+}
+
+#propertyPanel #userLoginInline {
+    margin: 0;
+    padding: 1px 6px;
+    font-size: 12px;
+    line-height: 16px;
+    border-radius: 6px;
+    min-height: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .actionButtonRow {

@@ -5,11 +5,13 @@ import {AABB} from "./util/AABB";
 
 export class Camera {
     public static readonly ZOOM_STEP: number = Math.sqrt(2);
+
     private canvas: Canvas;
 
-    private zoom: number;
-    private zoomMin: number;
-    private zoomMax: number;
+    private scale: number;
+    private scaleMin: number;
+    private scaleMax: number;
+    private maxLevel: number;
 
     private position: Position = new Position(0, 0);
 
@@ -23,19 +25,14 @@ export class Camera {
 
     public load(canvas: Canvas, chip: ChipContent) {
         this.canvas = canvas;
-        this.zoomMin = -2;
-        this.zoomMax = chip.maxLevel;
-        //zoom in a bit if screen is large enough.
-        let zoomOffset = Math.floor(Math.log2(Math.min(this.canvas.getWidth(), this.canvas.getHeight())) - Math.log2(Math.max(chip.width, chip.height)) + chip.maxLevel);
-        this.zoom = chip.maxLevel - zoomOffset;
-        this.checkZoom();
-
-        this.position.x = chip.width / 2;
-        this.position.y = chip.height / 2;
+        this.maxLevel = chip.maxLevel;
+        this.scaleMax = this.zoomToScale(-2);
+        this.scaleMin = this.zoomToScale(chip.maxLevel);
         this.xMin = 0;
         this.xMax = chip.width;
         this.yMin = 0;
         this.yMax = chip.height;
+        this.fitToScreen();
     }
     public moveXy(dx: number, dy: number) {
         this.position.x += dx;
@@ -48,72 +45,78 @@ export class Camera {
     }
 
     public getZoom(): number {
-        return this.zoom;
+        return this.scaleToZoom(this.scale);
     }
     public changeZoomBy(amount: number) {
-        this.zoom += amount;
-        this.checkZoom();
+        this.setZoomTo(this.getZoom() + amount);
     }
     public setZoomTo(zoom: number) {
-        this.zoom = zoom;
-        this.checkZoom();
-    }
-    private checkZoom() {
-        this.zoom = Math.min(Math.max(this.zoom, this.zoomMin), this.zoomMax);
+        this.setScaleTo(this.zoomToScale(zoom));
     }
 
     public getScale(): number {
-        return this.scale || (1.0 / Math.pow(2, this.zoom));
+        return this.scale;
     }
     public getScaleMin(): number {
-        return Math.min(1.0 / Math.pow(2, this.zoomMax), this.getFitScale());
+        return Math.min(this.scaleMin, this.getFitScale());
     }
     public getScaleMax(): number {
-        return 1.0 / Math.pow(2, this.zoomMin);
+        return this.scaleMax;
     }
-    public fitToScreen(): void {
-        if (!this.canvas) return;
-        let targetScale = this.getFitScale();
-        this.zoom = -Math.log2(targetScale);
-        this.checkZoom();
-        this.position.x = (this.xMin + this.xMax) / 2;
-        this.position.y = (this.yMin + this.yMax) / 2;
-        this.checkXy();
+    public changeScaleBy(ratio: number) {
+        this.setScaleTo(this.scale * ratio);
+    }
+    public setScaleTo(scale: number) {
+        this.scale = scale;
+        this.checkScale();
     }
     public setScaleAroundScreenPoint(scale: number, screenX: number, screenY: number): void {
-        let clamped = Math.min(Math.max(scale, this.getScaleMin()), this.getScaleMax());
+        this.action();
         let pointBefore = this.screenXyToCanvas(screenX, screenY);
-        this.zoom = -Math.log2(clamped);
-        this.checkZoom();
+        this.setScaleTo(scale);
         this.action();
         let pointAfter = this.screenXyToCanvas(screenX, screenY);
         this.moveXy(pointBefore.x - pointAfter.x, pointBefore.y - pointAfter.y);
     }
+    public changeScaleAroundScreenPoint(ratio: number, screenX: number, screenY: number): void {
+        this.setScaleAroundScreenPoint(this.scale * ratio, screenX, screenY);
+    }
+    public fitToScreen() {
+        if (!this.canvas) return;
+        this.position.x = (this.xMin + this.xMax) / 2;
+        this.position.y = (this.yMin + this.yMax) / 2;
+        this.setScaleTo(this.getFitScale());
+    }
     public getTileLevel(): number {
-        return Math.min(Math.max(Math.round(this.getZoom()), 0), this.zoomMax);
+        return Math.min(Math.max(Math.round(this.getZoom()), 0), this.maxLevel);
+    }
+    private checkScale() {
+        this.scale = Math.min(Math.max(this.scale, this.getScaleMin()), this.scaleMax);
     }
     private getFitScale(): number {
-        if (!this.canvas || this.xMax === this.xMin || this.yMax === this.yMin) return 1.0 / Math.pow(2, this.zoomMax);
+        if (!this.canvas || this.xMax === this.xMin || this.yMax === this.yMin) return this.scaleMin;
         return Math.min(
             this.canvas.getWidth() / (this.xMax - this.xMin),
             this.canvas.getHeight() / (this.yMax - this.yMin),
         );
     }
+    private zoomToScale(zoom: number): number {
+        return 1.0 / Math.pow(2, zoom);
+    }
+    private scaleToZoom(scale: number): number {
+        return Math.log2(1.0 / scale);
+    }
 
-
-    private scale: number;
     private tx: number;
     private ty: number;
 
     public action() {
         if (!this.canvas) return;
         this.checkXy();
-        this.checkZoom();
+        this.checkScale();
 
-        let scale = 1.0 / Math.pow(2, this.zoom);
-        this.scale = scale;
-        this.tx = this.canvas.getWidth() / 2 - this.position.x * scale;
-        this.ty = this.canvas.getHeight() / 2 - this.position.y * scale;
+        this.tx = this.canvas.getWidth() / 2 - this.position.x * this.scale;
+        this.ty = this.canvas.getHeight() / 2 - this.position.y * this.scale;
     }
 
     public screenXyToCanvas(x: number, y: number): Position {

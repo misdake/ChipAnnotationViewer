@@ -69,6 +69,13 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'));
 
         this.refreshChipList();
+
+        window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
+            const custom = ev as CustomEvent<number>;
+            if (!this.chip_content_current || !custom.detail) return;
+            this.annotation_id_toload = custom.detail;
+            this.refreshAnnotationList();
+        });
     }
 
     //load chip list
@@ -247,7 +254,9 @@ export class SelectElement extends LitElement {
     }
 
     render() {
-        let source = this.chip_content_current ? html`<a id="imageSource" target="_blank" href="${this.chip_content_current.source}">${this.chip_content_current.source}</a>` : html``;
+        let source = this.chip_content_current
+            ? html`<label class="imageSourceLabel">Source:<a class="imageSource" target="_blank" href="${this.chip_content_current.source}">${this.chip_content_current.source}</a></label>`
+            : html``;
 
         return html`
             <div style="max-width: 100%">

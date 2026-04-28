@@ -25,7 +25,7 @@ export class ClientApi {
                 } catch (e) {
                     reject(e);
                 }
-            }, getToken());
+            }, getToken(), true);
         });
     }
     private static post<B, T>(url: string, body: B): Promise<T> {
@@ -37,7 +37,7 @@ export class ClientApi {
                 } catch (e) {
                     reject(e);
                 }
-            }, getToken());
+            }, getToken(), true);
         });
     }
 
@@ -55,6 +55,19 @@ export class ClientApi {
 
     static getCurrentLogin(): Promise<UserInfo> {
         return ClientApi.get(`${API_SERVER}/login/get`);
+    }
+    static logout(): Promise<boolean> {
+        return new Promise(resolve => {
+            localStorage.removeItem('chipannotation-token');
+            let done = false;
+            let finish = () => {
+                if (done) return;
+                done = true;
+                resolve(true);
+            };
+            NetUtil.get(`${API_SERVER}/login/logout`, _ => finish(), null, true);
+            setTimeout(() => finish(), 500);
+        });
     }
 
     static listAnnotationByChip(chipName: string): Promise<Annotation[]> {

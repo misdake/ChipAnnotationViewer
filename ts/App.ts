@@ -1,13 +1,11 @@
 import {Canvas} from "./Canvas";
 import {Chip, ChipContent} from "./data/Chip";
 import { Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
-import {Ui} from "./util/Ui";
 import {html, render} from "lit-html";
 import "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
-import "./editable/DrawableMultipleEditElement";
 import {Selection, SelectType} from "./layers/Selection";
 import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
 import {DrawableText, DrawableTextPack} from "./editable/DrawableText";
@@ -15,7 +13,6 @@ import {Layers} from "./layers/Layers";
 import {EditorName, Editors} from "./editors/Editors";
 import {Size} from "./util/Size";
 import {Drawable} from "./drawable/Drawable";
-import {MultipleEdit} from "./editable/DrawableMultipleEditElement";
 import {EditablePick} from "./editable/Editable";
 import {EditorCameraControl} from "./editors/EditorCameraControl";
 import packageJson from "../package.json";
@@ -23,12 +20,6 @@ import packageJson from "../package.json";
 let url_string = window.location.href;
 let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
-
-if (Ui.isMobile() || isReadOnly) {
-    document.getElementById("panel").style.display = "none";
-} else {
-    document.getElementById("panel").style.display = "flex";
-}
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -117,8 +108,10 @@ class App {
             };
         }
 
+        const panelDivider = html`<div class="panel-divider"></div>`;
+
         Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -126,7 +119,7 @@ class App {
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
-            render(item.ui.render(canvas, this.chipContent), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
             const createEditor = polylineCreateMode === "rect" ? EditorName.RECT_CREATE : EditorName.POLYLINE_CREATE;
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, createEditor);
         }, () => {
@@ -136,7 +129,7 @@ class App {
         });
 
         Selection.register(SelectType.TEXT, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -144,7 +137,7 @@ class App {
         });
 
         Selection.register(SelectType.TEXT_CREATE, (item: DrawableText) => {
-            render(item.renderUi(canvas), document.getElementById("panelSelected"));
+            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_CREATE);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -152,7 +145,25 @@ class App {
         });
 
         Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
-            render(MultipleEdit.renderUi(canvas, item), document.getElementById("panelSelected"));
+            const polylines: DrawablePolyline[] = [];
+            const texts: DrawableText[] = [];
+            for (const d of item) {
+                if (d instanceof DrawablePolyline) {
+                    polylines.push(d);
+                } else if (d instanceof DrawableText) {
+                    texts.push(d);
+                }
+            }
+            const polylinePanel = polylines.length > 0
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${item as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
+                : html``;
+            const textPanel = texts.length > 0
+                ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
+                : html``;
+            const innerDivider = polylines.length > 0 && texts.length > 0
+                ? html`<div class="panel-divider"></div>`
+                : html``;
+            render(html`${panelDivider}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
             canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -206,14 +217,28 @@ function showToast(content: string) {
 
     let element = document.getElementById("toast");
     if (element) {
-        element.style.display = "block";
+        element.classList.remove("hiding");
+        element.classList.add("visible");
         element.innerText = content;
+        element.style.display = "block";
         toastTimeout = setTimeout(() => {
-            element.style.display = "none";
-            element.innerText = "";
+            element.classList.remove("visible");
+            element.classList.add("hiding");
+            setTimeout(() => {
+                element.classList.remove("hiding");
+                element.innerText = "";
+                element.style.display = "none";
+            }, 300);
         }, 2000);
     }
 }
+
+window.addEventListener("chipannotation-toast", (ev: Event) => {
+    const custom = ev as CustomEvent<string>;
+    if (custom.detail) {
+        showToast(custom.detail);
+    }
+});
 
 function interceptKeys(evt: KeyboardEvent) {
     if (evt.target !== document.body && evt.target !== document.getElementById("canvas2d")) {
@@ -222,16 +247,15 @@ function interceptKeys(evt: KeyboardEvent) {
 
     // @ts-ignore
     evt = evt || window.event; // IE support
-    var c = evt.keyCode;
-    var ctrlDown = evt.ctrlKey || evt.metaKey; // Mac support
+    let ctrlDown = evt.ctrlKey || evt.metaKey; // Mac support
 
     // Check for Alt+Gr (http://en.wikipedia.org/wiki/AltGr_key)
     if (ctrlDown && evt.altKey) return true;
 
     // Check for ctrl+c, v and x
-    else if (ctrlDown && c == 67) return ctrlC(); // c
-    else if (ctrlDown && c == 86) return ctrlV(); // v
-    else if (ctrlDown && c == 88) return ctrlX(); // x
+    else if (ctrlDown && evt.key === 'c') return ctrlC();
+    else if (ctrlDown && evt.key === 'v') return ctrlV();
+    else if (ctrlDown && evt.key === 'x') return ctrlX();
 
     // Otherwise allow
     return true;
@@ -246,6 +270,14 @@ interface CopyFormat {
 
 const COPY_TY = "ChipAnnotationViewer Copy";
 const COPY_VERSION = packageJson.version;
+
+function isValidCopy(c: unknown): c is CopyFormat {
+    return c !== null && c !== undefined
+        && typeof (c as CopyFormat).ty === 'string'
+        && typeof (c as CopyFormat).version === 'string'
+        && (c as CopyFormat).ty === COPY_TY
+        && (c as CopyFormat).version === COPY_VERSION;
+}
 
 const defaultCopy: CopyFormat = {
     ty: COPY_TY,
@@ -321,12 +353,12 @@ function ctrlV() {
     console.log("ctrlV");
 
     navigator.clipboard.readText().then(str => {
-        let c: CopyFormat = undefined;
+        let c: unknown = undefined;
         try {
-            c = JSON.parse(str) as CopyFormat;
+            c = JSON.parse(str);
         } catch (e) {
         }
-        if (c && c.ty === defaultCopy.ty && c.version === defaultCopy.version) {
+        if (c && isValidCopy(c)) {
             let newDrawables: Drawable[] = [];
 
             for (let polyline of c.polylines) {

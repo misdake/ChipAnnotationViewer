@@ -294,15 +294,84 @@ export class DrawablePolylineCalculator {
         let center = new Point((aabb.x1 + aabb.x2) / 2, (aabb.y1 + aabb.y2) / 2);
         return center;
     }
-    public intersectsAABB(aabbOrMinX: AABB | number, minY?: number, maxX?: number, maxY?: number): boolean {
-        let test: AABB;
-        if (aabbOrMinX instanceof AABB) {
-            test = aabbOrMinX;
-        } else {
-            test = new AABB(aabbOrMinX, minY, maxX, maxY);
+    public intersectsAABB(minX: number, minY: number, maxX: number, maxY: number): boolean {
+        if (this.points.length === 0) return false;
+
+        const aabbMinX = Math.min(minX, maxX);
+        const aabbMaxX = Math.max(minX, maxX);
+        const aabbMinY = Math.min(minY, maxY);
+        const aabbMaxY = Math.max(minY, maxY);
+
+        for (const point of this.points) {
+            if (point.x >= aabbMinX && point.x <= aabbMaxX && point.y >= aabbMinY && point.y <= aabbMaxY) {
+                return true;
+            }
         }
-        let self = this.aabb();
-        return !(self.x2 < test.x1 || self.x1 > test.x2 || self.y2 < test.y1 || self.y1 > test.y2);
+
+        if (this.polyline.style.closed && this.points.length >= 3) {
+            const corners = [
+                new Point(aabbMinX, aabbMinY),
+                new Point(aabbMaxX, aabbMinY),
+                new Point(aabbMaxX, aabbMaxY),
+                new Point(aabbMinX, aabbMaxY)
+            ];
+            for (const corner of corners) {
+                if (this.pointInPolygon(corner)) {
+                    return true;
+                }
+            }
+        }
+
+        const polylineEdges = this.points.length;
+        const closedOffset = this.polyline.style.closed ? 1 : 0;
+        for (let i = 0; i < polylineEdges - 1 + closedOffset; i++) {
+            const p1 = this.points[i];
+            const p2 = this.points[(i + 1) % this.points.length];
+            if (this.lineIntersectsAABB(p1.x, p1.y, p2.x, p2.y, aabbMinX, aabbMinY, aabbMaxX, aabbMaxY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private lineIntersectsAABB(x1: number, y1: number, x2: number, y2: number, minX: number, minY: number, maxX: number, maxY: number): boolean {
+        if (x1 >= minX && x1 <= maxX && y1 >= minY && y1 <= maxY) return true;
+        if (x2 >= minX && x2 <= maxX && y2 >= minY && y2 <= maxY) return true;
+        const edges = [
+            [minX, minY, maxX, minY],
+            [maxX, minY, maxX, maxY],
+            [maxX, maxY, minX, maxY],
+            [minX, maxY, minX, minY]
+        ];
+        for (const edge of edges) {
+            if (this.lineSegmentsIntersect(x1, y1, x2, y2, edge[0], edge[1], edge[2], edge[3])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private lineSegmentsIntersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number): boolean {
+        const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (Math.abs(denom) < 1e-10) return false;
+        const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+        const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+        return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+    }
+
+    private pointInPolygon(point: Point): boolean {
+        if (this.points.length < 3) return false;
+        let inside = false;
+        const n = this.points.length;
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+            const xi = this.points[i].x, yi = this.points[i].y;
+            const xj = this.points[j].x, yj = this.points[j].y;
+            if (((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) {
+                inside = !inside;
+            }
+        }
+        return inside;
     }
 
     public area(): number {
@@ -365,6 +434,7 @@ export class DrawablePolylineStyle {
         this._strokeColor = ColorEntry.findByName(pack.strokeColorName);
         this._strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
+        this.normalizeRenderableState();
     }
     protected _closed: boolean;
     protected _lineWidth: Size;
@@ -439,9 +509,11 @@ export class DrawablePolylineStyle {
         this._closed = value;
     }
     set fill(value: boolean) {
+        if (!value && !this._stroke) return;
         this._fill = value;
     }
     set stroke(value: boolean) {
+        if (!value && !this._fill) return;
         this._stroke = value;
     }
 
@@ -462,6 +534,10 @@ export class DrawablePolylineStyle {
         if (strokeAlpha) this._strokeAlpha = strokeAlpha;
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
     }
+
+    private normalizeRenderableState() {
+        if (!this._fill && !this._stroke) this._stroke = true;
+    }
 }
 
 export class DrawablePolylineEditUi {
@@ -471,7 +547,7 @@ export class DrawablePolylineEditUi {
     }
 
     render(canvas: Canvas, chipContent: ChipContent): TemplateResult {
-        return html`<polylineedit-element .polyline=${this.polyline} .canvas=${canvas} .chipContent=${chipContent}></polylineedit-element>`;
+        return html`<polylineedit-element .polylines=${[this.polyline]} .canvas=${canvas} .chipContent=${chipContent}></polylineedit-element>`;
     }
 }
 

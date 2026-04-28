@@ -118,8 +118,8 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this._link = null;
         let chipLink = DrawableText.CHIP_LINK_REGEX.exec(value);
         let annotationLink = DrawableText.ANNOTATION_LINK_REGEX.exec(value);
-        if (chipLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(chipLink[1])}`;
-        if (annotationLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(annotationLink[1])}&annotation=${annotationLink[2]}`;
+        if (chipLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(chipLink[2])}`;
+        if (annotationLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(annotationLink[2])}&annotation=${annotationLink[3]}`;
 
         //remove link from rendering text
         this._text = this._sourceText;

@@ -5,7 +5,9 @@ const webpack = require('webpack');
 module.exports = env => {
     const confName = (env && env.conf) ? env.conf : 'dev';
     const confPath = path.join(__dirname, `viewer_conf.${confName}.json`);
-    const conf = JSON.parse(fs.readFileSync(confPath).toString());
+    const exampleConfPath = path.join(__dirname, `viewer_conf.${confName}.example.json`);
+    const resolvedConfPath = fs.existsSync(confPath) ? confPath : exampleConfPath;
+    const conf = JSON.parse(fs.readFileSync(resolvedConfPath).toString());
 
     let devtool = env && env.production ? undefined : "source-map";
     let mode = env && env.production ? 'production' : 'development';

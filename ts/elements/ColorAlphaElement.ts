@@ -14,7 +14,7 @@ export class ColorAlphaElement extends LitElement {
     private currentAlpha: AlphaEntry | undefined = undefined;
 
     private isSelected(color: ColorEntry): boolean {
-        return this.currentColor !== undefined && this.currentColor.name === color.name;
+        return this.currentColor !== undefined && this.currentColor.equals(color);
     }
 
     private isAlphaSelected(alpha: AlphaEntry): boolean {
@@ -33,6 +33,16 @@ export class ColorAlphaElement extends LitElement {
         return `configAlphaButton ${selected} ${empty}`.trim();
     }
 
+    private updateColor(hex: string): void {
+        this.currentColor = ColorEntry.fromHex(hex);
+        this.setColor(this.currentColor);
+    }
+
+    private updateAlpha(value: string): void {
+        this.currentAlpha = new AlphaEntry(parseFloat(value));
+        this.setAlpha(this.currentAlpha);
+    }
+
     render() {
         return html`
             <style>
@@ -49,12 +59,27 @@ export class ColorAlphaElement extends LitElement {
                 }
             </style>
             <div class="configColorAlphaContainer">
-                ${ColorEntry.list.map(color => html`<button class="${this.getColorButtonClass(color)}" style="background:${color.name}" @click="${() => { this.currentColor = color; this.setColor(color); }}"></button>`)}
+                ${ColorEntry.list.map(color => html`<button class="${this.getColorButtonClass(color)}" style="background:${color.toHex()}" @click="${() => { this.currentColor = color; this.setColor(color); }}"></button>`)}
+                <input
+                    type="color"
+                    .value=${this.currentColor ? this.currentColor.toHex() : "#ffffff"}
+                    @input=${(event: Event) => this.updateColor((event.target as HTMLInputElement).value)}
+                    title="Custom color"
+                >
                 <br/>
                 ${AlphaEntry.list.map(alpha => {
             let color = 255 * (1 - alpha.value);
             return html`<button class="${this.getAlphaButtonClass(alpha)}" style="background:rgb(${color},${color},${color})" @click="${() => { this.currentAlpha = alpha; this.setAlpha(alpha); }}"></button>`
         })}
+                <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    .value=${String(this.currentAlpha ? this.currentAlpha.value : 1)}
+                    @input=${(event: Event) => this.updateAlpha((event.target as HTMLInputElement).value)}
+                    title="Custom alpha"
+                >
             </div>
         `;
     }

@@ -2,6 +2,7 @@ import { customElement, html, LitElement, property, TemplateResult } from 'lit-e
 import { Chip, ChipContent } from '../data/Chip';
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
+import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi } from '../data/ClientApi';
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
@@ -207,7 +208,7 @@ export class SelectElement extends LitElement {
         if (annotation.aid > 0) {
             //TODO solve async
             ClientApi.getAnnotationContent(annotation.aid).then(content => {
-                let data = JSON.parse(content.content) as AnnotationData;
+                let data = upgradeAnnotationData(JSON.parse(content.content));
                 if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
                 this.replaceUrl();
             });

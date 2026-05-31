@@ -1,10 +1,9 @@
 import { NetUtil } from '../util/NetUtil';
-import { Annotation, AnnotationContent } from './Annotation';
+import { ANNOTATION_DATA_VERSION, Annotation, AnnotationContent } from './Annotation';
 
 declare const __API_SERVER__: string;
 
 const API_SERVER = __API_SERVER__;
-const ANNOTATION_CONTENT_VERSION = 1;
 
 type UserInfo = { userName: string, userId: number };
 
@@ -85,10 +84,10 @@ export class ClientApi {
     }
 
     static createAnnotation(chipName: string, title: string, content: string): Promise<Annotation> {
-        return ClientApi.post(`${API_SERVER}/annotation/create/${chipName}`, {title, content, version: ANNOTATION_CONTENT_VERSION});
+        return ClientApi.post(`${API_SERVER}/annotation/create/${chipName}`, {title, content, version: ANNOTATION_DATA_VERSION});
     }
     static updateAnnotation(aid: number, title: string, content: string): Promise<Annotation> {
-        return ClientApi.post(`${API_SERVER}/annotation/update/${aid}`, {title, content, version: ANNOTATION_CONTENT_VERSION});
+        return ClientApi.post(`${API_SERVER}/annotation/update/${aid}`, {title, content, version: ANNOTATION_DATA_VERSION});
     }
     static deleteAnnotation(aid: number): Promise<boolean> {
         return ClientApi.get(`${API_SERVER}/annotation/delete/${aid}`);

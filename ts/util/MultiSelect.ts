@@ -1,11 +1,11 @@
 export type TriState = 'none' | 'some' | 'all';
 export type UnifiedValue<T> = T | undefined;
 
-export function getUnifiedValue<T, V>(arr: T[], getter: (item: T) => V): UnifiedValue<V> {
+export function getUnifiedValue<T, V>(arr: T[], getter: (item: T) => V, equals: (left: V, right: V) => boolean = (left, right) => left === right): UnifiedValue<V> {
     if (arr.length === 0) return undefined;
     const first = getter(arr[0]);
     for (const item of arr) {
-        if (getter(item) !== first) return undefined;
+        if (!equals(getter(item), first)) return undefined;
     }
     return getter(arr[0]);
 }

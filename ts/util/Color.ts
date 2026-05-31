@@ -1,56 +1,52 @@
 export class ColorEntry {
-    public constructor(public name: string, public r: number, public g: number, public b: number) {
+    public constructor(public r: number, public g: number, public b: number) {
     }
 
-    public static findByName(name: string): ColorEntry {
-        for (const colorValue of this.list) {
-            if (name === colorValue.name) {
-                return colorValue;
-            }
-        }
-        return this.list[0];
+    public static fromHex(hex: string): ColorEntry {
+        const value = hex.replace(/^#/, "");
+        return new ColorEntry(
+            parseInt(value.substring(0, 2), 16),
+            parseInt(value.substring(2, 4), 16),
+            parseInt(value.substring(4, 6), 16),
+        );
+    }
+
+    public toHex(): string {
+        const toHex = (value: number) => (`0${value.toString(16)}`).slice(-2);
+        return `#${toHex(this.r)}${toHex(this.g)}${toHex(this.b)}`;
+    }
+
+    public equals(other: ColorEntry): boolean {
+        return this.r === other.r && this.g === other.g && this.b === other.b;
     }
 
     public static readonly list = [
-        new ColorEntry("red", 255, 0, 0),
-        new ColorEntry("green", 0, 255, 0),
-        new ColorEntry("blue", 0, 0, 255),
-        new ColorEntry("cyan", 0, 255, 255),
-        new ColorEntry("purple", 255, 0, 255),
-        new ColorEntry("yellow", 255, 255, 0),
-        new ColorEntry("orange", 255, 127, 0),
-        new ColorEntry("gray", 127, 127, 127),
-        new ColorEntry("white", 255, 255, 255),
+        new ColorEntry(255, 0, 0),
+        new ColorEntry(0, 255, 0),
+        new ColorEntry(0, 0, 255),
+        new ColorEntry(0, 255, 255),
+        new ColorEntry(255, 0, 255),
+        new ColorEntry(255, 255, 0),
+        new ColorEntry(255, 127, 0),
+        new ColorEntry(127, 127, 127),
+        new ColorEntry(255, 255, 255),
     ];
 }
 
 export class AlphaEntry {
-    public constructor(public name: string, public buttonColor: string, public value: number) {
+    public constructor(public value: number) {
     }
 
-    public static findByName(name: string): AlphaEntry {
-        for (const alphaValue of this.list) {
-            if (name === alphaValue.name) {
-                return alphaValue;
-            }
-        }
-        return this.list[0];
-    }
-    public static findByValue(value: number): AlphaEntry {
-        for (const alphaValue of this.list) {
-            if (value === alphaValue.value) {
-                return alphaValue;
-            }
-        }
-        return this.list[0];
+    public equals(other: AlphaEntry): boolean {
+        return this.value === other.value;
     }
 
     public static readonly list = [
-        new AlphaEntry("15", "rgb(217,217,217)", 0.15),
-        new AlphaEntry("25", "rgb(191,191,191)", 0.25),
-        new AlphaEntry("50", "rgb(127,127,127)", 0.50),
-        new AlphaEntry("75", "rgb(63,63,63)", 0.75),
-        new AlphaEntry("100", "rgb(0,0,0)", 1.00),
+        new AlphaEntry(0.15),
+        new AlphaEntry(0.25),
+        new AlphaEntry(0.50),
+        new AlphaEntry(0.75),
+        new AlphaEntry(1.00),
     ];
 }
 

@@ -140,16 +140,16 @@ export class PolylineEdit extends LitElement {
         return getTriState(this.polylines, p => p.style.closed);
     }
     private getStrokeColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.strokeColor);
+        return getUnifiedValue(this.polylines, p => p.style.strokeColor, (left, right) => left.equals(right));
     }
     private getStrokeAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.strokeAlpha);
+        return getUnifiedValue(this.polylines, p => p.style.strokeAlpha, (left, right) => left.equals(right));
     }
     private getFillColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.fillColor);
+        return getUnifiedValue(this.polylines, p => p.style.fillColor, (left, right) => left.equals(right));
     }
     private getFillAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.fillAlpha);
+        return getUnifiedValue(this.polylines, p => p.style.fillAlpha, (left, right) => left.equals(right));
     }
     private getOnScreen(): number | undefined {
         return getUnifiedValue(this.polylines, p => p.style.onScreen);

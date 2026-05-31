@@ -54,10 +54,10 @@ export class TextEdit extends LitElement {
         return value === true;
     }
     private getColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.texts, t => t.color);
+        return getUnifiedValue(this.texts, t => t.color, (left, right) => left.equals(right));
     }
     private getAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.texts, t => t.alpha);
+        return getUnifiedValue(this.texts, t => t.alpha, (left, right) => left.equals(right));
     }
     private getOnScreen(): number | undefined {
         return getUnifiedValue(this.texts, t => t.onScreen);

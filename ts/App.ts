@@ -1,6 +1,6 @@
 import {Canvas} from "./Canvas";
 import {Chip, ChipContent} from "./data/Chip";
-import { Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
+import { ANNOTATION_DATA_VERSION, Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
 import {html, render} from "lit-html";
 import "./elements/SelectElement";
 import "./elements/TitleElement";
@@ -16,6 +16,8 @@ import {Drawable} from "./drawable/Drawable";
 import {EditablePick} from "./editable/Editable";
 import {EditorCameraControl} from "./editors/EditorCameraControl";
 import packageJson from "../package.json";
+import {ColorEntry} from "./util/Color";
+import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -42,8 +44,8 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     polylineCreateMode = "polyline";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
-        true, "white", "25",
-        true, "white", "75",
+        true, new ColorEntry(255, 255, 255), 0.25,
+        true, new ColorEntry(255, 255, 255), 0.75,
     ));
     canvas.env.polylines.push(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
@@ -52,8 +54,8 @@ document.getElementById("buttonCreateRect").onclick = () => {
     polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
-        true, "white", "25",
-        true, "white", "75",
+        true, new ColorEntry(255, 255, 255), 0.25,
+        true, new ColorEntry(255, 255, 255), 0.75,
     ));
     canvas.env.polylines.push(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
@@ -62,7 +64,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
 document.getElementById("buttonCreateText").onclick = () => {
     let text = new DrawableText(new DrawableTextPack(
         "text",
-        "white", "100", new Size(5, 50),
+        new ColorEntry(255, 255, 255), 1, new Size(5, 50),
         0, 0, false
     ));
     canvas.env.texts.push(text);
@@ -264,6 +266,7 @@ function interceptKeys(evt: KeyboardEvent) {
 interface CopyFormat {
     ty: string;
     version: string;
+    dataVersion?: number;
     polylines: DrawablePolylinePack[],
     texts: DrawableTextPack[],
 }
@@ -276,12 +279,14 @@ function isValidCopy(c: unknown): c is CopyFormat {
         && typeof (c as CopyFormat).ty === 'string'
         && typeof (c as CopyFormat).version === 'string'
         && (c as CopyFormat).ty === COPY_TY
-        && (c as CopyFormat).version === COPY_VERSION;
+        && Array.isArray((c as CopyFormat).polylines)
+        && Array.isArray((c as CopyFormat).texts);
 }
 
 const defaultCopy: CopyFormat = {
     ty: COPY_TY,
     version: COPY_VERSION,
+    dataVersion: ANNOTATION_DATA_VERSION,
     polylines: [],
     texts: [],
 };
@@ -359,14 +364,19 @@ function ctrlV() {
         } catch (e) {
         }
         if (c && isValidCopy(c)) {
+            const data = upgradeAnnotationData({
+                version: c.dataVersion,
+                polylines: c.polylines,
+                texts: c.texts,
+            });
             let newDrawables: Drawable[] = [];
 
-            for (let polyline of c.polylines) {
+            for (let polyline of data.polylines) {
                 let created = new DrawablePolyline(polyline);
                 canvas.env.polylines.push(created);
                 newDrawables.push(created);
             }
-            for (let text of c.texts) {
+            for (let text of data.texts) {
                 let created = new DrawableText(text);
                 canvas.env.texts.push(created);
                 newDrawables.push(created);
@@ -374,15 +384,15 @@ function ctrlV() {
 
             let selectType = undefined;
             let selected: Drawable | Drawable[] = undefined;
-            if (c.polylines.length === 0 && c.texts.length === 1) {
+            if (data.polylines.length === 0 && data.texts.length === 1) {
                 selectType = SelectType.TEXT;
                 selected = newDrawables[0];
             }
-            if (c.polylines.length === 1 && c.texts.length === 0) {
+            if (data.polylines.length === 1 && data.texts.length === 0) {
                 selectType = SelectType.POLYLINE;
                 selected = newDrawables[0];
             }
-            if (c.polylines.length + c.texts.length > 1) {
+            if (data.polylines.length + data.texts.length > 1) {
                 selectType = SelectType.MULTIPLE;
                 selected = newDrawables;
             }

@@ -37,19 +37,19 @@ class PointSegmentResult {
 
 export class DrawablePolylinePack implements PrimitivePack {
     public constructor(points: Point[], closed: boolean, lineWidth: Size,
-                       fill: boolean, fillColorName: string, fillAlphaName: string,
-                       stroke: boolean, strokeColorName: string, strokeAlphaName: string) {
+                       fill: boolean, fillColor: ColorEntry, fillAlpha: number,
+                       stroke: boolean, strokeColor: ColorEntry, strokeAlpha: number) {
         this.points = points;
         this.closed = closed;
         this.lineWidth = lineWidth;
 
         this.fill = fill;
-        this.fillColorName = fillColorName;
-        this.fillAlphaName = fillAlphaName;
+        this.fillColor = fillColor;
+        this.fillAlpha = fillAlpha;
 
         this.stroke = stroke;
-        this.strokeColorName = strokeColorName;
-        this.strokeAlphaName = strokeAlphaName;
+        this.strokeColor = strokeColor;
+        this.strokeAlpha = strokeAlpha;
     }
 
     points: Point[];
@@ -57,12 +57,12 @@ export class DrawablePolylinePack implements PrimitivePack {
     lineWidth: Size;
 
     fill: boolean;
-    fillColorName: string;
-    fillAlphaName: string;
+    fillColor: ColorEntry;
+    fillAlpha: number;
 
     stroke: boolean;
-    strokeColorName: string;
-    strokeAlphaName: string;
+    strokeColor: ColorEntry;
+    strokeAlpha: number;
 }
 
 export class DrawablePolylinePicker {
@@ -426,13 +426,13 @@ export class DrawablePolylineStyle {
         this._lineWidth = new Size(pack.lineWidth.onScreen, pack.lineWidth.onCanvas);
 
         this._fill = pack.fill;
-        this._fillColor = ColorEntry.findByName(pack.fillColorName);
-        this._fillAlpha = AlphaEntry.findByName(pack.fillAlphaName);
+        this._fillColor = new ColorEntry(pack.fillColor.r, pack.fillColor.g, pack.fillColor.b);
+        this._fillAlpha = new AlphaEntry(pack.fillAlpha);
         this._fillString = combineColorAlpha(this._fillColor, this._fillAlpha);
 
         this._stroke = pack.stroke;
-        this._strokeColor = ColorEntry.findByName(pack.strokeColorName);
-        this._strokeAlpha = AlphaEntry.findByName(pack.strokeAlphaName);
+        this._strokeColor = new ColorEntry(pack.strokeColor.r, pack.strokeColor.g, pack.strokeColor.b);
+        this._strokeAlpha = new AlphaEntry(pack.strokeAlpha);
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
         this.normalizeRenderableState();
     }
@@ -496,12 +496,12 @@ export class DrawablePolylineStyle {
             this._lineWidth.clone(),
 
             this._fill,
-            this._fillColor.name,
-            this._fillAlpha.name,
+            this._fillColor,
+            this._fillAlpha.value,
 
             this._stroke,
-            this._strokeColor.name,
-            this._strokeAlpha.name,
+            this._strokeColor,
+            this._strokeAlpha.value,
         )
     }
 

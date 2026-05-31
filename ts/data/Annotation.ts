@@ -1,6 +1,8 @@
 import { DrawablePolylinePack } from '../editable/DrawablePolyline';
 import { DrawableTextPack } from '../editable/DrawableText';
 
+export const ANNOTATION_DATA_VERSION = 2;
+
 export class Annotation {
     aid: number; //key
     title: string;
@@ -16,12 +18,13 @@ export class Annotation {
 
 export class AnnotationContent {
     aid: number;
-    version: number; //v1 => version === 1
+    version: number; //Server-side content format version.
 
     content: string;
 }
 
 export class AnnotationData {
+    version: number = ANNOTATION_DATA_VERSION;
     polylines: DrawablePolylinePack[];
     texts: DrawableTextPack[];
 

@@ -13,18 +13,18 @@ import { LayerName } from "../layers/Layers";
 import { Selection, SelectType } from "../layers/Selection";
 
 export class DrawableTextPack implements PrimitivePack {
-    public constructor(text: string, colorName: string, alphaName: string, fontSize: Size, x: number, y: number, multiline: boolean = false) {
+    public constructor(text: string, color: ColorEntry, alpha: number, fontSize: Size, x: number, y: number, multiline: boolean = false) {
         this.text = text;
-        this.colorName = colorName;
-        this.alphaName = alphaName;
+        this.color = color;
+        this.alpha = alpha;
         this.fontSize = fontSize;
         this.x = x;
         this.y = y;
         this.multiline = multiline;
     }
     text: string = "";
-    colorName: string;
-    alphaName: string;
+    color: ColorEntry;
+    alpha: number;
     fontSize: Size;
     x: number;
     y: number;
@@ -51,8 +51,8 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     protected readonly fontSize: Size;
 
     public constructor(pack: DrawableTextPack) {
-        this.color = ColorEntry.findByName(pack.colorName);
-        this.alpha = AlphaEntry.findByName(pack.alphaName);
+        this.color = new ColorEntry(pack.color.r, pack.color.g, pack.color.b);
+        this.alpha = new AlphaEntry(pack.alpha);
         this.colorString = combineColorAlpha(this.color, this.alpha);
         this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
         this._x = pack.x;
@@ -196,8 +196,8 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     private clone(offsetX: number, offsetY: number): DrawableTextPack {
         return new DrawableTextPack(
             this._sourceText,
-            this.color.name,
-            this.alpha.name,
+            this.color,
+            this.alpha.value,
             this.fontSize.clone(),
             this._x + offsetX,
             this._y + offsetY,
@@ -215,8 +215,8 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     public pack(): DrawableTextPack {
         return new DrawableTextPack(
             this._sourceText,
-            this.color.name,
-            this.alpha.name,
+            this.color,
+            this.alpha.value,
             this.fontSize.clone(),
             this._x,
             this._y,

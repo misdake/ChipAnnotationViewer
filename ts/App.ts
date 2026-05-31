@@ -63,7 +63,7 @@ document.getElementById("buttonCreateText").onclick = () => {
     let text = new DrawableText(new DrawableTextPack(
         "text",
         "white", "100", new Size(5, 50),
-        0, 0
+        0, 0, false
     ));
     canvas.env.texts.push(text);
     Selection.select(SelectType.TEXT_CREATE, text);

@@ -6,6 +6,9 @@ import { ScreenRect } from './util/ScreenRect';
 import { Point } from './editable/DrawablePolyline';
 
 export class Renderer {
+    private splitTextLines(text: string): string[] {
+        return text.split(/\^\^|\r?\n/);
+    }
     private canvas: Canvas;
     private canvasElement: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
@@ -159,7 +162,7 @@ export class Renderer {
     //text
 
     public measureText(camera: Camera, text: string, fontSize: Size) {
-        let lines = text.split('^^');
+        let lines = this.splitTextLines(text);
         let size = this.calculateLineWidth(camera, fontSize);
         this.context.font = size + "px Arial";
         let maxWidth = 0;
@@ -172,7 +175,7 @@ export class Renderer {
 
     public renderText(camera: Camera, text: string, fontSize: number, x: number, y: number, anchorX: CanvasTextAlign, anchorY: CanvasTextBaseline) {
         let position = camera.canvasToScreen(x, y);
-        let lines = text.split("^^");
+        let lines = this.splitTextLines(text);
         let offsetY = (lines.length - 1) * fontSize / 2;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];

@@ -49,6 +49,10 @@ export class TextEdit extends LitElement {
     private getText(): string | undefined {
         return getUnifiedValue(this.texts, t => t.text);
     }
+    private getMultiline(): boolean {
+        const value = getUnifiedValue(this.texts, t => t.multiline);
+        return value === true;
+    }
     private getColor(): ColorEntry | undefined {
         return getUnifiedValue(this.texts, t => t.color);
     }
@@ -64,9 +68,14 @@ export class TextEdit extends LitElement {
 
     private editText = (content: string) => {
         for (const text of this.texts) {
-            if (content.length) {
-                text.text = content;
-            }
+            text.text = content;
+        }
+        this.canvas.requestRender();
+        this.performUpdate();
+    };
+    private setMultiline = (multiline: boolean) => {
+        for (const text of this.texts) {
+            text.multiline = multiline;
         }
         this.canvas.requestRender();
         this.performUpdate();
@@ -82,18 +91,41 @@ export class TextEdit extends LitElement {
     };
 
     render() {
+        const multiline = this.getMultiline();
+        const textValue = this.getText() || "";
         return html`
             <div class="actionButtonRow">
                 <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button>
                 <button class="configButton" @click=${() => this.copyText()}>Clone Text</button>
             </div>
 
-            Text<br>
-            <text-input
-                .value="${this.getText()}"
-                .placeholder="-"
-                .onChange="${(val: string) => this.editText(val)}"
-            ></text-input>
+            Text
+            <label style="margin-left: 8px;">
+                <input
+                    type="checkbox"
+                    .checked=${multiline}
+                    @change="${(ev: Event) => this.setMultiline((ev.target as HTMLInputElement).checked)}"
+                >
+                Multiline
+            </label>
+            <br>
+            ${multiline
+                ? html`
+                    <textarea
+                        class="configText"
+                        style="width: 160px; height: 72px;"
+                        .value=${textValue}
+                        @input="${(ev: Event) => this.editText((ev.target as HTMLTextAreaElement).value)}"
+                    ></textarea>
+                `
+                : html`
+                    <text-input
+                        .value=${textValue}
+                        .placeholder=${"-"}
+                        .onChange=${(val: string) => this.editText(val)}
+                    ></text-input>
+                `
+            }
             <br>
 
             <div>Text Color</div>

@@ -13,13 +13,14 @@ import { LayerName } from "../layers/Layers";
 import { Selection, SelectType } from "../layers/Selection";
 
 export class DrawableTextPack implements PrimitivePack {
-    public constructor(text: string, colorName: string, alphaName: string, fontSize: Size, x: number, y: number) {
+    public constructor(text: string, colorName: string, alphaName: string, fontSize: Size, x: number, y: number, multiline: boolean = false) {
         this.text = text;
         this.colorName = colorName;
         this.alphaName = alphaName;
         this.fontSize = fontSize;
         this.x = x;
         this.y = y;
+        this.multiline = multiline;
     }
     text: string = "";
     colorName: string;
@@ -27,6 +28,7 @@ export class DrawableTextPack implements PrimitivePack {
     fontSize: Size;
     x: number;
     y: number;
+    multiline: boolean;
 }
 
 export class DrawableText implements EditablePick, EditableDeleteClone, EditableMove, EditableColor, Drawable, Primitive {
@@ -41,6 +43,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     private _x: number;
     private _y: number;
     private _link: string = null;
+    private _multiline: boolean = false;
 
     public color: ColorEntry;
     public alpha: AlphaEntry;
@@ -54,6 +57,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
         this._x = pack.x;
         this._y = pack.y;
+        this._multiline = !!pack.multiline;
         this._sourceText = pack.text;
         this.text = pack.text;
     }
@@ -81,6 +85,18 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
     get y(): number {
         return this._y;
+    }
+    get multiline(): boolean {
+        return this._multiline;
+    }
+    set multiline(value: boolean) {
+        const next = !!value;
+        if (this._multiline === next) return;
+        this._sourceText = next
+            ? this._sourceText.replace(/\^\^/g, "\n")
+            : this._sourceText.replace(/\r?\n/g, "^^");
+        this._multiline = next;
+        this.text = this._sourceText;
     }
     public validateCanvasAABB(camera: Camera, renderer: Renderer): AABB {
         this.validate(camera, renderer);
@@ -112,6 +128,9 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     static readonly ANNOTATION_LINK_REGEX = /@(annotation|comment)\[(\w+)]\(([0-9]+)\)/;
 
     set text(value: string) {
+        value = this._multiline
+            ? value.replace(/\r\n/g, "\n")
+            : value.replace(/\r?\n/g, "^^");
         this._sourceText = value;
 
         //generate link from text
@@ -182,6 +201,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
             this.fontSize.clone(),
             this._x + offsetX,
             this._y + offsetY,
+            this._multiline,
         )
     }
     public cloneOnCanvas(canvas: Canvas, offsetX: number, offsetY: number): Drawable {
@@ -200,6 +220,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
             this.fontSize.clone(),
             this._x,
             this._y,
+            this._multiline,
         )
     }
 

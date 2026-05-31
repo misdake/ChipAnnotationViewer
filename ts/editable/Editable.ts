@@ -1,4 +1,3 @@
-import {AlphaEntry, ColorEntry} from "../util/Color";
 import {Canvas} from "../Canvas";
 import {Selection, SelectType} from "../layers/Selection";
 import {Drawable} from "../drawable/Drawable";
@@ -23,7 +22,7 @@ export interface EditableMove {
 
 export interface EditableColor {
     isEditableColor: boolean;
-    setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry): void;
+    setColorAlpha(rgb?: number, alpha?: number): void;
 }
 
 export interface EditableDeleteClone {
@@ -76,9 +75,9 @@ export function editableMultiple(input: Drawable[]): EditableDeleteClone & Edita
             canvas.requestRender();
             return list;
         },
-        setColorAlpha: (color?: ColorEntry, alpha?: AlphaEntry) => {
+        setColorAlpha: (rgb?: number, alpha?: number) => {
             for (let drawable of drawables) {
-                drawable.setColorAlpha(color, alpha);
+                drawable.setColorAlpha(rgb, alpha);
             }
         }
     };

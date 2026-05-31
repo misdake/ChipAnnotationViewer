@@ -1,7 +1,7 @@
 import { customElement, html, LitElement, property } from "lit-element";
 import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
-import { AlphaEntry, ColorEntry } from "../util/Color";
+import { alphaOf, rgbOf } from "../util/Color";
 import "../elements/ColorAlphaElement"
 import "../elements/NumberInputElement"
 import "../elements/TextInputElement"
@@ -53,11 +53,11 @@ export class TextEdit extends LitElement {
         const value = getUnifiedValue(this.texts, t => t.multiline);
         return value === true;
     }
-    private getColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.texts, t => t.color, (left, right) => left.equals(right));
+    private getRgb(): number | undefined {
+        return getUnifiedValue(this.texts, t => rgbOf(t.color));
     }
-    private getAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.texts, t => t.alpha, (left, right) => left.equals(right));
+    private getAlpha(): number | undefined {
+        return getUnifiedValue(this.texts, t => alphaOf(t.color));
     }
     private getOnScreen(): number | undefined {
         return getUnifiedValue(this.texts, t => t.onScreen);
@@ -130,15 +130,15 @@ export class TextEdit extends LitElement {
 
             <div>Text Color</div>
             <coloralpha-element
-                .currentColor=${this.getColor()}
+                .currentRgb=${this.getRgb()}
                 .currentAlpha=${this.getAlpha()}
-                .setColor=${(color: ColorEntry) => {
+                .setRgb=${(rgb: number) => {
                 for (const text of this.texts) {
-                    text.setColorAlpha(color, undefined);
+                    text.setColorAlpha(rgb, undefined);
                 }
                 this.canvas.requestRender();
             }}
-                .setAlpha=${(alpha: AlphaEntry) => {
+                .setAlpha=${(alpha: number) => {
                 for (const text of this.texts) {
                     text.setColorAlpha(undefined, alpha);
                 }

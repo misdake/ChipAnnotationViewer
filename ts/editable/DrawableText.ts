@@ -3,7 +3,7 @@ import { Canvas } from "../Canvas";
 import { Renderer } from "../Renderer";
 import { Camera } from "../Camera";
 import { Size } from "../util/Size";
-import { AlphaEntry, ColorEntry, combineColorAlpha } from "../util/Color";
+import { alphaOf, Rgba, rgbaToCss, rgbOf, withAlpha, withRgb } from "../util/Color";
 import { AABB } from "../util/AABB";
 import { html, TemplateResult } from "lit-html";
 import { Primitive, PrimitivePack } from "./Primitive";
@@ -13,18 +13,16 @@ import { LayerName } from "../layers/Layers";
 import { Selection, SelectType } from "../layers/Selection";
 
 export class DrawableTextPack implements PrimitivePack {
-    public constructor(text: string, color: ColorEntry, alpha: number, fontSize: Size, x: number, y: number, multiline: boolean = false) {
+    public constructor(text: string, color: Rgba, fontSize: Size, x: number, y: number, multiline: boolean = false) {
         this.text = text;
         this.color = color;
-        this.alpha = alpha;
         this.fontSize = fontSize;
         this.x = x;
         this.y = y;
         this.multiline = multiline;
     }
     text: string = "";
-    color: ColorEntry;
-    alpha: number;
+    color: Rgba;
     fontSize: Size;
     x: number;
     y: number;
@@ -45,15 +43,13 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     private _link: string = null;
     private _multiline: boolean = false;
 
-    public color: ColorEntry;
-    public alpha: AlphaEntry;
+    public color: Rgba;
     public colorString: string;
     protected readonly fontSize: Size;
 
     public constructor(pack: DrawableTextPack) {
-        this.color = new ColorEntry(pack.color.r, pack.color.g, pack.color.b);
-        this.alpha = new AlphaEntry(pack.alpha);
-        this.colorString = combineColorAlpha(this.color, this.alpha);
+        this.color = pack.color;
+        this.colorString = rgbaToCss(this.color);
         this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
         this._x = pack.x;
         this._y = pack.y;
@@ -181,10 +177,10 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this._y = centerY + dx;
         this.invalidate();
     }
-    public setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry) {
-        if (color) this.color = color;
-        if (alpha) this.alpha = alpha;
-        this.colorString = combineColorAlpha(this.color, this.alpha);
+    public setColorAlpha(rgb?: number, alpha?: number) {
+        if (rgb !== undefined) this.color = withRgb(this.color, rgb);
+        if (alpha !== undefined) this.color = withAlpha(this.color, alpha);
+        this.colorString = rgbaToCss(this.color);
     }
     public deleteOnCanvas(canvas: Canvas): void {
         let layerView = <LayerTextView>canvas.findLayer(LayerName.TEXT_VIEW);
@@ -197,7 +193,6 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         return new DrawableTextPack(
             this._sourceText,
             this.color,
-            this.alpha.value,
             this.fontSize.clone(),
             this._x + offsetX,
             this._y + offsetY,
@@ -216,7 +211,6 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         return new DrawableTextPack(
             this._sourceText,
             this.color,
-            this.alpha.value,
             this.fontSize.clone(),
             this._x,
             this._y,

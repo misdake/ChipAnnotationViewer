@@ -3,7 +3,7 @@ import {Canvas} from "../Canvas";
 import {Renderer} from "../Renderer";
 import {Camera} from "../Camera";
 import {Size} from "../util/Size";
-import {AlphaEntry, ColorEntry, combineColorAlpha} from "../util/Color";
+import {Rgba, rgbaToCss, withAlpha, withRgb} from "../util/Color";
 import {AABB} from "../util/AABB";
 import {html, TemplateResult} from "lit-html";
 import {ChipContent} from "../data/Chip";
@@ -37,19 +37,17 @@ class PointSegmentResult {
 
 export class DrawablePolylinePack implements PrimitivePack {
     public constructor(points: Point[], closed: boolean, lineWidth: Size,
-                       fill: boolean, fillColor: ColorEntry, fillAlpha: number,
-                       stroke: boolean, strokeColor: ColorEntry, strokeAlpha: number) {
+                       fill: boolean, fillColor: Rgba,
+                       stroke: boolean, strokeColor: Rgba) {
         this.points = points;
         this.closed = closed;
         this.lineWidth = lineWidth;
 
         this.fill = fill;
         this.fillColor = fillColor;
-        this.fillAlpha = fillAlpha;
 
         this.stroke = stroke;
         this.strokeColor = strokeColor;
-        this.strokeAlpha = strokeAlpha;
     }
 
     points: Point[];
@@ -57,12 +55,10 @@ export class DrawablePolylinePack implements PrimitivePack {
     lineWidth: Size;
 
     fill: boolean;
-    fillColor: ColorEntry;
-    fillAlpha: number;
+    fillColor: Rgba;
 
     stroke: boolean;
-    strokeColor: ColorEntry;
-    strokeAlpha: number;
+    strokeColor: Rgba;
 }
 
 export class DrawablePolylinePicker {
@@ -308,7 +304,7 @@ export class DrawablePolylineCalculator {
             }
         }
 
-        if (this.polyline.style.closed && this.points.length >= 3) {
+        if (this.polyline.style.fill && this.polyline.style.closed && this.points.length >= 3) {
             const corners = [
                 new Point(aabbMinX, aabbMinY),
                 new Point(aabbMaxX, aabbMinY),
@@ -426,27 +422,23 @@ export class DrawablePolylineStyle {
         this._lineWidth = new Size(pack.lineWidth.onScreen, pack.lineWidth.onCanvas);
 
         this._fill = pack.fill;
-        this._fillColor = new ColorEntry(pack.fillColor.r, pack.fillColor.g, pack.fillColor.b);
-        this._fillAlpha = new AlphaEntry(pack.fillAlpha);
-        this._fillString = combineColorAlpha(this._fillColor, this._fillAlpha);
+        this._fillColor = pack.fillColor;
+        this._fillString = rgbaToCss(this._fillColor);
 
         this._stroke = pack.stroke;
-        this._strokeColor = new ColorEntry(pack.strokeColor.r, pack.strokeColor.g, pack.strokeColor.b);
-        this._strokeAlpha = new AlphaEntry(pack.strokeAlpha);
-        this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
+        this._strokeColor = pack.strokeColor;
+        this._strokeString = rgbaToCss(this._strokeColor);
         this.normalizeRenderableState();
     }
     protected _closed: boolean;
     protected _lineWidth: Size;
 
     protected _fill: boolean;
-    protected _fillColor: ColorEntry;
-    protected _fillAlpha: AlphaEntry;
+    protected _fillColor: Rgba;
     protected _fillString: string;
 
     protected _stroke: boolean;
-    protected _strokeColor: ColorEntry;
-    protected _strokeAlpha: AlphaEntry;
+    protected _strokeColor: Rgba;
     protected _strokeString: string;
 
     get closed(): boolean {
@@ -459,11 +451,8 @@ export class DrawablePolylineStyle {
     get fill(): boolean {
         return this._fill;
     }
-    get fillColor(): ColorEntry {
+    get fillColor(): Rgba {
         return this._fillColor;
-    }
-    get fillAlpha(): AlphaEntry {
-        return this._fillAlpha;
     }
     get fillString(): string {
         return this._fillString;
@@ -472,11 +461,8 @@ export class DrawablePolylineStyle {
     get stroke(): boolean {
         return this._stroke;
     }
-    get strokeColor(): ColorEntry {
+    get strokeColor(): Rgba {
         return this._strokeColor;
-    }
-    get strokeAlpha(): AlphaEntry {
-        return this._strokeAlpha;
     }
     get strokeString(): string {
         return this._strokeString;
@@ -497,11 +483,9 @@ export class DrawablePolylineStyle {
 
             this._fill,
             this._fillColor,
-            this._fillAlpha.value,
 
             this._stroke,
             this._strokeColor,
-            this._strokeAlpha.value,
         )
     }
 
@@ -524,15 +508,15 @@ export class DrawablePolylineStyle {
         this._lineWidth.onCanvas = onCanvas;
     }
 
-    public setFillColor(fillColor?: ColorEntry, fillAlpha?: AlphaEntry) {
-        if (fillColor) this._fillColor = fillColor;
-        if (fillAlpha) this._fillAlpha = fillAlpha;
-        this._fillString = combineColorAlpha(this._fillColor, this._fillAlpha);
+    public setFillColor(rgb?: number, alpha?: number) {
+        if (rgb !== undefined) this._fillColor = withRgb(this._fillColor, rgb);
+        if (alpha !== undefined) this._fillColor = withAlpha(this._fillColor, alpha);
+        this._fillString = rgbaToCss(this._fillColor);
     }
-    public setStrokeColor(strokeColor?: ColorEntry, strokeAlpha?: AlphaEntry) {
-        if (strokeColor) this._strokeColor = strokeColor;
-        if (strokeAlpha) this._strokeAlpha = strokeAlpha;
-        this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
+    public setStrokeColor(rgb?: number, alpha?: number) {
+        if (rgb !== undefined) this._strokeColor = withRgb(this._strokeColor, rgb);
+        if (alpha !== undefined) this._strokeColor = withAlpha(this._strokeColor, alpha);
+        this._strokeString = rgbaToCss(this._strokeColor);
     }
 
     private normalizeRenderableState() {
@@ -612,8 +596,8 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
     public rotateCW(centerX: number, centerY: number): void {
         this.editor.rotateCW(centerX, centerY);
     }
-    public setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry): void {
-        this.style.setFillColor(color, alpha);
+    public setColorAlpha(rgb?: number, alpha?: number): void {
+        this.style.setFillColor(rgb, alpha);
     }
     public deleteOnCanvas(canvas: Canvas): void {
         let layerView = <LayerPolylineView>canvas.findLayer(LayerName.POLYLINE_VIEW);

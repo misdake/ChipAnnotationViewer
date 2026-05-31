@@ -167,6 +167,13 @@ export class EditorPolylineEdit extends Editor {
                     }
                 } else if (event.buttons & 2) {
                     this.moved = true;
+                } else {
+                    let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
+                    let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
+                    if (pointIndex !== null && pointIndex !== undefined) {
+                        self.canvas.getElement().style.cursor = "crosshair";
+                        return true;
+                    }
                 }
                 return false;
             }

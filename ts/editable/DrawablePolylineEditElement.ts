@@ -3,7 +3,7 @@ import { DrawablePolyline } from "./DrawablePolyline";
 import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
 import { ChipContent } from "../data/Chip";
-import { AlphaEntry, ColorEntry } from "../util/Color";
+import { alphaOf, rgbOf } from "../util/Color";
 import "../elements/ColorAlphaElement";
 import "../elements/TriStateCheckboxElement";
 import "../elements/NumberInputElement";
@@ -139,17 +139,17 @@ export class PolylineEdit extends LitElement {
     private getClosedState(): TriState {
         return getTriState(this.polylines, p => p.style.closed);
     }
-    private getStrokeColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.strokeColor, (left, right) => left.equals(right));
+    private getStrokeRgb(): number | undefined {
+        return getUnifiedValue(this.polylines, p => rgbOf(p.style.strokeColor));
     }
-    private getStrokeAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.strokeAlpha, (left, right) => left.equals(right));
+    private getStrokeAlpha(): number | undefined {
+        return getUnifiedValue(this.polylines, p => alphaOf(p.style.strokeColor));
     }
-    private getFillColor(): ColorEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.fillColor, (left, right) => left.equals(right));
+    private getFillRgb(): number | undefined {
+        return getUnifiedValue(this.polylines, p => rgbOf(p.style.fillColor));
     }
-    private getFillAlpha(): AlphaEntry | undefined {
-        return getUnifiedValue(this.polylines, p => p.style.fillAlpha, (left, right) => left.equals(right));
+    private getFillAlpha(): number | undefined {
+        return getUnifiedValue(this.polylines, p => alphaOf(p.style.fillColor));
     }
     private getOnScreen(): number | undefined {
         return getUnifiedValue(this.polylines, p => p.style.onScreen);
@@ -214,15 +214,15 @@ export class PolylineEdit extends LitElement {
 
             <div>Stroke Color</div>
             <coloralpha-element
-                .currentColor=${this.getStrokeColor()}
+                .currentRgb=${this.getStrokeRgb()}
                 .currentAlpha=${this.getStrokeAlpha()}
-                .setColor=${(color: ColorEntry) => {
+                .setRgb=${(rgb: number) => {
                     for (const polyline of this.polylines) {
-                        polyline.style.setStrokeColor(color, undefined);
+                        polyline.style.setStrokeColor(rgb, undefined);
                     }
                     this.canvas.requestRender();
                 }}
-                .setAlpha=${(alpha: AlphaEntry) => {
+                .setAlpha=${(alpha: number) => {
                     for (const polyline of this.polylines) {
                         polyline.style.setStrokeColor(undefined, alpha);
                     }
@@ -231,15 +231,15 @@ export class PolylineEdit extends LitElement {
             ></coloralpha-element>
             <div>Fill Color</div>
             <coloralpha-element
-                .currentColor=${this.getFillColor()}
+                .currentRgb=${this.getFillRgb()}
                 .currentAlpha=${this.getFillAlpha()}
-                .setColor=${(color: ColorEntry) => {
+                .setRgb=${(rgb: number) => {
                     for (const polyline of this.polylines) {
-                        polyline.style.setFillColor(color, undefined);
+                        polyline.style.setFillColor(rgb, undefined);
                     }
                     this.canvas.requestRender();
                 }}
-                .setAlpha=${(alpha: AlphaEntry) => {
+                .setAlpha=${(alpha: number) => {
                     for (const polyline of this.polylines) {
                         polyline.style.setFillColor(undefined, alpha);
                     }

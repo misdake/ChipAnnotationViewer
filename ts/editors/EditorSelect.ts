@@ -16,6 +16,8 @@ export class EditorSelect extends Editor {
     private dragging = false;
     private dragStartX = 0;
     private dragStartY = 0;
+    private dragStartScreenX = 0;
+    private dragStartScreenY = 0;
     private dragCurrentX = 0;
     private dragCurrentY = 0;
     private previewSelection: (Drawable & EditablePick)[] = [];
@@ -27,6 +29,7 @@ export class EditorSelect extends Editor {
     private rightClickStartX = 0;
     private rightClickStartY = 0;
     private isRightClickDragging = false;
+    private static readonly BOX_SELECT_MIN_DRAG_PX = 6;
 
     constructor(canvas: Canvas) {
         super(EditorName.SELECT, canvas);
@@ -98,6 +101,8 @@ export class EditorSelect extends Editor {
                         self.dragging = false;
                         self.dragStartX = x;
                         self.dragStartY = y;
+                        self.dragStartScreenX = event.offsetX;
+                        self.dragStartScreenY = event.offsetY;
                         self.dragCurrentX = x;
                         self.dragCurrentY = y;
                         if (!event.ctrlKey) {
@@ -248,7 +253,9 @@ export class EditorSelect extends Editor {
                 }
 
                 if (self.isBoxSelecting && (event.buttons & 1)) {
-                    if (Math.abs(x - self.dragStartX) > 3 || Math.abs(y - self.dragStartY) > 3) {
+                    let dx = event.offsetX - self.dragStartScreenX;
+                    let dy = event.offsetY - self.dragStartScreenY;
+                    if (Math.hypot(dx, dy) >= EditorSelect.BOX_SELECT_MIN_DRAG_PX) {
                         self.dragging = true;
                     }
 

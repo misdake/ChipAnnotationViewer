@@ -1,55 +1,57 @@
-export class ColorEntry {
-    public constructor(public r: number, public g: number, public b: number) {
-    }
+export type Rgba = number; // Unsigned 0xRRGGBBAA.
 
-    public static fromHex(hex: string): ColorEntry {
-        const value = hex.replace(/^#/, "");
-        return new ColorEntry(
-            parseInt(value.substring(0, 2), 16),
-            parseInt(value.substring(2, 4), 16),
-            parseInt(value.substring(4, 6), 16),
-        );
-    }
+export const RGB_MASK = 0xffffff00;
+export const ALPHA_MASK = 0x000000ff;
 
-    public toHex(): string {
-        const toHex = (value: number) => (`0${value.toString(16)}`).slice(-2);
-        return `#${toHex(this.r)}${toHex(this.g)}${toHex(this.b)}`;
-    }
-
-    public equals(other: ColorEntry): boolean {
-        return this.r === other.r && this.g === other.g && this.b === other.b;
-    }
-
-    public static readonly list = [
-        new ColorEntry(255, 0, 0),
-        new ColorEntry(0, 255, 0),
-        new ColorEntry(0, 0, 255),
-        new ColorEntry(0, 255, 255),
-        new ColorEntry(255, 0, 255),
-        new ColorEntry(255, 255, 0),
-        new ColorEntry(255, 127, 0),
-        new ColorEntry(127, 127, 127),
-        new ColorEntry(255, 255, 255),
-    ];
+export function packRgba(r: number, g: number, b: number, alpha: number): Rgba {
+    return (((r & 0xff) << 24) | ((g & 0xff) << 16) | ((b & 0xff) << 8) | (alpha & 0xff)) >>> 0;
 }
 
-export class AlphaEntry {
-    public constructor(public value: number) {
-    }
-
-    public equals(other: AlphaEntry): boolean {
-        return this.value === other.value;
-    }
-
-    public static readonly list = [
-        new AlphaEntry(0.15),
-        new AlphaEntry(0.25),
-        new AlphaEntry(0.50),
-        new AlphaEntry(0.75),
-        new AlphaEntry(1.00),
-    ];
+export function rgbOf(rgba: Rgba): number {
+    return (rgba & RGB_MASK) >>> 0;
 }
 
-export function combineColorAlpha(color: ColorEntry, alpha: AlphaEntry): string {
-    return "rgba(" + color.r + "," + color.g + "," + color.b + "," + alpha.value + ")";
+export function alphaOf(rgba: Rgba): number {
+    return rgba & ALPHA_MASK;
 }
+
+export function withRgb(rgba: Rgba, rgb: number): Rgba {
+    return ((rgb & RGB_MASK) | alphaOf(rgba)) >>> 0;
+}
+
+export function withAlpha(rgba: Rgba, alpha: number): Rgba {
+    return (rgbOf(rgba) | (alpha & ALPHA_MASK)) >>> 0;
+}
+
+export function rgbToHex(rgb: number): string {
+    return `#${(`000000${((rgb >>> 8) & 0xffffff).toString(16)}`).slice(-6)}`;
+}
+
+export function hexToRgb(hex: string): number {
+    return (parseInt(hex.replace(/^#/, ""), 16) << 8) >>> 0;
+}
+
+export function rgbaToCss(rgba: Rgba): string {
+    const r = (rgba >>> 24) & 0xff;
+    const g = (rgba >>> 16) & 0xff;
+    const b = (rgba >>> 8) & 0xff;
+    return `rgba(${r},${g},${b},${alphaOf(rgba) / 255})`;
+}
+
+export const RGB_PRESETS = [
+    packRgba(255, 0, 0, 0),
+    packRgba(255, 127, 0, 0),
+    packRgba(255, 255, 0, 0),
+    packRgba(127, 255, 0, 0),
+    packRgba(0, 255, 0, 0),
+    packRgba(0, 255, 127, 0),
+    packRgba(0, 255, 255, 0),
+    packRgba(0, 127, 255, 0),
+    packRgba(0, 0, 255, 0),
+    packRgba(127, 0, 255, 0),
+    packRgba(255, 0, 255, 0),
+    packRgba(255, 0, 127, 0),
+    packRgba(0, 0, 0, 0),
+    packRgba(127, 127, 127, 0),
+    packRgba(255, 255, 255, 0),
+];

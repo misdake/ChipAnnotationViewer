@@ -22,22 +22,22 @@ values are stored as preset names, for example:
 
 ## Version 2
 
-Version 2 stores actual RGB and alpha values:
+Version 2 stores colors as unsigned packed RGBA integers using the
+`0xRRGGBBAA` layout:
 
 ```json
 {
   "version": 2,
   "texts": [
     {
-      "color": { "r": 255, "g": 255, "b": 255 },
-      "alpha": 1
+      "color": 4294967295
     }
   ]
 }
 ```
 
-Polyline colors use the same representation through `fillColor`, `fillAlpha`,
-`strokeColor`, and `strokeAlpha`.
+Polyline fill and stroke colors use the same representation through
+`fillColor` and `strokeColor`.
 
 ## Adding A Version
 

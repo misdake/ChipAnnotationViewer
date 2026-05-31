@@ -31,6 +31,10 @@ function legacyAlpha(name: string): number {
     return LEGACY_ALPHAS[name] === undefined ? 1 : LEGACY_ALPHAS[name];
 }
 
+function packRgba(color: JsonObject, alpha: number): number {
+    return (((color.r & 0xff) << 24) | ((color.g & 0xff) << 16) | ((color.b & 0xff) << 8) | Math.round(alpha * 255)) >>> 0;
+}
+
 const upgradeV1ToV2: Upgrade = data => ({
     version: 2,
     polylines: (data.polylines || []).map((polyline: JsonObject) => ({
@@ -38,16 +42,13 @@ const upgradeV1ToV2: Upgrade = data => ({
         closed: polyline.closed,
         lineWidth: polyline.lineWidth,
         fill: polyline.fill,
-        fillColor: legacyColor(polyline.fillColorName),
-        fillAlpha: legacyAlpha(polyline.fillAlphaName),
+        fillColor: packRgba(legacyColor(polyline.fillColorName), legacyAlpha(polyline.fillAlphaName)),
         stroke: polyline.stroke,
-        strokeColor: legacyColor(polyline.strokeColorName),
-        strokeAlpha: legacyAlpha(polyline.strokeAlphaName),
+        strokeColor: packRgba(legacyColor(polyline.strokeColorName), legacyAlpha(polyline.strokeAlphaName)),
     })),
     texts: (data.texts || []).map((text: JsonObject) => ({
         text: text.text,
-        color: legacyColor(text.colorName),
-        alpha: legacyAlpha(text.alphaName),
+        color: packRgba(legacyColor(text.colorName), legacyAlpha(text.alphaName)),
         fontSize: text.fontSize,
         x: text.x,
         y: text.y,

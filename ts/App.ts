@@ -16,7 +16,7 @@ import {Drawable} from "./drawable/Drawable";
 import {EditablePick} from "./editable/Editable";
 import {EditorCameraControl} from "./editors/EditorCameraControl";
 import packageJson from "../package.json";
-import {ColorEntry} from "./util/Color";
+import {packRgba} from "./util/Color";
 import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
 
 let url_string = window.location.href;
@@ -44,8 +44,8 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     polylineCreateMode = "polyline";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
-        true, new ColorEntry(255, 255, 255), 0.25,
-        true, new ColorEntry(255, 255, 255), 0.75,
+        true, packRgba(255, 255, 255, 64),
+        true, packRgba(255, 255, 255, 191),
     ));
     canvas.env.polylines.push(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
@@ -54,8 +54,8 @@ document.getElementById("buttonCreateRect").onclick = () => {
     polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
-        true, new ColorEntry(255, 255, 255), 0.25,
-        true, new ColorEntry(255, 255, 255), 0.75,
+        true, packRgba(255, 255, 255, 64),
+        true, packRgba(255, 255, 255, 191),
     ));
     canvas.env.polylines.push(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
@@ -64,7 +64,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
 document.getElementById("buttonCreateText").onclick = () => {
     let text = new DrawableText(new DrawableTextPack(
         "text",
-        new ColorEntry(255, 255, 255), 1, new Size(5, 50),
+        packRgba(255, 255, 255, 255), new Size(5, 50),
         0, 0, false
     ));
     canvas.env.texts.push(text);

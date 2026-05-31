@@ -1,85 +1,139 @@
 import { customElement, html, LitElement, property } from "lit-element";
-import { AlphaEntry, ColorEntry } from "../util/Color";
+import { hexToRgb, RGB_PRESETS, rgbToHex } from "../util/Color";
 
 @customElement('coloralpha-element')
 export class ColorAlphaElement extends LitElement {
 
     @property()
-    private setColor: (color: ColorEntry) => void;
+    private setRgb: (rgb: number) => void;
     @property()
-    private setAlpha: (alpha: AlphaEntry) => void;
+    private setAlpha: (alpha: number) => void;
     @property()
-    private currentColor: ColorEntry | undefined = undefined;
+    private currentRgb: number | undefined = undefined;
     @property()
-    private currentAlpha: AlphaEntry | undefined = undefined;
+    private currentAlpha: number | undefined = undefined;
 
-    private isSelected(color: ColorEntry): boolean {
-        return this.currentColor !== undefined && this.currentColor.equals(color);
+    private applyRgb(rgb: number): void {
+        this.currentRgb = rgb;
+        this.setRgb(rgb);
+        this.requestUpdate();
     }
 
-    private isAlphaSelected(alpha: AlphaEntry): boolean {
-        return this.currentAlpha !== undefined && this.currentAlpha.value === alpha.value;
+    private updateRgb(hex: string): void {
+        this.applyRgb(hexToRgb(hex));
     }
 
-    private getColorButtonClass(color: ColorEntry): string {
-        const selected = this.isSelected(color) ? 'selected' : '';
-        const empty = this.currentColor === undefined ? 'empty' : '';
-        return `configColorButton ${selected} ${empty}`.trim();
-    }
-
-    private getAlphaButtonClass(alpha: AlphaEntry): string {
-        const selected = this.isAlphaSelected(alpha) ? 'selected' : '';
-        const empty = this.currentAlpha === undefined ? 'empty' : '';
-        return `configAlphaButton ${selected} ${empty}`.trim();
-    }
-
-    private updateColor(hex: string): void {
-        this.currentColor = ColorEntry.fromHex(hex);
-        this.setColor(this.currentColor);
+    private applyAlpha(alpha: number): void {
+        this.currentAlpha = alpha;
+        this.setAlpha(alpha);
+        this.requestUpdate();
     }
 
     private updateAlpha(value: string): void {
-        this.currentAlpha = new AlphaEntry(parseFloat(value));
-        this.setAlpha(this.currentAlpha);
+        this.applyAlpha(parseInt(value, 10));
     }
 
     render() {
+        const alpha = this.currentAlpha === undefined ? 255 : this.currentAlpha;
+        const colorText = this.currentRgb === undefined || this.currentAlpha === undefined
+            ? "Mixed"
+            : `${rgbToHex(this.currentRgb)}${(`0${this.currentAlpha.toString(16)}`).slice(-2)}`;
         return html`
             <style>
-                .configColorButton.selected {
-                    outline: 3px solid #007bff;
-                    outline-offset: -3px;
+                .configColorPresetGrid {
+                    display: grid;
+                    grid-template-columns: repeat(5, 18px);
+                    gap: 2px;
                 }
-                .configAlphaButton.selected {
-                    outline: 3px solid #007bff;
-                    outline-offset: -3px;
+                .configColorPresetGrid .configColorButton {
+                    width: 18px;
+                    height: 18px;
+                    margin: 0;
+                    border-radius: 2px;
                 }
-                .configColorButton.empty, .configAlphaButton.empty {
-                    opacity: 0.5;
+                .configColorControls {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .configCustomColorControls {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .configCustomColorRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .configCustomColorControls input[type="range"] {
+                    width: 100px;
+                }
+                .configColorValue {
+                    font-family: monospace;
+                }
+                .configColorPicker {
+                    width: 28px;
+                    height: 28px;
+                    padding: 2px;
+                    border: 1px solid rgba(255, 255, 255, 0.28);
+                    border-radius: 4px;
+                    background: rgba(255, 255, 255, 0.08);
+                    cursor: pointer;
+                    vertical-align: middle;
+                }
+                .configColorPicker:hover {
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                }
+                .configColorPicker::-webkit-color-swatch-wrapper {
+                    padding: 0;
+                }
+                .configColorPicker::-webkit-color-swatch {
+                    border: none;
+                    border-radius: 2px;
+                }
+                .configColorPicker::-moz-color-swatch {
+                    border: none;
+                    border-radius: 2px;
                 }
             </style>
             <div class="configColorAlphaContainer">
-                ${ColorEntry.list.map(color => html`<button class="${this.getColorButtonClass(color)}" style="background:${color.toHex()}" @click="${() => { this.currentColor = color; this.setColor(color); }}"></button>`)}
-                <input
-                    type="color"
-                    .value=${this.currentColor ? this.currentColor.toHex() : "#ffffff"}
-                    @input=${(event: Event) => this.updateColor((event.target as HTMLInputElement).value)}
-                    title="Custom color"
-                >
-                <br/>
-                ${AlphaEntry.list.map(alpha => {
-            let color = 255 * (1 - alpha.value);
-            return html`<button class="${this.getAlphaButtonClass(alpha)}" style="background:rgb(${color},${color},${color})" @click="${() => { this.currentAlpha = alpha; this.setAlpha(alpha); }}"></button>`
-        })}
-                <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    .value=${String(this.currentAlpha ? this.currentAlpha.value : 1)}
-                    @input=${(event: Event) => this.updateAlpha((event.target as HTMLInputElement).value)}
-                    title="Custom alpha"
-                >
+                <div class="configColorControls">
+                    <div class="configColorPresetGrid">
+                        ${RGB_PRESETS.map(rgb => html`
+                            <button
+                                class="configColorButton"
+                                style="background:${rgbToHex(rgb)}"
+                                @click=${() => this.applyRgb(rgb)}
+                                title="${rgbToHex(rgb)}"
+                            ></button>
+                        `)}
+                    </div>
+                    <div class="configCustomColorControls">
+                        <div class="configCustomColorRow">
+                            <input
+                                class="configColorPicker"
+                                type="color"
+                                .value=${this.currentRgb === undefined ? "#ffffff" : rgbToHex(this.currentRgb)}
+                                @input=${(event: Event) => this.updateRgb((event.target as HTMLInputElement).value)}
+                                title="Custom color"
+                            >
+                            <span class="configColorValue">${colorText}</span>
+                        </div>
+                        <div class="configCustomColorRow">
+                            <input
+                                type="range"
+                                min="1"
+                                max="255"
+                                step="1"
+                                .value=${String(alpha)}
+                                @input=${(event: Event) => this.updateAlpha((event.target as HTMLInputElement).value)}
+                                title="Custom alpha"
+                            >
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -87,5 +141,4 @@ export class ColorAlphaElement extends LitElement {
     createRenderRoot() {
         return this;
     }
-
 }

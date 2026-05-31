@@ -25,6 +25,9 @@ export class PolylineEdit extends LitElement {
     @property()
     chipContent: ChipContent;
 
+    private strokeChangedByUser = false;
+    private fillChangedByUser = false;
+
     deletePolyline() {
         for (const polyline of this.polylines) {
             polyline.deleteOnCanvas(this.canvas);
@@ -159,6 +162,8 @@ export class PolylineEdit extends LitElement {
     }
 
     private onStyleCheck = (options: { fill?: boolean; stroke?: boolean; closed?: boolean }) => {
+        if (options.stroke !== undefined) this.strokeChangedByUser = true;
+        if (options.fill !== undefined) this.fillChangedByUser = true;
         for (const polyline of this.polylines) {
             if (options.fill !== undefined) polyline.style.fill = options.fill;
             if (options.stroke !== undefined) polyline.style.stroke = options.stroke;
@@ -176,8 +181,55 @@ export class PolylineEdit extends LitElement {
         this.requestUpdate();
     };
 
+    updated(changedProperties: Map<string | number | symbol, unknown>) {
+        if (changedProperties.has("polylines")) {
+            this.strokeChangedByUser = false;
+            this.fillChangedByUser = false;
+        }
+    }
+
     render() {
+        const strokeState = this.getStrokeState();
+        const fillState = this.getFillState();
+        const strokeVisible = strokeState !== "none";
+        const fillVisible = fillState !== "none";
+
         return html`
+            <style>
+                .colorFoldWrapper coloralpha-element {
+                    display: block;
+                    max-height: 66px;
+                    opacity: 1;
+                    overflow: hidden;
+                    transition: max-height 0.5s ease, opacity 0.5s ease;
+                }
+                .colorFoldWrapper.collapsed coloralpha-element {
+                    max-height: 0;
+                    opacity: 0;
+                    transition: max-height 0.5s ease, opacity 0.5s ease;
+                }
+                .colorFoldWrapper.collapsed coloralpha-element * {
+                    pointer-events: none;
+                }
+                .colorFoldWrapper.noAnimation coloralpha-element {
+                    transition: none !important;
+                }
+
+                .configColorHeader {
+                    display: grid;
+                    grid-template-columns: 102px auto;
+                    align-items: center;
+                    font-size: 12px;
+                }
+                .configColorHeader > span:first-child {
+                    font-size: 14px;
+                }
+                .configColorHeaderControls {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+            </style>
             <div class="actionButtonRow">
                 <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button>
                 <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button>
@@ -194,58 +246,67 @@ export class PolylineEdit extends LitElement {
                 <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
             </div>
 
-            <div class="checkboxRow">
-                <tristate-checkbox
-                    .state="${this.getFillState()}"
-                    label="Fill"
-                    .onChange="${(state: "none" | "all") => this.onStyleCheck({ fill: state === "all" })}"
-                ></tristate-checkbox>
-                <tristate-checkbox
-                    .state="${this.getStrokeState()}"
-                    label="Stroke"
-                    .onChange="${(state: "none" | "all") => this.onStyleCheck({ stroke: state === "all" })}"
-                ></tristate-checkbox>
-                <tristate-checkbox
-                    .state="${this.getClosedState()}"
-                    label="Closed"
-                    .onChange="${(state: "none" | "all") => this.onStyleCheck({ closed: state === "all" })}"
-                ></tristate-checkbox>
+            <div class="colorFoldWrapper${strokeVisible ? "" : " collapsed"}${this.strokeChangedByUser ? "" : " noAnimation"}">
+                <div class="configColorHeader">
+                    <span>Stroke Color</span>
+                    <span class="configColorHeaderControls">
+                        <tristate-checkbox
+                            .state="${strokeState}"
+                            label="Stroke"
+                            .onChange="${(state: "none" | "all") => this.onStyleCheck({ stroke: state === "all" })}"
+                        ></tristate-checkbox>
+                        <tristate-checkbox
+                            .state="${this.getClosedState()}"
+                            label="Closed"
+                            .onChange="${(state: "none" | "all") => this.onStyleCheck({ closed: state === "all" })}"
+                        ></tristate-checkbox>
+                    </span>
+                </div>
+                <coloralpha-element
+                    .currentRgb=${this.getStrokeRgb()}
+                    .currentAlpha=${this.getStrokeAlpha()}
+                    .setRgb=${(rgb: number) => {
+                for (const polyline of this.polylines) {
+                    polyline.style.setStrokeColor(rgb, undefined);
+                }
+                this.canvas.requestRender();
+            }}
+                    .setAlpha=${(alpha: number) => {
+                for (const polyline of this.polylines) {
+                    polyline.style.setStrokeColor(undefined, alpha);
+                }
+                this.canvas.requestRender();
+            }}
+                ></coloralpha-element>
             </div>
-
-            <div>Stroke Color</div>
-            <coloralpha-element
-                .currentRgb=${this.getStrokeRgb()}
-                .currentAlpha=${this.getStrokeAlpha()}
-                .setRgb=${(rgb: number) => {
-                    for (const polyline of this.polylines) {
-                        polyline.style.setStrokeColor(rgb, undefined);
-                    }
-                    this.canvas.requestRender();
-                }}
-                .setAlpha=${(alpha: number) => {
-                    for (const polyline of this.polylines) {
-                        polyline.style.setStrokeColor(undefined, alpha);
-                    }
-                    this.canvas.requestRender();
-                }}
-            ></coloralpha-element>
-            <div>Fill Color</div>
-            <coloralpha-element
-                .currentRgb=${this.getFillRgb()}
-                .currentAlpha=${this.getFillAlpha()}
-                .setRgb=${(rgb: number) => {
-                    for (const polyline of this.polylines) {
-                        polyline.style.setFillColor(rgb, undefined);
-                    }
-                    this.canvas.requestRender();
-                }}
-                .setAlpha=${(alpha: number) => {
-                    for (const polyline of this.polylines) {
-                        polyline.style.setFillColor(undefined, alpha);
-                    }
-                    this.canvas.requestRender();
-                }}
-            ></coloralpha-element>
+            <div class="colorFoldWrapper${fillVisible ? "" : " collapsed"}${this.fillChangedByUser ? "" : " noAnimation"}">
+                <div class="configColorHeader">
+                    <span>Fill Color</span>
+                    <span class="configColorHeaderControls">
+                        <tristate-checkbox
+                            .state="${fillState}"
+                            label="Fill"
+                            .onChange="${(state: "none" | "all") => this.onStyleCheck({ fill: state === "all" })}"
+                        ></tristate-checkbox>
+                    </span>
+                </div>
+                <coloralpha-element
+                    .currentRgb=${this.getFillRgb()}
+                    .currentAlpha=${this.getFillAlpha()}
+                    .setRgb=${(rgb: number) => {
+                for (const polyline of this.polylines) {
+                    polyline.style.setFillColor(rgb, undefined);
+                }
+                this.canvas.requestRender();
+            }}
+                    .setAlpha=${(alpha: number) => {
+                for (const polyline of this.polylines) {
+                    polyline.style.setFillColor(undefined, alpha);
+                }
+                this.canvas.requestRender();
+            }}
+                ></coloralpha-element>
+            </div>
 
             <div class="sizeInput">
                 <number-input

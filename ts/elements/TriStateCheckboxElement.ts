@@ -24,10 +24,10 @@ export class TriStateCheckboxElement extends LitElement {
 
         .tsc-box {
             display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid #666;
-            border-radius: 3px;
+            width: 11px;
+            height: 11px;
+            border: 1px solid #666;
+            border-radius: 2px;
             background: #fff;
             transition: all 0.2s;
             vertical-align: middle;
@@ -39,8 +39,8 @@ export class TriStateCheckboxElement extends LitElement {
         }
 
         .tsc-box svg {
-            width: 14px;
-            height: 14px;
+            width: 11px;
+            height: 11px;
             vertical-align: top;
         }
 
@@ -85,7 +85,7 @@ export class TriStateCheckboxElement extends LitElement {
 
     render() {
         return html`
-            <span class="tsc-box ${this.state === 'all' ? 'tsc-checked' : ''}" @click=${() => this.toggle()}>
+            <span class="tsc-box ${this.state !== 'none' ? 'tsc-checked' : ''}" @click=${() => this.toggle()}>
                 ${this.getSvg()}
             </span>
             ${this.label ? html`<span class="tsc-label" @click=${() => this.toggle()}>${this.label}</span>` : ''}

@@ -1,4 +1,4 @@
-import { customElement, html, LitElement, property } from "lit-element";
+import { customElement, html, LitElement, property, TemplateResult } from "lit-element";
 import { hexToRgb, RGB_PRESETS, rgbToHex } from "../util/Color";
 
 @customElement('coloralpha-element')
@@ -54,7 +54,9 @@ export class ColorAlphaElement extends LitElement {
                 .configColorControls {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 12px;
+                    margin-top: 6px;
+                    margin-bottom: 2px;
                 }
                 .configCustomColorControls {
                     display: flex;

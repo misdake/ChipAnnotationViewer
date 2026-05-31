@@ -128,23 +128,25 @@ export class TextEdit extends LitElement {
             }
             <br>
 
-            <div>Text Color</div>
-            <coloralpha-element
-                .currentRgb=${this.getRgb()}
-                .currentAlpha=${this.getAlpha()}
-                .setRgb=${(rgb: number) => {
+            <div class="colorFoldWrapper">
+                <div>Text Color</div>
+                <coloralpha-element
+                    .currentRgb=${this.getRgb()}
+                    .currentAlpha=${this.getAlpha()}
+                    .setRgb=${(rgb: number) => {
                 for (const text of this.texts) {
                     text.setColorAlpha(rgb, undefined);
                 }
                 this.canvas.requestRender();
             }}
-                .setAlpha=${(alpha: number) => {
+                    .setAlpha=${(alpha: number) => {
                 for (const text of this.texts) {
                     text.setColorAlpha(undefined, alpha);
                 }
                 this.canvas.requestRender();
-            }}
-            ></coloralpha-element>
+            }} 
+                ></coloralpha-element>
+            </div>
 
             <div class="sizeInput">
                 <number-input

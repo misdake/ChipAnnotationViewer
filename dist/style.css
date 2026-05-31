@@ -204,6 +204,7 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+textarea,
 input[type="text"],
 input[type="number"] {
     width: 100%;
@@ -217,6 +218,7 @@ input[type="number"] {
     transition: all 0.2s ease;
 }
 
+textarea,
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
@@ -320,9 +322,10 @@ input[type="number"]:focus {
     cursor: pointer;
 }
 
-.configColorAlphaContainer {
+.colorFoldWrapper {
+    overflow: hidden;
     margin: 8px 0;
-    padding: 12px;
+    padding: 8px;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.05);
 }
@@ -466,7 +469,7 @@ input[type="number"]:focus {
 .actionButtonRow {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
     margin: 6px 0;
 }
 

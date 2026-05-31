@@ -42,7 +42,7 @@ export const RGB_PRESETS = [
     packRgba(255, 0, 0, 0),
     packRgba(255, 127, 0, 0),
     packRgba(255, 255, 0, 0),
-    packRgba(127, 255, 0, 0),
+    packRgba(192, 255, 0, 0),
     packRgba(0, 255, 0, 0),
     packRgba(0, 255, 127, 0),
     packRgba(0, 255, 255, 0),
@@ -51,7 +51,7 @@ export const RGB_PRESETS = [
     packRgba(127, 0, 255, 0),
     packRgba(255, 0, 255, 0),
     packRgba(255, 0, 127, 0),
-    packRgba(0, 0, 0, 0),
+    packRgba(80, 80, 80, 0),
     packRgba(127, 127, 127, 0),
     packRgba(255, 255, 255, 0),
 ];

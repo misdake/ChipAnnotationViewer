@@ -4,7 +4,7 @@ export class ColorEntry {
 
     public static findByName(name: string): ColorEntry {
         for (const colorValue of this.list) {
-            if (name == colorValue.name) {
+            if (name === colorValue.name) {
                 return colorValue;
             }
         }
@@ -30,7 +30,7 @@ export class AlphaEntry {
 
     public static findByName(name: string): AlphaEntry {
         for (const alphaValue of this.list) {
-            if (name == alphaValue.name) {
+            if (name === alphaValue.name) {
                 return alphaValue;
             }
         }
@@ -38,7 +38,7 @@ export class AlphaEntry {
     }
     public static findByValue(value: number): AlphaEntry {
         for (const alphaValue of this.list) {
-            if (value == alphaValue.value) {
+            if (value === alphaValue.value) {
                 return alphaValue;
             }
         }

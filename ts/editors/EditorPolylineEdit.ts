@@ -51,19 +51,19 @@ export class EditorPolylineEdit extends Editor {
             onmousedown(event: MouseIn): boolean {
                 this.dragPointIndex = null;
 
-                if (event.button == 0) { //left button down => test drag point
+                if (event.button === 0) { //left button down => test drag point
                     this.down = true;
 
                     //test point
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                    if (pointIndex != null) { //start dragging this point
+                    if (pointIndex !== null && pointIndex !== undefined) { //start dragging this point
                         this.dragPointIndex = pointIndex;
                         return true;
                     }
 
                     let shape = polyline.picker.pickShape(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                    if (pointIndex == null && shape && event.altKey) {
+                    if ((pointIndex === null || pointIndex === undefined) && shape && event.altKey) {
                         if (event.ctrlKey) {
                             polyline.cloneOnCanvas(env.canvas, 0, 0);
                         }
@@ -71,13 +71,13 @@ export class EditorPolylineEdit extends Editor {
                         this.dragShapeX = position.x;
                         this.dragShapeY = position.y;
                     }
-                } else if (event.button == 2) {
+                } else if (event.button === 2) {
                     this.moved = false;
                 }
                 return false;
             }
             onmouseup(event: MouseIn): boolean {
-                let wasDragging: boolean = this.dragPointIndex != null || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
+                let wasDragging: boolean = (this.dragPointIndex !== null && this.dragPointIndex !== undefined) || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
 
                 this.dragPointIndex = null;
 
@@ -85,16 +85,16 @@ export class EditorPolylineEdit extends Editor {
                 this.dragShapeX = -1;
                 this.dragShapeY = -1;
 
-                if (event.button == 0) { //left button up => nothing
+                if (event.button === 0) { //left button up => nothing
                     this.down = false;
                     return wasDragging;
-                } else if (event.button == 2) {
+                } else if (event.button === 2) {
                     let hit = false;
                     if (!this.moved) {
                         let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                         //test points
                         let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                        if (pointIndex != null) { //delete point
+                        if (pointIndex !== null && pointIndex !== undefined) { //delete point
                             if (polyline.editor.pointCount() > 3) { //so it will be at least a triangle
                                 polyline.editor.removePoint(pointIndex);
                                 self.canvas.requestRender();
@@ -108,12 +108,12 @@ export class EditorPolylineEdit extends Editor {
                 return false;
             }
             ondblclick(event: MouseIn): boolean { //double click => remove point on selection or add point on segment
-                if (event.button == 0) {
+                if (event.button === 0) {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
                     //test points
                     let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
-                    if (pointIndex != null) { //delete point
+                    if (pointIndex !== null && pointIndex !== undefined) { //delete point
                         if (polyline.editor.pointCount() > 3) { //so it will be at least a triangle
                             polyline.editor.removePoint(pointIndex);
                             self.canvas.requestRender();
@@ -137,7 +137,7 @@ export class EditorPolylineEdit extends Editor {
                 if (this.down) { //left button is down => drag
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
-                    if (this.dragPointIndex != null) {
+                    if (this.dragPointIndex !== null && this.dragPointIndex !== undefined) {
                         polyline.editor.setPoint(this.dragPointIndex, position.x, position.y);
                         if (event.ctrlKey) {
                             let radius = self.camera.screenSizeToCanvas(EditorPolylineEdit.MAG_RADIUS);

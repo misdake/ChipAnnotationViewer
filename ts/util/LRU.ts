@@ -8,39 +8,33 @@ export class LRU<K, V> {
     }
 
     getOrInsert(key: K, create: (key: K) => V): V {
-        let v = this.get(key);
-        if (!v) {
-            this.set(key, v = create(key));
-        }
-        return v;
+        if (this.cache.has(key)) return this.get(key) as V;
+        const value = create(key);
+        this.set(key, value);
+        return value;
     }
 
-    get(key: K) {
-        let item = this.cache.get(key);
-        if (item) {
-            // refresh key
-            this.cache.delete(key);
-            this.cache.set(key, item);
-        }
+    get(key: K): V | undefined {
+        if (!this.cache.has(key)) return undefined;
+        const item = this.cache.get(key) as V;
+        // refresh key
+        this.cache.delete(key);
+        this.cache.set(key, item);
         return item;
     }
 
-    set(key: K, val: V) {
-        if (!key || !val) return;
+    set(key: K, val: V): void {
         // refresh key
         if (this.cache.has(key)) this.cache.delete(key);
         // evict oldest
-        else if (this.cache.size == this.max) {
-            this.cache.delete(this.first());
+        else if (this.cache.size >= this.max) {
+            const first = this.cache.keys().next();
+            if (!first.done) this.cache.delete(first.value);
         }
         this.cache.set(key, val);
     }
 
-    remove(key: K) {
+    remove(key: K): void {
         this.cache.delete(key);
-    }
-
-    first() {
-        return this.cache.keys().next()?.value;
     }
 }

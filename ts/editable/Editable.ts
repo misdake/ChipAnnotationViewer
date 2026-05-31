@@ -23,7 +23,7 @@ export interface EditableMove {
 
 export interface EditableColor {
     isEditableColor: boolean;
-    setColorAlpha(color: ColorEntry, alpha: AlphaEntry): void;
+    setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry): void;
 }
 
 export interface EditableDeleteClone {
@@ -76,7 +76,7 @@ export function editableMultiple(input: Drawable[]): EditableDeleteClone & Edita
             canvas.requestRender();
             return list;
         },
-        setColorAlpha: (color: ColorEntry, alpha: AlphaEntry) => {
+        setColorAlpha: (color?: ColorEntry, alpha?: AlphaEntry) => {
             for (let drawable of drawables) {
                 drawable.setColorAlpha(color, alpha);
             }

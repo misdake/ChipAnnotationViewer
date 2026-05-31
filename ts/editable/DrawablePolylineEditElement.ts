@@ -169,8 +169,8 @@ export class PolylineEdit extends LitElement {
     };
     private onSizeInput = (options: { screen?: string; canvas?: string }) => {
         for (const polyline of this.polylines) {
-            if (options.screen !== undefined) polyline.style.onScreen = parseInt(options.screen);
-            if (options.canvas !== undefined) polyline.style.onCanvas = parseInt(options.canvas);
+            if (options.screen !== undefined) polyline.style.onScreen = parseInt(options.screen, 10);
+            if (options.canvas !== undefined) polyline.style.onCanvas = parseInt(options.canvas, 10);
         }
         this.canvas.requestRender();
         this.requestUpdate();

@@ -64,25 +64,25 @@ export class EditorPolylineCreate extends Editor {
                 }
             }
             onmousedown(event: MouseIn): boolean {
-                if (event.button == 0 && !this.down) { //left button down => add point
+                if (event.button === 0 && !this.down) { //left button down => add point
                     this.down = true;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     polyline.editor.addPoint(position.x, position.y);
                     self.canvas.requestRender();
                     return true;
-                } else if (event.button == 2) {
+                } else if (event.button === 2) {
                     this.moved = false;
                 }
                 return false;
             }
             onmouseup(event: MouseIn): boolean {
-                if (event.button == 0) { //left button up => update last point
+                if (event.button === 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     this.preview(position, event.ctrlKey);
                     self.canvas.requestRender();
                     return true;
-                } else if (event.button == 2) {
+                } else if (event.button === 2) {
                     if (!this.moved) {
                         if (polyline.check()) {
                             self.selected = undefined;

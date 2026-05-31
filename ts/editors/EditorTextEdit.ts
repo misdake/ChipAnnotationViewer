@@ -39,7 +39,7 @@ export class EditorTextEdit extends Editor {
             private dragY: number = 0;
 
             onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) { //left button down => test drag point
+                if (event.button === 0) { //left button down => test drag point
                     this.down = true;
                     this.drag = false;
 
@@ -62,7 +62,7 @@ export class EditorTextEdit extends Editor {
                 let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
                 this.drag = false;
 
-                if (event.button == 0) { //left button up => nothing
+                if (event.button === 0) { //left button up => nothing
                     this.down = false;
                     return !passEvent;
                 }

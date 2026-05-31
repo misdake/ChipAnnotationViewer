@@ -73,7 +73,7 @@ export class EditorSelect extends Editor {
 
         this._mouseListener = new class extends MouseListener {
             onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) {
+                if (event.button === 0) {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
@@ -106,7 +106,7 @@ export class EditorSelect extends Editor {
                     }
                     return true;
                 }
-                if (event.button == 2) {
+                if (event.button === 2) {
                     self.rightClickStartX = event.offsetX;
                     self.rightClickStartY = event.offsetY;
                     return false;
@@ -114,14 +114,14 @@ export class EditorSelect extends Editor {
                 return false;
             }
             onmouseup(event: MouseIn): boolean {
-                if (event.button == 2) {
+                if (event.button === 2) {
                     if (!self.isRightClickDragging && Selection.getSelected().type) {
                         Selection.deselectAny();
                     }
                     self.isRightClickDragging = false;
                     return false;
                 }
-                if (event.button == 0) {
+                if (event.button === 0) {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
@@ -301,7 +301,7 @@ export class EditorSelect extends Editor {
                 return false;
             }
             ondblclick(event: MouseIn): boolean {
-                if (event.button == 0) {
+                if (event.button === 0) {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
                     let { item, type } = self.pickAny(x, y, env);
@@ -331,7 +331,7 @@ export class EditorSelect extends Editor {
             let pickPointIndex = polyline.picker.pickPoint(x, y, radius);
             let pickLine = polyline.picker.pickLine(x, y, radius);
             let pickShape = polyline.picker.pickShape(x, y, radius);
-            if (pickPointIndex != null || pickLine || pickShape) {
+            if ((pickPointIndex !== null && pickPointIndex !== undefined) || pickLine || pickShape) {
                 picked = polyline;
             }
         }

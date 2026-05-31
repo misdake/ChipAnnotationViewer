@@ -11,7 +11,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "outDir": "./js/",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": [
       "hammerjs",
       "lit-html",

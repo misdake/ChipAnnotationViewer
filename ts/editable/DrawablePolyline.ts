@@ -97,7 +97,7 @@ export class DrawablePolylinePicker {
         let length = points.length;
         let r: boolean = false;
         for (let i = 0, j = length - 1; i < length; j = i++) {
-            if (((points[i].y > y) != (points[j].y > y)) &&
+            if (((points[i].y > y) !== (points[j].y > y)) &&
                 (x < (points[j].x - points[i].x) * (y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
                 r = !r;
         }
@@ -524,12 +524,12 @@ export class DrawablePolylineStyle {
         this._lineWidth.onCanvas = onCanvas;
     }
 
-    public setFillColor(fillColor: ColorEntry, fillAlpha: AlphaEntry) {
+    public setFillColor(fillColor?: ColorEntry, fillAlpha?: AlphaEntry) {
         if (fillColor) this._fillColor = fillColor;
         if (fillAlpha) this._fillAlpha = fillAlpha;
         this._fillString = combineColorAlpha(this._fillColor, this._fillAlpha);
     }
-    public setStrokeColor(strokeColor: ColorEntry, strokeAlpha: AlphaEntry) {
+    public setStrokeColor(strokeColor?: ColorEntry, strokeAlpha?: AlphaEntry) {
         if (strokeColor) this._strokeColor = strokeColor;
         if (strokeAlpha) this._strokeAlpha = strokeAlpha;
         this._strokeString = combineColorAlpha(this._strokeColor, this._strokeAlpha);
@@ -612,7 +612,7 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
     public rotateCW(centerX: number, centerY: number): void {
         this.editor.rotateCW(centerX, centerY);
     }
-    public setColorAlpha(color: ColorEntry, alpha: AlphaEntry): void {
+    public setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry): void {
         this.style.setFillColor(color, alpha);
     }
     public deleteOnCanvas(canvas: Canvas): void {

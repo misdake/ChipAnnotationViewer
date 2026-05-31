@@ -71,23 +71,23 @@ export class TextEdit extends LitElement {
             text.text = content;
         }
         this.canvas.requestRender();
-        this.performUpdate();
+        this.requestUpdate();
     };
     private setMultiline = (multiline: boolean) => {
         for (const text of this.texts) {
             text.multiline = multiline;
         }
         this.canvas.requestRender();
-        this.performUpdate();
+        this.requestUpdate();
     };
 
     private onSizeInput = (options: { screen?: string, canvas?: string }) => {
         for (const text of this.texts) {
-            if (options.screen !== undefined) text.onScreen = parseInt(options.screen);
-            if (options.canvas !== undefined) text.onCanvas = parseInt(options.canvas);
+            if (options.screen !== undefined) text.onScreen = parseInt(options.screen, 10);
+            if (options.canvas !== undefined) text.onCanvas = parseInt(options.canvas, 10);
         }
         this.canvas.requestRender();
-        this.performUpdate();
+        this.requestUpdate();
     };
 
     render() {

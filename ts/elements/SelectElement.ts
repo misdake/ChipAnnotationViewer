@@ -66,7 +66,7 @@ export class SelectElement extends LitElement {
         let url_string = window.location.href;
         let url = new URL(url_string);
         this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
-        this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'));
+        this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
 
         this.refreshChipList();
 

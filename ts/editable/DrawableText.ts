@@ -181,7 +181,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this._y = centerY + dx;
         this.invalidate();
     }
-    public setColorAlpha(color: ColorEntry, alpha: AlphaEntry) {
+    public setColorAlpha(color?: ColorEntry, alpha?: AlphaEntry) {
         if (color) this.color = color;
         if (alpha) this.alpha = alpha;
         this.colorString = combineColorAlpha(this.color, this.alpha);
@@ -243,7 +243,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     }
 
     private validate(camera: Camera, renderer: Renderer) {
-        if (!this.sizeValid || this.canvasScale != camera.getScale()) {
+        if (!this.sizeValid || this.canvasScale !== camera.getScale()) {
             this.sizeValid = true;
 
             let { width, totalHeight, fontSize } = renderer.measureText(camera, this._text, this.fontSize);

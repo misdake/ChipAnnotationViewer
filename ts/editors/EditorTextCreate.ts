@@ -39,14 +39,14 @@ export class EditorTextCreate extends Editor {
             private down: boolean = false;
 
             onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) {
+                if (event.button === 0) {
                     this.down = true;
                     return true;
                 }
                 return false;
             }
             onmouseup(event: MouseIn): boolean {
-                if (event.button == 0) { //left button up => update last point
+                if (event.button === 0) { //left button up => update last point
                     this.down = false;
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     text.setPosition(position.x, position.y);

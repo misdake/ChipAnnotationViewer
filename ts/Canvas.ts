@@ -268,7 +268,7 @@ export class Canvas {
 
     public findLayer(name: LayerName): Layer {
         for (const layer of this.layers) {
-            if (layer.name == name) {
+            if (layer.name === name) {
                 return layer;
             }
         }
@@ -288,7 +288,7 @@ export class Canvas {
 
     public findEditor(name: EditorName): Editor {
         for (const editor of this.editors) {
-            if (editor.name == name) {
+            if (editor.name === name) {
                 return editor;
             }
         }
@@ -314,7 +314,7 @@ export class Canvas {
     public readonly env: Env = new Env();
 
     public loadChip(chip: ChipContent): void {
-        if (!this.chip || this.chip.name != chip.name) {
+        if (!this.chip || this.chip.name !== chip.name) {
             this.chip = chip;
             this.updateSize();
             this.camera.load(this, chip);
@@ -327,7 +327,7 @@ export class Canvas {
         }
     }
     public loadData(data: AnnotationData): void {
-        if (this.data != data) {
+        if (this.data !== data) {
             this.data = data;
 
             this.env.loadData(data);

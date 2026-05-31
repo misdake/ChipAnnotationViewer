@@ -41,7 +41,7 @@ export class EditorMultiple extends Editor {
             private dragY: number = 0;
 
             onmousedown(event: MouseIn): boolean {
-                if (event.button == 0) { //left button down => check pick => get ready to move
+                if (event.button === 0) { //left button down => check pick => get ready to move
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
                     this.down = true;
@@ -68,7 +68,7 @@ export class EditorMultiple extends Editor {
                 let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
                 this.drag = false;
 
-                if (event.button == 0) { //left button up => nothing
+                if (event.button === 0) { //left button up => nothing
                     this.down = false;
                     return !passEvent;
                 }

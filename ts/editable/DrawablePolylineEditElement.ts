@@ -195,41 +195,6 @@ export class PolylineEdit extends LitElement {
         const fillVisible = fillState !== "none";
 
         return html`
-            <style>
-                .colorFoldWrapper coloralpha-element {
-                    display: block;
-                    max-height: 66px;
-                    opacity: 1;
-                    overflow: hidden;
-                    transition: max-height 0.5s ease, opacity 0.5s ease;
-                }
-                .colorFoldWrapper.collapsed coloralpha-element {
-                    max-height: 0;
-                    opacity: 0;
-                    transition: max-height 0.5s ease, opacity 0.5s ease;
-                }
-                .colorFoldWrapper.collapsed coloralpha-element * {
-                    pointer-events: none;
-                }
-                .colorFoldWrapper.noAnimation coloralpha-element {
-                    transition: none !important;
-                }
-
-                .configColorHeader {
-                    display: grid;
-                    grid-template-columns: 102px auto;
-                    align-items: center;
-                    font-size: 12px;
-                }
-                .configColorHeader > span:first-child {
-                    font-size: 14px;
-                }
-                .configColorHeaderControls {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-            </style>
             <div class="actionButtonRow">
                 <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button>
                 <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button>

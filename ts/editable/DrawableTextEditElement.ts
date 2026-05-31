@@ -99,34 +99,39 @@ export class TextEdit extends LitElement {
                 <button class="configButton" @click=${() => this.copyText()}>Clone Text</button>
             </div>
 
-            Text
-            <label style="margin-left: 8px;">
-                <input
-                    type="checkbox"
-                    .checked=${multiline}
-                    @change="${(ev: Event) => this.setMultiline((ev.target as HTMLInputElement).checked)}"
-                >
-                Multiline
-            </label>
-            <br>
-            ${multiline
+            <div class="textConfigRow">
+                <div class="textConfigHeader">
+                    <span style="">Text</span>
+                    <span style="position: absolute; margin-left: 80px; margin-top: -2px;">
+                        <span class="chkBox ${multiline ? 'chkChecked' : ''}" @click=${() => this.setMultiline(!multiline)}>
+                            ${multiline ? html`
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="4,12 10,18 20,6" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            ` : ''}
+                        </span>
+                        <span class="chkLabel" @click=${() => this.setMultiline(!multiline)}>Multiline</span>
+                    </span>
+                </div>
+                <div style="margin-top: 6px;">
+                    ${multiline
                 ? html`
-                    <textarea
-                        class="configText"
-                        style="width: 160px; height: 72px;"
-                        .value=${textValue}
-                        @input="${(ev: Event) => this.editText((ev.target as HTMLTextAreaElement).value)}"
-                    ></textarea>
-                `
+                            <textarea
+                                rows="3"
+                                .value=${textValue}
+                                @input="${(ev: Event) => this.editText((ev.target as HTMLTextAreaElement).value)}"
+                            ></textarea>
+                        `
                 : html`
-                    <text-input
-                        .value=${textValue}
-                        .placeholder=${"-"}
-                        .onChange=${(val: string) => this.editText(val)}
-                    ></text-input>
-                `
+                            <text-input
+                                .value=${textValue}
+                                .placeholder=${"-"}
+                                .onChange=${(val: string) => this.editText(val)}
+                            ></text-input>
+                        `
             }
-            <br>
+                </div>
+            </div>
 
             <div class="colorFoldWrapper">
                 <div>Text Color</div>

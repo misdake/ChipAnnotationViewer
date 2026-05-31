@@ -214,11 +214,13 @@ input[type="number"] {
     box-sizing: border-box;
     background: var(--surface-color);
     color: var(--text-primary);
+    font-family: inherit;
     font-size: 14px;
     transition: all 0.2s ease;
+    resize: none;
 }
 
-textarea,
+textarea:focus,
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
@@ -320,14 +322,6 @@ input[type="number"]:focus {
     height: 18px;
     accent-color: var(--primary-color);
     cursor: pointer;
-}
-
-.colorFoldWrapper {
-    overflow: hidden;
-    margin: 8px 0;
-    padding: 8px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .configColorButton,
@@ -810,4 +804,98 @@ input[type="number"]:focus {
         padding: 6px 12px;
         font-size: 12px;
     }
+}
+
+/* colorFoldWrapper (shared by polyline/text editors) */
+.colorFoldWrapper {
+    overflow: hidden;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.colorFoldWrapper coloralpha-element {
+    display: block;
+    max-height: 66px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+}
+
+.colorFoldWrapper.collapsed coloralpha-element {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+}
+
+.colorFoldWrapper.collapsed coloralpha-element * {
+    pointer-events: none;
+}
+
+.colorFoldWrapper.noAnimation coloralpha-element {
+    transition: none !important;
+}
+
+.configColorHeader {
+    display: grid;
+    grid-template-columns: 102px auto;
+    align-items: center;
+    font-size: 12px;
+}
+
+.configColorHeader>span:first-child {
+    font-size: 14px;
+}
+
+.configColorHeaderControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* checkbox style matching TriStateCheckbox */
+.chkBox {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border: 1px solid #666;
+    border-radius: 2px;
+    background: #fff;
+    transition: all 0.2s;
+    vertical-align: middle;
+    text-align: center;
+    cursor: pointer;
+}
+
+.chkBox:hover {
+    border-color: #333;
+}
+
+.chkBox.chkChecked {
+    background: #4a90d9;
+    border-color: #4a90d9;
+}
+
+.chkBox svg {
+    width: 11px;
+    height: 11px;
+    vertical-align: top;
+}
+
+.chkLabel {
+    display: inline;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* textConfigRow for text editor */
+.textConfigRow {
+    overflow: hidden;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
 }

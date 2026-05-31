@@ -26,37 +26,6 @@ export class TextInputElement extends LitElement {
         }
     }
 
-    // static override styles = css`
-    //     :host {
-    //         display: inline-flex;
-    //         align-items: center;
-    //         vertical-align: middle;
-    //     }
-
-    //     // input {
-    //     //     width: 120px;
-    //     //     padding: 2px 4px;
-    //     //     border: 1px solid #666;
-    //     //     border-radius: 3px;
-    //     //     background: #fff;
-    //     //     color: #333;
-    //     //     font-size: 12px;
-    //     // }
-
-    //     // input:focus {
-    //     //     outline: none;
-    //     //     border-color: #4a90d9;
-    //     // }
-
-    //     // input.empty {
-    //     //     color: #999;
-    //     // }
-
-    //     // input::placeholder {
-    //     //     color: #999;
-    //     // }
-    // `;
-
     render() {
         const displayValue = this.isEmpty() ? '' : String(this.value);
 

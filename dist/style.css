@@ -616,6 +616,158 @@ input[type="number"]:focus {
     transform: rotate(180deg);
 }
 
+.chipInfoButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: rgba(30, 41, 59, 0.8);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.chipInfoButtonDisabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.chipInfoButton:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.chipInfoModalState {
+    position: absolute;
+    left: -9999px;
+}
+
+.chipInfoModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+
+.chipInfoModalState:checked + .chipInfoModalOverlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.2s ease, visibility 0s linear 0s;
+}
+
+.chipInfoBackdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.6);
+}
+
+.chipInfoModal {
+    position: relative;
+    z-index: 1;
+    width: min(560px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(30, 41, 59, 0.95);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chipInfoModalState:checked + .chipInfoModalOverlay .chipInfoModal {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.chipInfoModalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chipInfoModalHeader h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.chipInfoCloseButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.8);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.chipInfoCloseButton:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.chipInfoCloseButton svg {
+    display: block;
+}
+
+.chipInfoModalBody {
+    padding: 12px;
+}
+
+.chipInfoRow {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: start;
+}
+
+.chipInfoKey {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.chipInfoValue {
+    min-width: 0;
+    color: var(--text-primary);
+    font-size: 13px;
+    word-break: break-word;
+}
+
+.chipInfoLink {
+    color: var(--secondary-color);
+    text-decoration: none;
+}
+
+.chipInfoLink:hover {
+    text-decoration: underline;
+}
+
 #creationButtons {
     display: flex;
     gap: 6px;
@@ -760,6 +912,11 @@ input[type="number"]:focus {
     }
 
     #selectPanel .refreshButton {
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+
+    #selectPanel .chipInfoButton {
         flex: 0 0 auto;
         margin-left: 0;
     }

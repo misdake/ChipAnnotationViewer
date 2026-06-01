@@ -14,6 +14,10 @@ export class TitleElement extends LitElement {
     annotation: Annotation;
     @property()
     canvas: Canvas;
+    @property()
+    editMode: 'none' | 'create' | 'update' = 'none';
+    @property()
+    onUserChange: (userId: number, userName: string) => void;
 
     @property()
     userName: string;
@@ -21,20 +25,6 @@ export class TitleElement extends LitElement {
     menuOpen: boolean = false;
 
     userId: number;
-
-    private canUpdateCurrentAnnotation(): boolean {
-        return !!this.annotation
-            && this.annotation.aid > 0
-            && this.userId > 0
-            && this.annotation.userId === this.userId;
-    }
-
-    private canCreateCurrentAnnotation(): boolean {
-        return !!this.annotation
-            && this.annotation.aid === 0
-            && this.userId > 0;
-    }
-
     private toast(message: string) {
         window.dispatchEvent(new CustomEvent<string>("chipannotation-toast", { detail: message }));
     }
@@ -48,6 +38,7 @@ export class TitleElement extends LitElement {
             console.log('login:', userName, userId);
             this.userName = userName;
             this.userId = userId;
+            if (this.onUserChange) this.onUserChange(userId || 0, userName || '');
         });
     }
 
@@ -85,10 +76,11 @@ export class TitleElement extends LitElement {
             this.onClickLogin();
             return;
         }
+        if (this.editMode === 'none') return;
 
         let dataString = this.getData();
 
-        if (this.canCreateCurrentAnnotation()) {
+        if (this.editMode === 'create') {
             ClientApi.createAnnotation(this.chipContent.name, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
                 this.toast('Created');
@@ -99,7 +91,7 @@ export class TitleElement extends LitElement {
             }).catch(e => {
                 console.log('createAnnotation error:', e);
             });
-        } else if (this.canUpdateCurrentAnnotation()) {
+        } else if (this.editMode === 'update') {
             ClientApi.updateAnnotation(this.annotation.aid, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
                 this.toast('Updated');
@@ -117,6 +109,7 @@ export class TitleElement extends LitElement {
             this.userName = '';
             this.userId = 0;
             this.menuOpen = false;
+            if (this.onUserChange) this.onUserChange(0, '');
             this.requestUpdate();
         });
     }
@@ -142,10 +135,16 @@ export class TitleElement extends LitElement {
                 </div>
             `
             : html`<button id="userLoginInline" class="configButton" @click="${this.onClickLogin}">Login</button>`;
-        const canUpdate = this.canUpdateCurrentAnnotation();
-        const canCreate = this.canCreateCurrentAnnotation();
-        const buttonLine = (canUpdate || canCreate)
-            ? html`<button class="configButton" @click="${this.uploadAnnotation}">${canUpdate ? "Update" : "Create New"} Annotation</button>`
+        const buttonLine = this.editMode !== 'none'
+            ? html`<button class="configButton" @click="${this.uploadAnnotation}">${this.editMode === "update" ? "Update" : "Create New"} Annotation</button>`
+            : html``;
+        const titleRow = this.editMode !== 'none'
+            ? html`
+                <div class="titleInput">
+                    <label for="dataTitle">Title:</label>
+                    <input id="inputTitle" type="text" class="configText" value="${title}">
+                </div>
+            `
             : html``;
 
         return html`
@@ -153,10 +152,7 @@ export class TitleElement extends LitElement {
                 <label for="loginMenu">Login:</label>
                 <div id="loginMenu" class="loginControl">${loginControl}</div>
             </div>
-            <div class="titleInput">
-                <label for="dataTitle">Title:</label>
-                <input id="inputTitle" type="text" class="configText" value="${title}">
-            </div>
+            ${titleRow}
             ${buttonLine}
         `;
     }

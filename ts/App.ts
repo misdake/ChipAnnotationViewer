@@ -22,6 +22,7 @@ import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
 let url_string = window.location.href;
 let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
+let isEditingEnabled = false;
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -29,9 +30,23 @@ canvas.init();
 canvas.addLayers(...Layers.create(canvas));
 canvas.addEditors(...(isReadOnly ? [new EditorCameraControl(canvas)] : Editors.create(canvas)));
 
-canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+function enterBaseEditors() {
+    canvas.enterEditors(
+        EditorName.CAMERA_CONTROL,
+        ...(isEditingEnabled ? [EditorName.SELECT] : []),
+    );
+}
 
-Selection.register(null, () => {
+function enterEditingEditors(...editors: EditorName[]) {
+    canvas.enterEditors(
+        EditorName.CAMERA_CONTROL,
+        ...(isEditingEnabled ? [EditorName.SELECT, ...editors] : []),
+    );
+}
+
+enterBaseEditors();
+
+Selection.register(() => {
     canvas.requestRender();
 }, () => {
     canvas.requestRender();
@@ -41,6 +56,7 @@ type PolylineCreateMode = "polyline" | "rect";
 let polylineCreateMode: PolylineCreateMode = "polyline";
 
 document.getElementById("buttonCreatePolyline").onclick = () => {
+    if (!isEditingEnabled) return;
     polylineCreateMode = "polyline";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
@@ -51,6 +67,7 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
 };
 document.getElementById("buttonCreateRect").onclick = () => {
+    if (!isEditingEnabled) return;
     polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
@@ -62,6 +79,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
 };
 
 document.getElementById("buttonCreateText").onclick = () => {
+    if (!isEditingEnabled) return;
     let text = new DrawableText(new DrawableTextPack(
         "text",
         packRgba(255, 255, 255, 255), new Size(5, 50),
@@ -75,6 +93,31 @@ class App {
     private chip: Chip;
     private chipContent: ChipContent;
     private annotation: Annotation;
+    private userId: number = 0;
+    private userName: string = '';
+
+    private getEditMode(): 'none' | 'create' | 'update' {
+        if (isReadOnly || !this.annotation || this.userId <= 0) {
+            return 'none';
+        }
+        if (this.annotation.aid === 0) {
+            return 'create';
+        }
+        if (this.annotation.aid > 0 && this.annotation.userId === this.userId) {
+            return 'update';
+        }
+        return 'none';
+    }
+
+    private applyEditMode() {
+        const editMode = this.getEditMode();
+        const editable = editMode !== 'none';
+        if (isEditingEnabled === editable) return;
+        isEditingEnabled = editable;
+        document.getElementById("editControls").hidden = !editable;
+        Selection.deselectAny();
+        enterBaseEditors();
+    }
 
     public start() {
         render(html`
@@ -112,44 +155,44 @@ class App {
 
         const panelDivider = html`<div class="panel-divider"></div>`;
 
-        Selection.register(SelectType.POLYLINE, (item: DrawablePolyline) => {
-            render(html`${panelDivider}${item.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.POLYLINE_EDIT);
+        Selection.register(SelectType.POLYLINE, (polyline) => {
+            render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
+            enterEditingEditors(EditorName.POLYLINE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            enterBaseEditors();
         });
 
-        Selection.register(SelectType.POLYLINE_CREATE, (item: DrawablePolyline) => {
-            render(html`${panelDivider}${item.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
+        Selection.register(SelectType.POLYLINE_CREATE, (polyline) => {
+            render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
             const createEditor = polylineCreateMode === "rect" ? EditorName.RECT_CREATE : EditorName.POLYLINE_CREATE;
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, createEditor);
+            enterEditingEditors(createEditor);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             polylineCreateMode = "polyline";
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            enterBaseEditors();
         });
 
-        Selection.register(SelectType.TEXT, (item: DrawableText) => {
-            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_EDIT);
+        Selection.register(SelectType.TEXT, (text) => {
+            render(html`${panelDivider}${text.renderUi(canvas)}`, document.getElementById("panelSelected"));
+            enterEditingEditors(EditorName.TEXT_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            enterBaseEditors();
         });
 
-        Selection.register(SelectType.TEXT_CREATE, (item: DrawableText) => {
-            render(html`${panelDivider}${item.renderUi(canvas)}`, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.TEXT_CREATE);
+        Selection.register(SelectType.TEXT_CREATE, (text) => {
+            render(html`${panelDivider}${text.renderUi(canvas)}`, document.getElementById("panelSelected"));
+            enterEditingEditors(EditorName.TEXT_CREATE);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            enterBaseEditors();
         });
 
-        Selection.register(SelectType.MULTIPLE, (item: Drawable[]) => {
+        Selection.register(SelectType.MULTIPLE, (items) => {
             const polylines: DrawablePolyline[] = [];
             const texts: DrawableText[] = [];
-            for (const d of item) {
+            for (const d of items) {
                 if (d instanceof DrawablePolyline) {
                     polylines.push(d);
                 } else if (d instanceof DrawableText) {
@@ -157,7 +200,7 @@ class App {
                 }
             }
             const polylinePanel = polylines.length > 0
-                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${item as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
                 : html``;
             const textPanel = texts.length > 0
                 ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
@@ -166,28 +209,39 @@ class App {
                 ? html`<div class="panel-divider"></div>`
                 : html``;
             render(html`${panelDivider}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT, EditorName.MULTIPLE_EDIT);
+            enterEditingEditors(EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
-            canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+            enterBaseEditors();
         });
     }
 
     private refresh() {
+        const editMode = this.getEditMode();
         render(html`
             <title-element 
                 .canvas="${canvas}"
                 .chipContent="${this.chipContent}"
                 .annotation="${this.annotation}"
+                .editMode="${editMode}"
+                .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
             ></title-element>
         `, document.getElementById("annotationTitle"));
+        this.applyEditMode();
+    }
+
+    private onUserChange(userId: number, userName: string) {
+        if (this.userId === userId && this.userName === userName) return;
+        this.userId = userId;
+        this.userName = userName;
+        this.refresh();
     }
 
     onSelectChip(chip: Chip) {
         this.chip = chip;
         this.refresh();
         Selection.deselectAny();
-        canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        enterBaseEditors();
     }
 
     onSelectChipContent(chipContent: ChipContent) {
@@ -195,7 +249,7 @@ class App {
         this.refresh();
         canvas.loadChip(chipContent);
         Selection.deselectAny();
-        canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        enterBaseEditors();
         canvas.requestRender();
     }
 
@@ -206,7 +260,7 @@ class App {
         canvas.loadData(data);
 
         Selection.deselectAny();
-        canvas.enterEditors(EditorName.CAMERA_CONTROL, EditorName.SELECT);
+        enterBaseEditors();
         canvas.requestRender();
     }
 }
@@ -331,6 +385,7 @@ function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectT
 }
 function ctrlX() {
     console.log("ctrlX");
+    if (!isEditingEnabled) return true;
     let selected = Selection.getSelected();
     if (!selected.type) return false;
     let obj = generateCopyData(selected, true);
@@ -356,6 +411,7 @@ function ctrlC() {
 }
 function ctrlV() {
     console.log("ctrlV");
+    if (!isEditingEnabled) return true;
 
     navigator.clipboard.readText().then(str => {
         let c: unknown = undefined;

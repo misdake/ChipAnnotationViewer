@@ -1,4 +1,6 @@
 import {Drawable} from "../drawable/Drawable";
+import {DrawablePolyline} from "../editable/DrawablePolyline";
+import {DrawableText} from "../editable/DrawableText";
 
 export enum SelectType {
     POLYLINE = 1, // => Drawable
@@ -7,6 +9,26 @@ export enum SelectType {
     TEXT_CREATE, // => Drawable
     MULTIPLE, // => Drawable[]. modify array content to change selected instead of Select(MULTIPLE, new_array)
 }
+
+export type SingleSelectType =
+    | SelectType.POLYLINE
+    | SelectType.POLYLINE_CREATE
+    | SelectType.TEXT
+    | SelectType.TEXT_CREATE;
+
+export type SelectionItemMap = {
+    [SelectType.POLYLINE]: DrawablePolyline;
+    [SelectType.POLYLINE_CREATE]: DrawablePolyline;
+    [SelectType.TEXT]: DrawableText;
+    [SelectType.TEXT_CREATE]: DrawableText;
+    [SelectType.MULTIPLE]: Drawable[];
+};
+
+type SelectionItem = SelectionItemMap[SelectType];
+type SelectionAnyItem = Drawable | Drawable[];
+type SelectedState =
+    | { type: null; item: null }
+    | { [K in SelectType]: { type: K; item: SelectionItemMap[K] } }[SelectType];
 
 interface SelectionCallbackEntry<T> {
     id: number;
@@ -17,16 +39,30 @@ export class Selection {
 
     private static nextRegistrationId = 1;
 
-    private static listSelect: SelectionCallbackEntry<(item: Drawable | Drawable[]) => void>[] = [];
+    private static listSelect: SelectionCallbackEntry<(item: SelectionAnyItem) => void>[] = [];
     private static listDeselect: SelectionCallbackEntry<() => void>[] = [];
-    private static mapSelect: { [key: number]: SelectionCallbackEntry<(item: Drawable | Drawable[]) => void>[] } = {};
+    private static mapSelect: { [key: number]: SelectionCallbackEntry<(item: SelectionAnyItem) => void>[] } = {};
     private static mapDeselect: { [key: number]: SelectionCallbackEntry<() => void>[] } = {};
 
-    private static selected: Drawable | Drawable[];
-    private static selectedType: SelectType;
+    private static selected: SelectionAnyItem = null;
+    private static selectedType: SelectType = null;
 
-    public static register(typeName: SelectType, onselect: (item: Drawable | Drawable[]) => void, ondeselect: () => void): () => void {
+    public static register(onselect: (item: SelectionAnyItem) => void, ondeselect: () => void): () => void;
+    public static register<T extends SelectType>(typeName: T, onselect: (item: SelectionItemMap[T]) => void, ondeselect: () => void): () => void;
+    public static register<T extends SelectType>(
+        typeNameOrOnselect: T | ((item: SelectionAnyItem) => void),
+        onselectOrOndeselect: ((item: SelectionItemMap[T]) => void) | (() => void),
+        ondeselectMaybe?: () => void,
+    ): () => void {
         const registrationId = this.nextRegistrationId++;
+        const hasType = typeof typeNameOrOnselect === 'number';
+        const typeName = hasType ? typeNameOrOnselect as T : null;
+        const onselect = hasType
+            ? onselectOrOndeselect as (item: SelectionAnyItem) => void
+            : typeNameOrOnselect as (item: SelectionAnyItem) => void;
+        const ondeselect = hasType
+            ? ondeselectMaybe
+            : onselectOrOndeselect as () => void;
 
         if (typeName) {
             if (onselect) {
@@ -83,7 +119,9 @@ export class Selection {
             this.selected = null;
         }
     }
-    public static select(typeName: SelectType, item: Drawable | Drawable[]) {
+    public static select<T extends SelectType>(typeName: T, item: SelectionItemMap[T]): void;
+    public static select(typeName: SelectType, item: SelectionAnyItem): void;
+    public static select(typeName: SelectType, item: SelectionAnyItem): void {
         if (this.selectedType !== typeName) this.deselectAny();
 
         // console.log("select", typeName, item);
@@ -101,8 +139,11 @@ export class Selection {
         }
     }
 
-    public static getSelected(): { item: Drawable | Drawable[], type: SelectType } {
-        return {item: this.selected, type: this.selectedType};
+    public static getSelected(): SelectedState {
+        if (!this.selectedType || !this.selected) {
+            return { type: null, item: null };
+        }
+        return { item: this.selected, type: this.selectedType } as SelectedState;
     }
 
 }

@@ -16,6 +16,8 @@ function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): s
 
 @customElement('select-element')
 export class SelectElement extends LitElement {
+    private static readonly CHIP_INFO_MODAL_ID = "chip-info-modal-state";
+    private static readonly CHIP_INFO_MODAL_ROOT_ID = "chip-info-modal-root";
 
     //↓↓↓↓↓ chip selection box ↓↓↓↓↓
 
@@ -53,7 +55,7 @@ export class SelectElement extends LitElement {
     annotation_current: Annotation;
     annotation_content_current: AnnotationContent;
 
-    private static getDummyAnnotation: () => Annotation = () => ({aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0});
+    private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
     //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
 
@@ -70,6 +72,7 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
 
         this.refreshChipList();
+        this.ensureGlobalChipInfoModal();
 
         window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
@@ -79,11 +82,67 @@ export class SelectElement extends LitElement {
         });
     }
 
+    private ensureGlobalChipInfoModal() {
+        if (document.getElementById(SelectElement.CHIP_INFO_MODAL_ROOT_ID)) return;
+
+        const root = document.createElement("div");
+        root.id = SelectElement.CHIP_INFO_MODAL_ROOT_ID;
+        root.innerHTML = `
+            <input class="chipInfoModalState" id="${SelectElement.CHIP_INFO_MODAL_ID}" type="checkbox">
+            <div class="chipInfoModalOverlay">
+                <label class="chipInfoBackdrop" for="${SelectElement.CHIP_INFO_MODAL_ID}" aria-label="Close"></label>
+                <div class="chipInfoModal" role="dialog" aria-modal="true" aria-label="Chip Information">
+                    <div class="chipInfoModalHeader">
+                        <h3>Chip Information</h3>
+                        <label class="chipInfoCloseButton" for="${SelectElement.CHIP_INFO_MODAL_ID}" aria-label="Close">
+                            <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">
+                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>
+                            </svg>
+                        </label>
+                    </div>
+                    <div class="chipInfoModalBody">
+                        <div class="chipInfoRow"><span class="chipInfoKey">Name</span><span id="chip-info-name" class="chipInfoValue"></span></div>
+                        <div class="chipInfoRow"><span class="chipInfoKey">Info</span><span id="chip-info-vtf" class="chipInfoValue"></span></div>
+                        <div class="chipInfoRow"><span class="chipInfoKey">Size (px)</span><span id="chip-info-size" class="chipInfoValue"></span></div>
+                        <div class="chipInfoRow">
+                            <span class="chipInfoKey">Source</span>
+                            <a id="chip-info-source" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(root);
+    }
+
+    private openGlobalChipInfoModal() {
+        const chip = this.chip_content_current;
+        if (!chip) return;
+
+        const nameElement = document.getElementById("chip-info-name");
+        const vtfElement = document.getElementById("chip-info-vtf");
+        const sizeElement = document.getElementById("chip-info-size");
+        const sourceElement = document.getElementById("chip-info-source") as HTMLAnchorElement;
+        const modalState = document.getElementById(SelectElement.CHIP_INFO_MODAL_ID) as HTMLInputElement;
+
+        if (!nameElement || !vtfElement || !sizeElement || !sourceElement || !modalState) return;
+
+        const sourceText = chip.source || '';
+        nameElement.textContent = chip.name || '';
+        vtfElement.textContent = `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`;
+        sizeElement.textContent = `${chip.width} x ${chip.height}`;
+        sourceElement.textContent = sourceText;
+        sourceElement.setAttribute("href", sourceText);
+        sourceElement.setAttribute("title", sourceText);
+
+        modalState.checked = true;
+    }
+
     //load chip list
 
     private refreshChipList() {
         SelectElement.fetchChipList().then(chips => {
-            let {html, array, current} = SelectElement.showChipList(chips, this.chip_name_toload);
+            let { html, array, current } = SelectElement.showChipList(chips, this.chip_name_toload);
             this.chip_current = current;
             this.chiplist_html = html;
             this.chiplist_array = array;
@@ -147,7 +206,7 @@ export class SelectElement extends LitElement {
             last_Family = curr_Family;
         }
 
-        return {html: selections, array: selection_chip, current: current};
+        return { html: selections, array: selection_chip, current: current };
     }
 
     //select chip
@@ -183,7 +242,7 @@ export class SelectElement extends LitElement {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
         ClientApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
-            let {html, array, current} = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
+            let { html, array, current } = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;
             this.annotationlist_html = html;
             this.annotationlist_array = array;
@@ -251,26 +310,25 @@ export class SelectElement extends LitElement {
             array.push(annotation);
         }
 
-        return {html: options, array: array, current: current}
+        return { html: options, array: array, current: current }
     }
 
     render() {
-        let source = this.chip_content_current
-            ? html`<label class="imageSourceLabel">Source:<a class="imageSource" target="_blank" href="${this.chip_content_current.source}">${this.chip_content_current.source}</a></label>`
-            : html``;
+        const chip = this.chip_content_current;
 
         return html`
-            <div style="max-width: 100%">
+            <div style="width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden;">
                 <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.chiplist_html}
                 </select>
-                <select @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
+                ${chip
+                ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>i</button>`
+                : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">i</span>`
+            }
+                <select style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.annotationlist_html}
                 </select>
-                <button class="refreshButton" @click="${() => this.refreshAnnotationList()}">\xA0</button>
-            </div>
-            <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
-                ${source}
+                <button class="refreshButton" style="margin-left:1px;" @click="${() => this.refreshAnnotationList()}">\xA0</button>
             </div>
         `;
     }

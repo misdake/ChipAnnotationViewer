@@ -102,8 +102,19 @@ export class SelectElement extends LitElement {
                     </div>
                     <div class="chipInfoModalBody">
                         <div class="chipInfoRow"><span class="chipInfoKey">Name</span><span id="chip-info-name" class="chipInfoValue"></span></div>
-                        <div class="chipInfoRow"><span class="chipInfoKey">Info</span><span id="chip-info-vtf" class="chipInfoValue"></span></div>
+                        <div class="chipInfoRow"><span class="chipInfoKey">Type</span><span id="chip-info-vtf" class="chipInfoValue"></span></div>
                         <div class="chipInfoRow"><span class="chipInfoKey">Size (px)</span><span id="chip-info-size" class="chipInfoValue"></span></div>
+                        <div id="chip-info-die-size-row" class="chipInfoRow" style="display:none;">
+                            <span class="chipInfoKey">Die Size</span><span id="chip-info-die-size" class="chipInfoValue"></span>
+                        </div>
+                        <div id="chip-info-spec-row" class="chipInfoRow" style="display:none;">
+                            <span class="chipInfoKey">Spec</span>
+                            <a id="chip-info-spec" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
+                        </div>
+                        <div id="chip-info-author-row" class="chipInfoRow" style="display:none;">
+                            <span class="chipInfoKey">Image Author</span>
+                            <a id="chip-info-author" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
+                        </div>
                         <div class="chipInfoRow">
                             <span class="chipInfoKey">Source</span>
                             <a id="chip-info-source" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
@@ -123,17 +134,73 @@ export class SelectElement extends LitElement {
         const vtfElement = document.getElementById("chip-info-vtf");
         const sizeElement = document.getElementById("chip-info-size");
         const sourceElement = document.getElementById("chip-info-source") as HTMLAnchorElement;
+        const dieSizeRow = document.getElementById("chip-info-die-size-row");
+        const dieSizeElement = document.getElementById("chip-info-die-size");
+        const specRow = document.getElementById("chip-info-spec-row");
+        const specElement = document.getElementById("chip-info-spec") as HTMLAnchorElement;
+        const authorRow = document.getElementById("chip-info-author-row");
+        const authorElement = document.getElementById("chip-info-author") as HTMLAnchorElement;
         const modalState = document.getElementById(SelectElement.CHIP_INFO_MODAL_ID) as HTMLInputElement;
 
-        if (!nameElement || !vtfElement || !sizeElement || !sourceElement || !modalState) return;
+        if (!nameElement || !vtfElement || !sizeElement || !sourceElement || !dieSizeRow || !dieSizeElement || !specRow || !specElement || !authorRow || !authorElement || !modalState) return;
 
         const sourceText = chip.source || '';
+        const widthMm = chip.widthMillimeter || 0;
+        const heightMm = chip.heightMillimeter || 0;
+        const hasDieSize = widthMm > 0 && heightMm > 0;
+        const dieAreaMm2 = widthMm * heightMm;
+        const specUrl = chip.specUrl || '';
+        const authorName = chip.imageAuthorName || '';
+        const authorUrl = chip.imageAuthorUrl || '';
+        const hasAuthor = !!authorName;
+
+        const fmt = (value: number) => {
+            return Number.isFinite(value) ? value.toFixed(2).replace(/\.00$/, '') : '';
+        };
+
         nameElement.textContent = chip.name || '';
         vtfElement.textContent = `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`;
         sizeElement.textContent = `${chip.width} x ${chip.height}`;
         sourceElement.textContent = sourceText;
         sourceElement.setAttribute("href", sourceText);
         sourceElement.setAttribute("title", sourceText);
+
+        dieSizeRow.style.display = hasDieSize ? '' : 'none';
+        if (hasDieSize) {
+            dieSizeElement.textContent = `${fmt(dieAreaMm2)} mm², ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`;
+        } else {
+            dieSizeElement.textContent = '';
+        }
+
+        specRow.style.display = specUrl ? '' : 'none';
+        if (specUrl) {
+            specElement.textContent = specUrl;
+            specElement.setAttribute("href", specUrl);
+            specElement.setAttribute("title", specUrl);
+        } else {
+            specElement.textContent = '';
+            specElement.setAttribute("href", '');
+            specElement.setAttribute("title", '');
+        }
+
+        authorRow.style.display = hasAuthor ? '' : 'none';
+        if (hasAuthor) {
+            authorElement.textContent = authorName;
+            if (authorUrl) {
+                authorElement.setAttribute("href", authorUrl);
+                authorElement.setAttribute("title", authorUrl);
+                authorElement.style.pointerEvents = '';
+            } else {
+                authorElement.setAttribute("href", '');
+                authorElement.setAttribute("title", authorName);
+                authorElement.style.pointerEvents = 'none';
+            }
+        } else {
+            authorElement.textContent = '';
+            authorElement.setAttribute("href", '');
+            authorElement.setAttribute("title", '');
+            authorElement.style.pointerEvents = '';
+        }
 
         modalState.checked = true;
     }
@@ -281,6 +348,7 @@ export class SelectElement extends LitElement {
         return new Promise<ChipContent>(resolve => {
             NetUtil.get(chip.url + '/content.json', json => {
                 let chipContent: ChipContent = JSON.parse(json) as ChipContent;
+                chipContent.baseUrl = chip.url;
                 resolve(chipContent);
             });
         });
@@ -317,7 +385,7 @@ export class SelectElement extends LitElement {
         const chip = this.chip_content_current;
 
         return html`
-            <div style="width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden;">
+            <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden;">
                 <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.chiplist_html}
                 </select>

@@ -15,7 +15,11 @@ export class Chip {
 }
 
 export class ChipContent {
+    baseUrl?: string;
     source:string;
+    specUrl?: string;
+    imageAuthorName?: string;
+    imageAuthorUrl?: string;
     imageRoot?: string;
     githubRepo: string;
     githubIssueId: number;

@@ -620,6 +620,7 @@ input[type="number"]:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    vertical-align: middle;
     width: 20px;
     height: 20px;
     margin-left: 5px;
@@ -629,7 +630,7 @@ input[type="number"]:focus {
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 700;
-    line-height: 18px;
+    line-height: 20px;
     text-align: center;
     cursor: pointer;
 }
@@ -662,7 +663,7 @@ input[type="number"]:focus {
     transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
 
-.chipInfoModalState:checked + .chipInfoModalOverlay {
+.chipInfoModalState:checked+.chipInfoModalOverlay {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -690,7 +691,7 @@ input[type="number"]:focus {
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.chipInfoModalState:checked + .chipInfoModalOverlay .chipInfoModal {
+.chipInfoModalState:checked+.chipInfoModalOverlay .chipInfoModal {
     opacity: 1;
     transform: translateY(0) scale(1);
 }

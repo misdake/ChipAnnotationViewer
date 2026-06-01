@@ -23,14 +23,8 @@ export class LayerImage extends Layer {
         this.chip = chip;
         this.maxLevel = chip.maxLevel;
 
-        if (chip.imageRoot) {
-            this.baseFolder = chip.imageRoot;
-        } else {
-            let split = chip.githubRepo.indexOf('/');
-            let username = chip.githubRepo.substring(0, split);
-            let repo = chip.githubRepo.substring(split + 1);
-            this.baseFolder = `https://${username}.github.io/${repo}/` + this.chip.name;
-        }
+        const stripTrailingSlash = (input: string) => input ? input.replace(/\/+$/, '') : '';
+        this.baseFolder = stripTrailingSlash(chip.baseUrl);
         this.currentZoom = -1;
 
         let topLevel = chip.levels[this.maxLevel];

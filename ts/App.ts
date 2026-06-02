@@ -82,7 +82,7 @@ document.getElementById("buttonCreateText").onclick = () => {
     if (!isEditingEnabled) return;
     let text = new DrawableText(new DrawableTextPack(
         "text",
-        packRgba(255, 255, 255, 255), new Size(5, 50),
+        packRgba(255, 255, 255, 255), new Size(20),
         0, 0, false
     ));
     canvas.env.texts.push(text);

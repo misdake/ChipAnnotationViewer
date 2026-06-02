@@ -7,6 +7,7 @@ import { alphaOf, rgbOf } from "../util/Color";
 import "../elements/ColorAlphaElement";
 import "../elements/TriStateCheckboxElement";
 import "../elements/NumberInputElement";
+import "../elements/SizeInputElement";
 import { Selection, SelectType } from "../layers/Selection";
 import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon, deleteIcon, cloneIcon } from "../util/Icons";
 import { TriState, getTriState, getUnifiedValue } from "../util/MultiSelect";
@@ -180,10 +181,10 @@ export class PolylineEdit extends LitElement {
         this.canvas.requestRender();
         this.requestUpdate();
     };
-    private onSizeInput = (options: { screen?: string; canvas?: string }) => {
+    private onSizeInput = (options: { screen?: number; canvas?: number }) => {
         for (const polyline of this.polylines) {
-            if (options.screen !== undefined) polyline.style.onScreen = parseInt(options.screen, 10);
-            if (options.canvas !== undefined) polyline.style.onCanvas = parseInt(options.canvas, 10);
+            if (options.screen !== undefined) polyline.style.onScreen = options.screen;
+            if (options.canvas !== undefined) polyline.style.onCanvas = options.canvas;
         }
         this.canvas.requestRender();
         this.requestUpdate();
@@ -248,22 +249,12 @@ export class PolylineEdit extends LitElement {
                 this.canvas.requestRender();
             }}
                 ></coloralpha-element>
-                <div class="sizeInput">
-                    <number-input
-                        .value="${this.getOnScreen()}"
-                        .min="${0}"
-                        .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
-                    ></number-input>
-                    <label>Pixel on Screen</label>
-                </div>
-                <div class="sizeInput">
-                    <number-input
-                        .value="${this.getOnCanvas()}"
-                        .min="${0}"
-                        .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
-                    ></number-input>
-                    <label>Pixel on Canvas</label>
-                </div>
+                <size-input
+                    .screen=${this.getOnScreen()}
+                    .image=${this.getOnCanvas()}
+                    .setScreen=${(value: number) => this.onSizeInput({ screen: value })}
+                    .setImage=${(value: number) => this.onSizeInput({ canvas: value })}
+                ></size-input>
             </div>
             <div class="colorFoldWrapper${fillVisible ? "" : " collapsed"}${this.fillChangedByUser ? "" : " noAnimation"}">
                 <div class="configColorHeader">

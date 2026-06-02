@@ -5,6 +5,7 @@ import { alphaOf, rgbOf } from "../util/Color";
 import "../elements/ColorAlphaElement"
 import "../elements/NumberInputElement"
 import "../elements/TextInputElement"
+import "../elements/SizeInputElement"
 import { Selection, SelectType } from "../layers/Selection";
 import { getUnifiedValue } from "../util/MultiSelect";
 import { cloneIcon, deleteIcon } from "../util/Icons";
@@ -89,10 +90,10 @@ export class TextEdit extends LitElement {
         this.requestUpdate();
     };
 
-    private onSizeInput = (options: { screen?: string, canvas?: string }) => {
+    private onSizeInput = (options: { screen?: number, canvas?: number }) => {
         for (const text of this.texts) {
-            if (options.screen !== undefined) text.onScreen = parseInt(options.screen, 10);
-            if (options.canvas !== undefined) text.onCanvas = parseInt(options.canvas, 10);
+            if (options.screen !== undefined) text.onScreen = options.screen;
+            if (options.canvas !== undefined) text.onCanvas = options.canvas;
         }
         this.canvas.requestRender();
         this.requestUpdate();
@@ -163,22 +164,12 @@ export class TextEdit extends LitElement {
 
             <div class="colorFoldWrapper">
                 <div>Size</div>
-                <div class="sizeInput">
-                    <number-input
-                        .value="${this.getOnScreen()}"
-                        .min="${0}"
-                        .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
-                    ></number-input>
-                    <label>Pixel on Screen</label>
-                </div>
-                <div class="sizeInput">
-                    <number-input
-                        .value="${this.getOnCanvas()}"
-                        .min="${0}"
-                        .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
-                    ></number-input>
-                    <label>Pixel on Canvas</label>
-                </div>
+                <size-input
+                    .screen=${this.getOnScreen()}
+                    .image=${this.getOnCanvas()}
+                    .setScreen=${(value: number) => this.onSizeInput({ screen: value })}
+                    .setImage=${(value: number) => this.onSizeInput({ canvas: value })}
+                ></size-input>
             </div>
         `;
     }

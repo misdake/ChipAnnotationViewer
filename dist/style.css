@@ -1012,7 +1012,8 @@ input[type="number"]:focus {
     pointer-events: none;
 }
 
-.colorFoldWrapper.collapsed .sizeInput {
+.colorFoldWrapper.collapsed .sizeInput,
+.colorFoldWrapper.collapsed size-input {
     display: none;
 }
 

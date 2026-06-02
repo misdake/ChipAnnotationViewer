@@ -16,6 +16,9 @@ export class NumberInputElement extends LitElement {
     max: number | undefined;
 
     @property()
+    compact: boolean = false;
+
+    @property()
     onChange: (value: number) => void;
 
     private isEmpty(): boolean {
@@ -31,9 +34,10 @@ export class NumberInputElement extends LitElement {
         } else {
             const num = parseFloat(val);
             if (!isNaN(num)) {
-                this.value = num;
+                this.value = Math.max(this.min ?? num, Math.min(this.max ?? num, num));
             }
         }
+        input.value = String(this.value);
 
         if (this.onChange) {
             this.onChange(this.value!);
@@ -49,33 +53,44 @@ export class NumberInputElement extends LitElement {
 
         input {
             width: 60px;
-            padding: 2px 4px;
-            border: 1px solid #666;
-            border-radius: 3px;
-            background: #fff;
-            color: #333;
-            font-size: 12px;
+            padding: 4px 8px;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background: #1e293b;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 13px;
             text-align: center;
+            transition: all 0.2s ease;
+            appearance: textfield;
             -moz-appearance: textfield;
         }
 
-        // input::-webkit-outer-spin-button,
-        // input::-webkit-inner-spin-button {
-        //     -webkit-appearance: none;
-        //     margin: 0;
-        // }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            margin: 0;
+            -webkit-appearance: none;
+        }
 
         input:focus {
             outline: none;
-            border-color: #4a90d9;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        input.compact {
+            width: 40px;
+            padding: 3px 4px;
+            font-size: 12px;
         }
 
         input.empty {
-            color: #999;
+            color: #94a3b8;
         }
 
         input::placeholder {
-            color: #999;
+            color: #94a3b8;
         }
     `;
 
@@ -85,7 +100,7 @@ export class NumberInputElement extends LitElement {
         return html`
             <input
                 type="number"
-                class="${this.isEmpty() ? 'empty' : ''}"
+                class="${this.isEmpty() ? 'empty' : ''}${this.compact ? ' compact' : ''}"
                 .value="${displayValue}"
                 placeholder="${this.placeholder}"
                 min="${this.min !== undefined ? this.min : ''}"

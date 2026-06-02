@@ -8,9 +8,10 @@ import "../elements/ColorAlphaElement";
 import "../elements/TriStateCheckboxElement";
 import "../elements/NumberInputElement";
 import { Selection, SelectType } from "../layers/Selection";
-import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon } from "../util/Icons";
+import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon, deleteIcon, cloneIcon } from "../util/Icons";
 import { TriState, getTriState, getUnifiedValue } from "../util/MultiSelect";
 import { AABB } from "../util/AABB";
+import { DeleteConfirmation } from "../util/DeleteConfirmation";
 
 @customElement("polylineedit-element")
 export class PolylineEdit extends LitElement {
@@ -37,6 +38,13 @@ export class PolylineEdit extends LitElement {
         } else {
             Selection.deselect(SelectType.POLYLINE);
         }
+    }
+
+    confirmDeletePolyline() {
+        const target = this.polylines.length === 1 ? "this polyline" : `${this.polylines.length} polylines`;
+        DeleteConfirmation.confirm(target).then(confirmed => {
+            if (confirmed) this.deletePolyline();
+        });
     }
 
     copyPolyline() {
@@ -195,20 +203,17 @@ export class PolylineEdit extends LitElement {
         const fillVisible = fillState !== "none";
 
         return html`
-            <div class="actionButtonRow">
-                <button class="configButton" @click=${() => this.deletePolyline()}>Delete Polyline</button>
-                <button class="configButton" @click=${() => this.copyPolyline()}>Clone Polyline</button>
-            </div>
-            <div id="polylineAreaContainer">
-                <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
-                <span id="polylineTextArea">${this.area}</span>
-            </div>
-
             <div class="toolButtonRow">
                 <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
                 <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
                 <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
                 <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
+                <button class="iconButton deleteIconButton" @click=${() => this.confirmDeletePolyline()} title="Delete Polyline" aria-label="Delete Polyline">${deleteIcon}</button>
+                <button class="iconButton" @click=${() => this.copyPolyline()} title="Clone Polyline" aria-label="Clone Polyline">${cloneIcon}</button>
+            </div>
+            <div id="polylineAreaContainer">
+                <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
+                <span id="polylineTextArea">${this.area}</span>
             </div>
 
             <div class="colorFoldWrapper${strokeVisible ? "" : " collapsed"}${this.strokeChangedByUser ? "" : " noAnimation"}">
@@ -243,6 +248,22 @@ export class PolylineEdit extends LitElement {
                 this.canvas.requestRender();
             }}
                 ></coloralpha-element>
+                <div class="sizeInput">
+                    <number-input
+                        .value="${this.getOnScreen()}"
+                        .min="${0}"
+                        .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
+                    ></number-input>
+                    <label>Pixel on Screen</label>
+                </div>
+                <div class="sizeInput">
+                    <number-input
+                        .value="${this.getOnCanvas()}"
+                        .min="${0}"
+                        .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
+                    ></number-input>
+                    <label>Pixel on Canvas</label>
+                </div>
             </div>
             <div class="colorFoldWrapper${fillVisible ? "" : " collapsed"}${this.fillChangedByUser ? "" : " noAnimation"}">
                 <div class="configColorHeader">
@@ -273,22 +294,6 @@ export class PolylineEdit extends LitElement {
                 ></coloralpha-element>
             </div>
 
-            <div class="sizeInput">
-                <number-input
-                    .value="${this.getOnScreen()}"
-                    .min="${0}"
-                    .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
-                ></number-input>
-                <label>Pixel on Screen</label>
-            </div>
-            <div class="sizeInput">
-                <number-input
-                    .value="${this.getOnCanvas()}"
-                    .min="${0}"
-                    .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
-                ></number-input>
-                <label>Pixel on Canvas</label>
-            </div>
         `;
     }
 

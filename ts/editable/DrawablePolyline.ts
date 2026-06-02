@@ -493,12 +493,12 @@ export class DrawablePolylineStyle {
         this._closed = value;
     }
     set fill(value: boolean) {
-        if (!value && !this._stroke) return;
         this._fill = value;
+        if (!value && !this._stroke) this._stroke = true;
     }
     set stroke(value: boolean) {
-        if (!value && !this._fill) return;
         this._stroke = value;
+        if (!value && !this._fill) this._fill = true;
     }
 
     set onScreen(onScreen: number) {

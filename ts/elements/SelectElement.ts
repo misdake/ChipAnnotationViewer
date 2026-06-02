@@ -80,6 +80,12 @@ export class SelectElement extends LitElement {
             this.annotation_id_toload = custom.detail;
             this.refreshAnnotationList();
         });
+        window.addEventListener('chipannotation-annotation-deleted', (ev: Event) => {
+            const custom = ev as CustomEvent<number>;
+            if (!this.chip_content_current || !custom.detail) return;
+            this.annotation_id_toload = 0;
+            this.refreshAnnotationList();
+        });
     }
 
     private ensureGlobalChipInfoModal() {
@@ -349,6 +355,9 @@ export class SelectElement extends LitElement {
             NetUtil.get(chip.url + '/content.json', json => {
                 let chipContent: ChipContent = JSON.parse(json) as ChipContent;
                 chipContent.baseUrl = chip.url;
+                if (!chipContent.vendor) chipContent.vendor = chip.vendor;
+                if (!chipContent.type) chipContent.type = chip.type;
+                if (!chipContent.family) chipContent.family = chip.family;
                 resolve(chipContent);
             });
         });

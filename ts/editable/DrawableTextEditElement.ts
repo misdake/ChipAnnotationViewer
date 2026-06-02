@@ -7,6 +7,8 @@ import "../elements/NumberInputElement"
 import "../elements/TextInputElement"
 import { Selection, SelectType } from "../layers/Selection";
 import { getUnifiedValue } from "../util/MultiSelect";
+import { cloneIcon, deleteIcon } from "../util/Icons";
+import { DeleteConfirmation } from "../util/DeleteConfirmation";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
@@ -26,6 +28,12 @@ export class TextEdit extends LitElement {
         } else {
             Selection.deselect(SelectType.TEXT);
         }
+    }
+    confirmDeleteText() {
+        const target = this.texts.length === 1 ? "this text" : `${this.texts.length} texts`;
+        DeleteConfirmation.confirm(target).then(confirmed => {
+            if (confirmed) this.deleteText();
+        });
     }
     copyText() {
         let offset = this.canvas.getCamera().screenSizeToCanvas(20);
@@ -94,9 +102,9 @@ export class TextEdit extends LitElement {
         const multiline = this.getMultiline();
         const textValue = this.getText() || "";
         return html`
-            <div class="actionButtonRow">
-                <button class="configButton" @click=${() => this.deleteText()}>Delete Text</button>
-                <button class="configButton" @click=${() => this.copyText()}>Clone Text</button>
+            <div class="toolButtonRow">
+                <button class="iconButton deleteIconButton" @click=${() => this.confirmDeleteText()} title="Delete Text" aria-label="Delete Text">${deleteIcon}</button>
+                <button class="iconButton" @click=${() => this.copyText()} title="Clone Text" aria-label="Clone Text">${cloneIcon}</button>
             </div>
 
             <div class="textConfigRow">
@@ -153,21 +161,24 @@ export class TextEdit extends LitElement {
                 ></coloralpha-element>
             </div>
 
-            <div class="sizeInput">
-                <number-input
-                    .value="${this.getOnScreen()}"
-                    .min="${0}"
-                    .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
-                ></number-input>
-                <label>Pixel on Screen</label>
-            </div>
-            <div class="sizeInput">
-                <number-input
-                    .value="${this.getOnCanvas()}"
-                    .min="${0}"
-                    .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
-                ></number-input>
-                <label>Pixel on Canvas</label>
+            <div class="colorFoldWrapper">
+                <div>Size</div>
+                <div class="sizeInput">
+                    <number-input
+                        .value="${this.getOnScreen()}"
+                        .min="${0}"
+                        .onChange="${(val: number) => this.onSizeInput({ screen: String(val) })}"
+                    ></number-input>
+                    <label>Pixel on Screen</label>
+                </div>
+                <div class="sizeInput">
+                    <number-input
+                        .value="${this.getOnCanvas()}"
+                        .min="${0}"
+                        .onChange="${(val: number) => this.onSizeInput({ canvas: String(val) })}"
+                    ></number-input>
+                    <label>Pixel on Canvas</label>
+                </div>
             </div>
         `;
     }

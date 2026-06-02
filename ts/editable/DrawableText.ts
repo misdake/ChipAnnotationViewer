@@ -223,7 +223,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.validate(camera, renderer);
         let inScreen = camera.canvasAABBInScreen(this._canvasAABB);
         if (inScreen) {
-            renderer.renderText(camera, this._text, this.screenFontSize, this._x, this._y, "center", "middle");
+            renderer.renderText(camera, this.renderText, this.screenFontSize, this._x, this._y, "center", "middle");
 
             if (this._link) { //draw underline
                 let p1 = camera.canvasToScreen(this._canvasAABB.x1, this._canvasAABB.y1);
@@ -240,7 +240,7 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         if (!this.sizeValid || this.canvasScale !== camera.getScale()) {
             this.sizeValid = true;
 
-            let { width, totalHeight, fontSize } = renderer.measureText(camera, this._text, this.fontSize);
+            let { width, totalHeight, fontSize } = renderer.measureText(camera, this.renderText, this.fontSize);
             let ratio = camera.screenSizeToCanvas(1);
             this.canvasScale = camera.getScale();
             this.canvasWidth = width * ratio / 2;
@@ -251,6 +251,10 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
 
             this.calcCanvasAABB();
         }
+    }
+
+    private get renderText(): string {
+        return this._text || "-";
     }
 
     public pick(x: number, y: number, radius: number): boolean {

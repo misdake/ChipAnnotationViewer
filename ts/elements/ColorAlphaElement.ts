@@ -13,6 +13,10 @@ export class ColorAlphaElement extends LitElement {
     @property()
     private currentAlpha: number | undefined = undefined;
 
+    private editingColorValue = false;
+    private colorValueDraft = "";
+    private colorValueInvalid = false;
+
     private applyRgb(rgb: number): void {
         this.currentRgb = rgb;
         this.setRgb(rgb);
@@ -33,11 +37,65 @@ export class ColorAlphaElement extends LitElement {
         this.applyAlpha(parseInt(value, 10));
     }
 
-    render() {
-        const alpha = this.currentAlpha === undefined ? 255 : this.currentAlpha;
-        const colorText = this.currentRgb === undefined || this.currentAlpha === undefined
+    private getColorText(): string {
+        return this.currentRgb === undefined || this.currentAlpha === undefined
             ? "Mixed"
             : `${rgbToHex(this.currentRgb)}${(`0${this.currentAlpha.toString(16)}`).slice(-2)}`;
+    }
+
+    private editColorValue(): void {
+        this.colorValueDraft = this.getColorText() === "Mixed" ? "#ffffffff" : this.getColorText();
+        this.colorValueInvalid = false;
+        this.editingColorValue = true;
+        this.requestUpdate();
+        this.updateComplete.then(() => {
+            const input = this.querySelector(".configColorValueInput") as HTMLInputElement;
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        });
+    }
+
+    private updateColorValueDraft(value: string): void {
+        this.colorValueDraft = value;
+        const wasInvalid = this.colorValueInvalid;
+        this.colorValueInvalid = false;
+        if (wasInvalid) this.requestUpdate();
+    }
+
+    private applyColorValue(): void {
+        const match = /^#?([0-9a-f]{6})([0-9a-f]{2})?$/i.exec(this.colorValueDraft.trim());
+        if (!match) {
+            this.colorValueInvalid = true;
+            this.requestUpdate();
+            return;
+        }
+
+        this.applyRgb(hexToRgb(match[1]));
+        if (match[2]) this.applyAlpha(parseInt(match[2], 16));
+        this.editingColorValue = false;
+        this.colorValueInvalid = false;
+        this.requestUpdate();
+    }
+
+    private cancelColorValueEdit(): void {
+        this.editingColorValue = false;
+        this.colorValueInvalid = false;
+        this.requestUpdate();
+    }
+
+    private onColorValueKeydown(event: KeyboardEvent): void {
+        if (event.key === "Enter") {
+            this.applyColorValue();
+        } else if (event.key === "Escape") {
+            this.cancelColorValueEdit();
+        }
+    }
+
+    render() {
+        const alpha = this.currentAlpha === undefined ? 255 : this.currentAlpha;
+        const colorText = this.getColorText();
         return html`
             <style>
                 .configColorPresetGrid {
@@ -73,6 +131,35 @@ export class ColorAlphaElement extends LitElement {
                 }
                 .configColorValue {
                     font-family: monospace;
+                    cursor: text;
+                }
+                .configColorValueWrapper {
+                    position: relative;
+                }
+                .configCustomColorRow input.configColorValueInput[type="text"] {
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    z-index: 1;
+                    width: 9ch;
+                    padding: 6px 4px;
+                    border: 1px solid var(--border-color);
+                    border-radius: 4px;
+                    box-sizing: content-box;
+                    background: var(--surface-color);
+                    color: var(--text-primary);
+                    font-family: monospace;
+                    font-size: 12px;
+                    transform: translateY(-50%);
+                }
+                .configCustomColorRow input.configColorValueInput[type="text"]:focus {
+                    outline: none;
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                }
+                .configCustomColorRow input.configColorValueInput[type="text"].invalid {
+                    border-color: #ef4444;
+                    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
                 }
                 .configColorPicker {
                     width: 28px;
@@ -121,7 +208,23 @@ export class ColorAlphaElement extends LitElement {
                                 @input=${(event: Event) => this.updateRgb((event.target as HTMLInputElement).value)}
                                 title="Custom color"
                             >
-                            <span class="configColorValue">${colorText}</span>
+                            <span class="configColorValueWrapper">
+                                <span class="configColorValue" @click=${() => this.editColorValue()} title="Click to edit">${colorText}</span>
+                                ${this.editingColorValue
+                                    ? html`
+                                        <input
+                                            class="configColorValueInput${this.colorValueInvalid ? " invalid" : ""}"
+                                            type="text"
+                                            maxlength="9"
+                                            .value=${this.colorValueDraft}
+                                            @input=${(event: Event) => this.updateColorValueDraft((event.target as HTMLInputElement).value)}
+                                            @blur=${() => this.applyColorValue()}
+                                            @keydown=${(event: KeyboardEvent) => this.onColorValueKeydown(event)}
+                                            title="${this.colorValueInvalid ? "Use #RRGGBB or #RRGGBBAA" : "Enter #RRGGBB or #RRGGBBAA"}"
+                                        >
+                                    `
+                                    : ""}
+                            </span>
                         </div>
                         <div class="configCustomColorRow">
                             <input

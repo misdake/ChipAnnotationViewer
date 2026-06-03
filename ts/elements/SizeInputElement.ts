@@ -25,7 +25,7 @@ export class SizeInputElement extends LitElement {
             align-items: center;
             flex-wrap: nowrap;
             gap: 5px;
-            margin: 6px 0;
+            margin: 6px 0 0 0;
         }
 
         label {

@@ -6,7 +6,7 @@ import { Renderer } from '../Renderer';
 import { DrawableImage, ImageCacheItem, imageCache } from '../drawable/DrawableImage';
 import { LayerName } from './Layers';
 import { Env } from '../Env';
-import { Transform } from '../util/Transform';
+import { ScreenRect } from '../util/ScreenRect';
 
 export class LayerImage extends Layer {
 
@@ -42,6 +42,8 @@ export class LayerImage extends Layer {
     private xCount: number;
     private yCount: number;
     private imageMatrix: DrawableImage[][];
+    private xVertices: number[] = [];
+    private yVertices: number[] = [];
 
     private prepare(camera: Camera, canvas: Canvas) {
         if (!this.map) return;
@@ -59,54 +61,67 @@ export class LayerImage extends Layer {
             }
         }
 
-        let targetSize = this.map.tileSize * Math.pow(2, zoom);
-
         let levelData = this.map.levels[zoom];
         this.xCount = levelData.xMax;
         this.yCount = levelData.yMax;
+        this.xVertices.length = this.xCount + 1;
+        this.yVertices.length = this.yCount + 1;
         this.imageMatrix = [];
         for (let i = 0; i < this.xCount; i++) {
             this.imageMatrix[i] = [];
             for (let j = 0; j < this.yCount; j++) {
                 this.imageMatrix[i][j] = new DrawableImage(
                     `${this.baseFolder}/${zoom}/${i}_${j}.jpg`,
-                    i * targetSize, j * targetSize,
-                    targetSize, targetSize,
-                    _ => {
-                        canvas.requestRender();
-                    },
+                    _ => canvas.requestRender(),
                 );
             }
         }
     }
 
+    private updateScreenVertices(vertices: number[], count: number, targetSize: number, horizontal: boolean): void {
+        for (let i = 0; i <= count; i++) {
+            let point = horizontal
+                ? this.camera.canvasToScreen(i * targetSize, 0)
+                : this.camera.canvasToScreen(0, i * targetSize);
+            vertices[i] = horizontal ? Math.round(point.x) : Math.round(point.y);
+        }
+    }
+
+    private isVisible(rect: ScreenRect, range: number): boolean {
+        if (rect.left - range > this.canvas.getWidth() || rect.top - range > this.canvas.getHeight()) return false;
+        if (rect.left + rect.width + range < 0 || rect.top + rect.height + range < 0) return false;
+        return true;
+    }
+
     public render(renderer: Renderer): void {
         this.prepare(this.camera, this.canvas);
+        if (!this.imageMatrix) return;
 
-        if (this.imageMatrix) {
-            for (let i = 0; i < this.xCount; i++) {
-                for (let j = 0; j < this.yCount; j++) {
-                    let tile = this.imageMatrix[i][j];
-                    tile.render(this.canvas, renderer, this.camera);
-                    if (!tile.isLoaded()) {
-                        this.renderFallbackTile(renderer, i, j);
-                    }
+        let targetSize = this.map.tileSize * Math.pow(2, this.currentZoom);
+        this.updateScreenVertices(this.xVertices, this.xCount, targetSize, true);
+        this.updateScreenVertices(this.yVertices, this.yCount, targetSize, false);
+
+        for (let i = 0; i < this.xCount; i++) {
+            for (let j = 0; j < this.yCount; j++) {
+                let destRect = new ScreenRect(
+                    this.xVertices[i],
+                    this.yVertices[j],
+                    this.xVertices[i + 1] - this.xVertices[i],
+                    this.yVertices[j + 1] - this.yVertices[j],
+                );
+                if (!this.isVisible(destRect, 100)) continue;
+
+                let tile = this.imageMatrix[i][j];
+                tile.render(renderer, destRect);
+                if (!tile.isLoaded() && this.isVisible(destRect, 0)) {
+                    this.renderFallbackTile(renderer, i, j, destRect);
                 }
             }
         }
     }
 
-    private renderFallbackTile(renderer: Renderer, tileX: number, tileY: number) {
+    private renderFallbackTile(renderer: Renderer, tileX: number, tileY: number, destRect: ScreenRect) {
         let zoom = this.currentZoom;
-        let targetSize = this.map.tileSize * Math.pow(2, zoom);
-        let canvasX = tileX * targetSize;
-        let canvasY = tileY * targetSize;
-
-        let transform = new Transform();
-        transform.position.x = canvasX;
-        transform.position.y = canvasY;
-        let destRect = renderer.testImageVisibility(this.camera, transform, targetSize, targetSize, 0);
-        if (!destRect) return;
 
         for (let k = 1; zoom + k <= this.maxLevel; k++) {
             let fallbackZoom = zoom + k;

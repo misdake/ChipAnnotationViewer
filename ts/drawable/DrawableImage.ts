@@ -1,9 +1,6 @@
-import { Drawable } from './Drawable';
-import { Canvas } from '../Canvas';
 import { Renderer } from '../Renderer';
-import { Camera } from '../Camera';
-import { Transform } from '../util/Transform';
 import { LRU } from '../util/LRU';
+import { ScreenRect } from '../util/ScreenRect';
 
 export class ImageCacheItem {
     private _img: HTMLImageElement = undefined;
@@ -46,22 +43,12 @@ const createImage = (src: string) => {
     return ImageCacheItem.load(src);
 };
 
-export class DrawableImage implements Drawable {
+export class DrawableImage {
 
     private img: ImageCacheItem;
-
-    private readonly w: number;
-    private readonly h: number;
-    private readonly transformation: Transform = new Transform();
-
     private readonly src: string;
 
-    public constructor(src: string, x: number, y: number, w: number, h: number, onload: (image: DrawableImage) => void) {
-        this.transformation.position.x = x;
-        this.transformation.position.y = y;
-        this.w = w;
-        this.h = h;
-
+    public constructor(src: string, onload: (image: DrawableImage) => void) {
         ImageCacheItem.onloaded = () => onload(this);
         this.src = src;
     }
@@ -76,13 +63,10 @@ export class DrawableImage implements Drawable {
         return this.img !== undefined && this.img.loaded;
     }
 
-    public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {
-        let rect = renderer.testImageVisibility(camera, this.transformation, this.w, this.h, 100);
-        if (rect) {
-            this.loadIfNotLoaded();
-            if (this.img && this.img.loaded) {
-                renderer.drawImage(this.img.img, rect);
-            }
+    public render(renderer: Renderer, rect: ScreenRect): void {
+        this.loadIfNotLoaded();
+        if (this.img && this.img.loaded) {
+            renderer.drawImage(this.img.img, rect);
         }
     }
 

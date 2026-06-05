@@ -117,9 +117,9 @@ export class SelectElement extends LitElement {
                             <span class="chipInfoKey">Spec</span>
                             <a id="chip-info-spec" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
                         </div>
-                        <div id="chip-info-author-row" class="chipInfoRow" style="display:none;">
-                            <span class="chipInfoKey">Image Author</span>
-                            <a id="chip-info-author" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
+                        <div id="chip-info-author-row" class="chipInfoRow" style="display:none; margin-top: 32px">
+                            <span class="chipInfoKey">Credit</span>
+                            <span id="chip-info-author" class="chipInfoValue"></span>
                         </div>
                         <div class="chipInfoRow">
                             <span class="chipInfoKey">Source</span>
@@ -145,7 +145,7 @@ export class SelectElement extends LitElement {
         const specRow = document.getElementById("chip-info-spec-row");
         const specElement = document.getElementById("chip-info-spec") as HTMLAnchorElement;
         const authorRow = document.getElementById("chip-info-author-row");
-        const authorElement = document.getElementById("chip-info-author") as HTMLAnchorElement;
+        const authorElement = document.getElementById("chip-info-author");
         const modalState = document.getElementById(SelectElement.CHIP_INFO_MODAL_ID) as HTMLInputElement;
 
         if (!nameElement || !vtfElement || !sizeElement || !sourceElement || !dieSizeRow || !dieSizeElement || !specRow || !specElement || !authorRow || !authorElement || !modalState) return;
@@ -190,22 +190,19 @@ export class SelectElement extends LitElement {
         }
 
         authorRow.style.display = hasAuthor ? '' : 'none';
+        authorElement.textContent = '';
         if (hasAuthor) {
-            authorElement.textContent = authorName;
             if (authorUrl) {
-                authorElement.setAttribute("href", authorUrl);
-                authorElement.setAttribute("title", authorUrl);
-                authorElement.style.pointerEvents = '';
+                const authorLink = document.createElement("a");
+                authorLink.className = "chipInfoLink";
+                authorLink.textContent = authorName;
+                authorLink.setAttribute("href", authorUrl);
+                authorLink.setAttribute("title", authorUrl);
+                authorLink.setAttribute("target", "_blank");
+                authorElement.appendChild(authorLink);
             } else {
-                authorElement.setAttribute("href", '');
-                authorElement.setAttribute("title", authorName);
-                authorElement.style.pointerEvents = 'none';
+                authorElement.textContent = authorName;
             }
-        } else {
-            authorElement.textContent = '';
-            authorElement.setAttribute("href", '');
-            authorElement.setAttribute("title", '');
-            authorElement.style.pointerEvents = '';
         }
 
         modalState.checked = true;

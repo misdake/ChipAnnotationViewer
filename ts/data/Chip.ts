@@ -16,11 +16,10 @@ export class Chip {
 
 export class ChipContent {
     baseUrl?: string;
-    source:string;
+    source: string;
     specUrl?: string;
     imageAuthorName?: string;
     imageAuthorUrl?: string;
-    imageRoot?: string;
     githubRepo: string;
     githubIssueId: number;
 
@@ -28,6 +27,7 @@ export class ChipContent {
     type: string;
     family: string;
     name: string;
+    listname?: string;
 
     tileSize: number;
     width: number;

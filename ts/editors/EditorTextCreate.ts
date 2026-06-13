@@ -8,6 +8,7 @@ import {Ui} from "../util/Ui";
 import {LayerName} from "../layers/Layers";
 import {DrawableText} from "../editable/DrawableText";
 import {LayerTextView} from "../layers/LayerTextView";
+import {annotationHistory} from "../history/AnnotationHistory";
 
 export class EditorTextCreate extends Editor {
 
@@ -51,6 +52,7 @@ export class EditorTextCreate extends Editor {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     text.setPosition(position.x, position.y);
                     self.selected = undefined;
+                    annotationHistory.recordCreated(env.canvas, [text], "text.create");
                     Selection.select(SelectType.TEXT, text);
                     self.canvas.requestRender();
                     return true;

@@ -60,3 +60,17 @@ export const saveIcon = html`
         <path d="M7 3v5h8"/>
     </svg>
 `;
+
+export const undoIcon = html`
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 14 4 9l5-5"/>
+        <path d="M4 9h10a7 7 0 1 1 0 14h-1"/>
+    </svg>
+`;
+
+export const redoIcon = html`
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 14 5-5-5-5"/>
+        <path d="M20 9H10a7 7 0 1 0 0 14h1"/>
+    </svg>
+`;

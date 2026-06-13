@@ -6,10 +6,10 @@ import "../elements/ColorAlphaElement"
 import "../elements/NumberInputElement"
 import "../elements/TextInputElement"
 import "../elements/SizeInputElement"
-import { Selection, SelectType } from "../layers/Selection";
 import { getUnifiedValue } from "../util/MultiSelect";
 import { cloneIcon, deleteIcon } from "../util/Icons";
 import { DeleteConfirmation } from "../util/DeleteConfirmation";
+import { annotationHistory } from "../history/AnnotationHistory";
 
 @customElement('textedit-element')
 export class TextEdit extends LitElement {
@@ -20,15 +20,11 @@ export class TextEdit extends LitElement {
     @property()
     canvas: Canvas;
 
+    @property({ type: Boolean })
+    showActions: boolean = true;
+
     deleteText() {
-        for (const text of this.texts) {
-            text.deleteOnCanvas(this.canvas);
-        }
-        if (this.texts.length > 1) {
-            Selection.deselectAny();
-        } else {
-            Selection.deselect(SelectType.TEXT);
-        }
+        annotationHistory.removeDrawables(this.canvas, this.texts, "text.delete");
     }
     confirmDeleteText() {
         const target = this.texts.length === 1 ? "this text" : `${this.texts.length} texts`;
@@ -37,22 +33,8 @@ export class TextEdit extends LitElement {
         });
     }
     copyText() {
-        let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        const newTexts: DrawableText[] = [];
-        for (const text of this.texts) {
-            const cloned = text.cloneOnCanvas(this.canvas, offset, offset) as DrawableText;
-            if (cloned) newTexts.push(cloned);
-        }
-        if (newTexts.length > 0) {
-            if (this.texts.length > 1) {
-                const selected = Selection.getSelected();
-                if (Array.isArray(selected.item)) {
-                    (selected.item as DrawableText[]).splice(0, selected.item.length, ...newTexts);
-                }
-            } else {
-                Selection.select(SelectType.TEXT, newTexts[0]);
-            }
-        }
+        const offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        annotationHistory.cloneDrawables(this.canvas, this.texts, offset, offset, "text.clone");
     }
 
     private getText(): string | undefined {
@@ -76,37 +58,41 @@ export class TextEdit extends LitElement {
     }
 
     private editText = (content: string) => {
-        for (const text of this.texts) {
-            text.text = content;
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.texts, "text.content", (items) => {
+            for (const text of items as DrawableText[]) text.text = content;
+        }, annotationHistory.mergeKey("text.content", this.texts));
         this.requestUpdate();
     };
     private setMultiline = (multiline: boolean) => {
-        for (const text of this.texts) {
-            text.multiline = multiline;
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.texts, "text.multiline", (items) => {
+            for (const text of items as DrawableText[]) text.multiline = multiline;
+        });
         this.requestUpdate();
     };
 
     private onSizeInput = (options: { screen?: number, canvas?: number }) => {
-        for (const text of this.texts) {
-            if (options.screen !== undefined) text.onScreen = options.screen;
-            if (options.canvas !== undefined) text.onCanvas = options.canvas;
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.texts, "text.size", (items) => {
+            for (const text of items as DrawableText[]) {
+                if (options.screen !== undefined) text.onScreen = options.screen;
+                if (options.canvas !== undefined) text.onCanvas = options.canvas;
+            }
+        }, annotationHistory.mergeKey("text.size", this.texts));
         this.requestUpdate();
     };
 
     render() {
         const multiline = this.getMultiline();
         const textValue = this.getText() || "";
+        const actionButtons = this.showActions
+            ? html`
+                <div class="toolButtonRow">
+                    <button class="iconButton deleteIconButton" @click=${() => this.confirmDeleteText()} title="Delete Text" aria-label="Delete Text">${deleteIcon}</button>
+                    <button class="iconButton" @click=${() => this.copyText()} title="Clone Text" aria-label="Clone Text">${cloneIcon}</button>
+                </div>
+            `
+            : html``;
         return html`
-            <div class="toolButtonRow">
-                <button class="iconButton deleteIconButton" @click=${() => this.confirmDeleteText()} title="Delete Text" aria-label="Delete Text">${deleteIcon}</button>
-                <button class="iconButton" @click=${() => this.copyText()} title="Clone Text" aria-label="Clone Text">${cloneIcon}</button>
-            </div>
+            ${actionButtons}
 
             <div class="textConfigRow">
                 <div class="textConfigHeader">
@@ -148,16 +134,14 @@ export class TextEdit extends LitElement {
                     .currentRgb=${this.getRgb()}
                     .currentAlpha=${this.getAlpha()}
                     .setRgb=${(rgb: number) => {
-                for (const text of this.texts) {
-                    text.setColorAlpha(rgb, undefined);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.texts, "text.color", (items) => {
+                    for (const text of items as DrawableText[]) text.setColorAlpha(rgb, undefined);
+                }, annotationHistory.mergeKey("text.color", this.texts));
             }}
                     .setAlpha=${(alpha: number) => {
-                for (const text of this.texts) {
-                    text.setColorAlpha(undefined, alpha);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.texts, "text.alpha", (items) => {
+                    for (const text of items as DrawableText[]) text.setColorAlpha(undefined, alpha);
+                }, annotationHistory.mergeKey("text.alpha", this.texts));
             }} 
                 ></coloralpha-element>
             </div>

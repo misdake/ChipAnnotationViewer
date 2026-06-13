@@ -10,6 +10,7 @@ import { DrawableText } from "../editable/DrawableText";
 import { Drawable } from "../drawable/Drawable";
 import { EditablePick, EditableMove, EditableDeleteClone, EditableColor, editableMultiple } from "../editable/Editable";
 import { Camera } from "../Camera";
+import { annotationHistory, HistoryTransaction } from "../history/AnnotationHistory";
 
 export class EditorSelect extends Editor {
 
@@ -26,6 +27,7 @@ export class EditorSelect extends Editor {
     private dragMoveStartX = 0;
     private dragMoveStartY = 0;
     private selectedEditable: EditableMove & EditableDeleteClone & EditableColor;
+    private moveTransaction: HistoryTransaction = null;
     private rightClickStartX = 0;
     private rightClickStartY = 0;
     private isRightClickDragging = false;
@@ -87,9 +89,11 @@ export class EditorSelect extends Editor {
                         self.dragMoveStartY = y;
                         let selected = self.getSelectedDrawables();
                         self.selectedEditable = editableMultiple(selected);
+                        self.moveTransaction = annotationHistory.begin(self.canvas, selected, event.ctrlKey ? "selection.clone.drag" : "selection.move");
 
                         if (event.ctrlKey) {
-                            self.selectedEditable.cloneOnCanvas(self.canvas, 0, 0);
+                            const clones = self.selectedEditable.cloneOnCanvas(self.canvas, 0, 0);
+                            if (Array.isArray(clones)) annotationHistory.trackAdded(self.moveTransaction, clones);
                             let newSelected = self.getSelectedDrawables();
                             self.selectedEditable = editableMultiple(newSelected);
                         }
@@ -133,6 +137,10 @@ export class EditorSelect extends Editor {
                     if (self.isDraggingSelected) {
                         self.isDraggingSelected = false;
                         self.selectedEditable = null;
+                        if (annotationHistory.isActive(self.moveTransaction)) {
+                            annotationHistory.commit(self.canvas, self.moveTransaction);
+                        }
+                        self.moveTransaction = null;
                         self.canvas.getElement().style.cursor = "";
                         self.canvas.requestRender();
                         return true;
@@ -243,12 +251,19 @@ export class EditorSelect extends Editor {
                 }
 
                 if (self.isDraggingSelected && (event.buttons & 1)) {
+                    if (!annotationHistory.isActive(self.moveTransaction)) {
+                        self.isDraggingSelected = false;
+                        self.selectedEditable = null;
+                        self.moveTransaction = null;
+                        self.canvas.getElement().style.cursor = "";
+                        return false;
+                    }
                     let dx = x - self.dragMoveStartX;
                     let dy = y - self.dragMoveStartY;
                     self.selectedEditable.move(dx, dy);
+                    self.canvas.requestRender();
                     self.dragMoveStartX = x;
                     self.dragMoveStartY = y;
-                    self.canvas.requestRender();
                     return true;
                 }
 
@@ -326,6 +341,7 @@ export class EditorSelect extends Editor {
     }
 
     exit(env: Env): void {
+        annotationHistory.commitActive(env.canvas);
     }
 
 

@@ -12,6 +12,7 @@ import {EditableColor, EditableDeleteClone, EditableMove, EditablePick} from "./
 import {LayerPolylineView} from "../layers/LayerPolylineView";
 import {LayerName} from "../layers/Layers";
 import {Selection, SelectType} from "../layers/Selection";
+import {createHistoryId, reserveHistoryId} from "../history/HistoryId";
 
 export class Point {
     public constructor(x: number, y: number) {
@@ -489,6 +490,20 @@ export class DrawablePolylineStyle {
         )
     }
 
+    public applyPack(pack: DrawablePolylinePack): void {
+        this._closed = pack.closed;
+        this._lineWidth = new Size(pack.lineWidth.onScreen, pack.lineWidth.onCanvas);
+
+        this._fill = pack.fill;
+        this._fillColor = pack.fillColor;
+        this._fillString = rgbaToCss(this._fillColor);
+
+        this._stroke = pack.stroke;
+        this._strokeColor = pack.strokeColor;
+        this._strokeString = rgbaToCss(this._strokeColor);
+        this.normalizeRenderableState();
+    }
+
     set closed(value: boolean) {
         this._closed = value;
     }
@@ -544,7 +559,9 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
 
     private readonly points: Point[];
 
-    public constructor(pack: DrawablePolylinePack) {
+    public constructor(pack: DrawablePolylinePack, historyId: number = createHistoryId()) {
+        reserveHistoryId(historyId);
+        this.historyId = historyId;
         this.points = pack.points;
         this.style = new DrawablePolylineStyle(pack);
         this.picker = new DrawablePolylinePicker(this, this.points);
@@ -560,6 +577,7 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
     public readonly calculator: DrawablePolylineCalculator;
 
     public readonly ui: DrawablePolylineEditUi;
+    public readonly historyId: number;
 
     public check(): boolean {
         if (this.style.fill || this.style.closed) {
@@ -572,6 +590,15 @@ export class DrawablePolyline implements EditablePick, EditableDeleteClone, Edit
         let pack = this.style.pack();
         pack.points = this.points;
         return pack;
+    }
+
+    public applyPack(pack: DrawablePolylinePack): void {
+        this.points.length = 0;
+        for (const point of pack.points) {
+            this.points.push(new Point(point.x, point.y));
+        }
+        this.style.applyPack(pack);
+        this.invalidate();
     }
 
     //Editable

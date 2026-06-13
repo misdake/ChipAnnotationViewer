@@ -8,6 +8,7 @@ import { Selection, SelectType } from "../layers/Selection";
 import { Ui } from "../util/Ui";
 import { LayerName } from "../layers/Layers";
 import { LayerPolylineView } from "../layers/LayerPolylineView";
+import { annotationHistory } from "../history/AnnotationHistory";
 
 export class EditorRectCreate extends Editor {
 
@@ -111,6 +112,7 @@ export class EditorRectCreate extends Editor {
                 dragging = false;
                 updateRectPreview(event);
                 selectedRef.selected = undefined;
+                annotationHistory.recordCreated(env.canvas, [polyline], "polyline.create.rect");
                 setTimeout(() => {
                     Selection.select(SelectType.POLYLINE, polyline);
                 });

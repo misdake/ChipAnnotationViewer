@@ -8,11 +8,11 @@ import "../elements/ColorAlphaElement";
 import "../elements/TriStateCheckboxElement";
 import "../elements/NumberInputElement";
 import "../elements/SizeInputElement";
-import { Selection, SelectType } from "../layers/Selection";
 import { rotateCCWIcon, rotateCWIcon, flipXIcon, flipYIcon, deleteIcon, cloneIcon } from "../util/Icons";
 import { TriState, getTriState, getUnifiedValue } from "../util/MultiSelect";
 import { AABB } from "../util/AABB";
 import { DeleteConfirmation } from "../util/DeleteConfirmation";
+import { annotationHistory } from "../history/AnnotationHistory";
 
 @customElement("polylineedit-element")
 export class PolylineEdit extends LitElement {
@@ -21,6 +21,9 @@ export class PolylineEdit extends LitElement {
 
     @property()
     linkedDrawables: (DrawablePolyline | DrawableText)[] = [];
+
+    @property({ type: Boolean })
+    showActions: boolean = true;
 
     @property()
     canvas: Canvas;
@@ -31,14 +34,7 @@ export class PolylineEdit extends LitElement {
     private fillChangedByUser = false;
 
     deletePolyline() {
-        for (const polyline of this.polylines) {
-            polyline.deleteOnCanvas(this.canvas);
-        }
-        if (this.polylines.length > 1) {
-            Selection.deselectAny();
-        } else {
-            Selection.deselect(SelectType.POLYLINE);
-        }
+        annotationHistory.removeDrawables(this.canvas, this.polylines, "polyline.delete");
     }
 
     confirmDeletePolyline() {
@@ -49,22 +45,8 @@ export class PolylineEdit extends LitElement {
     }
 
     copyPolyline() {
-        let offset = this.canvas.getCamera().screenSizeToCanvas(20);
-        const newPolylines: DrawablePolyline[] = [];
-        for (const polyline of this.polylines) {
-            const cloned = polyline.cloneOnCanvas(this.canvas, offset, offset) as DrawablePolyline;
-            if (cloned) newPolylines.push(cloned);
-        }
-        if (newPolylines.length > 0) {
-            if (this.polylines.length > 1) {
-                const selected = Selection.getSelected();
-                if (Array.isArray(selected.item)) {
-                    (selected.item as DrawablePolyline[]).splice(0, selected.item.length, ...newPolylines);
-                }
-            } else {
-                Selection.select(SelectType.POLYLINE, newPolylines[0]);
-            }
-        }
+        const offset = this.canvas.getCamera().screenSizeToCanvas(20);
+        annotationHistory.cloneDrawables(this.canvas, this.polylines, offset, offset, "polyline.clone");
     }
 
     @property()
@@ -112,34 +94,30 @@ export class PolylineEdit extends LitElement {
     rotateCCW() {
         const center = this.getSelectionCenter();
         if (!center) return;
-        for (const item of this.getTransformTargets()) {
-            item.rotateCCW(center.x, center.y);
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.getTransformTargets(), "selection.rotateCCW", (items) => {
+            for (const item of items as (DrawablePolyline | DrawableText)[]) item.rotateCCW(center.x, center.y);
+        });
     }
     rotateCW() {
         const center = this.getSelectionCenter();
         if (!center) return;
-        for (const item of this.getTransformTargets()) {
-            item.rotateCW(center.x, center.y);
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.getTransformTargets(), "selection.rotateCW", (items) => {
+            for (const item of items as (DrawablePolyline | DrawableText)[]) item.rotateCW(center.x, center.y);
+        });
     }
     flipX() {
         const center = this.getSelectionCenter();
         if (!center) return;
-        for (const item of this.getTransformTargets()) {
-            item.flipX(center.x);
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.getTransformTargets(), "selection.flipX", (items) => {
+            for (const item of items as (DrawablePolyline | DrawableText)[]) item.flipX(center.x);
+        });
     }
     flipY() {
         const center = this.getSelectionCenter();
         if (!center) return;
-        for (const item of this.getTransformTargets()) {
-            item.flipY(center.y);
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.getTransformTargets(), "selection.flipY", (items) => {
+            for (const item of items as (DrawablePolyline | DrawableText)[]) item.flipY(center.y);
+        });
     }
 
     private getFillState(): TriState {
@@ -173,20 +151,22 @@ export class PolylineEdit extends LitElement {
     private onStyleCheck = (options: { fill?: boolean; stroke?: boolean; closed?: boolean }) => {
         if (options.stroke !== undefined) this.strokeChangedByUser = true;
         if (options.fill !== undefined) this.fillChangedByUser = true;
-        for (const polyline of this.polylines) {
-            if (options.fill !== undefined) polyline.style.fill = options.fill;
-            if (options.stroke !== undefined) polyline.style.stroke = options.stroke;
-            if (options.closed !== undefined) polyline.style.closed = options.closed;
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.style", (items) => {
+            for (const polyline of items as DrawablePolyline[]) {
+                if (options.fill !== undefined) polyline.style.fill = options.fill;
+                if (options.stroke !== undefined) polyline.style.stroke = options.stroke;
+                if (options.closed !== undefined) polyline.style.closed = options.closed;
+            }
+        });
         this.requestUpdate();
     };
     private onSizeInput = (options: { screen?: number; canvas?: number }) => {
-        for (const polyline of this.polylines) {
-            if (options.screen !== undefined) polyline.style.onScreen = options.screen;
-            if (options.canvas !== undefined) polyline.style.onCanvas = options.canvas;
-        }
-        this.canvas.requestRender();
+        annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.size", (items) => {
+            for (const polyline of items as DrawablePolyline[]) {
+                if (options.screen !== undefined) polyline.style.onScreen = options.screen;
+                if (options.canvas !== undefined) polyline.style.onCanvas = options.canvas;
+            }
+        }, annotationHistory.mergeKey("polyline.size", this.polylines));
         this.requestUpdate();
     };
 
@@ -202,6 +182,12 @@ export class PolylineEdit extends LitElement {
         const fillState = this.getFillState();
         const strokeVisible = strokeState !== "none";
         const fillVisible = fillState !== "none";
+        const actionButtons = this.showActions
+            ? html`
+                <button class="iconButton deleteIconButton" @click=${() => this.confirmDeletePolyline()} title="Delete Polyline" aria-label="Delete Polyline">${deleteIcon}</button>
+                <button class="iconButton" @click=${() => this.copyPolyline()} title="Clone Polyline" aria-label="Clone Polyline">${cloneIcon}</button>
+            `
+            : html``;
 
         return html`
             <div class="toolButtonRow">
@@ -209,8 +195,7 @@ export class PolylineEdit extends LitElement {
                 <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
                 <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
                 <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
-                <button class="iconButton deleteIconButton" @click=${() => this.confirmDeletePolyline()} title="Delete Polyline" aria-label="Delete Polyline">${deleteIcon}</button>
-                <button class="iconButton" @click=${() => this.copyPolyline()} title="Clone Polyline" aria-label="Clone Polyline">${cloneIcon}</button>
+                ${actionButtons}
             </div>
             <div id="polylineAreaContainer">
                 <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
@@ -237,16 +222,14 @@ export class PolylineEdit extends LitElement {
                     .currentRgb=${this.getStrokeRgb()}
                     .currentAlpha=${this.getStrokeAlpha()}
                     .setRgb=${(rgb: number) => {
-                for (const polyline of this.polylines) {
-                    polyline.style.setStrokeColor(rgb, undefined);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.strokeColor", (items) => {
+                    for (const polyline of items as DrawablePolyline[]) polyline.style.setStrokeColor(rgb, undefined);
+                }, annotationHistory.mergeKey("polyline.strokeColor", this.polylines));
             }}
                     .setAlpha=${(alpha: number) => {
-                for (const polyline of this.polylines) {
-                    polyline.style.setStrokeColor(undefined, alpha);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.strokeAlpha", (items) => {
+                    for (const polyline of items as DrawablePolyline[]) polyline.style.setStrokeColor(undefined, alpha);
+                }, annotationHistory.mergeKey("polyline.strokeAlpha", this.polylines));
             }}
                 ></coloralpha-element>
                 <size-input
@@ -271,16 +254,14 @@ export class PolylineEdit extends LitElement {
                     .currentRgb=${this.getFillRgb()}
                     .currentAlpha=${this.getFillAlpha()}
                     .setRgb=${(rgb: number) => {
-                for (const polyline of this.polylines) {
-                    polyline.style.setFillColor(rgb, undefined);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.fillColor", (items) => {
+                    for (const polyline of items as DrawablePolyline[]) polyline.style.setFillColor(rgb, undefined);
+                }, annotationHistory.mergeKey("polyline.fillColor", this.polylines));
             }}
                     .setAlpha=${(alpha: number) => {
-                for (const polyline of this.polylines) {
-                    polyline.style.setFillColor(undefined, alpha);
-                }
-                this.canvas.requestRender();
+                annotationHistory.mutateDrawables(this.canvas, this.polylines, "polyline.fillAlpha", (items) => {
+                    for (const polyline of items as DrawablePolyline[]) polyline.style.setFillColor(undefined, alpha);
+                }, annotationHistory.mergeKey("polyline.fillAlpha", this.polylines));
             }}
                 ></coloralpha-element>
             </div>

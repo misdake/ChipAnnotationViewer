@@ -22,17 +22,11 @@ export class LayerTextView extends Layer {
     }
 
     public addText(text: DrawableText) {
-        this.texts.push(text);
+        this.canvas.env.addText(text);
         this.canvas.requestRender();
     }
     public deleteText(text: DrawableText): boolean {
-        let index = this.texts.indexOf(text);
-        if (index !== -1) {
-            this.texts.splice(index, 1);
-            return true;
-        } else {
-            return false;
-        }
+        return this.canvas.env.removeText(text);
     }
 
     public saveData(data: AnnotationData): void {

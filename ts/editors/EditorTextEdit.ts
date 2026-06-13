@@ -5,9 +5,8 @@ import {Canvas} from "../Canvas";
 import {Env} from "../Env";
 import {Selection, SelectType} from "../layers/Selection";
 import {Ui} from "../util/Ui";
-import {LayerName} from "../layers/Layers";
 import {DrawableText} from "../editable/DrawableText";
-import {LayerTextView} from "../layers/LayerTextView";
+import {annotationHistory, HistoryTransaction} from "../history/AnnotationHistory";
 
 export class EditorTextEdit extends Editor {
 
@@ -24,8 +23,6 @@ export class EditorTextEdit extends Editor {
     }
 
     enter(env: Env): void {
-        let layerView = <LayerTextView>env.canvas.findLayer(LayerName.TEXT_VIEW);
-
         let {item: item, type: type} = Selection.getSelected();
         if (type !== SelectType.TEXT) return;
         let text = <DrawableText>item;
@@ -37,6 +34,7 @@ export class EditorTextEdit extends Editor {
             private drag: boolean = false;
             private dragX: number = 0;
             private dragY: number = 0;
+            private transaction: HistoryTransaction = null;
 
             onmousedown(event: MouseIn): boolean {
                 if (event.button === 0) { //left button down => test drag point
@@ -47,8 +45,10 @@ export class EditorTextEdit extends Editor {
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let pick = text.pick(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pick && event.altKey) { //start dragging
+                        this.transaction = annotationHistory.begin(self.canvas, [text], event.ctrlKey ? "text.clone.drag" : "text.move");
                         if (event.ctrlKey) {
-                            text.cloneOnCanvas(env.canvas, 0, 0);
+                            const clone = text.cloneOnCanvas(env.canvas, 0, 0);
+                            if (clone) annotationHistory.trackAdded(this.transaction, [clone]);
                         }
                         this.drag = true;
                         this.dragX = position.x - text.x;
@@ -60,6 +60,10 @@ export class EditorTextEdit extends Editor {
             }
             onmouseup(event: MouseIn): boolean {
                 let passEvent: boolean = !this.drag; //pass event if not moving point, so that LayerTextView will deselect this text
+                if (annotationHistory.isActive(this.transaction)) {
+                    annotationHistory.commit(self.canvas, this.transaction);
+                }
+                this.transaction = null;
                 this.drag = false;
 
                 if (event.button === 0) { //left button up => nothing
@@ -70,6 +74,12 @@ export class EditorTextEdit extends Editor {
             }
             onmousemove(event: MouseIn): boolean {
                 if (this.down && this.drag) {
+                    if (!annotationHistory.isActive(this.transaction)) {
+                        this.down = false;
+                        this.drag = false;
+                        this.transaction = null;
+                        return false;
+                    }
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     text.setPosition(position.x - this.dragX, position.y - this.dragY);
                     self.canvas.requestRender();
@@ -80,13 +90,16 @@ export class EditorTextEdit extends Editor {
         };
 
         this._keyboardListener = Ui.createKeyboardListener(self.canvas, self.camera, text, () => {
-            layerView.deleteText(text);
-            Selection.deselect(SelectType.TEXT);
-            env.canvas.requestRender();
+            annotationHistory.removeDrawables(env.canvas, [text], "text.delete");
+        }, (dx, dy) => {
+            annotationHistory.mutateText(env.canvas, text, "text.move.keyboard", draft => {
+                draft.move(dx, dy);
+            }, annotationHistory.mergeKey("text.move.keyboard", [text]));
         });
     }
 
     exit(env: Env): void {
+        annotationHistory.commitActive(env.canvas);
     }
 
     render(env: Env): void {

@@ -22,17 +22,11 @@ export class LayerPolylineView extends Layer {
     }
 
     public addPolyline(polyline: DrawablePolyline) {
-        this.polylines.push(polyline);
+        this.canvas.env.addPolyline(polyline);
         this.canvas.requestRender();
     }
     public deletePolyline(polyline: DrawablePolyline): boolean {
-        let index = this.polylines.indexOf(polyline);
-        if (index !== -1) {
-            this.polylines.splice(index, 1);
-            return true;
-        } else {
-            return false;
-        }
+        return this.canvas.env.removePolyline(polyline);
     }
     public containPolyline(polyline: DrawablePolyline): boolean {
         return this.polylines.indexOf(polyline) >= 0;

@@ -9,13 +9,14 @@ export class Ui {
         return (/Mobi|Android/i.test(navigator.userAgent));
     }
 
-    static createKeyboardListener(canvas: Canvas, camera: Camera, drawable: EditableMove & EditableDeleteClone, ondelete: () => void) {
+    static createKeyboardListener(canvas: Canvas, camera: Camera, drawable: EditableMove & EditableDeleteClone, ondelete: () => void, onmove?: (dx: number, dy: number) => void) {
         return new class extends KeyboardListener {
             public onkeydown(event: KeyboardIn): boolean {
                 let scale = camera.screenSizeToCanvas(1);
                 let {dx, dy} = Ui.getMove(event, scale);
                 if (dx !== 0 || dy !== 0) {
-                    drawable.move(dx, dy);
+                    if (onmove) onmove(dx, dy);
+                    else drawable.move(dx, dy);
                     canvas.requestRender();
                     return true;
                 }

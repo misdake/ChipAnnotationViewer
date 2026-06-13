@@ -2,6 +2,7 @@
 /js
 /out
 /node_modules
+/.test-dist
 /.rpt2_cache
 /dist/app.js
 /dist/login.js

@@ -8,6 +8,7 @@ import { Selection, SelectType } from "../layers/Selection";
 import { Ui } from "../util/Ui";
 import { LayerName } from "../layers/Layers";
 import { LayerPolylineView } from "../layers/LayerPolylineView";
+import { annotationHistory, HistoryTransaction } from "../history/AnnotationHistory";
 
 export class EditorPolylineEdit extends Editor {
 
@@ -47,6 +48,7 @@ export class EditorPolylineEdit extends Editor {
             private dragShape: boolean = false;
             private dragShapeX: number = -1;
             private dragShapeY: number = -1;
+            private transaction: HistoryTransaction = null;
 
             onmousedown(event: MouseIn): boolean {
                 this.dragPointIndex = null;
@@ -59,17 +61,21 @@ export class EditorPolylineEdit extends Editor {
                     let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pointIndex !== null && pointIndex !== undefined) { //start dragging this point
                         this.dragPointIndex = pointIndex;
+                        this.transaction = annotationHistory.begin(self.canvas, [polyline], "polyline.point.move");
                         return true;
                     }
 
                     let shape = polyline.picker.pickShape(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if ((pointIndex === null || pointIndex === undefined) && shape && event.altKey) {
+                        this.transaction = annotationHistory.begin(self.canvas, [polyline], event.ctrlKey ? "polyline.clone.drag" : "polyline.move");
                         if (event.ctrlKey) {
-                            polyline.cloneOnCanvas(env.canvas, 0, 0);
+                            const clone = polyline.cloneOnCanvas(env.canvas, 0, 0);
+                            if (clone) annotationHistory.trackAdded(this.transaction, [clone]);
                         }
                         this.dragShape = true;
                         this.dragShapeX = position.x;
                         this.dragShapeY = position.y;
+                        return true;
                     }
                 } else if (event.button === 2) {
                     this.moved = false;
@@ -78,13 +84,16 @@ export class EditorPolylineEdit extends Editor {
             }
             onmouseup(event: MouseIn): boolean {
                 let wasDragging: boolean = (this.dragPointIndex !== null && this.dragPointIndex !== undefined) || !!this.dragShape; //pass event if not dragging, so that LayerPolylineView will deselect this polyline
+                if (annotationHistory.isActive(this.transaction)) {
+                    annotationHistory.commit(self.canvas, this.transaction);
+                }
+                this.transaction = null;
 
                 this.dragPointIndex = null;
 
                 this.dragShape = false;
                 this.dragShapeX = -1;
                 this.dragShapeY = -1;
-
                 if (event.button === 0) { //left button up => nothing
                     this.down = false;
                     return wasDragging;
@@ -96,8 +105,9 @@ export class EditorPolylineEdit extends Editor {
                         let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                         if (pointIndex !== null && pointIndex !== undefined) { //delete point
                             if (polyline.editor.pointCount() > 3) { //so it will be at least a triangle
-                                polyline.editor.removePoint(pointIndex);
-                                self.canvas.requestRender();
+                                annotationHistory.mutatePolyline(self.canvas, polyline, "polyline.point.remove", draft => {
+                                    draft.editor.removePoint(pointIndex);
+                                });
                             }
                             hit = true;
                         }
@@ -115,8 +125,9 @@ export class EditorPolylineEdit extends Editor {
                     let pointIndex = polyline.picker.pickPoint(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (pointIndex !== null && pointIndex !== undefined) { //delete point
                         if (polyline.editor.pointCount() > 3) { //so it will be at least a triangle
-                            polyline.editor.removePoint(pointIndex);
-                            self.canvas.requestRender();
+                            annotationHistory.mutatePolyline(self.canvas, polyline, "polyline.point.remove", draft => {
+                                draft.editor.removePoint(pointIndex);
+                            });
                         }
                         return true;
                     }
@@ -125,8 +136,9 @@ export class EditorPolylineEdit extends Editor {
                     let segment = polyline.picker.pickLine(position.x, position.y, self.camera.screenSizeToCanvas(5));
                     if (segment) { //add point
                         let newIndex = segment.p1Index; //insert point after p1
-                        polyline.editor.insertPoint(segment.position.x, segment.position.y, newIndex);
-                        self.canvas.requestRender();
+                        annotationHistory.mutatePolyline(self.canvas, polyline, "polyline.point.insert", draft => {
+                            draft.editor.insertPoint(segment.position.x, segment.position.y, newIndex);
+                        });
                         return true;
                     }
                 }
@@ -135,33 +147,32 @@ export class EditorPolylineEdit extends Editor {
             }
             onmousemove(event: MouseIn): boolean {
                 if (this.down) { //left button is down => drag
+                    if (this.transaction && !annotationHistory.isActive(this.transaction)) {
+                        this.down = false;
+                        this.dragPointIndex = null;
+                        this.dragShape = false;
+                        this.transaction = null;
+                        return false;
+                    }
                     let position = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
 
                     if (this.dragPointIndex !== null && this.dragPointIndex !== undefined) {
                         polyline.editor.setPoint(this.dragPointIndex, position.x, position.y);
                         if (event.ctrlKey) {
                             let radius = self.camera.screenSizeToCanvas(EditorPolylineEdit.MAG_RADIUS);
-                            let result = undefined;
-                            if (!result) {
-                                let p = polyline.editor.getPoint(this.dragPointIndex);
-                                result = layerView.tryAlignPoint(p, polyline, radius);
-                            }
-                            if (!result) {
-                                result = polyline.calculator.alignPoint(this.dragPointIndex, radius);
-                            }
-                            if (result) {
-                                polyline.editor.setPoint(this.dragPointIndex, result.x, result.y);
-                            }
+                            let result = layerView.tryAlignPoint(polyline.editor.getPoint(this.dragPointIndex), polyline, radius);
+                            if (!result) result = polyline.calculator.alignPoint(this.dragPointIndex, radius);
+                            if (result) polyline.editor.setPoint(this.dragPointIndex, result.x, result.y);
                         }
-
                         self.canvas.requestRender();
                         return true;
 
                     } else if (this.dragShape) {
-                        polyline.editor.move(position.x - this.dragShapeX, position.y - this.dragShapeY);
+                        const dx = position.x - this.dragShapeX;
+                        const dy = position.y - this.dragShapeY;
                         this.dragShapeX = position.x;
                         this.dragShapeY = position.y;
-
+                        polyline.editor.move(dx, dy);
                         self.canvas.requestRender();
                         return true;
                     }
@@ -179,13 +190,16 @@ export class EditorPolylineEdit extends Editor {
             }
         };
         this._keyboardListener = Ui.createKeyboardListener(self.canvas, self.camera, polyline, () => {
-            layerView.deletePolyline(polyline);
-            Selection.deselect(SelectType.POLYLINE);
-            env.canvas.requestRender();
+            annotationHistory.removeDrawables(env.canvas, [polyline], "polyline.delete");
+        }, (dx, dy) => {
+            annotationHistory.mutatePolyline(env.canvas, polyline, "polyline.move.keyboard", draft => {
+                draft.move(dx, dy);
+            }, annotationHistory.mergeKey("polyline.move.keyboard", [polyline]));
         });
     }
 
     exit(env: Env): void {
+        annotationHistory.commitActive(env.canvas);
     }
 
     render(env: Env): void {

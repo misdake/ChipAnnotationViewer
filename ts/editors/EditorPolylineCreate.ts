@@ -9,6 +9,7 @@ import {Ui} from "../util/Ui";
 import {LayerName} from "../layers/Layers";
 import {LayerPolylineView} from "../layers/LayerPolylineView";
 import {Position} from "../util/Transform";
+import {annotationHistory} from "../history/AnnotationHistory";
 
 export class EditorPolylineCreate extends Editor {
 
@@ -86,6 +87,7 @@ export class EditorPolylineCreate extends Editor {
                     if (!this.moved) {
                         if (polyline.check()) {
                             self.selected = undefined;
+                            annotationHistory.recordCreated(env.canvas, [polyline], "polyline.create");
                             //pass it to polyline edit
                             setTimeout(() => {
                                 Selection.select(SelectType.POLYLINE, polyline);

@@ -11,6 +11,7 @@ import { EditableColor, EditableDeleteClone, EditableMove, EditablePick } from "
 import { LayerTextView } from "../layers/LayerTextView";
 import { LayerName } from "../layers/Layers";
 import { Selection, SelectType } from "../layers/Selection";
+import { createHistoryId, reserveHistoryId } from "../history/HistoryId";
 
 export class DrawableTextPack implements PrimitivePack {
     public constructor(text: string, color: Rgba, fontSize: Size, x: number, y: number, multiline: boolean = false) {
@@ -46,8 +47,11 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
     public color: Rgba;
     public colorString: string;
     protected readonly fontSize: Size;
+    public readonly historyId: number;
 
-    public constructor(pack: DrawableTextPack) {
+    public constructor(pack: DrawableTextPack, historyId: number = createHistoryId()) {
+        reserveHistoryId(historyId);
+        this.historyId = historyId;
         this.color = pack.color;
         this.colorString = rgbaToCss(this.color);
         this.fontSize = new Size(pack.fontSize.onScreen, pack.fontSize.onCanvas);
@@ -216,6 +220,18 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
             this._y,
             this._multiline,
         )
+    }
+
+    public applyPack(pack: DrawableTextPack): void {
+        this.color = pack.color;
+        this.colorString = rgbaToCss(this.color);
+        this.fontSize.onScreen = pack.fontSize.onScreen;
+        this.fontSize.onCanvas = pack.fontSize.onCanvas;
+        this._x = pack.x;
+        this._y = pack.y;
+        this._multiline = !!pack.multiline;
+        this.text = pack.text;
+        this.invalidate();
     }
 
     public render(canvas: Canvas, renderer: Renderer, camera: Camera): void {

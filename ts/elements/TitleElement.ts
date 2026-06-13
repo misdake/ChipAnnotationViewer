@@ -3,7 +3,7 @@ import { Annotation } from '../data/Annotation';
 import { ChipContent } from '../data/Chip';
 import { Canvas } from '../Canvas';
 import { ClientApi } from '../data/ClientApi';
-import { deleteIcon, saveIcon } from '../util/Icons';
+import { deleteIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
 
 
 @customElement('title-element')
@@ -21,6 +21,14 @@ export class TitleElement extends LitElement {
     editMode: 'none' | 'create' | 'update' = 'none';
     @property()
     onUserChange: (userId: number, userName: string) => void;
+    @property()
+    onUndo: () => void;
+    @property()
+    onRedo: () => void;
+    @property({ type: Boolean })
+    canUndo: boolean = false;
+    @property({ type: Boolean })
+    canRedo: boolean = false;
 
     @property()
     userName: string;
@@ -130,7 +138,6 @@ export class TitleElement extends LitElement {
         if (this.editMode === 'none') return;
 
         let dataString = this.getData();
-
         if (this.editMode === 'create') {
             ClientApi.createAnnotation(this.chipContent.name, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
@@ -233,6 +240,8 @@ export class TitleElement extends LitElement {
             ? html`
                 <div class="annotationActionRow">
                     <button class="iconButton" @click="${this.uploadAnnotation}" title="Save Annotation" aria-label="Save Annotation">${saveIcon}</button>
+                    <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
+                    <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
                     ${canDelete
                         ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${this.openDeleteAnnotationModal}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
                         : html``}

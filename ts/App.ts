@@ -6,6 +6,7 @@ import "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
+import "./editable/DrawableMultipleEditElement";
 import {Selection, SelectType} from "./layers/Selection";
 import {DrawablePolyline, DrawablePolylinePack} from "./editable/DrawablePolyline";
 import {DrawableText, DrawableTextPack} from "./editable/DrawableText";
@@ -18,6 +19,7 @@ import {EditorCameraControl} from "./editors/EditorCameraControl";
 import packageJson from "../package.json";
 import {packRgba} from "./util/Color";
 import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
+import {annotationHistory} from "./history/AnnotationHistory";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -63,7 +65,7 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
         true, packRgba(255, 255, 255, 64),
         true, packRgba(255, 255, 255, 191),
     ));
-    canvas.env.polylines.push(polyline);
+    canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
 };
 document.getElementById("buttonCreateRect").onclick = () => {
@@ -74,7 +76,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
         true, packRgba(255, 255, 255, 64),
         true, packRgba(255, 255, 255, 191),
     ));
-    canvas.env.polylines.push(polyline);
+    canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
 };
 
@@ -85,9 +87,17 @@ document.getElementById("buttonCreateText").onclick = () => {
         packRgba(255, 255, 255, 255), new Size(20),
         0, 0, false
     ));
-    canvas.env.texts.push(text);
+    canvas.env.addText(text);
     Selection.select(SelectType.TEXT_CREATE, text);
 };
+
+function updateHistoryButtons() {
+    const undoButton = document.getElementById("buttonUndo") as HTMLButtonElement;
+    const redoButton = document.getElementById("buttonRedo") as HTMLButtonElement;
+    if (undoButton) undoButton.disabled = !isEditingEnabled || !annotationHistory.canUndo();
+    if (redoButton) redoButton.disabled = !isEditingEnabled || !annotationHistory.canRedo();
+}
+annotationHistory.subscribe(updateHistoryButtons);
 
 class App {
     private chip: Chip;
@@ -200,15 +210,16 @@ class App {
                 }
             }
             const polylinePanel = polylines.length > 0
-                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .showActions=${false} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
                 : html``;
             const textPanel = texts.length > 0
-                ? html`<textedit-element .texts=${texts} .canvas=${canvas}></textedit-element>`
+                ? html`<textedit-element .texts=${texts} .showActions=${false} .canvas=${canvas}></textedit-element>`
                 : html``;
             const innerDivider = polylines.length > 0 && texts.length > 0
                 ? html`<div class="panel-divider"></div>`
                 : html``;
-            render(html`${panelDivider}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
+            const selectionActions = html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`;
+            render(html`${panelDivider}${selectionActions}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -224,9 +235,19 @@ class App {
                 .chipContent="${this.chipContent}"
                 .annotation="${this.annotation}"
                 .editMode="${editMode}"
+                .canUndo=${isEditingEnabled && annotationHistory.canUndo()}
+                .canRedo=${isEditingEnabled && annotationHistory.canRedo()}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
+                .onUndo=${() => {
+                    if (isEditingEnabled) annotationHistory.undo(canvas);
+                }}
+                .onRedo=${() => {
+                    if (isEditingEnabled) annotationHistory.redo(canvas);
+                }}
             ></title-element>
         `, document.getElementById("annotationTitle"));
+        const titleElement = document.querySelector("title-element") as HTMLElement & { updateComplete?: Promise<unknown> };
+        if (titleElement && titleElement.updateComplete) titleElement.updateComplete.then(updateHistoryButtons);
         this.applyEditMode();
     }
 
@@ -239,6 +260,7 @@ class App {
 
     onSelectChip(chip: Chip) {
         this.chip = chip;
+        annotationHistory.reset();
         this.refresh();
         Selection.deselectAny();
         enterBaseEditors();
@@ -248,6 +270,7 @@ class App {
         this.chipContent = chipContent;
         this.refresh();
         canvas.loadChip(chipContent);
+        annotationHistory.reset();
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
@@ -258,6 +281,7 @@ class App {
         this.refresh();
 
         canvas.loadData(data);
+        annotationHistory.reset();
 
         Selection.deselectAny();
         enterBaseEditors();
@@ -297,16 +321,28 @@ window.addEventListener("chipannotation-toast", (ev: Event) => {
 });
 
 function interceptKeys(evt: KeyboardEvent) {
-    if (evt.target !== document.body && evt.target !== document.getElementById("canvas2d")) {
-        return true;
-    }
-
     // @ts-ignore
     evt = evt || window.event; // IE support
     let ctrlDown = evt.ctrlKey || evt.metaKey; // Mac support
 
     // Check for Alt+Gr (http://en.wikipedia.org/wiki/AltGr_key)
     if (ctrlDown && evt.altKey) return true;
+
+    if (evt.target !== document.body && evt.target !== document.getElementById("canvas2d")) {
+        return true;
+    }
+
+    // Check for undo/redo
+    if (ctrlDown && evt.key.toLowerCase() === 'z' && !evt.shiftKey) {
+        if (!isEditingEnabled) return true;
+        annotationHistory.undo(canvas);
+        return false;
+    }
+    else if ((ctrlDown && evt.key.toLowerCase() === 'z' && evt.shiftKey) || (ctrlDown && evt.key.toLowerCase() === 'y')) {
+        if (!isEditingEnabled) return true;
+        annotationHistory.redo(canvas);
+        return false;
+    }
 
     // Check for ctrl+c, v and x
     else if (ctrlDown && evt.key === 'c') return ctrlC();
@@ -345,7 +381,7 @@ const defaultCopy: CopyFormat = {
     texts: [],
 };
 
-function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectType }, deleteOrigin: boolean) {
+function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectType }) {
     let polylines: DrawablePolyline[] = [];
     let texts: DrawableText[] = [];
     switch (selected.type) {
@@ -372,15 +408,6 @@ function generateCopyData(selected: { item: Drawable | Drawable[]; type: SelectT
     obj.polylines = polylines.map(polyline => polyline.pack());
     obj.texts = texts.map(text => text.pack());
 
-    if (deleteOrigin) {
-        let newPolylines = canvas.env.polylines.filter(polyline => polylines.indexOf(polyline) < 0);
-        canvas.env.polylines.length = 0;
-        canvas.env.polylines.push(...newPolylines);
-        let newTexts = canvas.env.texts.filter(text => texts.indexOf(text) < 0);
-        canvas.env.texts.length = 0;
-        canvas.env.texts.push(...newTexts);
-    }
-
     return obj;
 }
 function ctrlX() {
@@ -388,7 +415,9 @@ function ctrlX() {
     if (!isEditingEnabled) return true;
     let selected = Selection.getSelected();
     if (!selected.type) return false;
-    let obj = generateCopyData(selected, true);
+    let obj = generateCopyData(selected);
+    const items = Array.isArray(selected.item) ? selected.item as Drawable[] : [selected.item as Drawable];
+    annotationHistory.removeDrawables(canvas, items, "selection.cut");
     navigator.clipboard.writeText(JSON.stringify(obj)).then(() => {
         showToast("Cut");
     });
@@ -402,7 +431,7 @@ function ctrlC() {
     console.log("ctrlC");
     let selected = Selection.getSelected();
     if (!selected.type) return false;
-    let obj = generateCopyData(selected, false);
+    let obj = generateCopyData(selected);
     navigator.clipboard.writeText(JSON.stringify(obj)).then(() => {
         showToast("Copied");
     });
@@ -429,33 +458,13 @@ function ctrlV() {
 
             for (let polyline of data.polylines) {
                 let created = new DrawablePolyline(polyline);
-                canvas.env.polylines.push(created);
                 newDrawables.push(created);
             }
             for (let text of data.texts) {
                 let created = new DrawableText(text);
-                canvas.env.texts.push(created);
                 newDrawables.push(created);
             }
-
-            let selectType = undefined;
-            let selected: Drawable | Drawable[] = undefined;
-            if (data.polylines.length === 0 && data.texts.length === 1) {
-                selectType = SelectType.TEXT;
-                selected = newDrawables[0];
-            }
-            if (data.polylines.length === 1 && data.texts.length === 0) {
-                selectType = SelectType.POLYLINE;
-                selected = newDrawables[0];
-            }
-            if (data.polylines.length + data.texts.length > 1) {
-                selectType = SelectType.MULTIPLE;
-                selected = newDrawables;
-            }
-            if (selectType) {
-                Selection.select(selectType, selected);
-            }
-            canvas.requestRender();
+            annotationHistory.addDrawables(canvas, newDrawables, "selection.paste");
             showToast("Pasted");
         }
     });

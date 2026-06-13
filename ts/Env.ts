@@ -50,4 +50,28 @@ export class Env {
 
     }
 
+    addPolyline(polyline: DrawablePolyline, index: number = this.polylines.length): void {
+        const bounded = Math.max(0, Math.min(index, this.polylines.length));
+        this.polylines.splice(bounded, 0, polyline);
+    }
+
+    removePolyline(polyline: DrawablePolyline): boolean {
+        const index = this.polylines.indexOf(polyline);
+        if (index < 0) return false;
+        this.polylines.splice(index, 1);
+        return true;
+    }
+
+    addText(text: DrawableText, index: number = this.texts.length): void {
+        const bounded = Math.max(0, Math.min(index, this.texts.length));
+        this.texts.splice(bounded, 0, text);
+    }
+
+    removeText(text: DrawableText): boolean {
+        const index = this.texts.indexOf(text);
+        if (index < 0) return false;
+        this.texts.splice(index, 1);
+        return true;
+    }
+
 }

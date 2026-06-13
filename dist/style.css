@@ -505,6 +505,21 @@ input[type="number"]:focus {
     height: 18px;
 }
 
+.iconButton:disabled {
+    color: rgba(226, 232, 240, 0.45);
+    background: rgba(71, 85, 105, 0.45);
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+}
+
+.iconButton:disabled:hover,
+.iconButton:disabled:active {
+    box-shadow: none;
+    transform: none;
+}
+
 .deleteIconButton {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
 }

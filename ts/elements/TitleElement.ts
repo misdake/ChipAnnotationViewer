@@ -4,6 +4,7 @@ import { ChipContent } from '../data/Chip';
 import { Canvas } from '../Canvas';
 import { ClientApi } from '../data/ClientApi';
 import { deleteIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
+import { notifyToast, ToastKind } from '../util/Toast';
 
 
 @customElement('title-element')
@@ -36,8 +37,8 @@ export class TitleElement extends LitElement {
     menuOpen: boolean = false;
 
     userId: number;
-    private toast(message: string) {
-        window.dispatchEvent(new CustomEvent<string>("chipannotation-toast", { detail: message }));
+    private toast(message: string, kind: ToastKind = "success") {
+        notifyToast(message, kind);
     }
 
     private notifyAnnotationCreated(aid: number) {
@@ -138,23 +139,26 @@ export class TitleElement extends LitElement {
         if (this.editMode === 'none') return;
 
         let dataString = this.getData();
+        this.toast('Saving...', 'saving');
         if (this.editMode === 'create') {
             ClientApi.createAnnotation(this.chipContent.name, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
-                this.toast('Created');
+                this.toast('Saved');
                 this.notifyAnnotationCreated(r.aid);
                 //TODO refresh annotationlist and replace url
                 //TODO via global event bus?
 
             }).catch(e => {
                 console.log('createAnnotation error:', e);
+                this.toast('Save failed', 'error');
             });
         } else if (this.editMode === 'update') {
             ClientApi.updateAnnotation(this.annotation.aid, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
-                this.toast('Updated');
+                this.toast('Saved');
             }).catch(e => {
                 console.log('updateAnnotation error:', e);
+                this.toast('Save failed', 'error');
             });
         }
     }
@@ -189,11 +193,11 @@ export class TitleElement extends LitElement {
         ClientApi.deleteAnnotation(aid).then(deleted => {
             if (!deleted) throw new Error('Delete annotation rejected');
             modalState.checked = false;
-            this.toast('Deleted');
+            this.toast('Deleted', 'warning');
             this.notifyAnnotationDeleted(aid);
         }).catch(e => {
             console.log('deleteAnnotation error:', e);
-            this.toast('Delete failed');
+            this.toast('Delete failed', 'error');
             submit.disabled = false;
         });
     }
@@ -239,7 +243,7 @@ export class TitleElement extends LitElement {
         const buttonLine = this.editMode !== 'none'
             ? html`
                 <div class="annotationActionRow">
-                    <button class="iconButton" @click="${this.uploadAnnotation}" title="Save Annotation" aria-label="Save Annotation">${saveIcon}</button>
+                    <button id="buttonSaveAnnotation" class="iconButton" @click="${this.uploadAnnotation}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
                     <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
                     <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
                     ${canDelete

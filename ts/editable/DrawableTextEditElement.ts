@@ -94,10 +94,10 @@ export class TextEdit extends LitElement {
         return html`
             ${actionButtons}
 
-            <div class="textConfigRow">
+            <div class="editorConfigSection">
                 <div class="textConfigHeader">
-                    <span style="">Text</span>
-                    <span style="position: absolute; margin-left: 80px; margin-top: -2px;">
+                    <span class="editorConfigTitle">Text</span>
+                    <span class="textConfigOption">
                         <span class="chkBox ${multiline ? 'chkChecked' : ''}" @click=${() => this.setMultiline(!multiline)}>
                             ${multiline ? html`
                                 <svg viewBox="0 0 24 24">
@@ -105,7 +105,7 @@ export class TextEdit extends LitElement {
                                 </svg>
                             ` : ''}
                         </span>
-                        <span class="chkLabel" @click=${() => this.setMultiline(!multiline)}>Multiline</span>
+                        <span class="chkLabel editorConfigOptionLabel" @click=${() => this.setMultiline(!multiline)}>Multiline</span>
                     </span>
                 </div>
                 <div style="margin-top: 6px;">
@@ -128,8 +128,8 @@ export class TextEdit extends LitElement {
                 </div>
             </div>
 
-            <div class="colorFoldWrapper">
-                <div>Text Color</div>
+            <div class="editorConfigSection">
+                <div class="editorConfigTitle">Text Color</div>
                 <coloralpha-element
                     .currentRgb=${this.getRgb()}
                     .currentAlpha=${this.getAlpha()}
@@ -146,8 +146,8 @@ export class TextEdit extends LitElement {
                 ></coloralpha-element>
             </div>
 
-            <div class="colorFoldWrapper">
-                <div>Size</div>
+            <div class="editorConfigSection">
+                <div class="editorConfigTitle">Size</div>
                 <size-input
                     .screen=${this.getOnScreen()}
                     .image=${this.getOnCanvas()}

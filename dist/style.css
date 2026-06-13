@@ -874,12 +874,42 @@ input[type="number"]:focus {
     display: none;
     padding: 12px 24px;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--success-color), #059669);
+      background: linear-gradient(135deg, var(--success-color), #059669);
     color: white;
     font-size: 16px;
     box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-    animation: slideIn 0.3s ease;
-}
+      animation: slideIn 0.3s ease;
+  }
+
+  #toast.toast-saving {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+  }
+
+  #toast.toast-success {
+      background: linear-gradient(135deg, var(--success-color), #059669);
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  }
+
+  #toast.toast-copied {
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      box-shadow: 0 10px 30px rgba(8, 145, 178, 0.3);
+  }
+
+  #toast.toast-pasted {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+  }
+
+  #toast.toast-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 10px 30px rgba(217, 119, 6, 0.3);
+  }
+
+  #toast.toast-error {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 10px 30px rgba(220, 38, 38, 0.3);
+  }
 
 #toast.visible {
     display: block;
@@ -1000,16 +1030,15 @@ input[type="number"]:focus {
     }
 }
 
-/* colorFoldWrapper (shared by polyline/text editors) */
-.colorFoldWrapper {
+/* Shared section layout for annotation editors. */
+.editorConfigSection {
     overflow: hidden;
     margin: 8px 0 0 0;
-    padding: 8px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 0 0 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-.colorFoldWrapper coloralpha-element {
+.editorConfigSection coloralpha-element {
     display: block;
     max-height: 66px;
     opacity: 1;
@@ -1017,41 +1046,63 @@ input[type="number"]:focus {
     transition: max-height 0.5s ease, opacity 0.5s ease;
 }
 
-.colorFoldWrapper.collapsed coloralpha-element {
+.editorConfigSection.collapsed coloralpha-element {
     max-height: 0;
     opacity: 0;
     transition: max-height 0.5s ease, opacity 0.5s ease;
 }
 
-.colorFoldWrapper.collapsed coloralpha-element * {
+.editorConfigSection.collapsed coloralpha-element * {
     pointer-events: none;
 }
 
-.colorFoldWrapper.collapsed .sizeInput,
-.colorFoldWrapper.collapsed size-input {
+.editorConfigSection.collapsed .sizeInput,
+.editorConfigSection.collapsed size-input {
     display: none;
 }
 
-.colorFoldWrapper.noAnimation coloralpha-element {
+.editorConfigSection.noAnimation coloralpha-element {
     transition: none !important;
 }
 
 .configColorHeader {
-    display: grid;
-    grid-template-columns: 102px auto;
-    align-items: center;
-    font-size: 12px;
-}
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      font-size: 12px;
+  }
 
-.configColorHeader>span:first-child {
+.editorConfigTitle {
     font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
 }
 
-.configColorHeaderControls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.editorConfigOptionLabel {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
 }
+
+.textConfigOption {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 80px;
+}
+
+  .configColorHeaderControls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+
+  .configColorPrimary {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+  }
 
 /* checkbox style matching TriStateCheckbox */
 .chkBox {
@@ -1088,13 +1139,4 @@ input[type="number"]:focus {
     vertical-align: middle;
     cursor: pointer;
     user-select: none;
-}
-
-/* textConfigRow for text editor */
-.textConfigRow {
-    overflow: hidden;
-    margin: 8px 0;
-    padding: 8px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
 }

@@ -31,6 +31,7 @@ export class Ui {
     }
     static getMove(event: KeyboardIn, scale: number) {
         let dx = 0, dy = 0;
+        if (event.ctrlKey || event.metaKey || event.altKey) return {dx, dy};
         if (event.shiftKey) scale *= 10;
         switch (event.key) {
             case 'w':

@@ -20,6 +20,7 @@ import packageJson from "../package.json";
 import {packRgba} from "./util/Color";
 import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
 import {annotationHistory} from "./history/AnnotationHistory";
+import {notifyToast, ToastDetail} from "./util/Toast";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -215,11 +216,8 @@ class App {
             const textPanel = texts.length > 0
                 ? html`<textedit-element .texts=${texts} .showActions=${false} .canvas=${canvas}></textedit-element>`
                 : html``;
-            const innerDivider = polylines.length > 0 && texts.length > 0
-                ? html`<div class="panel-divider"></div>`
-                : html``;
             const selectionActions = html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`;
-            render(html`${panelDivider}${selectionActions}${polylinePanel}${innerDivider}${textPanel}`, document.getElementById("panelSelected"));
+            render(html`${panelDivider}${selectionActions}${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.MULTIPLE_EDIT);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -292,19 +290,24 @@ class App {
 new App().start();
 
 let toastTimeout: number = undefined;
-function showToast(content: string) {
+let toastHideTimeout: number = undefined;
+function showToast(detail: ToastDetail) {
     if (toastTimeout) clearTimeout(toastTimeout);
+    if (toastHideTimeout) clearTimeout(toastHideTimeout);
 
     let element = document.getElementById("toast");
     if (element) {
         element.classList.remove("hiding");
+        element.classList.remove("toast-saving", "toast-success", "toast-copied", "toast-pasted", "toast-warning", "toast-error");
+        element.classList.add(`toast-${detail.kind}`);
         element.classList.add("visible");
-        element.innerText = content;
+        element.innerText = detail.message;
         element.style.display = "block";
+        if (detail.kind === "saving") return;
         toastTimeout = setTimeout(() => {
             element.classList.remove("visible");
             element.classList.add("hiding");
-            setTimeout(() => {
+            toastHideTimeout = setTimeout(() => {
                 element.classList.remove("hiding");
                 element.innerText = "";
                 element.style.display = "none";
@@ -314,7 +317,7 @@ function showToast(content: string) {
 }
 
 window.addEventListener("chipannotation-toast", (ev: Event) => {
-    const custom = ev as CustomEvent<string>;
+    const custom = ev as CustomEvent<ToastDetail>;
     if (custom.detail) {
         showToast(custom.detail);
     }
@@ -327,6 +330,14 @@ function interceptKeys(evt: KeyboardEvent) {
 
     // Check for Alt+Gr (http://en.wikipedia.org/wiki/AltGr_key)
     if (ctrlDown && evt.altKey) return true;
+
+    // Save remains available while editing the annotation title.
+    if (ctrlDown && evt.key.toLowerCase() === 's') {
+        if (!isEditingEnabled) return true;
+        evt.preventDefault();
+        (document.getElementById("buttonSaveAnnotation") as HTMLButtonElement)?.click();
+        return false;
+    }
 
     if (evt.target !== document.body && evt.target !== document.getElementById("canvas2d")) {
         return true;
@@ -419,7 +430,7 @@ function ctrlX() {
     const items = Array.isArray(selected.item) ? selected.item as Drawable[] : [selected.item as Drawable];
     annotationHistory.removeDrawables(canvas, items, "selection.cut");
     navigator.clipboard.writeText(JSON.stringify(obj)).then(() => {
-        showToast("Cut");
+        notifyToast("Cut", "warning");
     });
 
     Selection.deselectAny();
@@ -433,7 +444,7 @@ function ctrlC() {
     if (!selected.type) return false;
     let obj = generateCopyData(selected);
     navigator.clipboard.writeText(JSON.stringify(obj)).then(() => {
-        showToast("Copied");
+        notifyToast("Copied", "copied");
     });
 
     return false;
@@ -465,7 +476,7 @@ function ctrlV() {
                 newDrawables.push(created);
             }
             annotationHistory.addDrawables(canvas, newDrawables, "selection.paste");
-            showToast("Pasted");
+            notifyToast("Pasted", "pasted");
         }
     });
 

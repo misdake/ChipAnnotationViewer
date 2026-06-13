@@ -1,6 +1,7 @@
 export class KeyboardIn {
     key: string;    
     ctrlKey: boolean;
+    metaKey: boolean;
     altKey: boolean;
     shiftKey: boolean;
 }

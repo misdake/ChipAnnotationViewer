@@ -14,24 +14,24 @@ export class TriStateCheckboxElement extends LitElement {
 
     static override styles = css`
         :host {
-            display: inline;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             cursor: pointer;
             user-select: none;
-            // line-height: 24px;
-            // height: 24px;
-            vertical-align: middle;
         }
 
         .tsc-box {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
             width: 11px;
             height: 11px;
             border: 1px solid #666;
             border-radius: 2px;
             background: #fff;
             transition: all 0.2s;
-            vertical-align: middle;
-            text-align: center;
         }
 
         :host(:hover) .tsc-box {
@@ -50,9 +50,12 @@ export class TriStateCheckboxElement extends LitElement {
         }
 
         .tsc-label {
-            display: inline;
+            display: inline-flex;
+            align-items: center;
             white-space: nowrap;
-            vertical-align: middle;
+            font-size: 12px;
+            line-height: 16px;
+            font-weight: 400;
         }
     `;
 

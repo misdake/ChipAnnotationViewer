@@ -202,15 +202,16 @@ export class PolylineEdit extends LitElement {
                 <span id="polylineTextArea">${this.area}</span>
             </div>
 
-            <div class="colorFoldWrapper${strokeVisible ? "" : " collapsed"}${this.strokeChangedByUser ? "" : " noAnimation"}">
+            <div class="editorConfigSection${strokeVisible ? "" : " collapsed"}${this.strokeChangedByUser ? "" : " noAnimation"}">
                 <div class="configColorHeader">
-                    <span>Stroke Color</span>
-                    <span class="configColorHeaderControls">
+                    <span class="configColorPrimary editorConfigTitle">
                         <tristate-checkbox
                             .state="${strokeState}"
-                            label="Stroke"
                             .onChange="${(state: "none" | "all") => this.onStyleCheck({ stroke: state === "all" })}"
                         ></tristate-checkbox>
+                        <span>Stroke</span>
+                    </span>
+                    <span class="configColorHeaderControls">
                         <tristate-checkbox
                             .state="${this.getClosedState()}"
                             label="Closed"
@@ -239,15 +240,14 @@ export class PolylineEdit extends LitElement {
                     .setImage=${(value: number) => this.onSizeInput({ canvas: value })}
                 ></size-input>
             </div>
-            <div class="colorFoldWrapper${fillVisible ? "" : " collapsed"}${this.fillChangedByUser ? "" : " noAnimation"}">
+            <div class="editorConfigSection${fillVisible ? "" : " collapsed"}${this.fillChangedByUser ? "" : " noAnimation"}">
                 <div class="configColorHeader">
-                    <span>Fill Color</span>
-                    <span class="configColorHeaderControls">
+                    <span class="configColorPrimary editorConfigTitle">
                         <tristate-checkbox
                             .state="${fillState}"
-                            label="Fill"
                             .onChange="${(state: "none" | "all") => this.onStyleCheck({ fill: state === "all" })}"
                         ></tristate-checkbox>
+                        <span>Fill</span>
                     </span>
                 </div>
                 <coloralpha-element

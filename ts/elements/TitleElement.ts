@@ -145,9 +145,6 @@ export class TitleElement extends LitElement {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
                 this.notifyAnnotationCreated(r.aid);
-                //TODO refresh annotationlist and replace url
-                //TODO via global event bus?
-
             }).catch(e => {
                 console.log('createAnnotation error:', e);
                 this.toast('Save failed', 'error');

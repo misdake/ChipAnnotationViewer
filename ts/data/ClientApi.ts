@@ -24,7 +24,7 @@ export class ClientApi {
                 } catch (e) {
                     reject(e);
                 }
-            }, getToken(), true);
+            }, getToken(), true, reject);
         });
     }
     private static post<B, T>(url: string, body: B): Promise<T> {
@@ -36,7 +36,7 @@ export class ClientApi {
                 } catch (e) {
                     reject(e);
                 }
-            }, getToken(), true);
+            }, getToken(), true, reject);
         });
     }
 

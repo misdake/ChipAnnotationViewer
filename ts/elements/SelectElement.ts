@@ -54,6 +54,7 @@ export class SelectElement extends LitElement {
     @property()
     annotation_current: Annotation;
     annotation_content_current: AnnotationContent;
+    private annotationSelectionVersion = 0;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
@@ -332,11 +333,12 @@ export class SelectElement extends LitElement {
         this.selectedAnnotation(annotation);
     }
     private selectedAnnotation(annotation: Annotation) {
+        const selectionVersion = ++this.annotationSelectionVersion;
         this.annotation_id_toload = annotation ? annotation.aid : 0;
         this.annotation_current = annotation;
         if (annotation.aid > 0) {
-            //TODO solve async
             ClientApi.getAnnotationContent(annotation.aid).then(content => {
+                if (selectionVersion !== this.annotationSelectionVersion) return;
                 let data = upgradeAnnotationData(JSON.parse(content.content));
                 if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
                 this.replaceUrl();

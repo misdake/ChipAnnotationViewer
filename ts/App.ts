@@ -140,28 +140,21 @@ class App {
         `, document.getElementById("selectPanel"));
         this.refresh();
 
-        let hintElement = document.getElementById("hint");
-        let hintToggle = document.getElementById("hintToggle") as HTMLButtonElement;
-        let hintIconEye = document.getElementById("hintIconEye") as HTMLElement;
-        let hintIconEyeOff = document.getElementById("hintIconEyeOff") as HTMLElement;
-        if (hintToggle) {
-            hintElement.classList.add("hidden");
-            hintToggle.classList.add("hintHidden");
-            if (hintIconEye) hintIconEye.style.display = "none";
-            if (hintIconEyeOff) hintIconEyeOff.style.display = "block";
-            hintToggle.onclick = () => {
-                hintElement.classList.toggle("hidden");
-                hintToggle.classList.toggle("hintHidden");
-                if (hintIconEye && hintIconEyeOff) {
-                    if (hintElement.classList.contains("hidden")) {
-                        hintIconEye.style.display = "none";
-                        hintIconEyeOff.style.display = "block";
-                    } else {
-                        hintIconEye.style.display = "block";
-                        hintIconEyeOff.style.display = "none";
-                    }
-                }
+        const hintToggle = document.getElementById("hintToggle");
+        const hintElement = document.getElementById("hint");
+        if (hintToggle && hintElement) {
+            const showHint = () => {
+                const rect = hintToggle.getBoundingClientRect();
+                hintElement.classList.add("visible");
+                const hintRect = hintElement.getBoundingClientRect();
+                hintElement.style.top = `${Math.max(8, rect.top - hintRect.height - 8)}px`;
+                hintElement.style.left = `${Math.min(window.innerWidth - hintRect.width - 8, Math.max(8, rect.left))}px`;
             };
+            const hideHint = () => hintElement.classList.remove("visible");
+            hintToggle.addEventListener("mouseenter", showHint);
+            hintToggle.addEventListener("mouseleave", hideHint);
+            hintToggle.addEventListener("focus", showHint);
+            hintToggle.addEventListener("blur", hideHint);
         }
 
         const panelDivider = html`<div class="panel-divider"></div>`;

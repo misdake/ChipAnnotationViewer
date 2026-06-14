@@ -45,7 +45,6 @@ body {
 #selectPanel,
 #cameraPanel,
 #propertyPanel,
-#hint,
 #footer {
     background: rgba(30, 41, 59, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -89,6 +88,7 @@ body {
     min-width: 220px;
     max-height: calc(100vh - 150px);
     overflow-y: auto;
+    scrollbar-gutter: stable;
     padding: 12px;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -115,23 +115,35 @@ body {
 }
 
 /* Hint */
-#hint {
-    position: absolute;
-    bottom: 70px;
-    left: 50%;
-    z-index: 997;
-    max-width: 80%;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transform: translateX(-50%);
-    transition: opacity 0.3s ease;
-    color: var(--text-secondary);
-    font-size: 13px;
+#hintControl {
+    display: flex;
+    align-items: center;
 }
 
-#hint.hidden {
+#hint {
+    position: fixed;
+    z-index: 1000;
+    width: max-content;
+    max-width: min(360px, calc(100vw - 70px));
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    background: rgba(30, 41, 59, 0.95);
+    color: var(--text-secondary);
+    font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+#hint.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 /* Footer */
@@ -148,7 +160,8 @@ body {
     vertical-align: middle;
 }
 
-#footer a {
+#footer a,
+#hintToggle {
     display: flex;
     flex-flow: row;
     align-items: center;
@@ -160,10 +173,17 @@ body {
     transition: all 0.2s ease;
 }
 
-#footer a:hover {
+#footer a:hover,
+#hintToggle:hover,
+#hintToggle:focus-visible {
+    outline: none;
     background: var(--primary-color);
     color: white;
     text-decoration: none !important;
+}
+
+#hintToggle {
+    cursor: default;
 }
 
 #footer span {
@@ -177,6 +197,10 @@ body {
     width: 20px;
     height: 20px;
     opacity: 0.8;
+}
+
+svg.footerIcon {
+    flex-shrink: 0;
 }
 
 /* Form controls */
@@ -465,29 +489,6 @@ input[type="number"]:focus {
     flex-wrap: wrap;
     gap: 2px;
     margin: 6px 0;
-}
-
-.hintToggleButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.hintToggleButton svg {
-    flex-shrink: 0;
-}
-
-.hintToggleButton.hintHidden {
-    background: rgba(100, 116, 139, 0.6);
-}
-
-.hintToggleButton.hintHidden:hover {
-    background: rgba(100, 116, 139, 0.8);
-    box-shadow: 0 0 15px rgba(100, 116, 139, 0.3);
-}
-
-#hintToggleText {
-    font-size: 13px;
 }
 
 .iconButton {

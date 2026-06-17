@@ -4,6 +4,7 @@ import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi } from '../data/ClientApi';
+import { notifyToast } from '../util/Toast';
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
@@ -218,14 +219,20 @@ export class SelectElement extends LitElement {
             this.chiplist_html = html;
             this.chiplist_array = array;
             if (current) this.selectedChip(current);
+        }).catch(error => {
+            SelectElement.warnNetwork('Could not load chip list', error);
         });
     }
     private static fetchChipList(): Promise<Chip[]> {
-        return new Promise<Chip[]>(resolve => {
+        return new Promise<Chip[]>((resolve, reject) => {
             NetUtil.get('https://chip.rgbuv.xyz/list.json', text => {
-                let chips = JSON.parse(text) as Chip[];
-                resolve(chips);
-            });
+                try {
+                    let chips = JSON.parse(text) as Chip[];
+                    resolve(chips);
+                } catch (error) {
+                    reject(error);
+                }
+            }, undefined, false, reject);
         });
     }
     private static showChipList(chips: Chip[], chip_current_name: string): { html: TemplateResult[], array: Chip[], current: Chip } {
@@ -306,6 +313,8 @@ export class SelectElement extends LitElement {
                 this.annotation_id_toload = save;
                 this.replaceUrl();
                 this.refreshAnnotationList();
+            }).catch(error => {
+                SelectElement.warnNetwork(`Could not load chip data for ${chip.name}`, error);
             });
         }
     }
@@ -323,6 +332,8 @@ export class SelectElement extends LitElement {
             } else {
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
             }
+        }).catch(error => {
+            SelectElement.warnNetwork('Could not load annotations from the server', error);
         });
     }
 
@@ -342,6 +353,9 @@ export class SelectElement extends LitElement {
                 let data = upgradeAnnotationData(JSON.parse(content.content));
                 if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
                 this.replaceUrl();
+            }).catch(error => {
+                if (selectionVersion !== this.annotationSelectionVersion) return;
+                SelectElement.warnNetwork('Could not load annotation content', error);
             });
         } else {
             if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy());
@@ -350,16 +364,25 @@ export class SelectElement extends LitElement {
     }
 
     private static fetchChipDetail(chip: Chip): Promise<ChipContent> {
-        return new Promise<ChipContent>(resolve => {
+        return new Promise<ChipContent>((resolve, reject) => {
             NetUtil.get(chip.url + '/content.json', json => {
-                let chipContent: ChipContent = JSON.parse(json) as ChipContent;
-                chipContent.baseUrl = chip.url;
-                if (!chipContent.vendor) chipContent.vendor = chip.vendor;
-                if (!chipContent.type) chipContent.type = chip.type;
-                if (!chipContent.family) chipContent.family = chip.family;
-                resolve(chipContent);
-            });
+                try {
+                    let chipContent: ChipContent = JSON.parse(json) as ChipContent;
+                    chipContent.baseUrl = chip.url;
+                    if (!chipContent.vendor) chipContent.vendor = chip.vendor;
+                    if (!chipContent.type) chipContent.type = chip.type;
+                    if (!chipContent.family) chipContent.family = chip.family;
+                    resolve(chipContent);
+                } catch (error) {
+                    reject(error);
+                }
+            }, undefined, false, reject);
         });
+    }
+
+    private static warnNetwork(message: string, error: unknown) {
+        console.warn(message, error);
+        notifyToast(message, 'warning');
     }
     private static showAnnotationList(annotations: Annotation[], annotation_current_id: number): { html: TemplateResult[], array: Annotation[], current: Annotation } {
         let options: TemplateResult[] = [];

@@ -70,7 +70,7 @@ export class ClientApi {
     }
 
     static listAnnotationByChip(chipName: string): Promise<Annotation[]> {
-        return ClientApi.get(`${API_SERVER}/annotation/listchip/${chipName}`);
+        return ClientApi.get(`${API_SERVER}/annotation/listchip/${encodeURIComponent(chipName)}`);
     }
     static listAnnotationByUserId(userId: number): Promise<Annotation[]> {
         return ClientApi.get(`${API_SERVER}/annotation/listuser/${userId}`);
@@ -84,7 +84,7 @@ export class ClientApi {
     }
 
     static createAnnotation(chipName: string, title: string, content: string): Promise<Annotation> {
-        return ClientApi.post(`${API_SERVER}/annotation/create/${chipName}`, {title, content, version: ANNOTATION_DATA_VERSION});
+        return ClientApi.post(`${API_SERVER}/annotation/create/${encodeURIComponent(chipName)}`, {title, content, version: ANNOTATION_DATA_VERSION});
     }
     static updateAnnotation(aid: number, title: string, content: string): Promise<Annotation> {
         return ClientApi.post(`${API_SERVER}/annotation/update/${aid}`, {title, content, version: ANNOTATION_DATA_VERSION});

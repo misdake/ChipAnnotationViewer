@@ -98,6 +98,9 @@ export class TitleElement extends LitElement {
             this.userName = userName;
             this.userId = userId;
             if (this.onUserChange) this.onUserChange(userId || 0, userName || '');
+        }).catch(e => {
+            console.warn('getCurrentLogin error:', e);
+            this.toast('Could not check login status', 'warning');
         });
     }
 
@@ -147,7 +150,7 @@ export class TitleElement extends LitElement {
                 this.notifyAnnotationCreated(r.aid);
             }).catch(e => {
                 console.log('createAnnotation error:', e);
-                this.toast('Save failed', 'error');
+                this.toast('Save failed', 'warning');
             });
         } else if (this.editMode === 'update') {
             ClientApi.updateAnnotation(this.annotation.aid, this.annotation.title, dataString).then(r => {
@@ -155,7 +158,7 @@ export class TitleElement extends LitElement {
                 this.toast('Saved');
             }).catch(e => {
                 console.log('updateAnnotation error:', e);
-                this.toast('Save failed', 'error');
+                this.toast('Save failed', 'warning');
             });
         }
     }
@@ -194,7 +197,7 @@ export class TitleElement extends LitElement {
             this.notifyAnnotationDeleted(aid);
         }).catch(e => {
             console.log('deleteAnnotation error:', e);
-            this.toast('Delete failed', 'error');
+            this.toast('Delete failed', 'warning');
             submit.disabled = false;
         });
     }

@@ -5,6 +5,7 @@ import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotatio
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
+import { AppModal } from '../util/AppModal';
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
@@ -17,10 +18,7 @@ function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): s
 
 @customElement('select-element')
 export class SelectElement extends LitElement {
-    private static readonly CHIP_INFO_MODAL_ID = "chip-info-modal-state";
-    private static readonly CHIP_INFO_MODAL_ROOT_ID = "chip-info-modal-root";
-
-    //↓↓↓↓↓ chip selection box ↓↓↓↓↓
+    // chip selection box
 
     chip_name_toload: string;
 
@@ -38,10 +36,10 @@ export class SelectElement extends LitElement {
     @property()
     onSelectChipContent: (chipContent: ChipContent) => void;
 
-    //↑↑↑↑↑ chip selection box ↑↑↑↑↑
+    // chip selection box
 
 
-    //↓↓↓↓↓ annotation selection box ↓↓↓↓↓
+    // annotation selection box
 
     annotation_id_toload: number;
 
@@ -59,7 +57,7 @@ export class SelectElement extends LitElement {
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
-    //↑↑↑↑↑ annotation selection box ↑↑↑↑↑
+    // annotation selection box
 
     private replaceUrl() {
         let url = window.location.pathname + '?chip=' + encodeURIComponent(this.chip_current.name);
@@ -74,7 +72,6 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
 
         this.refreshChipList();
-        this.ensureGlobalChipInfoModal();
 
         window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
@@ -90,68 +87,7 @@ export class SelectElement extends LitElement {
         });
     }
 
-    private ensureGlobalChipInfoModal() {
-        if (document.getElementById(SelectElement.CHIP_INFO_MODAL_ROOT_ID)) return;
-
-        const root = document.createElement("div");
-        root.id = SelectElement.CHIP_INFO_MODAL_ROOT_ID;
-        root.innerHTML = `
-            <input class="chipInfoModalState" id="${SelectElement.CHIP_INFO_MODAL_ID}" type="checkbox">
-            <div class="chipInfoModalOverlay">
-                <label class="chipInfoBackdrop" for="${SelectElement.CHIP_INFO_MODAL_ID}" aria-label="Close"></label>
-                <div class="chipInfoModal" role="dialog" aria-modal="true" aria-label="Chip Information">
-                    <div class="chipInfoModalHeader">
-                        <h3>Chip Information</h3>
-                        <label class="chipInfoCloseButton" for="${SelectElement.CHIP_INFO_MODAL_ID}" aria-label="Close">
-                            <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">
-                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>
-                            </svg>
-                        </label>
-                    </div>
-                    <div class="chipInfoModalBody">
-                        <div class="chipInfoRow"><span class="chipInfoKey">Name</span><span id="chip-info-name" class="chipInfoValue"></span></div>
-                        <div class="chipInfoRow"><span class="chipInfoKey">Type</span><span id="chip-info-vtf" class="chipInfoValue"></span></div>
-                        <div class="chipInfoRow"><span class="chipInfoKey">Size (px)</span><span id="chip-info-size" class="chipInfoValue"></span></div>
-                        <div id="chip-info-die-size-row" class="chipInfoRow" style="display:none;">
-                            <span class="chipInfoKey">Die Size</span><span id="chip-info-die-size" class="chipInfoValue"></span>
-                        </div>
-                        <div id="chip-info-spec-row" class="chipInfoRow" style="display:none;">
-                            <span class="chipInfoKey">Spec</span>
-                            <a id="chip-info-spec" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
-                        </div>
-                        <div id="chip-info-author-row" class="chipInfoRow" style="display:none; margin-top: 32px">
-                            <span class="chipInfoKey">Credit</span>
-                            <span id="chip-info-author" class="chipInfoValue"></span>
-                        </div>
-                        <div class="chipInfoRow">
-                            <span class="chipInfoKey">Source</span>
-                            <a id="chip-info-source" class="chipInfoValue chipInfoLink" target="_blank" href=""></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(root);
-    }
-
-    private openGlobalChipInfoModal() {
-        const chip = this.chip_content_current;
-        if (!chip) return;
-
-        const nameElement = document.getElementById("chip-info-name");
-        const vtfElement = document.getElementById("chip-info-vtf");
-        const sizeElement = document.getElementById("chip-info-size");
-        const sourceElement = document.getElementById("chip-info-source") as HTMLAnchorElement;
-        const dieSizeRow = document.getElementById("chip-info-die-size-row");
-        const dieSizeElement = document.getElementById("chip-info-die-size");
-        const specRow = document.getElementById("chip-info-spec-row");
-        const specElement = document.getElementById("chip-info-spec") as HTMLAnchorElement;
-        const authorRow = document.getElementById("chip-info-author-row");
-        const authorElement = document.getElementById("chip-info-author");
-        const modalState = document.getElementById(SelectElement.CHIP_INFO_MODAL_ID) as HTMLInputElement;
-
-        if (!nameElement || !vtfElement || !sizeElement || !sourceElement || !dieSizeRow || !dieSizeElement || !specRow || !specElement || !authorRow || !authorElement || !modalState) return;
-
+    private openChipInfoModal(chip: ChipContent) {
         const sourceText = chip.source || '';
         const widthMm = chip.widthMillimeter || 0;
         const heightMm = chip.heightMillimeter || 0;
@@ -166,49 +102,41 @@ export class SelectElement extends LitElement {
             return Number.isFinite(value) ? value.toFixed(2).replace(/\.00$/, '') : '';
         };
 
-        nameElement.textContent = chip.name || '';
-        vtfElement.textContent = `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`;
-        sizeElement.textContent = `${chip.width} x ${chip.height}`;
-        sourceElement.textContent = sourceText;
-        sourceElement.setAttribute("href", sourceText);
-        sourceElement.setAttribute("title", sourceText);
+        const rows: TemplateResult[] = [];
+        const row = (keyText: string, value: TemplateResult | string, extraClass: string = "") => html`
+            <div class="chipInfoRow ${extraClass}">
+                <span class="chipInfoKey">${keyText}</span>
+                <span class="chipInfoValue">${value}</span>
+            </div>
+        `;
+        const link = (text: string, href: string) => html`
+            <a class="chipInfoLink" href="${href}" title="${href}" target="_blank">${text}</a>
+        `;
 
-        dieSizeRow.style.display = hasDieSize ? '' : 'none';
-        if (hasDieSize) {
-            dieSizeElement.textContent = `${fmt(dieAreaMm2)} mm², ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`;
-        } else {
-            dieSizeElement.textContent = '';
-        }
+        rows.push(row("Name", chip.name || ""));
+        rows.push(row("Type", `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`));
+        rows.push(row("Size (px)", `${chip.width} x ${chip.height}`));
+        if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm2, ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
+        if (specUrl) rows.push(row("Spec", link(specUrl, specUrl)));
+        if (hasAuthor) rows.push(row("Credit", authorUrl ? link(authorName, authorUrl) : authorName, "chipInfoCreditRow"));
+        rows.push(row("Source", sourceText ? link(sourceText, sourceText) : ""));
 
-        specRow.style.display = specUrl ? '' : 'none';
-        if (specUrl) {
-            specElement.textContent = specUrl;
-            specElement.setAttribute("href", specUrl);
-            specElement.setAttribute("title", specUrl);
-        } else {
-            specElement.textContent = '';
-            specElement.setAttribute("href", '');
-            specElement.setAttribute("title", '');
-        }
-
-        authorRow.style.display = hasAuthor ? '' : 'none';
-        authorElement.textContent = '';
-        if (hasAuthor) {
-            if (authorUrl) {
-                const authorLink = document.createElement("a");
-                authorLink.className = "chipInfoLink";
-                authorLink.textContent = authorName;
-                authorLink.setAttribute("href", authorUrl);
-                authorLink.setAttribute("title", authorUrl);
-                authorLink.setAttribute("target", "_blank");
-                authorElement.appendChild(authorLink);
-            } else {
-                authorElement.textContent = authorName;
-            }
-        }
-
-        modalState.checked = true;
+        AppModal.open({
+            title: "Chip Information",
+            ariaLabel: "Chip Information",
+            primaryText: "Close",
+            body: html`${rows}`,
+            onSubmit: () => true,
+        });
     }
+
+    private openGlobalChipInfoModal() {
+        const chip = this.chip_content_current;
+        if (!chip) return;
+
+        this.openChipInfoModal(chip);
+    }
+
 
     //load chip list
 
@@ -388,8 +316,11 @@ export class SelectElement extends LitElement {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
 
+        const annotationCountLabel = annotations.length === 1
+            ? "1 annotation"
+            : `${annotations.length} annotations`;
         options.push(html`
-            <option>(annotation count: ${annotations.length})</option>`);
+            <option>${annotationCountLabel}</option>`);
         array.push(SelectElement.getDummyAnnotation());
 
         let current: Annotation = null;

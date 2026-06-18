@@ -111,9 +111,6 @@ class App {
         if (isReadOnly || !this.annotation || this.userId <= 0) {
             return 'none';
         }
-        if (this.annotation.aid === 0) {
-            return 'create';
-        }
         if (this.annotation.aid > 0 && this.annotation.userId === this.userId) {
             return 'update';
         }
@@ -226,6 +223,7 @@ class App {
                 .chipContent="${this.chipContent}"
                 .annotation="${this.annotation}"
                 .editMode="${editMode}"
+                .canCreate=${!isReadOnly && this.userId > 0 && !!this.chipContent}
                 .canUndo=${isEditingEnabled && annotationHistory.canUndo()}
                 .canRedo=${isEditingEnabled && annotationHistory.canRedo()}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}

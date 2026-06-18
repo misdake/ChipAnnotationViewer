@@ -472,8 +472,13 @@ input[type="number"]:focus {
     margin: 6px 0;
 }
 
-.annotationDeleteButton {
+.annotationDeleteButton,
+.annotationCreateButton {
     margin-left: auto !important;
+}
+
+.annotationCreateButton+.annotationDeleteButton {
+    margin-left: 2px !important;
 }
 
 #propertyPanel .configButton,
@@ -523,6 +528,10 @@ input[type="number"]:focus {
 
 .deleteIconButton {
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+}
+
+.createIconButton {
+    background: linear-gradient(135deg, #0891b2 0%, #0f766e 100%);
 }
 
 .zoomButton {
@@ -645,11 +654,6 @@ input[type="number"]:focus {
     color: var(--primary-color);
 }
 
-.chipInfoModalState {
-    position: absolute;
-    left: -9999px;
-}
-
 .chipInfoModalOverlay {
     position: fixed;
     inset: 0;
@@ -663,7 +667,7 @@ input[type="number"]:focus {
     transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
 
-.chipInfoModalState:checked+.chipInfoModalOverlay {
+.appModalRoot.appModalOpen .chipInfoModalOverlay {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -691,7 +695,7 @@ input[type="number"]:focus {
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.chipInfoModalState:checked+.chipInfoModalOverlay .chipInfoModal {
+.appModalRoot.appModalOpen .chipInfoModal {
     opacity: 1;
     transform: translateY(0) scale(1);
 }
@@ -725,6 +729,16 @@ input[type="number"]:focus {
     line-height: 20px;
     text-align: center;
     cursor: pointer;
+}
+
+button.chipInfoCloseButton,
+.appModalBackdrop {
+    font-family: inherit;
+}
+
+.appModalBackdrop {
+    border: 0;
+    padding: 0;
 }
 
 .chipInfoCloseButton:hover {
@@ -804,6 +818,25 @@ input[type="number"]:focus {
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+}
+
+.appModalStatus {
+    min-height: 18px;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.appModalStatus-saving {
+    color: var(--secondary-color);
+}
+
+.appModalStatus-warning {
+    color: var(--warning-color);
+}
+
+.appModalStatus-error {
+    color: #ef4444;
 }
 
 #creationButtons {

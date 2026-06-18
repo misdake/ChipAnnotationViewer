@@ -1,17 +1,15 @@
 import { customElement, html, LitElement, property } from 'lit-element';
-import { Annotation } from '../data/Annotation';
+import { Annotation, AnnotationData } from '../data/Annotation';
 import { ChipContent } from '../data/Chip';
 import { Canvas } from '../Canvas';
 import { ClientApi } from '../data/ClientApi';
-import { deleteIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
+import { deleteIcon, newAnnotationIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
 import { notifyToast, ToastKind } from '../util/Toast';
+import { AppModal, AppModalContext } from '../util/AppModal';
 
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
-    private static readonly DELETE_MODAL_ID = "delete-annotation-modal-state";
-    private static readonly DELETE_MODAL_ROOT_ID = "delete-annotation-modal-root";
-
     @property()
     chipContent: ChipContent;
     @property()
@@ -20,6 +18,8 @@ export class TitleElement extends LitElement {
     canvas: Canvas;
     @property()
     editMode: 'none' | 'create' | 'update' = 'none';
+    @property({ type: Boolean })
+    canCreate: boolean = false;
     @property()
     onUserChange: (userId: number, userName: string) => void;
     @property()
@@ -37,6 +37,7 @@ export class TitleElement extends LitElement {
     menuOpen: boolean = false;
 
     userId: number;
+    private createdAnnotationIdToSelect = 0;
     private toast(message: string, kind: ToastKind = "success") {
         notifyToast(message, kind);
     }
@@ -47,49 +48,6 @@ export class TitleElement extends LitElement {
 
     private notifyAnnotationDeleted(aid: number) {
         window.dispatchEvent(new CustomEvent<number>("chipannotation-annotation-deleted", { detail: aid }));
-    }
-
-    private ensureDeleteAnnotationModal() {
-        const previousRoot = document.getElementById(TitleElement.DELETE_MODAL_ROOT_ID);
-        if (previousRoot) previousRoot.remove();
-
-        const root = document.createElement("div");
-        root.id = TitleElement.DELETE_MODAL_ROOT_ID;
-        root.innerHTML = `
-            <input class="chipInfoModalState" id="${TitleElement.DELETE_MODAL_ID}" type="checkbox">
-            <div class="chipInfoModalOverlay">
-                <label class="chipInfoBackdrop" for="${TitleElement.DELETE_MODAL_ID}" aria-label="Cancel deletion"></label>
-                <div class="chipInfoModal" role="dialog" aria-modal="true" aria-label="Delete Annotation">
-                    <div class="chipInfoModalHeader">
-                        <h3>Delete Annotation</h3>
-                        <label class="chipInfoCloseButton" for="${TitleElement.DELETE_MODAL_ID}" aria-label="Cancel deletion">
-                            <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">
-                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>
-                            </svg>
-                        </label>
-                    </div>
-                    <div class="chipInfoModalBody">
-                        <p class="deleteAnnotationWarning">Warning: this permanently deletes the annotation.</p>
-                        <p class="deleteAnnotationWarning">This action cannot be undone. The annotation data cannot be recovered from this viewer.</p>
-                        <p class="deleteAnnotationTarget">Annotation: <strong id="delete-annotation-title"></strong></p>
-                        <label class="deleteAnnotationPrompt" for="delete-annotation-confirmation">Type <strong>DELETE</strong> to confirm:</label>
-                        <input id="delete-annotation-confirmation" type="text" autocomplete="off" spellcheck="false">
-                        <div class="deleteAnnotationActions">
-                            <label class="configButton" for="${TitleElement.DELETE_MODAL_ID}">Cancel</label>
-                            <button id="delete-annotation-submit" class="configButton deleteAnnotationSubmit" disabled>Delete Permanently</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(root);
-
-        const input = document.getElementById("delete-annotation-confirmation") as HTMLInputElement;
-        const submit = document.getElementById("delete-annotation-submit") as HTMLButtonElement;
-        input.addEventListener("input", () => {
-            submit.disabled = input.value !== "DELETE";
-        });
-        submit.addEventListener("click", () => this.confirmDeleteAnnotation());
     }
 
     private getLogin() {
@@ -108,7 +66,6 @@ export class TitleElement extends LitElement {
         super.firstUpdated(_changedProperties);
 
         this.getLogin();
-        this.ensureDeleteAnnotationModal();
 
         window.addEventListener('message', (e: MessageEvent) => {
             if (e.data && e.data.type === 'chipannotation-login-done') {
@@ -163,43 +120,116 @@ export class TitleElement extends LitElement {
         }
     }
 
+    private openCreateAnnotationModal() {
+        if (!this.canCreate || !this.chipContent) return;
+
+        this.createdAnnotationIdToSelect = 0;
+        AppModal.open({
+            title: "New Annotation",
+            ariaLabel: "New Annotation",
+            input: {
+                label: "Title",
+                required: true,
+            },
+            primaryText: "Create",
+            onSubmit: context => this.confirmCreateAnnotation(context),
+            onInputChange: (_value, context) => {
+                if (!this.createdAnnotationIdToSelect) return;
+                this.createdAnnotationIdToSelect = 0;
+                context.setPrimaryText("Create");
+            },
+            onCancel: () => {
+                this.createdAnnotationIdToSelect = 0;
+            },
+        });
+    }
+
+    private async confirmCreateAnnotation(context: AppModalContext): Promise<boolean> {
+        if (!this.canCreate || !this.chipContent) return false;
+
+        const title = context.inputValue;
+        if (!title) {
+            context.setStatus("Enter a title before creating.");
+            context.input?.focus({ preventScroll: true });
+            return false;
+        }
+
+        context.setPrimaryDisabled(true);
+        context.setStatus("Creating...", "saving");
+
+        try {
+            let createdAid = this.createdAnnotationIdToSelect;
+            if (!createdAid) {
+                const dataString = JSON.stringify(AnnotationData.dummy());
+                const created = await ClientApi.createAnnotation(this.chipContent.name, title, dataString);
+                createdAid = created.aid;
+                this.createdAnnotationIdToSelect = createdAid;
+                context.setPrimaryText("Retry");
+            }
+
+            const annotations = await ClientApi.listAnnotationByChip(this.chipContent.name);
+            const listed = annotations && annotations.some(annotation => annotation.aid === createdAid);
+            if (!listed) throw new Error("Created annotation was not returned by the annotation list");
+
+            this.toast("Created");
+            this.notifyAnnotationCreated(createdAid);
+            return true;
+        } catch (e) {
+            console.log("createAnnotation error:", e);
+            context.setStatus(
+                this.createdAnnotationIdToSelect
+                    ? "Created, but list reload failed. Retry to select it."
+                    : "Create failed. Check login or network, then retry."
+            );
+            this.toast("Create failed", "warning");
+            context.setPrimaryDisabled(false);
+            return false;
+        }
+    }
+
     private openDeleteAnnotationModal() {
         if (!this.annotation || this.annotation.aid <= 0 || this.annotation.userId !== this.userId) return;
 
         const title = this.annotation.title || 'untitled';
-        const modalState = document.getElementById(TitleElement.DELETE_MODAL_ID) as HTMLInputElement;
-        const titleElement = document.getElementById("delete-annotation-title");
-        const input = document.getElementById("delete-annotation-confirmation") as HTMLInputElement;
-        const submit = document.getElementById("delete-annotation-submit") as HTMLButtonElement;
-        if (!modalState || !titleElement || !input || !submit) return;
-
-        titleElement.textContent = title;
-        input.value = "";
-        submit.disabled = true;
-        modalState.checked = true;
-        input.focus();
+        AppModal.open({
+            title: "Delete Annotation",
+            ariaLabel: "Delete Annotation",
+            input: {
+                label: "Type DELETE to confirm:",
+                required: true,
+                confirmText: "DELETE",
+            },
+            primaryText: "Delete Permanently",
+            primaryClassName: "deleteAnnotationSubmit",
+            body: html`
+                <p class="deleteAnnotationWarning">Warning: this permanently deletes the annotation.</p>
+                <p class="deleteAnnotationWarning">This action cannot be undone. The annotation data cannot be recovered from this viewer.</p>
+                <p class="deleteAnnotationTarget">Annotation: <strong>${title}</strong></p>
+            `,
+            onSubmit: context => this.confirmDeleteAnnotation(context),
+        });
     }
 
-    private confirmDeleteAnnotation() {
-        if (!this.annotation || this.annotation.aid <= 0 || this.annotation.userId !== this.userId) return;
-
-        const input = document.getElementById("delete-annotation-confirmation") as HTMLInputElement;
-        const submit = document.getElementById("delete-annotation-submit") as HTMLButtonElement;
-        const modalState = document.getElementById(TitleElement.DELETE_MODAL_ID) as HTMLInputElement;
-        if (!input || !submit || !modalState || input.value !== "DELETE") return;
+    private async confirmDeleteAnnotation(context: AppModalContext): Promise<boolean> {
+        if (!this.annotation || this.annotation.aid <= 0 || this.annotation.userId !== this.userId) return false;
+        if (!context.input || context.input.value !== "DELETE") return false;
 
         const aid = this.annotation.aid;
-        submit.disabled = true;
-        ClientApi.deleteAnnotation(aid).then(deleted => {
+        context.setPrimaryDisabled(true);
+        context.setStatus("Deleting...", "saving");
+        try {
+            const deleted = await ClientApi.deleteAnnotation(aid);
             if (!deleted) throw new Error('Delete annotation rejected');
-            modalState.checked = false;
             this.toast('Deleted', 'warning');
             this.notifyAnnotationDeleted(aid);
-        }).catch(e => {
+            return true;
+        } catch (e) {
             console.log('deleteAnnotation error:', e);
+            context.setStatus("Delete failed. Check login or network, then retry.");
             this.toast('Delete failed', 'warning');
-            submit.disabled = false;
-        });
+            context.setPrimaryDisabled(false);
+            return false;
+        }
     }
 
     private onClickLogin() {
@@ -240,14 +270,21 @@ export class TitleElement extends LitElement {
             && this.annotation
             && this.annotation.aid > 0
             && this.annotation.userId === this.userId;
-        const buttonLine = this.editMode !== 'none'
+        const buttonLine = this.editMode !== 'none' || this.canCreate
             ? html`
                 <div class="annotationActionRow">
-                    <button id="buttonSaveAnnotation" class="iconButton" @click="${this.uploadAnnotation}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
-                    <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
-                    <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
+                    ${this.editMode !== 'none'
+                        ? html`
+                            <button id="buttonSaveAnnotation" class="iconButton" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
+                            <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
+                            <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
+                        `
+                        : html``}
+                    ${this.canCreate
+                        ? html`<button class="iconButton createIconButton annotationCreateButton" @click="${() => this.openCreateAnnotationModal()}" title="New Annotation" aria-label="New Annotation">${newAnnotationIcon}</button>`
+                        : html``}
                     ${canDelete
-                        ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${this.openDeleteAnnotationModal}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
+                        ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
                         : html``}
                 </div>
             `

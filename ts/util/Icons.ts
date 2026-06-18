@@ -46,6 +46,14 @@ export const deleteIcon = html`
     </svg>
 `;
 
+export const newAnnotationIcon = html`
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+        <path d="M12 13l1.1 2.2 2.4.35-1.75 1.7.42 2.4L12 18.52 9.83 19.65l.42-2.4-1.75-1.7 2.4-.35z"/>
+    </svg>
+`;
+
 export const cloneIcon = html`
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="8" y="8" width="12" height="12" rx="2"/>

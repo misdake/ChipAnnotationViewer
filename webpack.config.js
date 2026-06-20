@@ -16,6 +16,7 @@ module.exports = env => {
         entry: {
             app: './ts/App.ts',
             login: './ts/login.ts',
+            comments: './ts/comments.ts',
         },
         devtool: devtool,
         mode: mode,

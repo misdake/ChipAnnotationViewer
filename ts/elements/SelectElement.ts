@@ -7,6 +7,17 @@ import { ClientApi } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 
+const commentIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.8 9.8 0 0 1-4.5-1.1L3 20l1.3-4A8.3 8.3 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.5 8.4 8.4 0 0 1 9 8.5Z" />
+    </svg>`;
+
+const chipInfoIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 5h.01" />
+        <path d="M12 11v8" />
+    </svg>`;
+
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
     for (let param of paramNames) {
@@ -52,10 +63,16 @@ export class SelectElement extends LitElement {
     @property()
     canDiscardCurrentAnnotation: () => boolean;
 
+    @property({type: Number})
+    chipCommentCount: number = null;
+    @property({type: Number})
+    annotationCommentCount: number = null;
+
     @property()
     annotation_current: Annotation;
     annotation_content_current: AnnotationContent;
     private annotationSelectionVersion = 0;
+    private chipSelectionVersion = 0;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
@@ -127,6 +144,7 @@ export class SelectElement extends LitElement {
             title: "Chip Information",
             ariaLabel: "Chip Information",
             primaryText: "Close",
+            showCancel: false,
             body: html`${rows}`,
             onSubmit: () => true,
         });
@@ -230,8 +248,11 @@ export class SelectElement extends LitElement {
         }
     }
     private selectedChip(chip: Chip) {
+        const selectionVersion = ++this.chipSelectionVersion;
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
+        this.chipCommentCount = null;
+        this.annotationCommentCount = null;
         if (this.onSelectChip) this.onSelectChip(chip);
         this.annotationlist_html = [];
         this.annotationlist_array = [];
@@ -239,7 +260,9 @@ export class SelectElement extends LitElement {
         this.replaceUrl();
 
         if (chip) {
+            this.loadChipCommentCount(chip.name, selectionVersion);
             SelectElement.fetchChipDetail(chip).then(chipDetail => {
+                if (selectionVersion !== this.chipSelectionVersion) return;
                 this.chip_content_current = chipDetail;
                 if (this.onSelectChipContent) this.onSelectChipContent(chipDetail);
                 let save = this.annotation_id_toload;
@@ -286,11 +309,13 @@ export class SelectElement extends LitElement {
         const selectionVersion = ++this.annotationSelectionVersion;
         this.annotation_id_toload = annotation ? annotation.aid : 0;
         this.annotation_current = annotation;
+        this.annotationCommentCount = null;
         if (annotation.aid > 0) {
             ClientApi.getAnnotationContent(annotation.aid).then(content => {
                 if (selectionVersion !== this.annotationSelectionVersion) return;
                 let data = upgradeAnnotationData(JSON.parse(content.content));
                 if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+                this.loadAnnotationCommentCount(annotation, selectionVersion);
                 this.replaceUrl();
             }).catch(error => {
                 if (selectionVersion !== this.annotationSelectionVersion) return;
@@ -326,6 +351,40 @@ export class SelectElement extends LitElement {
 
     private canDiscardCurrent(): boolean {
         return !this.canDiscardCurrentAnnotation || this.canDiscardCurrentAnnotation();
+    }
+
+    private loadChipCommentCount(chipName: string, selectionVersion: number) {
+        ClientApi.getCommentCount(chipName, 0).then(count => {
+            if (selectionVersion !== this.chipSelectionVersion || this.chip_current.name !== chipName) return;
+            this.chipCommentCount = count;
+        }).catch(error => {
+            if (selectionVersion !== this.chipSelectionVersion) return;
+            console.warn('Could not load chip comment count', error);
+        });
+    }
+
+    private loadAnnotationCommentCount(annotation: Annotation, selectionVersion: number) {
+        ClientApi.getCommentCount(annotation.chipName, annotation.aid).then(count => {
+            if (selectionVersion !== this.annotationSelectionVersion || this.annotation_current !== annotation) return;
+            this.annotationCommentCount = count;
+        }).catch(error => {
+            if (selectionVersion !== this.annotationSelectionVersion) return;
+            console.warn('Could not load annotation comment count', error);
+        });
+    }
+
+    private openComments(annotation: number) {
+        const chip = this.chip_current;
+        if (!chip) return;
+        window.open(`comments.html?chip=${encodeURIComponent(chip.name)}&annotation=${annotation}`, '_blank', 'noopener');
+    }
+
+    private renderCommentButton(annotation: number, count: number, title: string, disabled: boolean) {
+        return html`
+            <button class="commentButton" ?disabled=${disabled} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
+                ${commentIcon}
+                ${count === null ? html`` : html`<span class="commentCount ${count === 0 ? 'commentCountEmpty' : ''}" aria-label=${`${count} comments`}>${count}</span>`}
+            </button>`;
     }
 
     private restoreChipSelect() {
@@ -376,18 +435,20 @@ export class SelectElement extends LitElement {
         const chip = this.chip_content_current;
 
         return html`
-            <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden;">
+            <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:visible;">
                 <select id="chipSelect" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.chiplist_html}
                 </select>
                 ${chip
-                ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>i</button>`
-                : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">i</span>`
+                ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" aria-label="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
+                : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">${chipInfoIcon}</span>`
             }
+                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
                 <select id="annotationSelect" style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.annotationlist_html}
                 </select>
                 <button class="refreshButton" style="margin-left:1px;" @click="${() => this.refreshAnnotationList()}">\xA0</button>
+                ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
             </div>
         `;
     }

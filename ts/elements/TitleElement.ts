@@ -29,6 +29,10 @@ export class TitleElement extends LitElement {
     @property()
     onAnnotationSaved: () => void;
     @property()
+    canDiscardCurrentAnnotation: () => boolean;
+    @property()
+    onAnnotationCreated: () => void;
+    @property()
     onUserChange: (userId: number, userName: string) => void;
     @property()
     onUndo: () => void;
@@ -113,6 +117,7 @@ export class TitleElement extends LitElement {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
                 if (this.onAnnotationSaved) this.onAnnotationSaved();
+                if (this.onAnnotationCreated) this.onAnnotationCreated();
                 this.notifyAnnotationCreated(r.aid);
             }).catch(e => {
                 console.log('createAnnotation error:', e);
@@ -132,6 +137,7 @@ export class TitleElement extends LitElement {
 
     private openCreateAnnotationModal() {
         if (!this.canCreate || !this.chipContent) return;
+        if (this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
 
         this.createdAnnotationIdToSelect = 0;
         AppModal.open({

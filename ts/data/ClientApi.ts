@@ -1,5 +1,6 @@
 import { NetUtil } from '../util/NetUtil';
 import { ANNOTATION_DATA_VERSION, Annotation, AnnotationContent } from './Annotation';
+import { Comment } from './Comment';
 
 declare const __API_SERVER__: string;
 
@@ -91,5 +92,18 @@ export class ClientApi {
     }
     static deleteAnnotation(aid: number): Promise<boolean> {
         return ClientApi.get(`${API_SERVER}/annotation/delete/${aid}`);
+    }
+
+    static getCommentCount(chipName: string, annotation: number): Promise<number> {
+        return ClientApi.get(`${API_SERVER}/comment/count/${encodeURIComponent(chipName)}/${annotation}`);
+    }
+    static listComments(chipName: string, annotation: number): Promise<Comment[]> {
+        return ClientApi.get(`${API_SERVER}/comment/list/${encodeURIComponent(chipName)}/${annotation}`);
+    }
+    static createComment(chipName: string, annotation: number, content: string): Promise<Comment> {
+        return ClientApi.post(`${API_SERVER}/comment/create/${encodeURIComponent(chipName)}/${annotation}`, {content});
+    }
+    static deleteComment(cid: number): Promise<boolean> {
+        return ClientApi.post(`${API_SERVER}/comment/delete/${cid}`, {});
     }
 }

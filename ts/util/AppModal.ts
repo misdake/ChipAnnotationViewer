@@ -29,6 +29,7 @@ export interface AppModalConfig {
     primaryText: string;
     primaryClassName?: string;
     cancelText?: string;
+    showCancel?: boolean;
     initialStatus?: string;
     onSubmit: (context: AppModalContext) => boolean | void | Promise<boolean | void>;
     onInputChange?: (value: string, context: AppModalContext) => void;
@@ -293,7 +294,9 @@ class AppModalElement extends LitElement {
                             : html``}
                         <p class="appModalStatus appModalStatus-${this.statusKind}">${this.statusMessage}</p>
                         <div class="deleteAnnotationActions">
-                            <button class="configButton appModalCancel" type="button" @click=${() => this.close(true)}>${config ? (config.cancelText || "Cancel") : "Cancel"}</button>
+                            ${config && config.showCancel !== false
+                                ? html`<button class="configButton appModalCancel" type="button" @click=${() => this.close(true)}>${config.cancelText || "Cancel"}</button>`
+                                : html``}
                             <button class=${primaryClass} type="button" ?disabled=${this.primaryDisabled} @click=${() => this.submit()}>${this.primaryText}</button>
                         </div>
                     </div>

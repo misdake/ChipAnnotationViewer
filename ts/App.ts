@@ -109,6 +109,7 @@ class App {
     private annotationBaselineSnapshot: string = '';
     private annotationDirty: boolean = false;
     private annotationTitleDraft: string = '';
+    private allowNextAnnotationSelectionDiscard: boolean = false;
 
     private getEditMode(): 'none' | 'create' | 'update' {
         if (isReadOnly || !this.annotation || this.userId <= 0) {
@@ -243,6 +244,10 @@ class App {
                     this.annotationTitleDraft = this.annotation ? (this.annotation.title || '') : '';
                     this.markAnnotationClean();
                 }}
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
+                .onAnnotationCreated=${() => {
+                    this.allowNextAnnotationSelectionDiscard = true;
+                }}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
                 .onUndo=${() => {
                     if (isEditingEnabled) annotationHistory.undo(canvas);
@@ -302,6 +307,10 @@ class App {
     }
 
     private confirmDiscardCurrentAnnotation(): boolean {
+        if (this.allowNextAnnotationSelectionDiscard) {
+            this.allowNextAnnotationSelectionDiscard = false;
+            return true;
+        }
         this.updateAnnotationDirtyState(false);
         if (!this.annotationDirty) return true;
         return window.confirm("Discard unsaved annotation changes?");

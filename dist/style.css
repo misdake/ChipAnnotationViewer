@@ -135,7 +135,7 @@ body {
     transform: translateY(-4px);
     transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
     background: rgba(30, 41, 59, 0.95);
-    color: var(--text-secondary);
+    color: #fff;
     font-size: 13px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
@@ -612,17 +612,26 @@ input[type="number"]:focus {
 
 .refreshButton {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     width: 20px;
     height: 20px;
-    margin-left: 5px;
-    border: 0;
-    background: transparent url("res/refresh.png");
-    background-size: cover;
-    transition: transform 0.3s ease;
+    margin-left: 1px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background-color: rgba(30, 41, 59, 0.8);
+    background-image: url("res/refresh.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 13px 13px;
+    cursor: pointer;
 }
 
 .refreshButton:hover {
-    transform: rotate(180deg);
+    border-color: var(--primary-color);
 }
 
 .chipInfoButton {
@@ -630,6 +639,7 @@ input[type="number"]:focus {
     align-items: center;
     justify-content: center;
     vertical-align: middle;
+    box-sizing: border-box;
     width: 20px;
     height: 20px;
     margin-left: 5px;
@@ -651,7 +661,71 @@ input[type="number"]:focus {
 
 .chipInfoButton:hover {
     border-color: var(--primary-color);
+}
+
+.chipInfoButton svg {
+    width: 14.4px;
+    height: 14.4px;
+}
+
+.commentButton {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    margin-left: 1px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: rgba(30, 41, 59, 0.8);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.commentButton svg {
+    width: 13px;
+    height: 13px;
+    color: #fff;
+}
+
+.commentButton:hover:not(:disabled) {
+    border-color: var(--primary-color);
     color: var(--primary-color);
+}
+
+.commentButton:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.commentCount {
+    position: absolute;
+    top: -7px;
+    right: -8px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border: 1px solid var(--surface-color);
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    pointer-events: none;
+}
+
+.commentCountEmpty {
+    background: var(--success-color);
 }
 
 .chipInfoModalOverlay {
@@ -807,6 +881,12 @@ button.chipInfoCloseButton,
 
 .deleteAnnotationActions label.configButton {
     display: inline-block;
+}
+
+.deleteAnnotationActions .configButton {
+    min-height: 34px;
+    padding: 7px 14px;
+    font-size: 14px;
 }
 
 .deleteAnnotationSubmit {
@@ -1018,6 +1098,11 @@ button.chipInfoCloseButton,
     }
 
     #selectPanel .chipInfoButton {
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+
+    #selectPanel .commentButton {
         flex: 0 0 auto;
         margin-left: 0;
     }

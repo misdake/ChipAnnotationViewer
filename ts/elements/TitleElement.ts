@@ -15,11 +15,19 @@ export class TitleElement extends LitElement {
     @property()
     annotation: Annotation;
     @property()
+    titleValue: string = '';
+    @property()
     canvas: Canvas;
     @property()
     editMode: 'none' | 'create' | 'update' = 'none';
     @property({ type: Boolean })
     canCreate: boolean = false;
+    @property({ type: Boolean })
+    dirty: boolean = false;
+    @property()
+    onAnnotationChanged: (title: string) => void;
+    @property()
+    onAnnotationSaved: () => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
     @property()
@@ -104,6 +112,7 @@ export class TitleElement extends LitElement {
             ClientApi.createAnnotation(this.chipContent.name, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
+                if (this.onAnnotationSaved) this.onAnnotationSaved();
                 this.notifyAnnotationCreated(r.aid);
             }).catch(e => {
                 console.log('createAnnotation error:', e);
@@ -113,6 +122,7 @@ export class TitleElement extends LitElement {
             ClientApi.updateAnnotation(this.annotation.aid, this.annotation.title, dataString).then(r => {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
+                if (this.onAnnotationSaved) this.onAnnotationSaved();
             }).catch(e => {
                 console.log('updateAnnotation error:', e);
                 this.toast('Save failed', 'warning');
@@ -249,11 +259,13 @@ export class TitleElement extends LitElement {
         this.requestUpdate();
     }
 
+    private onTitleInput(event: Event) {
+        if (this.onAnnotationChanged) this.onAnnotationChanged((event.target as HTMLInputElement).value);
+    }
+
     render() {
         let title = '';
-        if (this.annotation) {
-            title = this.annotation.title || '';
-        }
+        if (this.annotation) title = this.titleValue !== undefined && this.titleValue !== null ? this.titleValue : (this.annotation.title || '');
 
         let loginControl = this.userId > 0
             ? html`
@@ -275,7 +287,7 @@ export class TitleElement extends LitElement {
                 <div class="annotationActionRow">
                     ${this.editMode !== 'none'
                         ? html`
-                            <button id="buttonSaveAnnotation" class="iconButton" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
+                            <button id="buttonSaveAnnotation" class="iconButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
                             <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
                             <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
                         `
@@ -293,7 +305,7 @@ export class TitleElement extends LitElement {
             ? html`
                 <div class="titleInput">
                     <label for="dataTitle">Title:</label>
-                    <input id="inputTitle" type="text" class="configText" value="${title}">
+                    <input id="inputTitle" type="text" class="configText" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
                 </div>
             `
             : html``;

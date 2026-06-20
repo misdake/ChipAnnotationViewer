@@ -49,6 +49,8 @@ export class SelectElement extends LitElement {
 
     @property()
     onSelectAnnotation: (annotation: Annotation, data: AnnotationData) => void;
+    @property()
+    canDiscardCurrentAnnotation: () => boolean;
 
     @property()
     annotation_current: Annotation;
@@ -218,6 +220,10 @@ export class SelectElement extends LitElement {
     //select chip
 
     private uiSelectedChip(index: number) {
+        if (!this.canDiscardCurrent()) {
+            this.restoreChipSelect();
+            return;
+        }
         let chip = this.chiplist_array[index];
         if (chip) {
             this.selectedChip(chip);
@@ -247,6 +253,7 @@ export class SelectElement extends LitElement {
         }
     }
     private refreshAnnotationList() {
+        if (!this.canDiscardCurrent()) return;
         this.annotationlist_html = [];
         this.annotationlist_array = [];
         ClientApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
@@ -268,6 +275,10 @@ export class SelectElement extends LitElement {
     //select annotation
 
     private uiSelectedAnnotation(index: number) {
+        if (!this.canDiscardCurrent()) {
+            this.restoreAnnotationSelect();
+            return;
+        }
         let annotation = this.annotationlist_array[index];
         this.selectedAnnotation(annotation);
     }
@@ -312,6 +323,24 @@ export class SelectElement extends LitElement {
         console.warn(message, error);
         notifyToast(message, 'warning');
     }
+
+    private canDiscardCurrent(): boolean {
+        return !this.canDiscardCurrentAnnotation || this.canDiscardCurrentAnnotation();
+    }
+
+    private restoreChipSelect() {
+        const select = this.querySelector("#chipSelect") as HTMLSelectElement;
+        if (!select || !this.chiplist_array) return;
+        const index = this.chiplist_array.indexOf(this.chip_current);
+        if (index >= 0) select.selectedIndex = index;
+    }
+
+    private restoreAnnotationSelect() {
+        const select = this.querySelector("#annotationSelect") as HTMLSelectElement;
+        if (!select || !this.annotationlist_array) return;
+        const index = this.annotationlist_array.indexOf(this.annotation_current);
+        if (index >= 0) select.selectedIndex = index;
+    }
     private static showAnnotationList(annotations: Annotation[], annotation_current_id: number): { html: TemplateResult[], array: Annotation[], current: Annotation } {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
@@ -348,14 +377,14 @@ export class SelectElement extends LitElement {
 
         return html`
             <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:hidden;">
-                <select @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
+                <select id="chipSelect" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.chiplist_html}
                 </select>
                 ${chip
                 ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>i</button>`
                 : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">i</span>`
             }
-                <select style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
+                <select id="annotationSelect" style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
                     ${this.annotationlist_html}
                 </select>
                 <button class="refreshButton" style="margin-left:1px;" @click="${() => this.refreshAnnotationList()}">\xA0</button>

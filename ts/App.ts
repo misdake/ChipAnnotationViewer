@@ -106,6 +106,9 @@ class App {
     private annotation: Annotation;
     private userId: number = 0;
     private userName: string = '';
+    private annotationBaselineSnapshot: string = '';
+    private annotationDirty: boolean = false;
+    private annotationTitleDraft: string = '';
 
     private getEditMode(): 'none' | 'create' | 'update' {
         if (isReadOnly || !this.annotation || this.userId <= 0) {
@@ -133,9 +136,16 @@ class App {
                 .onSelectChip=${(chip: Chip) => this.onSelectChip(chip)}
                 .onSelectChipContent=${(chipContent: ChipContent) => this.onSelectChipContent(chipContent)}
                 .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData) => this.onSelectAnnotation(annotation, data)}
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
+        annotationHistory.subscribe(() => this.updateAnnotationDirtyState());
+        window.addEventListener("beforeunload", (event) => {
+            if (!this.annotationDirty) return;
+            event.preventDefault();
+            event.returnValue = "";
+        });
 
         const hintToggle = document.getElementById("hintToggle");
         const hintElement = document.getElementById("hint");
@@ -222,10 +232,17 @@ class App {
                 .canvas="${canvas}"
                 .chipContent="${this.chipContent}"
                 .annotation="${this.annotation}"
+                .titleValue=${this.annotationTitleDraft}
                 .editMode="${editMode}"
                 .canCreate=${!isReadOnly && this.userId > 0 && !!this.chipContent}
+                .dirty=${this.annotationDirty}
                 .canUndo=${isEditingEnabled && annotationHistory.canUndo()}
                 .canRedo=${isEditingEnabled && annotationHistory.canRedo()}
+                .onAnnotationChanged=${(title: string) => this.onAnnotationTitleChanged(title)}
+                .onAnnotationSaved=${() => {
+                    this.annotationTitleDraft = this.annotation ? (this.annotation.title || '') : '';
+                    this.markAnnotationClean();
+                }}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
                 .onUndo=${() => {
                     if (isEditingEnabled) annotationHistory.undo(canvas);
@@ -238,6 +255,7 @@ class App {
         const titleElement = document.querySelector("title-element") as HTMLElement & { updateComplete?: Promise<unknown> };
         if (titleElement && titleElement.updateComplete) titleElement.updateComplete.then(updateHistoryButtons);
         this.applyEditMode();
+        this.updateAnnotationDirtyState(false);
     }
 
     private onUserChange(userId: number, userName: string) {
@@ -249,7 +267,9 @@ class App {
 
     onSelectChip(chip: Chip) {
         this.chip = chip;
+        this.annotationTitleDraft = '';
         annotationHistory.reset();
+        this.markAnnotationClean(false);
         this.refresh();
         Selection.deselectAny();
         enterBaseEditors();
@@ -257,9 +277,11 @@ class App {
 
     onSelectChipContent(chipContent: ChipContent) {
         this.chipContent = chipContent;
+        this.annotationTitleDraft = '';
         this.refresh();
         canvas.loadChip(chipContent);
         annotationHistory.reset();
+        this.markAnnotationClean(false);
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
@@ -267,7 +289,7 @@ class App {
 
     onSelectAnnotation(annotation: Annotation, data: AnnotationData) {
         this.annotation = annotation;
-        this.refresh();
+        this.annotationTitleDraft = annotation ? (annotation.title || '') : '';
 
         canvas.loadData(data);
         annotationHistory.reset();
@@ -275,6 +297,53 @@ class App {
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
+        this.refresh();
+        this.markAnnotationClean();
+    }
+
+    private confirmDiscardCurrentAnnotation(): boolean {
+        this.updateAnnotationDirtyState(false);
+        if (!this.annotationDirty) return true;
+        return window.confirm("Discard unsaved annotation changes?");
+    }
+
+    private markAnnotationClean(refresh: boolean = true) {
+        this.annotationBaselineSnapshot = this.createAnnotationSnapshot();
+        const changed = this.annotationDirty;
+        this.annotationDirty = false;
+        if (refresh && changed) this.refresh();
+    }
+
+    private updateAnnotationDirtyState(refresh: boolean = true) {
+        const next = this.hasAnnotationChanges();
+        if (this.annotationDirty === next) return;
+        this.annotationDirty = next;
+        if (refresh) this.refresh();
+    }
+
+    private hasAnnotationChanges(): boolean {
+        if (this.getEditMode() === 'none' || !this.annotationBaselineSnapshot) return false;
+        return this.createAnnotationSnapshot() !== this.annotationBaselineSnapshot;
+    }
+
+    private createAnnotationSnapshot(): string {
+        if (!this.annotation || !canvas) return "";
+        return JSON.stringify({
+            title: this.getCurrentAnnotationTitle(),
+            data: canvas.save(),
+        });
+    }
+
+    private getCurrentAnnotationTitle(): string {
+        const title = this.annotationTitleDraft !== undefined && this.annotationTitleDraft !== null
+            ? this.annotationTitleDraft
+            : (this.annotation ? this.annotation.title : "");
+        return title || "untitled";
+    }
+
+    private onAnnotationTitleChanged(title: string) {
+        this.annotationTitleDraft = title;
+        this.updateAnnotationDirtyState();
     }
 }
 

@@ -1289,8 +1289,8 @@ html, body {
 #canvas2d {
     position: absolute !important;
     top: var(--editor-top);
-    left: var(--editor-tools);
-    width: calc(100% - var(--editor-tools) - var(--editor-inspector)) !important;
+    left: 0;
+    width: 100% !important;
     height: calc(100% - var(--editor-top) - var(--editor-status)) !important;
     background-color: #090d13;
     background-image: radial-gradient(circle, rgba(95, 111, 135, .17) 1px, transparent 1px);
@@ -1312,7 +1312,7 @@ html, body {
     z-index: 1000;
     height: var(--editor-top);
     display: grid;
-    grid-template-columns: 190px minmax(420px, 1fr) minmax(340px, auto);
+    grid-template-columns: 170px 520px minmax(300px, 1fr);
     align-items: center;
     gap: 14px;
     padding: 0 14px;
@@ -1329,7 +1329,7 @@ html, body {
 .app-name { font-size: 13px; font-weight: 650; white-space: nowrap; }
 
 #selectPanel { position: static; max-width: none; padding: 0; background: transparent; border: 0; box-shadow: none; }
-#selectPanel > select-element > .workspace-selectors { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(190px, 1fr); gap: 10px; }
+#selectPanel > select-element > .workspace-selectors { display: grid; grid-template-columns: 260px 250px; gap: 10px; }
 .selector-field { min-width: 0; }
 .selector-field-label, .eyebrow {
     display: block; margin: 0 0 3px; color: var(--ink-muted); font-size: 9px;
@@ -1413,12 +1413,20 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 #annotationTitle #buttonSaveAnnotation::after { content: "Save"; margin-left: 5px; color: white; font-size: 11px; font-weight: 650; }
 #annotationTitle #buttonSaveAnnotation:disabled { background: var(--panel-3); opacity: .55; }
 #annotationTitle #userLoginInline { width: auto; padding: 0 11px; }
-#annotationTitle .annotationCopyButton { width: auto; padding: 0 10px; white-space: nowrap; }
 .userMenuName { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+#annotationTitle .userMenu { position: relative; }
+#annotationTitle .userMenuRow { height: 29px; gap: 4px; }
+#annotationTitle .userMenuToggle { border: 0; background: transparent; color: var(--ink-muted); font-size: 13px; }
+#annotationTitle .userMenuToggle:hover { color: var(--ink); }
+#annotationTitle .userMenuDropdown { position: absolute; z-index: 1250; top: calc(100% + 5px); right: 0; min-width: 112px; margin: 0; padding: 5px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel-2); box-shadow: 0 12px 28px rgba(0,0,0,.42); }
+#annotationTitle .userMenuDropdown[hidden] { display: none; }
+#annotationTitle #userLogoutInline { width: 100%; height: 30px; padding: 0 9px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font: inherit; font-size: 11px; text-align: left; cursor: pointer; }
+#annotationTitle #userLogoutInline:hover { background: rgba(79,140,255,.14); }
 
 #toolRail {
-    position: absolute; z-index: 998; top: var(--editor-top); bottom: var(--editor-status); left: 0;
-    width: var(--editor-tools); padding: 9px 8px; border-right: 1px solid var(--line);
+    position: absolute; z-index: 998; top: calc(var(--editor-top) + 12px); bottom: auto; left: 12px;
+    width: var(--editor-tools); padding: 9px 8px 4px; border: 1px solid var(--line-strong); border-radius: 9px;
+    background: rgba(17, 23, 34, .94); box-shadow: 0 12px 30px rgba(0,0,0,.38); backdrop-filter: blur(12px);
 }
 .rail-label { margin-bottom: 8px; color: var(--ink-muted); font-size: 8px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase; }
 #editControls { display: contents; }
@@ -1433,10 +1441,13 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 .rail-separator { height: 1px; margin: 8px 3px 10px; background: var(--line); }
 
 #propertyPanel {
-    position: absolute; z-index: 997; inset: var(--editor-top) 0 var(--editor-status) auto;
-    width: var(--editor-inspector); min-width: 0; max-height: none; padding: 0; overflow-y: auto; border-left: 1px solid var(--line);
+    position: absolute; z-index: 997; top: calc(var(--editor-top) + 12px); right: 12px; bottom: auto; left: auto;
+    width: var(--editor-inspector); min-width: 0; max-height: calc(100% - var(--editor-top) - var(--editor-status) - 24px); padding: 0; overflow-y: auto;
+    border: 1px solid var(--line-strong); border-radius: 9px; background: rgba(17, 23, 34, .94);
+    box-shadow: 0 14px 34px rgba(0,0,0,.42); backdrop-filter: blur(12px);
 }
-.inspector-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 14px 15px 12px; border-bottom: 1px solid var(--line); background: var(--panel-1); }
+#container:not(:has(#panelSelected:not(:empty))) #propertyPanel { display: none; }
+.inspector-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 14px 15px 12px; border-bottom: 1px solid var(--line); border-radius: 8px 8px 0 0; background: rgba(17, 23, 34, .98); }
 .inspector-header h2 { margin: 0; font-size: 14px; font-weight: 650; }
 .state-badge { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-muted); font-size: 10px; }
 .empty-inspector { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 44px 24px; color: var(--ink-muted); text-align: center; }
@@ -1464,21 +1475,30 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #45bd85; box-shadow: 0 0 0 2px rgba(69,189,133,.12); }
 .footer-spacer { flex: 1; }
 .footer-divider { width: 1px; height: 12px; background: var(--line); }
+.footer-links { display: flex; align-items: center; gap: 3px; }
+#footer .footer-links a { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 4px; }
+#footer .footer-links a:hover { background: var(--panel-3); }
+#footer .footer-links img { width: 15px; height: 15px; object-fit: contain; opacity: .72; }
+#footer .footer-links a:hover img { opacity: 1; }
 
 #cameraPanel {
-    position: absolute; z-index: 1002; right: calc(var(--editor-inspector) + 8px); bottom: 3px; left: auto;
+    position: absolute; z-index: 1002; right: calc(var(--editor-inspector) + 108px); bottom: 3px; left: auto;
     max-width: none; padding: 0; background: transparent;
 }
 .zoomControls { gap: 4px; }
-.zoomSlider, .zoomButton { display: none; }
+.zoomButton { display: inline-flex; width: 22px; height: 22px; border-color: var(--line); border-radius: 4px; background: var(--panel-2); }
+.zoomButton img { width: 12px; height: 12px; }
+.zoomSlider { display: block; width: 92px; }
 .zoomText { width: 48px; color: var(--ink-muted); font-size: 10px; }
 .viewButton { min-width: 34px; height: 22px; padding: 0 6px; border-color: var(--line); border-radius: 4px; background: var(--panel-2); font-size: 10px; }
 
 #toast { right: calc(var(--editor-inspector) + 18px); bottom: 44px; }
+#container:not(:has(#panelSelected:not(:empty))) #cameraPanel { right: 108px; }
+#container:not(:has(#panelSelected:not(:empty))) #toast { right: 18px; }
 
 @media (max-width: 980px) {
     :root { --editor-inspector: 240px; }
-    #topBar { grid-template-columns: 42px minmax(330px, 1fr) minmax(260px, auto); gap: 8px; padding: 0 8px; }
+    #topBar { grid-template-columns: 42px minmax(470px, 520px) minmax(260px, 1fr); gap: 8px; padding: 0 8px; }
     .app-name { display: none; }
     #annotationTitle .historyButton, #annotationTitle .annotationDeleteButton { display: none; }
 }
@@ -1489,5 +1509,6 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
     #selectPanel { grid-column: 2; }
     #annotationTitle { grid-column: 1 / -1; grid-row: 2; }
     #propertyPanel { display: none; }
+    #toolRail { top: calc(var(--editor-top) + 8px); left: 8px; }
     #cameraPanel { right: 8px; }
 }

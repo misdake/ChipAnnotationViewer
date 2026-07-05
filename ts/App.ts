@@ -150,9 +150,10 @@ class App {
         const editable = editMode !== 'none';
         const stateLabel = editable ? "Editable" : "Read only";
         const stateBadge = document.getElementById("editStateBadge");
-        const permissionState = document.getElementById("permissionState");
+        const toolRail = document.getElementById("toolRail");
         if (stateBadge) stateBadge.textContent = stateLabel;
-        if (permissionState) permissionState.textContent = stateLabel;
+        if (toolRail) toolRail.hidden = !editable;
+        EditorCameraControl.allowLeftMousePan = !editable;
         if (isEditingEnabled === editable) return;
         isEditingEnabled = editable;
         document.getElementById("editControls").hidden = !editable;

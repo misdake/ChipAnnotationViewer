@@ -79,6 +79,18 @@ export class SelectElement extends LitElement {
     private chipPickerOpen = false;
     @property({ type: Boolean })
     private showAllChips = false;
+    @property({ type: Boolean })
+    private advancedBrowserOpen = false;
+    @property()
+    private advancedName = '';
+    @property()
+    private advancedVendor = '';
+    @property()
+    private advancedType = '';
+    @property()
+    private advancedFamily = '';
+    @property()
+    private advancedSelectedChip: Chip = null;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
@@ -283,6 +295,25 @@ export class SelectElement extends LitElement {
             });
         }
     }
+
+    private openAdvancedBrowser() {
+        this.advancedName = '';
+        this.advancedVendor = '';
+        this.advancedType = '';
+        this.advancedFamily = '';
+        this.advancedSelectedChip = this.chip_current;
+        this.advancedBrowserOpen = true;
+    }
+
+    private closeAdvancedBrowser() {
+        this.advancedBrowserOpen = false;
+    }
+
+    private confirmAdvancedChip() {
+        if (!this.advancedSelectedChip || !this.canDiscardCurrent()) return;
+        this.selectedChip(this.advancedSelectedChip);
+        this.closeAdvancedBrowser();
+    }
     private refreshAnnotationList() {
         if (!this.canDiscardCurrent()) return;
         this.annotationlist_html = [];
@@ -449,6 +480,15 @@ export class SelectElement extends LitElement {
             return !query || searchText.includes(query);
         });
         const quickChips = filteredChips.slice(0, this.showAllChips ? 80 : 8);
+        const uniqueValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.map(item => item[key]).filter(Boolean))).sort();
+        const advancedName = this.advancedName.trim().toLowerCase();
+        const advancedChips = chips.filter(item => {
+            const displayName = `${item.name} ${item.listname || ''}`.toLowerCase();
+            return (!advancedName || displayName.includes(advancedName))
+                && (!this.advancedVendor || item.vendor === this.advancedVendor)
+                && (!this.advancedType || item.type === this.advancedType)
+                && (!this.advancedFamily || item.family === this.advancedFamily);
+        });
 
         return html`
             <div class="workspace-selectors">
@@ -476,7 +516,7 @@ export class SelectElement extends LitElement {
                         </span>
                         ${chip
                             ? html`
-                                <button class="chipInfoButton chipBrowseButton" title="Browse more chips" aria-label="Browse more chips" @mousedown=${(ev: Event) => ev.preventDefault()} @click=${() => { this.chipQuery = ''; this.showAllChips = true; this.chipPickerOpen = true; (this.querySelector('#chipSearch') as HTMLInputElement)?.focus(); }}>•••</button>
+                                <button class="chipInfoButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
                                 <button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
                             : html`<span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
                         ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
@@ -493,6 +533,32 @@ export class SelectElement extends LitElement {
                     </span>
                 </label>
             </div>
+            ${this.advancedBrowserOpen ? html`
+                <div class="advanced-chip-overlay" role="presentation">
+                    <button class="advanced-chip-backdrop" type="button" aria-label="Close advanced chip browser" @click=${() => this.closeAdvancedBrowser()}></button>
+                    <section class="advanced-chip-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-chip-title">
+                        <header>
+                            <div><h2 id="advanced-chip-title">Open Chip</h2><p>Filter the complete chip catalog, select a row, then open it.</p></div>
+                            <button class="advanced-chip-close" type="button" aria-label="Close" @click=${() => this.closeAdvancedBrowser()}>×</button>
+                        </header>
+                        <div class="advanced-chip-filters">
+                            <label><span>Name</span><input type="search" .value=${this.advancedName} @input=${(ev: Event) => { this.advancedName = (ev.target as HTMLInputElement).value; this.advancedSelectedChip = null; }} placeholder="Search chip name"></label>
+                            <label><span>Vendor</span><select .value=${this.advancedVendor} @change=${(ev: Event) => { this.advancedVendor = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All vendors</option>${uniqueValues('vendor').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Type</span><select .value=${this.advancedType} @change=${(ev: Event) => { this.advancedType = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All types</option>${uniqueValues('type').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Family</span><select .value=${this.advancedFamily} @change=${(ev: Event) => { this.advancedFamily = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All families</option>${uniqueValues('family').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                        </div>
+                        <div class="advanced-chip-results" role="grid" aria-label="Chip results">
+                            <div class="advanced-chip-row advanced-chip-head" role="row"><span>Name</span><span>Vendor</span><span>Type</span><span>Family</span></div>
+                            ${advancedChips.map(item => html`
+                                <button type="button" role="row" class="advanced-chip-row ${this.advancedSelectedChip === item ? 'selected' : ''}"
+                                    @click=${() => { this.advancedSelectedChip = item; }} @dblclick=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
+                                    <strong>${item.listname || item.name}</strong><span>${item.vendor || '—'}</span><span>${item.type || '—'}</span><span>${item.family || '—'}</span>
+                                </button>`)}
+                            ${advancedChips.length ? html`` : html`<div class="advanced-chip-no-results">No chips match these filters.</div>`}
+                        </div>
+                        <footer><span>${advancedChips.length} results</span><button type="button" class="configButton" @click=${() => this.closeAdvancedBrowser()}>Cancel</button><button type="button" class="configButton advanced-chip-open" ?disabled=${!this.advancedSelectedChip} @click=${() => this.confirmAdvancedChip()}>Open</button></footer>
+                    </section>
+                </div>` : html``}
         `;
     }
 

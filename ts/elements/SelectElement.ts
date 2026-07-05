@@ -435,20 +435,29 @@ export class SelectElement extends LitElement {
         const chip = this.chip_content_current;
 
         return html`
-            <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:visible;">
-                <select id="chipSelect" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
-                    ${this.chiplist_html}
-                </select>
-                ${chip
-                ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" aria-label="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
-                : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">${chipInfoIcon}</span>`
-            }
-                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
-                <select id="annotationSelect" style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
-                    ${this.annotationlist_html}
-                </select>
-                <button class="refreshButton" style="margin-left:1px;" @click="${() => this.refreshAnnotationList()}">\xA0</button>
-                ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
+            <div class="workspace-selectors">
+                <label class="selector-field">
+                    <span class="selector-field-label">Chip</span>
+                    <span class="selector-control">
+                        <select id="chipSelect" aria-label="Chip" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
+                            ${this.chiplist_html}
+                        </select>
+                        ${chip
+                            ? html`<button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
+                            : html`<span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
+                        ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
+                    </span>
+                </label>
+                <label class="selector-field">
+                    <span class="selector-field-label">Annotation</span>
+                    <span class="selector-control">
+                        <select id="annotationSelect" aria-label="Annotation" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
+                            ${this.annotationlist_html}
+                        </select>
+                        <button class="refreshButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">\xA0</button>
+                        ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
+                    </span>
+                </label>
             </div>
         `;
     }

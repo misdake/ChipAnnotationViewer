@@ -1259,3 +1259,180 @@ button.chipInfoCloseButton,
     cursor: pointer;
     user-select: none;
 }
+
+/* Professional editor workspace ------------------------------------------------ */
+:root {
+    --editor-top: 58px;
+    --editor-tools: 54px;
+    --editor-inspector: 294px;
+    --editor-status: 30px;
+    --panel-0: #0b0f16;
+    --panel-1: #111722;
+    --panel-2: #171f2c;
+    --panel-3: #202a3a;
+    --line: #293446;
+    --line-strong: #3b4960;
+    --ink: #e6ebf2;
+    --ink-muted: #8995a8;
+    --brand: #4f8cff;
+    --brand-hover: #6ca0ff;
+}
+
+html, body {
+    background: var(--panel-0);
+    color: var(--ink);
+    font: 13px/1.4 Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+#container.editor-shell { background: #090d13; }
+
+#canvas2d {
+    position: absolute !important;
+    top: var(--editor-top);
+    left: var(--editor-tools);
+    width: calc(100% - var(--editor-tools) - var(--editor-inspector)) !important;
+    height: calc(100% - var(--editor-top) - var(--editor-status)) !important;
+    background-color: #090d13;
+    background-image: radial-gradient(circle, rgba(95, 111, 135, .17) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+#topBar, #toolRail, #propertyPanel, #footer, #cameraPanel {
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 0;
+    background: var(--panel-1);
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+#topBar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 1000;
+    height: var(--editor-top);
+    display: grid;
+    grid-template-columns: 190px minmax(420px, 1fr) minmax(340px, auto);
+    align-items: center;
+    gap: 14px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--line);
+}
+
+.app-brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.app-mark {
+    display: grid; place-items: center; width: 29px; height: 29px;
+    border: 1px solid #427ce4; border-radius: 7px;
+    background: linear-gradient(145deg, #3679f3, #2455b4); color: white;
+    font-size: 10px; font-weight: 800; letter-spacing: -.03em;
+}
+.app-name { font-size: 13px; font-weight: 650; white-space: nowrap; }
+
+#selectPanel { position: static; max-width: none; padding: 0; background: transparent; border: 0; box-shadow: none; }
+#selectPanel > select-element > .workspace-selectors { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(190px, 1fr); gap: 10px; }
+.selector-field { min-width: 0; }
+.selector-field-label, .eyebrow {
+    display: block; margin: 0 0 3px; color: var(--ink-muted); font-size: 9px;
+    font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+}
+.selector-control { display: flex; min-width: 0; }
+#selectPanel select {
+    width: 100%; min-width: 0; height: 29px; padding: 0 26px 0 9px;
+    border-color: var(--line); border-radius: 5px; background: var(--panel-2); color: var(--ink); font-size: 12px;
+}
+#selectPanel .chipInfoButton, #selectPanel .refreshButton, #selectPanel .commentButton {
+    flex: 0 0 29px; width: 29px; height: 29px; margin: 0 0 0 4px !important;
+    border-color: var(--line); border-radius: 5px; background: var(--panel-2);
+}
+
+#annotationTitle { min-width: 0; }
+#annotationTitle > title-element { display: grid; grid-template-columns: minmax(150px, 1fr) auto auto; align-items: end; gap: 8px; }
+#annotationTitle .titleInput { display: block; min-width: 0; }
+#annotationTitle .titleInput label { display: block; margin-bottom: 3px; color: var(--ink-muted); font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+#annotationTitle .titleInput input { height: 29px; padding: 0 9px; border-color: var(--line); border-radius: 5px; background: var(--panel-2); font-size: 12px; }
+#annotationTitle .loginInput { grid-column: 3; grid-row: 1; }
+#annotationTitle .loginControl { height: 29px; display: flex; align-items: center; }
+#annotationTitle .loginInput > label { display: none; }
+#annotationTitle .annotationActionRow { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 4px; margin: 0; }
+#annotationTitle .iconButton, #annotationTitle .configButton { width: 29px; height: 29px; min-height: 29px; padding: 5px; border-radius: 5px; }
+#annotationTitle #buttonSaveAnnotation { width: 68px; padding: 0 12px; background: var(--brand); }
+#annotationTitle #buttonSaveAnnotation::after { content: "Save"; margin-left: 5px; color: white; font-size: 11px; font-weight: 650; }
+#annotationTitle #buttonSaveAnnotation:disabled { background: var(--panel-3); opacity: .55; }
+#annotationTitle #userLoginInline { width: auto; padding: 0 11px; }
+.userMenuName { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+
+#toolRail {
+    position: absolute; z-index: 998; top: var(--editor-top); bottom: var(--editor-status); left: 0;
+    width: var(--editor-tools); padding: 9px 8px; border-right: 1px solid var(--line);
+}
+.rail-label { margin-bottom: 8px; color: var(--ink-muted); font-size: 8px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+#editControls { display: contents; }
+.tool-button {
+    position: relative; display: grid; place-items: center; width: 37px; height: 37px; margin: 0 0 6px;
+    border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ink-muted); cursor: pointer;
+}
+.tool-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tool-button span { position: absolute; right: 3px; bottom: 1px; font-size: 7px; font-weight: 700; opacity: .65; }
+.tool-button:hover { border-color: var(--line); background: var(--panel-2); color: var(--ink); }
+.tool-button.active { border-color: rgba(79,140,255,.7); background: rgba(79,140,255,.16); color: #8eb5ff; }
+.rail-separator { height: 1px; margin: 8px 3px 10px; background: var(--line); }
+
+#propertyPanel {
+    position: absolute; z-index: 997; inset: var(--editor-top) 0 var(--editor-status) auto;
+    width: var(--editor-inspector); min-width: 0; max-height: none; padding: 0; overflow-y: auto; border-left: 1px solid var(--line);
+}
+.inspector-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 14px 15px 12px; border-bottom: 1px solid var(--line); background: var(--panel-1); }
+.inspector-header h2 { margin: 0; font-size: 14px; font-weight: 650; }
+.state-badge { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-muted); font-size: 10px; }
+.empty-inspector { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 44px 24px; color: var(--ink-muted); text-align: center; }
+.empty-inspector .empty-icon { display: grid; place-items: center; width: 35px; height: 35px; margin-bottom: 4px; border: 1px solid var(--line); border-radius: 8px; font-size: 18px; }
+.empty-inspector strong { color: var(--ink); font-size: 12px; font-weight: 600; }
+.empty-inspector span { max-width: 205px; font-size: 11px; }
+#panelSelected:not(:empty) + .inspector-help { margin-top: 0; }
+#panelSelected:not(:empty) ~ * {}
+#panelSelected { padding: 0 15px; }
+#panelSelected:not(:empty) { padding-bottom: 14px; }
+#propertyPanel:has(#panelSelected:not(:empty)) .empty-inspector { display: none; }
+.inspector-help { margin: 0 15px; padding: 13px 0; border-top: 1px solid var(--line); }
+.inspector-help p { margin: 0; color: var(--ink-muted); font-size: 11px; }
+.panel-divider { display: none; }
+.editorConfigSection { border-color: var(--line); }
+
+#footer {
+    position: absolute; z-index: 1001; inset: auto 0 0 0; height: var(--editor-status);
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; padding: 0 12px;
+    border-top: 1px solid var(--line); color: var(--ink-muted); font-size: 10px;
+}
+#footer a, #hintToggle { height: auto; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink-muted); font-size: 10px; }
+#footer a:hover, #hintToggle:hover { background: transparent; color: var(--ink); }
+.status-primary { display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #45bd85; box-shadow: 0 0 0 2px rgba(69,189,133,.12); }
+.footer-spacer { flex: 1; }
+.footer-divider { width: 1px; height: 12px; background: var(--line); }
+
+#cameraPanel {
+    position: absolute; z-index: 1002; right: calc(var(--editor-inspector) + 8px); bottom: 3px; left: auto;
+    max-width: none; padding: 0; background: transparent;
+}
+.zoomControls { gap: 4px; }
+.zoomSlider, .zoomButton { display: none; }
+.zoomText { width: 48px; color: var(--ink-muted); font-size: 10px; }
+.viewButton { min-width: 34px; height: 22px; padding: 0 6px; border-color: var(--line); border-radius: 4px; background: var(--panel-2); font-size: 10px; }
+
+#toast { right: calc(var(--editor-inspector) + 18px); bottom: 44px; }
+
+@media (max-width: 980px) {
+    :root { --editor-inspector: 240px; }
+    #topBar { grid-template-columns: 42px minmax(330px, 1fr) minmax(260px, auto); gap: 8px; padding: 0 8px; }
+    .app-name { display: none; }
+    #annotationTitle .historyButton, #annotationTitle .annotationDeleteButton { display: none; }
+}
+
+@media (max-width: 720px) {
+    :root { --editor-inspector: 0px; --editor-tools: 48px; --editor-top: 96px; }
+    #topBar { grid-template-columns: 34px 1fr; grid-template-rows: 48px 48px; }
+    #selectPanel { grid-column: 2; }
+    #annotationTitle { grid-column: 1 / -1; grid-row: 2; }
+    #propertyPanel { display: none; }
+    #cameraPanel { right: 8px; }
+}

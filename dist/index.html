@@ -1,58 +1,74 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Chip Annotation Viewer</title>
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-    <div id="container">
-        <div id="selectPanel" class="ui-panel">
-        </div>
-        <div id="propertyPanel" class="ui-panel">
+    <div id="container" class="editor-shell">
+        <header id="topBar" class="ui-panel">
+            <div class="app-brand" aria-label="Chip Annotation Viewer">
+                <span class="app-mark">CA</span>
+                <span class="app-name">Chip Annotation</span>
+            </div>
+            <div id="selectPanel"></div>
             <div id="annotationTitle"></div>
+        </header>
+
+        <aside id="toolRail" class="ui-panel" aria-label="Editor tools">
+            <div class="rail-label">Tools</div>
+            <button id="buttonSelect" class="tool-button active" type="button" title="Select (V)" aria-label="Select">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 13 9-6 2-3 6L5 3Z"/></svg><span>V</span>
+            </button>
+            <button id="buttonPan" class="tool-button" type="button" title="Pan (H)" aria-label="Pan">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V6a2 2 0 0 1 4 0v4-6a2 2 0 0 1 4 0v6-4a2 2 0 0 1 4 0v8c0 5-3 8-8 8-3 0-5-2-7-5l-2-3a2 2 0 0 1 3-3l2 2Z"/></svg><span>H</span>
+            </button>
+            <div class="rail-separator"></div>
             <div id="editControls" hidden>
-                <div class="panel-divider"></div>
-                <div id="creationButtons">
-                    <button id="buttonCreatePolyline" class="configButton" title="New Polyline">+ Polyline</button>
-                    <button id="buttonCreateRect" class="configButton" title="New Rectangle">+ Rect</button>
-                    <button id="buttonCreateText" class="configButton" title="New Text">+ Text</button>
-                </div>
-                <div id="panelSelected">
-                </div>
+                <button id="buttonCreatePolyline" class="tool-button" type="button" title="Polyline (P)" aria-label="New polyline">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 5-11 6 4 5-7M4 18h.01M9 7h.01M15 11h.01M20 4h.01"/></svg><span>P</span>
+                </button>
+                <button id="buttonCreateRect" class="tool-button" type="button" title="Rectangle (R)" aria-label="New rectangle">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1"/></svg><span>R</span>
+                </button>
+                <button id="buttonCreateText" class="tool-button" type="button" title="Text (T)" aria-label="New text">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M12 5v14M8 19h8"/></svg><span>T</span>
+                </button>
             </div>
-        </div>
-        <div id="footer" class="ui-panel">
-            <div id="hintControl">
-                <div id="hintToggle" tabindex="0" aria-describedby="hint">
-                    <svg class="footerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="3" y="5" width="18" height="14" rx="3" />
-                        <path d="M7 12h4M9 10v4M15 11h.01M18 13h.01" />
-                    </svg>
-                    <span>Controls</span>
-                </div>
+        </aside>
+
+        <aside id="propertyPanel" class="ui-panel">
+            <div class="inspector-header">
+                <div><span class="eyebrow">Inspector</span><h2>Properties</h2></div>
+                <span id="editStateBadge" class="state-badge">Viewer</span>
             </div>
-            <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank"><img src="res/github.png"
-                    class="footerIcon" alt="" /><span>Repo</span></a>
-            <a href="https://twitter.com/rSkip" target="_blank"><img src="res/twitter.png" class="footerIcon"
-                    alt="" /><span>rSkip</span></a>
-            <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank"><img src="res/rss.png"
-                    class="footerIcon" alt="" /><span>RSS</span></a>
-        </div>
-        <div id="cameraPanel" class="ui-panel">
-        </div>
+            <div id="selectionEmpty" class="empty-inspector">
+                <div class="empty-icon">◇</div>
+                <strong>No selection</strong>
+                <span>Select an annotation on the canvas to edit its properties.</span>
+            </div>
+            <div id="panelSelected"></div>
+            <section class="inspector-help">
+                <span class="eyebrow">Current tool</span>
+                <p id="toolHelpText">Select objects · Drag to move · Ctrl adds to selection</p>
+            </section>
+        </aside>
+
+        <footer id="footer" class="ui-panel">
+            <div class="status-primary"><span class="status-dot"></span><span id="statusText">Ready</span></div>
+            <div id="hintControl"><button id="hintToggle" type="button" aria-describedby="hint">Controls</button></div>
+            <div class="footer-spacer"></div>
+            <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank" rel="noopener">Repository</a>
+            <span class="footer-divider"></span>
+            <span id="permissionState">Viewer</span>
+        </footer>
+
+        <div id="cameraPanel" class="ui-panel"></div>
         <div id="hint" class="ui-panel" role="tooltip"></div>
         <div id="toast" class="ui-panel"></div>
     </div>
-
     <script src="app.js"></script>
-
 </body>
-
-
 </html>

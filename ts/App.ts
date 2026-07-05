@@ -58,6 +58,27 @@ Selection.register(() => {
 type PolylineCreateMode = "polyline" | "rect";
 let polylineCreateMode: PolylineCreateMode = "polyline";
 
+function setActiveTool(buttonId: string, help: string) {
+    document.querySelectorAll<HTMLButtonElement>("#toolRail .tool-button").forEach(button => {
+        button.classList.toggle("active", button.id === buttonId);
+    });
+    const helpElement = document.getElementById("toolHelpText");
+    if (helpElement) helpElement.textContent = help;
+    const statusElement = document.getElementById("statusText");
+    if (statusElement) statusElement.textContent = help.split(" · ")[0];
+}
+
+document.getElementById("buttonSelect").onclick = () => {
+    Selection.deselectAny();
+    enterBaseEditors();
+    setActiveTool("buttonSelect", "Select objects · Drag to move · Ctrl adds to selection");
+};
+document.getElementById("buttonPan").onclick = () => {
+    Selection.deselectAny();
+    enterBaseEditors();
+    setActiveTool("buttonPan", "Pan canvas · Drag empty space · Wheel to zoom");
+};
+
 document.getElementById("buttonCreatePolyline").onclick = () => {
     if (!isEditingEnabled) return;
     polylineCreateMode = "polyline";
@@ -68,6 +89,7 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     ));
     canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
+    setActiveTool("buttonCreatePolyline", "Polyline · Click to add points · Enter to finish · Escape to cancel");
 };
 document.getElementById("buttonCreateRect").onclick = () => {
     if (!isEditingEnabled) return;
@@ -79,6 +101,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
     ));
     canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
+    setActiveTool("buttonCreateRect", "Rectangle · Drag on canvas to create · Escape to cancel");
 };
 
 document.getElementById("buttonCreateText").onclick = () => {
@@ -90,6 +113,7 @@ document.getElementById("buttonCreateText").onclick = () => {
     ));
     canvas.env.addText(text);
     Selection.select(SelectType.TEXT_CREATE, text);
+    setActiveTool("buttonCreateText", "Text · Click canvas to place · Edit content in Properties");
 };
 
 function updateHistoryButtons() {
@@ -124,6 +148,11 @@ class App {
     private applyEditMode() {
         const editMode = this.getEditMode();
         const editable = editMode !== 'none';
+        const stateLabel = editable ? "Editable" : "Read only";
+        const stateBadge = document.getElementById("editStateBadge");
+        const permissionState = document.getElementById("permissionState");
+        if (stateBadge) stateBadge.textContent = stateLabel;
+        if (permissionState) permissionState.textContent = stateLabel;
         if (isEditingEnabled === editable) return;
         isEditingEnabled = editable;
         document.getElementById("editControls").hidden = !editable;
@@ -170,6 +199,7 @@ class App {
         Selection.register(SelectType.POLYLINE, (polyline) => {
             render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.POLYLINE_EDIT);
+            setActiveTool("buttonSelect", "Polygon selected · Drag to move · Double-click an edge to add a point");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -188,6 +218,7 @@ class App {
         Selection.register(SelectType.TEXT, (text) => {
             render(html`${panelDivider}${text.renderUi(canvas)}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.TEXT_EDIT);
+            setActiveTool("buttonSelect", "Text selected · Drag to move · Edit content in Properties");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -220,6 +251,7 @@ class App {
             const selectionActions = html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`;
             render(html`${panelDivider}${selectionActions}${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.MULTIPLE_EDIT);
+            setActiveTool("buttonSelect", `${items.length} objects selected · Drag to move · Delete removes selection`);
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -410,6 +442,24 @@ function interceptKeys(evt: KeyboardEvent) {
 
     if (evt.target !== document.body && evt.target !== document.getElementById("canvas2d")) {
         return true;
+    }
+
+    if (!ctrlDown && !evt.altKey) {
+        const key = evt.key.toLowerCase();
+        const toolButtonByKey: Record<string, string> = {
+            v: "buttonSelect",
+            h: "buttonPan",
+            p: "buttonCreatePolyline",
+            r: "buttonCreateRect",
+            t: "buttonCreateText",
+        };
+        const buttonId = toolButtonByKey[key];
+        const button = buttonId ? document.getElementById(buttonId) as HTMLButtonElement : null;
+        if (button && !button.disabled && (buttonId === "buttonSelect" || buttonId === "buttonPan" || isEditingEnabled)) {
+            evt.preventDefault();
+            button.click();
+            return false;
+        }
     }
 
     // Check for undo/redo

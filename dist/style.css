@@ -1361,6 +1361,7 @@ html, body {
     flex: 0 0 29px; width: 29px; height: 29px; margin: 0 0 0 4px !important;
     border-color: var(--line); border-radius: 5px; background: var(--panel-2);
 }
+#selectPanel .chipBrowseButton { font-size: 9px; font-weight: 800; letter-spacing: -1px; }
 
 #annotationTitle { min-width: 0; }
 #annotationTitle > title-element { display: grid; grid-template-columns: minmax(150px, 1fr) auto auto; align-items: end; gap: 8px; }

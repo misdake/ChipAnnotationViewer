@@ -459,6 +459,7 @@ export class SelectElement extends LitElement {
                             <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
                                 .value=${this.chipQuery || (this.chip_current ? this.chip_current.name : '')}
                                 @focus=${() => { this.chipPickerOpen = true; }}
+                                @blur=${() => window.setTimeout(() => { this.chipPickerOpen = false; }, 0)}
                                 @input=${(ev: Event) => { this.chipQuery = (ev.target as HTMLInputElement).value; this.chipPickerOpen = true; this.showAllChips = false; }}
                                 @keydown=${(ev: KeyboardEvent) => {
                                     if (ev.key === 'Escape') this.chipPickerOpen = false;
@@ -474,7 +475,9 @@ export class SelectElement extends LitElement {
                                 </div>` : html``}
                         </span>
                         ${chip
-                            ? html`<button class="chipInfoButton" title="Browse more chips" aria-label="Browse more chips" @click=${() => { this.chipQuery = ''; this.showAllChips = true; this.chipPickerOpen = true; }}>•••</button>`
+                            ? html`
+                                <button class="chipInfoButton chipBrowseButton" title="Browse more chips" aria-label="Browse more chips" @mousedown=${(ev: Event) => ev.preventDefault()} @click=${() => { this.chipQuery = ''; this.showAllChips = true; this.chipPickerOpen = true; (this.querySelector('#chipSearch') as HTMLInputElement)?.focus(); }}>•••</button>
+                                <button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
                             : html`<span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
                         ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
                     </span>

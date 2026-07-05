@@ -73,6 +73,12 @@ export class SelectElement extends LitElement {
     annotation_content_current: AnnotationContent;
     private annotationSelectionVersion = 0;
     private chipSelectionVersion = 0;
+    @property()
+    private chipQuery = '';
+    @property({ type: Boolean })
+    private chipPickerOpen = false;
+    @property({ type: Boolean })
+    private showAllChips = false;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
@@ -251,6 +257,8 @@ export class SelectElement extends LitElement {
         const selectionVersion = ++this.chipSelectionVersion;
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
+        this.chipQuery = chip ? (chip.listname || chip.name) : '';
+        this.chipPickerOpen = false;
         this.chipCommentCount = null;
         this.annotationCommentCount = null;
         if (this.onSelectChip) this.onSelectChip(chip);
@@ -303,6 +311,11 @@ export class SelectElement extends LitElement {
             return;
         }
         let annotation = this.annotationlist_array[index];
+        if (annotation && annotation.aid === 0) {
+            (document.querySelector('.annotationCreateButton') as HTMLButtonElement)?.click();
+            this.restoreAnnotationSelect();
+            return;
+        }
         this.selectedAnnotation(annotation);
     }
     private selectedAnnotation(annotation: Annotation) {
@@ -404,11 +417,7 @@ export class SelectElement extends LitElement {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
 
-        const annotationCountLabel = annotations.length === 1
-            ? "1 annotation"
-            : `${annotations.length} annotations`;
-        options.push(html`
-            <option>${annotationCountLabel}</option>`);
+        options.push(html`<option>+ New Annotation</option>`);
         array.push(SelectElement.getDummyAnnotation());
 
         let current: Annotation = null;
@@ -433,17 +442,39 @@ export class SelectElement extends LitElement {
 
     render() {
         const chip = this.chip_content_current;
+        const query = this.chipQuery.trim().toLowerCase();
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const filteredChips = chips.filter(item => {
+            const searchText = `${item.name} ${item.listname || ''} ${item.vendor || ''} ${item.type || ''} ${item.family || ''}`.toLowerCase();
+            return !query || searchText.includes(query);
+        });
+        const quickChips = filteredChips.slice(0, this.showAllChips ? 80 : 8);
 
         return html`
             <div class="workspace-selectors">
                 <label class="selector-field">
                     <span class="selector-field-label">Chip</span>
                     <span class="selector-control">
-                        <select id="chipSelect" aria-label="Chip" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
-                            ${this.chiplist_html}
-                        </select>
+                        <span class="chip-picker">
+                            <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
+                                .value=${this.chipQuery || (this.chip_current ? this.chip_current.name : '')}
+                                @focus=${() => { this.chipPickerOpen = true; }}
+                                @input=${(ev: Event) => { this.chipQuery = (ev.target as HTMLInputElement).value; this.chipPickerOpen = true; this.showAllChips = false; }}
+                                @keydown=${(ev: KeyboardEvent) => {
+                                    if (ev.key === 'Escape') this.chipPickerOpen = false;
+                                    if (ev.key === 'Enter' && quickChips.length === 1) this.selectedChip(quickChips[0]);
+                                }}>
+                            ${this.chipPickerOpen ? html`
+                                <div class="chip-quick-list" @mousedown=${(ev: Event) => ev.preventDefault()}>
+                                    ${quickChips.length ? quickChips.map(item => html`
+                                        <button type="button" class="chip-quick-item" @click=${() => this.canDiscardCurrent() && this.selectedChip(item)}>
+                                            <strong>${item.listname || item.name}</strong>
+                                            <span>${[item.vendor, item.type, item.family].filter(Boolean).join(' · ')}</span>
+                                        </button>`) : html`<div class="chip-quick-empty">No matching chips</div>`}
+                                </div>` : html``}
+                        </span>
                         ${chip
-                            ? html`<button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
+                            ? html`<button class="chipInfoButton" title="Browse more chips" aria-label="Browse more chips" @click=${() => { this.chipQuery = ''; this.showAllChips = true; this.chipPickerOpen = true; }}>•••</button>`
                             : html`<span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
                         ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
                     </span>

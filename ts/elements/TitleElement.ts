@@ -135,6 +135,19 @@ export class TitleElement extends LitElement {
         }
     }
 
+    private copyAnnotationAsMine() {
+        if (!this.canCreate || !this.userId || !this.chipContent || !this.annotation || this.annotation.aid <= 0) return;
+        const title = `${this.annotation.title || 'untitled'} copy`;
+        this.toast('Copying...', 'saving');
+        ClientApi.createAnnotation(this.chipContent.name, title, JSON.stringify(this.canvas.save())).then(created => {
+            this.toast('Copied as your annotation');
+            this.notifyAnnotationCreated(created.aid);
+        }).catch(error => {
+            console.warn('copyAnnotationAsMine error:', error);
+            this.toast('Copy failed', 'warning');
+        });
+    }
+
     private openCreateAnnotationModal() {
         if (!this.canCreate || !this.chipContent) return;
         if (this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
@@ -288,6 +301,8 @@ export class TitleElement extends LitElement {
             && this.annotation
             && this.annotation.aid > 0
             && this.annotation.userId === this.userId;
+        const canCopyAsMine = this.canCreate && this.annotation && this.annotation.aid > 0
+            && this.userId > 0 && this.annotation.userId !== this.userId;
         const buttonLine = this.editMode !== 'none' || this.canCreate
             ? html`
                 <div class="annotationActionRow">
@@ -300,6 +315,9 @@ export class TitleElement extends LitElement {
                         : html``}
                     ${this.canCreate
                         ? html`<button class="iconButton createIconButton annotationCreateButton" @click="${() => this.openCreateAnnotationModal()}" title="New Annotation" aria-label="New Annotation">${newAnnotationIcon}</button>`
+                        : html``}
+                    ${canCopyAsMine
+                        ? html`<button id="buttonCopyAnnotation" class="configButton annotationCopyButton" @click=${() => this.copyAnnotationAsMine()}>Copy as Mine</button>`
                         : html``}
                     ${canDelete
                         ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`

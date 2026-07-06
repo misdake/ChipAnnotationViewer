@@ -18,6 +18,16 @@ const chipInfoIcon = html`
         <path d="M12 11v8" />
     </svg>`;
 
+const refreshIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.5-2.4L20 11M4 13l2.4 4.4A7 7 0 0 0 17.9 15"/>
+    </svg>`;
+
+const newAnnotationIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><path d="M13 3v5h5"/><path d="M15 17h6M18 14v6"/>
+    </svg>`;
+
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
     for (let param of paramNames) {
@@ -67,6 +77,8 @@ export class SelectElement extends LitElement {
     chipCommentCount: number = null;
     @property({type: Number})
     annotationCommentCount: number = null;
+    @property({type: Boolean})
+    canCreateAnnotation: boolean = false;
 
     @property()
     annotation_current: Annotation;
@@ -120,6 +132,12 @@ export class SelectElement extends LitElement {
             const custom = ev as CustomEvent<number>;
             if (!this.chip_content_current || !custom.detail) return;
             this.annotation_id_toload = 0;
+            this.refreshAnnotationList();
+        });
+        window.addEventListener('chipannotation-annotation-updated', (ev: Event) => {
+            const custom = ev as CustomEvent<number>;
+            if (!this.chip_content_current || !custom.detail) return;
+            this.annotation_id_toload = custom.detail;
             this.refreshAnnotationList();
         });
     }
@@ -343,11 +361,16 @@ export class SelectElement extends LitElement {
         }
         let annotation = this.annotationlist_array[index];
         if (annotation && annotation.aid === 0) {
-            (document.querySelector('.annotationCreateButton') as HTMLButtonElement)?.click();
+            this.requestNewAnnotation();
             this.restoreAnnotationSelect();
             return;
         }
         this.selectedAnnotation(annotation);
+    }
+
+    private requestNewAnnotation() {
+        if (!this.canCreateAnnotation || !this.chip_content_current) return;
+        window.dispatchEvent(new CustomEvent('chipannotation-new-annotation-requested'));
     }
     private selectedAnnotation(annotation: Annotation) {
         const selectionVersion = ++this.annotationSelectionVersion;
@@ -489,6 +512,9 @@ export class SelectElement extends LitElement {
                 && (!this.advancedType || item.type === this.advancedType)
                 && (!this.advancedFamily || item.family === this.advancedFamily);
         });
+        const annotationOptionOffset = this.canCreateAnnotation ? 0 : 1;
+        const annotationOptions = (this.annotationlist_html || []).slice(annotationOptionOffset);
+        const hasAnnotationOptions = annotationOptions.length > 0;
 
         return html`
             <div class="workspace-selectors">
@@ -497,7 +523,7 @@ export class SelectElement extends LitElement {
                     <span class="selector-control">
                         <span class="chip-picker">
                             <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
-                                .value=${this.chipQuery || (this.chip_current ? this.chip_current.name : '')}
+                                .value=${this.chipQuery}
                                 @focus=${() => { this.chipPickerOpen = true; }}
                                 @blur=${() => window.setTimeout(() => { this.chipPickerOpen = false; }, 0)}
                                 @input=${(ev: Event) => { this.chipQuery = (ev.target as HTMLInputElement).value; this.chipPickerOpen = true; this.showAllChips = false; }}
@@ -517,19 +543,24 @@ export class SelectElement extends LitElement {
                         ${chip
                             ? html`
                                 <button class="chipInfoButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
+                                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', false)}
                                 <button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
-                            : html`<span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
-                        ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
+                            : html`
+                                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', true)}
+                                <span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
                     </span>
                 </label>
                 <label class="selector-field">
                     <span class="selector-field-label">Annotation</span>
                     <span class="selector-control">
-                        <select id="annotationSelect" aria-label="Annotation" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
-                            ${this.annotationlist_html}
+                        <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
+                            ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
                         </select>
-                        <button class="refreshButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">\xA0</button>
+                        <button class="refreshButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
                         ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
+                        ${this.canCreateAnnotation && this.chip_content_current
+                            ? html`<button class="chipInfoButton newAnnotationButton" title="New annotation" aria-label="New annotation" @click=${() => this.requestNewAnnotation()}>${newAnnotationIcon}</button>`
+                            : html``}
                     </span>
                 </label>
             </div>

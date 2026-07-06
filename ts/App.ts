@@ -25,6 +25,7 @@ import {notifyToast, ToastDetail} from "./util/Toast";
 let url_string = window.location.href;
 let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
+const editorLayoutMedia = window.matchMedia("(min-width: 900px)");
 let isEditingEnabled = false;
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
@@ -58,25 +59,21 @@ Selection.register(() => {
 type PolylineCreateMode = "polyline" | "rect";
 let polylineCreateMode: PolylineCreateMode = "polyline";
 
-function setActiveTool(buttonId: string, help: string) {
+function setActiveTool(buttonId: string) {
     document.querySelectorAll<HTMLButtonElement>("#toolRail .tool-button").forEach(button => {
         button.classList.toggle("active", button.id === buttonId);
     });
-    const helpElement = document.getElementById("toolHelpText");
-    if (helpElement) helpElement.textContent = help;
-    const statusElement = document.getElementById("statusText");
-    if (statusElement) statusElement.textContent = help.split(" · ")[0];
 }
 
 document.getElementById("buttonSelect").onclick = () => {
     Selection.deselectAny();
     enterBaseEditors();
-    setActiveTool("buttonSelect", "Select objects · Drag to move · Ctrl adds to selection");
+    setActiveTool("buttonSelect");
 };
 document.getElementById("buttonPan").onclick = () => {
     Selection.deselectAny();
     enterBaseEditors();
-    setActiveTool("buttonPan", "Pan canvas · Drag empty space · Wheel to zoom");
+    setActiveTool("buttonPan");
 };
 
 document.getElementById("buttonCreatePolyline").onclick = () => {
@@ -89,7 +86,7 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
     ));
     canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
-    setActiveTool("buttonCreatePolyline", "Polyline · Click to add points · Enter to finish · Escape to cancel");
+    setActiveTool("buttonCreatePolyline");
 };
 document.getElementById("buttonCreateRect").onclick = () => {
     if (!isEditingEnabled) return;
@@ -101,7 +98,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
     ));
     canvas.env.addPolyline(polyline);
     Selection.select(SelectType.POLYLINE_CREATE, polyline);
-    setActiveTool("buttonCreateRect", "Rectangle · Drag on canvas to create · Escape to cancel");
+    setActiveTool("buttonCreateRect");
 };
 
 document.getElementById("buttonCreateText").onclick = () => {
@@ -113,7 +110,13 @@ document.getElementById("buttonCreateText").onclick = () => {
     ));
     canvas.env.addText(text);
     Selection.select(SelectType.TEXT_CREATE, text);
-    setActiveTool("buttonCreateText", "Text · Click canvas to place · Edit content in Properties");
+    setActiveTool("buttonCreateText");
+};
+document.getElementById("buttonUndo").onclick = () => {
+    if (isEditingEnabled) annotationHistory.undo(canvas);
+};
+document.getElementById("buttonRedo").onclick = () => {
+    if (isEditingEnabled) annotationHistory.redo(canvas);
 };
 
 function updateHistoryButtons() {
@@ -135,23 +138,19 @@ class App {
     private annotationTitleDraft: string = '';
     private allowNextAnnotationSelectionDiscard: boolean = false;
 
+    private ownsCurrentAnnotation(): boolean {
+        return !isReadOnly && !!this.annotation && this.userId > 0
+            && this.annotation.aid > 0 && this.annotation.userId === this.userId;
+    }
+
     private getEditMode(): 'none' | 'create' | 'update' {
-        if (isReadOnly || !this.annotation || this.userId <= 0) {
-            return 'none';
-        }
-        if (this.annotation.aid > 0 && this.annotation.userId === this.userId) {
-            return 'update';
-        }
-        return 'none';
+        return editorLayoutMedia.matches && this.ownsCurrentAnnotation() ? 'update' : 'none';
     }
 
     private applyEditMode() {
         const editMode = this.getEditMode();
         const editable = editMode !== 'none';
-        const stateLabel = editable ? "Editable" : "Read only";
-        const stateBadge = document.getElementById("editStateBadge");
         const toolRail = document.getElementById("toolRail");
-        if (stateBadge) stateBadge.textContent = stateLabel;
         if (toolRail) toolRail.hidden = !editable;
         EditorCameraControl.allowLeftMousePan = !editable;
         if (isEditingEnabled === editable) return;
@@ -171,6 +170,7 @@ class App {
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
+        editorLayoutMedia.addEventListener("change", () => this.refresh());
         annotationHistory.subscribe(() => this.updateAnnotationDirtyState());
         window.addEventListener("beforeunload", (event) => {
             if (!this.annotationDirty) return;
@@ -200,7 +200,7 @@ class App {
         Selection.register(SelectType.POLYLINE, (polyline) => {
             render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.POLYLINE_EDIT);
-            setActiveTool("buttonSelect", "Polygon selected · Drag to move · Double-click an edge to add a point");
+            setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -219,7 +219,7 @@ class App {
         Selection.register(SelectType.TEXT, (text) => {
             render(html`${panelDivider}${text.renderUi(canvas)}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.TEXT_EDIT);
-            setActiveTool("buttonSelect", "Text selected · Drag to move · Edit content in Properties");
+            setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -252,7 +252,7 @@ class App {
             const selectionActions = html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`;
             render(html`${panelDivider}${selectionActions}${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             enterEditingEditors(EditorName.MULTIPLE_EDIT);
-            setActiveTool("buttonSelect", `${items.length} objects selected · Drag to move · Delete removes selection`);
+            setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
@@ -261,6 +261,11 @@ class App {
 
     private refresh() {
         const editMode = this.getEditMode();
+        const canCreate = editorLayoutMedia.matches && !isReadOnly && this.userId > 0 && !!this.chipContent;
+        const selectElement = document.querySelector('select-element') as HTMLElement & { canCreateAnnotation?: boolean };
+        if (selectElement) {
+            selectElement.canCreateAnnotation = canCreate;
+        }
         render(html`
             <title-element 
                 .canvas="${canvas}"
@@ -268,10 +273,8 @@ class App {
                 .annotation="${this.annotation}"
                 .titleValue=${this.annotationTitleDraft}
                 .editMode="${editMode}"
-                .canCreate=${!isReadOnly && this.userId > 0 && !!this.chipContent}
+                .canCreate=${canCreate}
                 .dirty=${this.annotationDirty}
-                .canUndo=${isEditingEnabled && annotationHistory.canUndo()}
-                .canRedo=${isEditingEnabled && annotationHistory.canRedo()}
                 .onAnnotationChanged=${(title: string) => this.onAnnotationTitleChanged(title)}
                 .onAnnotationSaved=${() => {
                     this.annotationTitleDraft = this.annotation ? (this.annotation.title || '') : '';
@@ -282,12 +285,6 @@ class App {
                     this.allowNextAnnotationSelectionDiscard = true;
                 }}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
-                .onUndo=${() => {
-                    if (isEditingEnabled) annotationHistory.undo(canvas);
-                }}
-                .onRedo=${() => {
-                    if (isEditingEnabled) annotationHistory.redo(canvas);
-                }}
             ></title-element>
         `, document.getElementById("annotationTitle"));
         const titleElement = document.querySelector("title-element") as HTMLElement & { updateComplete?: Promise<unknown> };
@@ -364,7 +361,7 @@ class App {
     }
 
     private hasAnnotationChanges(): boolean {
-        if (this.getEditMode() === 'none' || !this.annotationBaselineSnapshot) return false;
+        if (!this.ownsCurrentAnnotation() || !this.annotationBaselineSnapshot) return false;
         return this.createAnnotationSnapshot() !== this.annotationBaselineSnapshot;
     }
 

@@ -36,35 +36,23 @@
                 <button id="buttonCreateText" class="tool-button" type="button" title="Text (T)" aria-label="New text">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M12 5v14M8 19h8"/></svg><span>T</span>
                 </button>
+                <div class="rail-separator"></div>
+                <button id="buttonUndo" class="tool-button history-tool-button" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a7 7 0 1 1 0 14h-1"/></svg>
+                </button>
+                <button id="buttonRedo" class="tool-button history-tool-button" type="button" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a7 7 0 1 0 0 14h1"/></svg>
+                </button>
             </div>
         </aside>
 
         <aside id="propertyPanel" class="ui-panel">
-            <div class="inspector-header">
-                <div><span class="eyebrow">Inspector</span><h2>Properties</h2></div>
-                <span id="editStateBadge" class="state-badge">Viewer</span>
-            </div>
-            <div id="selectionEmpty" class="empty-inspector">
-                <div class="empty-icon">◇</div>
-                <strong>No selection</strong>
-                <span>Select an annotation on the canvas to edit its properties.</span>
-            </div>
             <div id="panelSelected"></div>
-            <section class="inspector-help">
-                <span class="eyebrow">Current tool</span>
-                <p id="toolHelpText">Select objects · Drag to move · Ctrl adds to selection</p>
-            </section>
         </aside>
 
         <footer id="footer" class="ui-panel">
-            <div class="status-primary"><span class="status-dot"></span><span id="statusText">Ready</span></div>
             <div id="hintControl"><button id="hintToggle" type="button" aria-describedby="hint">Controls</button></div>
             <div class="footer-spacer"></div>
-            <nav class="footer-links" aria-label="Project links">
-                <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><img src="res/github.png" alt=""></a>
-                <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
-                <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
-            </nav>
         </footer>
 
         <div id="cameraPanel" class="ui-panel"></div>

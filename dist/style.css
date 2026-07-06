@@ -1057,98 +1057,6 @@ button.chipInfoCloseButton,
     }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    #propertyPanel {
-        display: none;
-        min-width: 180px;
-        max-width: 200px;
-    }
-
-    #selectPanel,
-    #propertyPanel,
-    #cameraPanel {
-        padding: 8px;
-        border-radius: 8px;
-    }
-
-    #selectPanel,
-    #cameraPanel {
-        left: 8px;
-        max-width: calc(100vw - 16px);
-    }
-
-    #selectPanel>div {
-        display: flex;
-        align-items: center;
-        max-width: 100%;
-        gap: 6px;
-    }
-
-    #selectPanel select {
-        flex: 1 1 0;
-        min-width: 0;
-        max-width: 100%;
-        font-size: 12px;
-    }
-
-    #selectPanel .refreshButton {
-        flex: 0 0 auto;
-        margin-left: 0;
-    }
-
-    #selectPanel .chipInfoButton {
-        flex: 0 0 auto;
-        margin-left: 0;
-    }
-
-    #selectPanel .commentButton {
-        flex: 0 0 auto;
-        margin-left: 0;
-    }
-
-    .configButton {
-        padding: 7px 10px;
-        font-size: 11px;
-    }
-
-    .zoomControls {
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .zoomButton {
-        width: 30px;
-        height: 30px;
-    }
-
-    .zoomSlider {
-        flex: 1 1 86px;
-        width: auto;
-    }
-
-    .zoomText {
-        width: 42px;
-        font-size: 12px;
-    }
-
-    .viewButton {
-        min-width: 36px;
-        height: 28px;
-        padding: 0 7px;
-        font-size: 11px;
-    }
-
-    #footer a span {
-        display: none;
-    }
-
-    #hint {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-}
-
 /* Shared section layout for annotation editors. */
 .editorConfigSection {
     overflow: hidden;
@@ -1311,15 +1219,14 @@ html, body {
     inset: 0 0 auto 0;
     z-index: 1000;
     height: var(--editor-top);
-    display: grid;
-    grid-template-columns: 170px 520px minmax(300px, 1fr);
+    display: flex;
     align-items: center;
     gap: 14px;
     padding: 0 14px;
     border-bottom: 1px solid var(--line);
 }
 
-.app-brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.app-brand { display: flex; flex: 0 0 170px; align-items: center; gap: 9px; min-width: 0; }
 .app-mark {
     display: grid; place-items: center; width: 29px; height: 29px;
     border: 1px solid #427ce4; border-radius: 7px;
@@ -1328,8 +1235,8 @@ html, body {
 }
 .app-name { font-size: 13px; font-weight: 650; white-space: nowrap; }
 
-#selectPanel { position: static; max-width: none; padding: 0; background: transparent; border: 0; box-shadow: none; }
-#selectPanel > select-element > .workspace-selectors { display: grid; grid-template-columns: 260px 250px; gap: 10px; }
+#selectPanel { position: static; flex: 1 1 520px; min-width: 280px; max-width: 520px; padding: 0; background: transparent; border: 0; box-shadow: none; }
+#selectPanel > select-element > .workspace-selectors { display: grid; grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr); gap: 10px; }
 .selector-field { min-width: 0; }
 .selector-field-label, .eyebrow {
     display: block; margin: 0 0 3px; color: var(--ink-muted); font-size: 9px;
@@ -1362,6 +1269,9 @@ html, body {
     border-color: var(--line); border-radius: 5px; background: var(--panel-2);
 }
 #selectPanel .chipBrowseButton { font-size: 9px; font-weight: 800; letter-spacing: -1px; }
+#selectPanel .refreshButton { background-image: none; color: var(--text-secondary); }
+#selectPanel .refreshButton svg, #selectPanel .newAnnotationButton svg { width: 14px; height: 14px; }
+#selectPanel .refreshButton:hover, #selectPanel .newAnnotationButton:hover { color: var(--primary-color); }
 
 .advanced-chip-overlay { position: fixed; z-index: 1300; inset: 0; display: grid; place-items: center; padding: 28px; }
 .advanced-chip-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: rgba(3,7,13,.74); backdrop-filter: blur(3px); }
@@ -1393,14 +1303,24 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 .advanced-chip-modal > footer .advanced-chip-open:disabled { background: var(--panel-3); opacity: .45; }
 
 @media (max-width: 720px) {
-    .advanced-chip-overlay { padding: 10px; }
-    .advanced-chip-modal { width: calc(100vw - 20px); height: calc(100vh - 20px); }
-    .advanced-chip-filters { grid-template-columns: 1fr 1fr; }
-    .advanced-chip-row { grid-template-columns: minmax(120px, 1.2fr) repeat(3, minmax(80px, 1fr)); gap: 8px; }
+    .advanced-chip-overlay { padding: 8px; }
+    .advanced-chip-modal { width: calc(100vw - 16px); height: calc(100vh - 16px); grid-template-rows: auto auto minmax(120px, 1fr) auto; }
+    .advanced-chip-modal > header { padding: 12px; }
+    .advanced-chip-modal header p { display: none; }
+    .advanced-chip-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 10px 12px; }
+    .advanced-chip-results { padding: 0 8px 8px; }
+    .advanced-chip-head { display: none; }
+    button.advanced-chip-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 5px 10px; min-height: 68px; padding: 7px 8px; }
+    button.advanced-chip-row > *::before { display: block; margin-bottom: 1px; color: var(--ink-muted); font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+    button.advanced-chip-row > strong::before { content: "Name"; }
+    button.advanced-chip-row > span:nth-child(2)::before { content: "Vendor"; }
+    button.advanced-chip-row > span:nth-child(3)::before { content: "Type"; }
+    button.advanced-chip-row > span:nth-child(4)::before { content: "Family"; }
+    .advanced-chip-modal > footer { min-height: 50px; padding: 0 12px; }
 }
 
-#annotationTitle { min-width: 0; }
-#annotationTitle > title-element { display: grid; grid-template-columns: minmax(150px, 1fr) auto auto; align-items: end; gap: 8px; }
+#annotationTitle { flex: 0 1 500px; min-width: 300px; max-width: 500px; margin-left: auto; }
+#annotationTitle > title-element { display: grid; grid-template-columns: minmax(0, 250px) auto auto; justify-content: end; align-items: end; gap: 8px; }
 #annotationTitle .titleInput { display: block; min-width: 0; }
 #annotationTitle .titleInput label { display: block; margin-bottom: 3px; color: var(--ink-muted); font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 #annotationTitle .titleInput input { height: 29px; padding: 0 9px; border-color: var(--line); border-radius: 5px; background: var(--panel-2); font-size: 12px; }
@@ -1408,20 +1328,23 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 #annotationTitle .loginControl { height: 29px; display: flex; align-items: center; }
 #annotationTitle .loginInput > label { display: none; }
 #annotationTitle .annotationActionRow { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 4px; margin: 0; }
-#annotationTitle .iconButton, #annotationTitle .configButton { width: 29px; height: 29px; min-height: 29px; padding: 5px; border-radius: 5px; }
-#annotationTitle #buttonSaveAnnotation { width: 68px; padding: 0 12px; background: var(--brand); }
-#annotationTitle #buttonSaveAnnotation::after { content: "Save"; margin-left: 5px; color: white; font-size: 11px; font-weight: 650; }
+#annotationTitle .annotationActionRow .iconButton { flex: 0 0 29px; width: 29px; height: 29px; min-width: 29px; min-height: 29px; padding: 5px; border-radius: 5px; }
+#annotationTitle #buttonSaveAnnotation { background: var(--brand); }
 #annotationTitle #buttonSaveAnnotation:disabled { background: var(--panel-3); opacity: .55; }
-#annotationTitle #userLoginInline { width: auto; padding: 0 11px; }
 .userMenuName { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
 #annotationTitle .userMenu { position: relative; }
 #annotationTitle .userMenuRow { height: 29px; gap: 4px; }
 #annotationTitle .userMenuToggle { border: 0; background: transparent; color: var(--ink-muted); font-size: 13px; }
 #annotationTitle .userMenuToggle:hover { color: var(--ink); }
-#annotationTitle .userMenuDropdown { position: absolute; z-index: 1250; top: calc(100% + 5px); right: 0; min-width: 112px; margin: 0; padding: 5px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel-2); box-shadow: 0 12px 28px rgba(0,0,0,.42); }
+#annotationTitle .userMenuDropdown { position: absolute; z-index: 1250; top: calc(100% + 5px); right: 0; min-width: 128px; margin: 0; padding: 5px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel-2); box-shadow: 0 12px 28px rgba(0,0,0,.42); }
 #annotationTitle .userMenuDropdown[hidden] { display: none; }
-#annotationTitle #userLogoutInline { width: 100%; height: 30px; padding: 0 9px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font: inherit; font-size: 11px; text-align: left; cursor: pointer; }
-#annotationTitle #userLogoutInline:hover { background: rgba(79,140,255,.14); }
+#annotationTitle #userLoginInline, #annotationTitle #userLogoutInline { width: 100%; height: 30px; padding: 0 9px; border: 0; border-radius: 4px; background: transparent; color: var(--ink); font: inherit; font-size: 11px; text-align: left; cursor: pointer; }
+#annotationTitle #userLoginInline:hover, #annotationTitle #userLogoutInline:hover { background: rgba(79,140,255,.14); }
+#annotationTitle .userMenuLinks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 4px; padding-top: 5px; border-top: 1px solid var(--line); }
+#annotationTitle .userMenuLinks a { display: grid; place-items: center; height: 28px; border-radius: 4px; }
+#annotationTitle .userMenuLinks a:hover { background: rgba(79,140,255,.14); }
+#annotationTitle .userMenuLinks img { width: 15px; height: 15px; object-fit: contain; opacity: .75; }
+#annotationTitle .userMenuLinks a:hover img { opacity: 1; }
 
 #toolRail {
     position: absolute; z-index: 998; top: calc(var(--editor-top) + 12px); bottom: auto; left: 12px;
@@ -1431,13 +1354,15 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 .rail-label { margin-bottom: 8px; color: var(--ink-muted); font-size: 8px; font-weight: 700; letter-spacing: .1em; text-align: center; text-transform: uppercase; }
 #editControls { display: contents; }
 .tool-button {
-    position: relative; display: grid; place-items: center; width: 37px; height: 37px; margin: 0 0 6px;
+    position: relative; display: grid; place-items: center; width: 100%; height: auto; aspect-ratio: 1; margin: 0 0 6px;
     border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ink-muted); cursor: pointer;
 }
 .tool-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .tool-button span { position: absolute; right: 3px; bottom: 1px; font-size: 7px; font-weight: 700; opacity: .65; }
 .tool-button:hover { border-color: var(--line); background: var(--panel-2); color: var(--ink); }
 .tool-button.active { border-color: rgba(79,140,255,.7); background: rgba(79,140,255,.16); color: #8eb5ff; }
+.tool-button:disabled { opacity: .32; cursor: default; }
+.tool-button:disabled:hover { border-color: transparent; background: transparent; color: var(--ink-muted); }
 .rail-separator { height: 1px; margin: 8px 3px 10px; background: var(--line); }
 
 #propertyPanel {
@@ -1447,20 +1372,7 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
     box-shadow: 0 14px 34px rgba(0,0,0,.42); backdrop-filter: blur(12px);
 }
 #container:not(:has(#panelSelected:not(:empty))) #propertyPanel { display: none; }
-.inspector-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 14px 15px 12px; border-bottom: 1px solid var(--line); border-radius: 8px 8px 0 0; background: rgba(17, 23, 34, .98); }
-.inspector-header h2 { margin: 0; font-size: 14px; font-weight: 650; }
-.state-badge { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-muted); font-size: 10px; }
-.empty-inspector { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 44px 24px; color: var(--ink-muted); text-align: center; }
-.empty-inspector .empty-icon { display: grid; place-items: center; width: 35px; height: 35px; margin-bottom: 4px; border: 1px solid var(--line); border-radius: 8px; font-size: 18px; }
-.empty-inspector strong { color: var(--ink); font-size: 12px; font-weight: 600; }
-.empty-inspector span { max-width: 205px; font-size: 11px; }
-#panelSelected:not(:empty) + .inspector-help { margin-top: 0; }
-#panelSelected:not(:empty) ~ * {}
-#panelSelected { padding: 0 15px; }
-#panelSelected:not(:empty) { padding-bottom: 14px; }
-#propertyPanel:has(#panelSelected:not(:empty)) .empty-inspector { display: none; }
-.inspector-help { margin: 0 15px; padding: 13px 0; border-top: 1px solid var(--line); }
-.inspector-help p { margin: 0; color: var(--ink-muted); font-size: 11px; }
+#panelSelected { padding: 14px 15px; }
 .panel-divider { display: none; }
 .editorConfigSection { border-color: var(--line); }
 
@@ -1471,18 +1383,10 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 }
 #footer a, #hintToggle { height: auto; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink-muted); font-size: 10px; }
 #footer a:hover, #hintToggle:hover { background: transparent; color: var(--ink); }
-.status-primary { display: flex; align-items: center; gap: 6px; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #45bd85; box-shadow: 0 0 0 2px rgba(69,189,133,.12); }
 .footer-spacer { flex: 1; }
-.footer-divider { width: 1px; height: 12px; background: var(--line); }
-.footer-links { display: flex; align-items: center; gap: 3px; }
-#footer .footer-links a { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 4px; }
-#footer .footer-links a:hover { background: var(--panel-3); }
-#footer .footer-links img { width: 15px; height: 15px; object-fit: contain; opacity: .72; }
-#footer .footer-links a:hover img { opacity: 1; }
 
 #cameraPanel {
-    position: absolute; z-index: 1002; right: calc(var(--editor-inspector) + 108px); bottom: 3px; left: auto;
+    position: absolute; z-index: 1002; right: 8px; bottom: 3px; left: auto;
     max-width: none; padding: 0; background: transparent;
 }
 .zoomControls { gap: 4px; }
@@ -1493,21 +1397,39 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 .viewButton { min-width: 34px; height: 22px; padding: 0 6px; border-color: var(--line); border-radius: 4px; background: var(--panel-2); font-size: 10px; }
 
 #toast { right: calc(var(--editor-inspector) + 18px); bottom: 44px; }
-#container:not(:has(#panelSelected:not(:empty))) #cameraPanel { right: 108px; }
 #container:not(:has(#panelSelected:not(:empty))) #toast { right: 18px; }
 
 @media (max-width: 980px) {
     :root { --editor-inspector: 240px; }
-    #topBar { grid-template-columns: 42px minmax(470px, 520px) minmax(260px, 1fr); gap: 8px; padding: 0 8px; }
+    #topBar { gap: 8px; padding: 0 8px; }
+    .app-brand { flex-basis: 34px; }
     .app-name { display: none; }
+    #selectPanel { min-width: 250px; }
+    #annotationTitle { min-width: 280px; }
     #annotationTitle .historyButton, #annotationTitle .annotationDeleteButton { display: none; }
 }
 
+@media (max-width: 899.98px) {
+    :root { --editor-top: 0px; }
+    #topBar {
+        display: block;
+        inset: 10px auto auto 10px;
+        width: min(300px, calc(100vw - 20px));
+        height: auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        pointer-events: none;
+    }
+    .app-brand { display: none; }
+    #annotationTitle { display: none; }
+    #selectPanel { width: 100%; min-width: 0; max-width: none; pointer-events: auto; }
+    #selectPanel > select-element > .workspace-selectors { box-sizing: border-box; grid-template-columns: minmax(0, 1fr); gap: 6px; width: 100%; padding: 7px; border: 1px solid var(--line-strong); border-radius: 9px; background: rgba(17, 23, 34, .94); box-shadow: 0 12px 30px rgba(0,0,0,.38); backdrop-filter: blur(12px); }
+    #selectPanel .selector-field { width: 100%; }
+}
+
 @media (max-width: 720px) {
-    :root { --editor-inspector: 0px; --editor-tools: 48px; --editor-top: 96px; }
-    #topBar { grid-template-columns: 34px 1fr; grid-template-rows: 48px 48px; }
-    #selectPanel { grid-column: 2; }
-    #annotationTitle { grid-column: 1 / -1; grid-row: 2; }
+    :root { --editor-inspector: 0px; --editor-tools: 48px; }
     #propertyPanel { display: none; }
     #toolRail { top: calc(var(--editor-top) + 8px); left: 8px; }
     #cameraPanel { right: 8px; }

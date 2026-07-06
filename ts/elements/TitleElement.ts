@@ -3,7 +3,7 @@ import { Annotation, AnnotationData } from '../data/Annotation';
 import { ChipContent } from '../data/Chip';
 import { Canvas } from '../Canvas';
 import { ClientApi } from '../data/ClientApi';
-import { deleteIcon, newAnnotationIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
+import { deleteIcon, saveIcon } from '../util/Icons';
 import { notifyToast, ToastKind } from '../util/Toast';
 import { AppModal, AppModalContext } from '../util/AppModal';
 
@@ -34,14 +34,6 @@ export class TitleElement extends LitElement {
     onAnnotationCreated: () => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
-    @property()
-    onUndo: () => void;
-    @property()
-    onRedo: () => void;
-    @property({ type: Boolean })
-    canUndo: boolean = false;
-    @property({ type: Boolean })
-    canRedo: boolean = false;
 
     @property()
     userName: string;
@@ -60,6 +52,10 @@ export class TitleElement extends LitElement {
 
     private notifyAnnotationDeleted(aid: number) {
         window.dispatchEvent(new CustomEvent<number>("chipannotation-annotation-deleted", { detail: aid }));
+    }
+
+    private notifyAnnotationUpdated(aid: number) {
+        window.dispatchEvent(new CustomEvent<number>("chipannotation-annotation-updated", { detail: aid }));
     }
 
     private getLogin() {
@@ -92,6 +88,7 @@ export class TitleElement extends LitElement {
             }
             ClientApi.closeAllLoginTabs();
         });
+        window.addEventListener('chipannotation-new-annotation-requested', () => this.openCreateAnnotationModal());
     }
 
     private getData(): string {
@@ -128,6 +125,7 @@ export class TitleElement extends LitElement {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
                 if (this.onAnnotationSaved) this.onAnnotationSaved();
+                this.notifyAnnotationUpdated(r.aid);
             }).catch(e => {
                 console.log('updateAnnotation error:', e);
                 this.toast('Save failed', 'warning');
@@ -273,36 +271,34 @@ export class TitleElement extends LitElement {
         let title = '';
         if (this.annotation) title = this.titleValue !== undefined && this.titleValue !== null ? this.titleValue : (this.annotation.title || '');
 
-        let loginControl = this.userId > 0
-            ? html`
-                <div class="userMenu">
-                    <div class="userMenuRow">
-                        <span class="userMenuName">${this.userName}</span>
-                        <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>▾</button>
-                    </div>
-                    <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
-                        <button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>
-                    </div>
+        const projectLinks = html`
+            <div class="userMenuLinks" aria-label="Project links">
+                <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><img src="res/github.png" alt=""></a>
+                <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
+                <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
+            </div>`;
+        const accountAction = this.userId > 0
+            ? html`<button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>`
+            : html`<button id="userLoginInline" type="button" @click="${this.onClickLogin}">Login</button>`;
+        const loginControl = html`
+            <div class="userMenu">
+                <div class="userMenuRow">
+                    <span class="userMenuName">${this.userId > 0 ? this.userName : 'Guest'}</span>
+                    <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>▾</button>
                 </div>
-            `
-            : html`<button id="userLoginInline" class="configButton" @click="${this.onClickLogin}">Login</button>`;
+                <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
+                    ${accountAction}
+                    ${projectLinks}
+                </div>
+            </div>`;
         const canDelete = this.editMode === 'update'
             && this.annotation
             && this.annotation.aid > 0
             && this.annotation.userId === this.userId;
-        const buttonLine = this.editMode !== 'none' || this.canCreate
+        const buttonLine = this.editMode !== 'none'
             ? html`
                 <div class="annotationActionRow">
-                    ${this.editMode !== 'none'
-                        ? html`
-                            <button id="buttonSaveAnnotation" class="iconButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
-                            <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
-                            <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
-                        `
-                        : html``}
-                    ${this.canCreate
-                        ? html`<button class="iconButton createIconButton annotationCreateButton" @click="${() => this.openCreateAnnotationModal()}" title="New Annotation" aria-label="New Annotation">${newAnnotationIcon}</button>`
-                        : html``}
+                    <button id="buttonSaveAnnotation" class="iconButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
                     ${canDelete
                         ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
                         : html``}

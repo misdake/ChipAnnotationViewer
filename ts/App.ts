@@ -83,6 +83,15 @@ function restorePrimaryToolHighlight() {
     setActiveTool(primaryMouseTool === "select" ? "buttonSelect" : "buttonPan");
 }
 
+function prepareCreateTool(buttonId: string, selectionType: SelectType): boolean {
+    const selected = Selection.getSelected();
+    if (selected.type !== selectionType) return true;
+    const button = document.getElementById(buttonId);
+    const togglingOff = !!button && button.classList.contains("active");
+    Selection.deselect(selectionType);
+    return !togglingOff;
+}
+
 document.getElementById("buttonSelect").onclick = () => {
     activatePrimaryMouseTool("select");
 };
@@ -92,6 +101,7 @@ document.getElementById("buttonPan").onclick = () => {
 
 document.getElementById("buttonCreatePolyline").onclick = () => {
     if (!isEditingEnabled) return;
+    if (!prepareCreateTool("buttonCreatePolyline", SelectType.POLYLINE_CREATE)) return;
     polylineCreateMode = "polyline";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
@@ -104,6 +114,7 @@ document.getElementById("buttonCreatePolyline").onclick = () => {
 };
 document.getElementById("buttonCreateRect").onclick = () => {
     if (!isEditingEnabled) return;
+    if (!prepareCreateTool("buttonCreateRect", SelectType.POLYLINE_CREATE)) return;
     polylineCreateMode = "rect";
     let polyline = new DrawablePolyline(new DrawablePolylinePack(
         [], true, new Size(2),
@@ -117,6 +128,7 @@ document.getElementById("buttonCreateRect").onclick = () => {
 
 document.getElementById("buttonCreateText").onclick = () => {
     if (!isEditingEnabled) return;
+    if (!prepareCreateTool("buttonCreateText", SelectType.TEXT_CREATE)) return;
     let text = new DrawableText(new DrawableTextPack(
         "text",
         packRgba(255, 255, 255, 255), new Size(20),
@@ -205,7 +217,7 @@ class App {
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (polyline) => {
-            render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
+            render(html`${panelDivider}<polylineedit-element .polylines=${[polyline]} .canvas=${canvas} .chipContent=${this.chipContent} .showMeasurement=${false}></polylineedit-element>`, document.getElementById("panelSelected"));
             const createEditor = polylineCreateMode === "rect" ? EditorName.RECT_CREATE : EditorName.POLYLINE_CREATE;
             enterEditingEditors(createEditor);
         }, () => {

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChipAnnotation Comments</title>
     <script>
+        document.documentElement.dataset.loading = 'true';
         const compact = new URLSearchParams(location.search).get('compact') === '1';
         if (compact) {
             document.documentElement.dataset.theme = 'dark';
@@ -59,6 +60,9 @@
         .delete-button { margin-left: auto; padding: 3px 8px; color: var(--danger); }
         .comment-content { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
         .empty { color: var(--muted); }
+        :root[data-loading="true"] #comment-content,
+        :root[data-loading="true"] #comment-submit-actions { visibility: hidden; }
+        .comment-skeleton { height: 66px; margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; background: linear-gradient(var(--surface-muted) 28px, var(--surface) 28px); }
         :root[data-compact="true"] main { width: 100%; padding: 10px 10px 24px; }
         :root[data-compact="true"] .page-header { justify-content: flex-end; margin-bottom: 6px; }
         :root[data-compact="true"] .page-header h1 { display: none; }
@@ -71,6 +75,7 @@
         :root[data-compact="true"] .login-controls button, :root[data-compact="true"] .form-submit-actions button { min-height: 28px; padding: 4px 8px; }
         :root[data-compact="true"] .comment-list-header { margin: 4px 0; }
         :root[data-compact="true"] .comment { margin-top: 8px; }
+        :root[data-compact="true"] .comment-skeleton { height: 58px; margin-top: 8px; background: linear-gradient(var(--surface-muted) 25px, var(--surface) 25px); }
         :root[data-compact="true"] .comment header { gap: 8px; padding: 6px 8px; font-size: 11px; }
         :root[data-compact="true"] .comment-content { padding: 8px; font-size: 12px; line-height: 1.45; }
         [hidden] { display: none !important; }
@@ -83,13 +88,13 @@
         <button id="theme-toggle" type="button" aria-label="Switch color theme"></button>
     </div>
     <form id="comment-form">
-        <textarea id="comment-content" maxlength="10000" required hidden placeholder="Enter a comment (plain text, multiple lines supported)"></textarea>
+        <textarea id="comment-content" maxlength="10000" required disabled placeholder="Enter a comment (plain text, multiple lines supported)"></textarea>
         <div class="form-actions">
             <div class="login-controls">
                 <span id="login-status">Checking login status...</span>
                 <button id="login-button" type="button" hidden>Sign in with GitHub</button>
             </div>
-            <div id="comment-submit-actions" class="form-submit-actions" hidden>
+            <div id="comment-submit-actions" class="form-submit-actions">
                 <span>Maximum 10,000 characters</span>
                 <button id="comment-submit" type="submit">Post comment</button>
             </div>
@@ -102,7 +107,10 @@
             <button id="sort-button" type="button"></button>
         </div>
     </div>
-    <section id="comment-list" aria-live="polite"></section>
+    <section id="comment-list" aria-live="polite" aria-busy="true">
+        <div class="comment-skeleton" aria-hidden="true"></div>
+        <div class="comment-skeleton" aria-hidden="true"></div>
+    </section>
 </main>
 <script src="comments.js"></script>
 </body>

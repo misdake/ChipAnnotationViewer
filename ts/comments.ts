@@ -79,6 +79,7 @@ function updateSortButton() {
 
 function renderComments() {
     listElement.innerHTML = '';
+    listElement.setAttribute('aria-busy', 'false');
     if (comments.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'empty';
@@ -125,18 +126,20 @@ async function loadUser() {
         statusElement.textContent = `Logged in as ${currentUser.userName}`;
         loginButton.hidden = true;
         textarea.hidden = false;
+        textarea.disabled = false;
         submitActions.hidden = false;
     } else {
         statusElement.textContent = 'Sign in to post a comment.';
         loginButton.hidden = false;
         textarea.hidden = true;
+        textarea.disabled = true;
         submitActions.hidden = true;
     }
 }
 
-async function loadComments() {
+async function loadComments(render: boolean = true) {
     comments = await ClientApi.listComments(chipName, annotation);
-    renderComments();
+    if (render) renderComments();
     notifyParentCommentsChanged();
 }
 
@@ -180,17 +183,22 @@ async function initialize() {
         setMessage('The URL must include a non-empty chip parameter, and annotation must be a non-negative integer.', true);
         loginButton.hidden = true;
         form.hidden = true;
+        delete document.documentElement.dataset.loading;
         return;
     }
 
     try {
-        titleElement.textContent = annotation === 0
-            ? `Comments on ${chipName}`
-            : `Comments on ${chipName} / ${await getAnnotationTitle()}`;
-        await loadUser();
-        await loadComments();
+        titleElement.textContent = `Comments on ${chipName}`;
+        const titlePromise = annotation === 0 ? Promise.resolve('') : getAnnotationTitle();
+        const [, , annotationTitle] = await Promise.all([loadUser(), loadComments(false), titlePromise]);
+        if (annotationTitle) titleElement.textContent = `Comments on ${chipName} / ${annotationTitle}`;
+        renderComments();
     } catch (error) {
+        listElement.innerHTML = '';
+        listElement.setAttribute('aria-busy', 'false');
         setMessage(error instanceof Error ? error.message : 'Could not load comments.', true);
+    } finally {
+        delete document.documentElement.dataset.loading;
     }
 }
 

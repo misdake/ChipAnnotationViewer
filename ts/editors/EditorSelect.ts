@@ -109,9 +109,6 @@ export class EditorSelect extends Editor {
                         self.dragStartScreenY = event.offsetY;
                         self.dragCurrentX = x;
                         self.dragCurrentY = y;
-                        if (!event.ctrlKey) {
-                            Selection.deselectAny();
-                        }
                     }
                     return true;
                 }
@@ -271,6 +268,7 @@ export class EditorSelect extends Editor {
                     let dx = event.offsetX - self.dragStartScreenX;
                     let dy = event.offsetY - self.dragStartScreenY;
                     if (Math.hypot(dx, dy) >= EditorSelect.BOX_SELECT_MIN_DRAG_PX) {
+                        if (!self.dragging && !event.ctrlKey) Selection.deselectAny();
                         self.dragging = true;
                     }
 

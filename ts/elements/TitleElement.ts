@@ -341,7 +341,7 @@ export class TitleElement extends LitElement {
         const titleRow = this.editMode !== 'none'
             ? html`
                 <label class="selector-field annotationTitleField">
-                    <span class="selector-field-label">Title</span>
+                    <span class="selector-field-label ui-section-label">Title</span>
                     <span class="selector-control">
                         <input id="inputTitle" type="text" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
                         ${buttonLine}

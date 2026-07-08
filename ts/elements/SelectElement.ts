@@ -356,6 +356,26 @@ export class SelectElement extends LitElement {
         return [chip.vendor, chip.type, chip.family].filter(Boolean).join(' / ');
     }
 
+    private setAdvancedFacet(key: 'vendor' | 'type' | 'family', value: string) {
+        const property = `advanced${key.charAt(0).toUpperCase()}${key.slice(1)}` as 'advancedVendor' | 'advancedType' | 'advancedFamily';
+        this[property] = value;
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const name = this.advancedName.trim().toLowerCase();
+        const otherKeys = (['vendor', 'type', 'family'] as const).filter(item => item !== key);
+
+        for (const otherKey of otherKeys) {
+            const otherProperty = `advanced${otherKey.charAt(0).toUpperCase()}${otherKey.slice(1)}` as 'advancedVendor' | 'advancedType' | 'advancedFamily';
+            const selected = this[otherProperty];
+            if (!selected) continue;
+            const compatible = chips.some(chip => {
+                const displayName = `${chip.name} ${chip.listname || ''}`.toLowerCase();
+                return (!name || displayName.includes(name)) && (!value || chip[key] === value) && chip[otherKey] === selected;
+            });
+            if (!compatible) this[otherProperty] = '';
+        }
+        this.advancedSelectedChip = null;
+    }
+
     protected updated(): void {
         const root = document.getElementById('advancedChipModalRoot');
         if (root) renderTemplate(this.renderAdvancedBrowser(), root);
@@ -571,7 +591,7 @@ export class SelectElement extends LitElement {
         return html`
             <div class="workspace-selectors">
                 <label class="selector-field">
-                    <span class="selector-field-label">Chip</span>
+                    <span class="selector-field-label ui-section-label">Chip</span>
                     <span class="selector-control">
                         <span class="chip-picker">
                             <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
@@ -603,7 +623,7 @@ export class SelectElement extends LitElement {
                     </span>
                 </label>
                 <label class="selector-field">
-                    <span class="selector-field-label">Annotation</span>
+                    <span class="selector-field-label ui-section-label">Annotation</span>
                     <span class="selector-control">
                         <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
                             ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
@@ -622,11 +642,19 @@ export class SelectElement extends LitElement {
     private renderAdvancedBrowser() {
         if (!this.advancedBrowserOpen) return html``;
         const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
-        const uniqueValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.map(item => item[key]).filter(Boolean))).sort();
         const advancedName = this.advancedName.trim().toLowerCase();
-        const advancedChips = chips.filter(item => {
+        const matchesName = (item: Chip) => {
             const displayName = `${item.name} ${item.listname || ''}`.toLowerCase();
-            return (!advancedName || displayName.includes(advancedName))
+            return !advancedName || displayName.includes(advancedName);
+        };
+        const facetValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.filter(item => {
+            return matchesName(item)
+                && (key === 'vendor' || !this.advancedVendor || item.vendor === this.advancedVendor)
+                && (key === 'type' || !this.advancedType || item.type === this.advancedType)
+                && (key === 'family' || !this.advancedFamily || item.family === this.advancedFamily);
+        }).map(item => item[key]).filter(Boolean))).sort();
+        const advancedChips = chips.filter(item => {
+            return matchesName(item)
                 && (!this.advancedVendor || item.vendor === this.advancedVendor)
                 && (!this.advancedType || item.type === this.advancedType)
                 && (!this.advancedFamily || item.family === this.advancedFamily);
@@ -648,9 +676,9 @@ export class SelectElement extends LitElement {
                         </header>
                         <div class="advanced-chip-filters">
                             <label><span>Name</span><input type="search" .value=${this.advancedName} @input=${(ev: Event) => { this.advancedName = (ev.target as HTMLInputElement).value; this.advancedSelectedChip = null; }} placeholder="Search chip name"></label>
-                            <label><span>Vendor</span><select .value=${this.advancedVendor} @change=${(ev: Event) => { this.advancedVendor = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All vendors</option>${uniqueValues('vendor').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
-                            <label><span>Type</span><select .value=${this.advancedType} @change=${(ev: Event) => { this.advancedType = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All types</option>${uniqueValues('type').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
-                            <label><span>Family</span><select .value=${this.advancedFamily} @change=${(ev: Event) => { this.advancedFamily = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All families</option>${uniqueValues('family').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Vendor</span><select .value=${this.advancedVendor} @change=${(ev: Event) => this.setAdvancedFacet('vendor', (ev.target as HTMLSelectElement).value)}><option value="">All vendors</option>${facetValues('vendor').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Type</span><select .value=${this.advancedType} @change=${(ev: Event) => this.setAdvancedFacet('type', (ev.target as HTMLSelectElement).value)}><option value="">All types</option>${facetValues('type').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Family</span><select .value=${this.advancedFamily} @change=${(ev: Event) => this.setAdvancedFacet('family', (ev.target as HTMLSelectElement).value)}><option value="">All families</option>${facetValues('family').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
                         </div>
                         <div class="advanced-chip-results" role="grid" aria-label="Chip results">
                             <div class="advanced-chip-row advanced-chip-head" role="row">

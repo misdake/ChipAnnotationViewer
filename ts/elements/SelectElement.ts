@@ -7,6 +7,7 @@ import { ClientApi } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
+import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
 
 const commentIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -126,6 +127,8 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
 
         this.refreshChipList();
+        commentsPanel.setCountRefreshHandler(target => this.refreshCommentsTarget(target));
+        commentsPanel.setStateChangeHandler(() => this.requestUpdate());
 
         window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
@@ -296,6 +299,7 @@ export class SelectElement extends LitElement {
         this.chipPickerOpen = false;
         this.chipCommentCount = null;
         this.annotationCommentCount = null;
+        commentsPanel.followChip(chip ? chip.name : '', 0);
         if (this.onSelectChip) this.onSelectChip(chip);
         this.annotationlist_html = [];
         this.annotationlist_array = [];
@@ -358,6 +362,9 @@ export class SelectElement extends LitElement {
     }
 
     disconnectedCallback(): void {
+        commentsPanel.setCountRefreshHandler(null);
+        commentsPanel.setStateChangeHandler(null);
+        commentsPanel.clearTarget();
         const root = document.getElementById('advancedChipModalRoot');
         if (root) renderTemplate(html``, root);
         super.disconnectedCallback();
@@ -406,6 +413,7 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = annotation ? annotation.aid : 0;
         this.annotation_current = annotation;
         this.annotationCommentCount = null;
+        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0);
         if (annotation.aid > 0) {
             ClientApi.getAnnotationContent(annotation.aid).then(content => {
                 if (selectionVersion !== this.annotationSelectionVersion) return;
@@ -453,6 +461,7 @@ export class SelectElement extends LitElement {
         ClientApi.getCommentCount(chipName, 0).then(count => {
             if (selectionVersion !== this.chipSelectionVersion || this.chip_current.name !== chipName) return;
             this.chipCommentCount = count;
+            commentsPanel.updateCount(this.commentsTarget(0, count));
         }).catch(error => {
             if (selectionVersion !== this.chipSelectionVersion) return;
             console.warn('Could not load chip comment count', error);
@@ -463,6 +472,7 @@ export class SelectElement extends LitElement {
         ClientApi.getCommentCount(annotation.chipName, annotation.aid).then(count => {
             if (selectionVersion !== this.annotationSelectionVersion || this.annotation_current !== annotation) return;
             this.annotationCommentCount = count;
+            commentsPanel.updateCount(this.commentsTarget(annotation.aid, count));
         }).catch(error => {
             if (selectionVersion !== this.annotationSelectionVersion) return;
             console.warn('Could not load annotation comment count', error);
@@ -472,12 +482,33 @@ export class SelectElement extends LitElement {
     private openComments(annotation: number) {
         const chip = this.chip_current;
         if (!chip) return;
-        window.open(`comments.html?chip=${encodeURIComponent(chip.name)}&annotation=${annotation}`, '_blank', 'noopener');
+        const count = annotation === 0 ? this.chipCommentCount : this.annotationCommentCount;
+        commentsPanel.toggle(this.commentsTarget(annotation, count || 0));
+    }
+
+    private commentsTarget(annotation: number, count: number): CommentsTarget {
+        return {
+            chipName: this.chip_current ? this.chip_current.name : '',
+            annotation,
+            count: count || 0,
+            label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+        };
+    }
+
+    private refreshCommentsTarget(target: CommentsTarget) {
+        if (!this.chip_current || target.chipName !== this.chip_current.name) return;
+        if (target.annotation === 0) {
+            this.loadChipCommentCount(target.chipName, this.chipSelectionVersion);
+        } else if (this.annotation_current && this.annotation_current.aid === target.annotation) {
+            this.loadAnnotationCommentCount(this.annotation_current, this.annotationSelectionVersion);
+        }
     }
 
     private renderCommentButton(annotation: number, count: number, title: string, disabled: boolean) {
+        const target = disabled ? null : this.commentsTarget(annotation, count || 0);
+        const active = !!target && commentsPanel.isOpen(target);
         return html`
-            <button class="topBarIconButton commentButton" ?disabled=${disabled} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
+            <button class="topBarIconButton commentButton ${active ? 'commentButtonActive' : ''}" ?disabled=${disabled} aria-pressed=${active ? 'true' : 'false'} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
                 ${commentIcon}
                 ${count === null ? html`` : html`<span class="commentCount ${count === 0 ? 'commentCountEmpty' : ''}" aria-label=${`${count} comments`}>${count}</span>`}
             </button>`;

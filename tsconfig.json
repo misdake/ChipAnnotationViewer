@@ -4,7 +4,7 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "rootDir": "./ts/",
-    "module": "es6",
+    "module": "esnext",
     "target": "es6",
     "sourceMap": true,
     "noImplicitAny": true,

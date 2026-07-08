@@ -412,8 +412,8 @@ input[type="number"]:focus {
 .commentCount {
     position: absolute;
     z-index: 2;
-    top: -7px;
-    right: -8px;
+    top: -5px;
+    right: -6px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -973,6 +973,12 @@ html, body {
 .chipBrowseButton { font-size: 9px; font-weight: 800; letter-spacing: -1px; }
 .commentButton { z-index: 1; }
 .commentButton svg { width: 13px; height: 13px; color: #fff; }
+.commentButton.commentButtonActive {
+    border-color: var(--primary-color);
+    background: rgba(79,140,255,.22);
+    color: #fff;
+}
+.commentButton.commentButtonActive:hover:not(:disabled) { background: rgba(79,140,255,.32); }
 .saveAnnotationButton { background: var(--brand); color: #fff; }
 .topBarIconButton.saveAnnotationButton:hover:not(:disabled) { border-color: var(--brand-hover); background: var(--brand-hover); color: #fff; }
 .saveAnnotationButton:disabled { background: var(--panel-3); opacity: .55; }
@@ -1130,6 +1136,38 @@ button.advanced-chip-row.selected { background: rgba(79,140,255,.17); box-shadow
 
 #toast { right: calc(var(--editor-inspector) + 18px); bottom: 44px; }
 #container:not(:has(#panelSelected:not(:empty))) #toast { right: 18px; }
+
+.jsPanel.comments-dock-panel {
+    z-index: 1280 !important;
+    border: 1px solid var(--line-strong) !important;
+    background: var(--panel-1) !important;
+    box-shadow: 0 14px 38px rgba(0,0,0,.48) !important;
+}
+.comments-dock-panel .jsPanel-hdr { min-height: 34px; background: #111b2a !important; color: var(--ink) !important; }
+.comments-dock-panel .jsPanel-headerbar { min-height: 34px; }
+.comments-dock-panel .jsPanel-titlebar { cursor: pointer; }
+.comments-dock-panel .jsPanel-title { color: #fff !important; font: 600 12px/1.2 Inter, "Segoe UI", system-ui, sans-serif; }
+.comments-dock-panel .jsPanel-btn-smallify { transform: none !important; }
+.comments-dock-panel .jsPanel-controlbar .jsPanel-btn {
+    display: grid !important;
+    place-items: center;
+    width: 28px !important;
+    height: 28px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 4px;
+    color: #b9c6d8 !important;
+}
+.comments-dock-panel .jsPanel-controlbar .jsPanel-btn:hover,
+.comments-dock-panel .jsPanel-controlbar .jsPanel-btn:focus-visible { background: rgba(79,140,255,.16) !important; color: #fff !important; }
+.comments-dock-panel .comments-control-icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.comments-dock-panel .jsPanel-content { background: var(--panel-0) !important; }
+.comments-dock-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--panel-0); }
+body.comments-panel-visible #toast { right: 422px; }
+
+@media (max-width: 560px) {
+    body.comments-panel-visible #toast { right: 8px; bottom: 48px; }
+}
 
 @media (max-width: 899.98px) {
     :root { --editor-top: 0px; }

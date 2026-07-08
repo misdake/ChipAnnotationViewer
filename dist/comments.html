@@ -6,11 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChipAnnotation Comments</title>
     <script>
-        try {
-            const savedTheme = localStorage.getItem('chipannotation-comments-theme');
-            document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
-        } catch (_) {
+        const compact = new URLSearchParams(location.search).get('compact') === '1';
+        if (compact) {
             document.documentElement.dataset.theme = 'dark';
+            document.documentElement.dataset.compact = 'true';
+        } else {
+            try {
+                const savedTheme = localStorage.getItem('chipannotation-comments-theme');
+                document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+            } catch (_) {
+                document.documentElement.dataset.theme = 'dark';
+            }
         }
     </script>
     <style>
@@ -53,6 +59,20 @@
         .delete-button { margin-left: auto; padding: 3px 8px; color: var(--danger); }
         .comment-content { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
         .empty { color: var(--muted); }
+        :root[data-compact="true"] main { width: 100%; padding: 10px 10px 24px; }
+        :root[data-compact="true"] .page-header { justify-content: flex-end; margin-bottom: 6px; }
+        :root[data-compact="true"] .page-header h1 { display: none; }
+        :root[data-compact="true"] #theme-toggle { display: none; }
+        :root[data-compact="true"] form { margin-bottom: 10px; }
+        :root[data-compact="true"] textarea { min-height: 82px; max-height: 180px; padding: 8px; }
+        :root[data-compact="true"] .form-actions { align-items: flex-start; gap: 6px; font-size: 11px; }
+        :root[data-compact="true"] .login-controls, :root[data-compact="true"] .form-submit-actions { gap: 5px; }
+        :root[data-compact="true"] .form-submit-actions span { display: none; }
+        :root[data-compact="true"] .login-controls button, :root[data-compact="true"] .form-submit-actions button { min-height: 28px; padding: 4px 8px; }
+        :root[data-compact="true"] .comment-list-header { margin: 4px 0; }
+        :root[data-compact="true"] .comment { margin-top: 8px; }
+        :root[data-compact="true"] .comment header { gap: 8px; padding: 6px 8px; font-size: 11px; }
+        :root[data-compact="true"] .comment-content { padding: 8px; font-size: 12px; line-height: 1.45; }
         [hidden] { display: none !important; }
     </style>
 </head>

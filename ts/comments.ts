@@ -28,6 +28,15 @@ let currentUser: UserInfo = {userId: 0, userName: 'guest'};
 let comments: Comment[] = [];
 let newestFirst = true;
 
+function notifyParentCommentsChanged() {
+    if (window.parent === window) return;
+    window.parent.postMessage({
+        type: 'chipannotation-comments-changed',
+        chip: chipName,
+        annotation,
+    }, window.location.origin);
+}
+
 function currentTheme(): Theme {
     return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 }
@@ -128,6 +137,7 @@ async function loadUser() {
 async function loadComments() {
     comments = await ClientApi.listComments(chipName, annotation);
     renderComments();
+    notifyParentCommentsChanged();
 }
 
 async function getAnnotationTitle(): Promise<string> {

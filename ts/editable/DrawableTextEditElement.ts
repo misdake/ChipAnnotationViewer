@@ -95,9 +95,9 @@ export class TextEdit extends LitElement {
             ${actionButtons}
 
             <div class="editorConfigSection">
-                <div class="textConfigHeader">
+                <div class="configColorHeader">
                     <span class="editorConfigTitle">Text</span>
-                    <span class="textConfigOption">
+                    <span class="configColorHeaderControls">
                         <span class="chkBox ${multiline ? 'chkChecked' : ''}" @click=${() => this.setMultiline(!multiline)}>
                             ${multiline ? html`
                                 <svg viewBox="0 0 24 24">

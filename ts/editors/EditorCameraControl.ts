@@ -14,7 +14,7 @@ export class EditorCameraControl extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("drag right button to view map", UsageType.MOUSE),
+            Editor.usage(EditorCameraControl.allowLeftMousePan ? "drag left or right button to pan map" : "drag right button to pan map", UsageType.MOUSE),
             Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
         ];
     }
@@ -48,16 +48,19 @@ export class EditorCameraControl extends Editor {
                 this.buttonMask = isRightButton ? 2 : 1;
                 this.lastX = event.offsetX;
                 this.lastY = event.offsetY;
+                self.canvas.getElement().style.cursor = "grabbing";
                 return true;
             }
             onmouseup(event: MouseIn): boolean {
                 if (!this.down) return false;
                 this.down = false;
                 this.buttonMask = 0;
+                self.canvas.getElement().style.cursor = EditorCameraControl.allowLeftMousePan ? "grab" : "";
                 return true;
             }
             onmousemove(event: MouseIn): boolean {
                 if (this.down && (event.buttons & this.buttonMask)) {
+                    self.canvas.getElement().style.cursor = "grabbing";
                     let camera = self.canvas.getCamera();
                     camera.action();
                     let offsetX = event.offsetX;
@@ -75,6 +78,7 @@ export class EditorCameraControl extends Editor {
                     if (this.down && event.buttons === 0) {
                         this.down = false;
                         this.buttonMask = 0;
+                        self.canvas.getElement().style.cursor = EditorCameraControl.allowLeftMousePan ? "grab" : "";
                     }
                     return false;
                 }

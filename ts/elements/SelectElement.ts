@@ -6,6 +6,7 @@ import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
+import { render as renderTemplate } from 'lit-html';
 
 const commentIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -101,6 +102,10 @@ export class SelectElement extends LitElement {
     private advancedType = '';
     @property()
     private advancedFamily = '';
+    @property()
+    private advancedSort: 'name' | 'classification' = 'classification';
+    @property()
+    private advancedSortDirection: 'asc' | 'desc' = 'asc';
     @property()
     private advancedSelectedChip: Chip = null;
 
@@ -332,6 +337,31 @@ export class SelectElement extends LitElement {
         this.selectedChip(this.advancedSelectedChip);
         this.closeAdvancedBrowser();
     }
+
+    private toggleAdvancedSort(sort: 'name' | 'classification') {
+        if (this.advancedSort === sort) {
+            this.advancedSortDirection = this.advancedSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.advancedSort = sort;
+            this.advancedSortDirection = 'asc';
+        }
+        this.advancedSelectedChip = null;
+    }
+
+    private advancedClassification(chip: Chip): string {
+        return [chip.vendor, chip.type, chip.family].filter(Boolean).join(' / ');
+    }
+
+    protected updated(): void {
+        const root = document.getElementById('advancedChipModalRoot');
+        if (root) renderTemplate(this.renderAdvancedBrowser(), root);
+    }
+
+    disconnectedCallback(): void {
+        const root = document.getElementById('advancedChipModalRoot');
+        if (root) renderTemplate(html``, root);
+        super.disconnectedCallback();
+    }
     private refreshAnnotationList() {
         if (!this.canDiscardCurrent()) return;
         this.annotationlist_html = [];
@@ -360,8 +390,7 @@ export class SelectElement extends LitElement {
             return;
         }
         let annotation = this.annotationlist_array[index];
-        if (annotation && annotation.aid === 0) {
-            this.requestNewAnnotation();
+        if (!annotation) {
             this.restoreAnnotationSelect();
             return;
         }
@@ -448,7 +477,7 @@ export class SelectElement extends LitElement {
 
     private renderCommentButton(annotation: number, count: number, title: string, disabled: boolean) {
         return html`
-            <button class="commentButton" ?disabled=${disabled} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
+            <button class="topBarIconButton commentButton" ?disabled=${disabled} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
                 ${commentIcon}
                 ${count === null ? html`` : html`<span class="commentCount ${count === 0 ? 'commentCountEmpty' : ''}" aria-label=${`${count} comments`}>${count}</span>`}
             </button>`;
@@ -471,8 +500,9 @@ export class SelectElement extends LitElement {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
 
-        options.push(html`<option>+ New Annotation</option>`);
-        array.push(SelectElement.getDummyAnnotation());
+        const annotationCount = annotations ? annotations.length : 0;
+        options.push(html`<option disabled>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}</option>`);
+        array.push(null);
 
         let current: Annotation = null;
         for (let annotation of annotations) {
@@ -503,17 +533,8 @@ export class SelectElement extends LitElement {
             return !query || searchText.includes(query);
         });
         const quickChips = filteredChips.slice(0, this.showAllChips ? 80 : 8);
-        const uniqueValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.map(item => item[key]).filter(Boolean))).sort();
-        const advancedName = this.advancedName.trim().toLowerCase();
-        const advancedChips = chips.filter(item => {
-            const displayName = `${item.name} ${item.listname || ''}`.toLowerCase();
-            return (!advancedName || displayName.includes(advancedName))
-                && (!this.advancedVendor || item.vendor === this.advancedVendor)
-                && (!this.advancedType || item.type === this.advancedType)
-                && (!this.advancedFamily || item.family === this.advancedFamily);
-        });
-        const annotationOptionOffset = this.canCreateAnnotation ? 0 : 1;
-        const annotationOptions = (this.annotationlist_html || []).slice(annotationOptionOffset);
+        const annotationOptionOffset = 0;
+        const annotationOptions = this.annotationlist_html || [];
         const hasAnnotationOptions = annotationOptions.length > 0;
 
         return html`
@@ -542,12 +563,12 @@ export class SelectElement extends LitElement {
                         </span>
                         ${chip
                             ? html`
-                                <button class="chipInfoButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
+                                <button class="topBarIconButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
                                 ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', false)}
-                                <button class="chipInfoButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
+                                <button class="topBarIconButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
                             : html`
                                 ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', true)}
-                                <span class="chipInfoButton chipInfoButtonDisabled" title="Chip information">${chipInfoIcon}</span>`}
+                                <span class="topBarIconButton topBarIconButtonDisabled" title="Chip information" aria-disabled="true">${chipInfoIcon}</span>`}
                     </span>
                 </label>
                 <label class="selector-field">
@@ -556,15 +577,37 @@ export class SelectElement extends LitElement {
                         <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
                             ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
                         </select>
-                        <button class="refreshButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
+                        <button class="topBarIconButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
                         ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
                         ${this.canCreateAnnotation && this.chip_content_current
-                            ? html`<button class="chipInfoButton newAnnotationButton" title="New annotation" aria-label="New annotation" @click=${() => this.requestNewAnnotation()}>${newAnnotationIcon}</button>`
+                            ? html`<button class="topBarIconButton" title="New annotation" aria-label="New annotation" @click=${() => this.requestNewAnnotation()}>${newAnnotationIcon}</button>`
                             : html``}
                     </span>
                 </label>
             </div>
-            ${this.advancedBrowserOpen ? html`
+        `;
+    }
+
+    private renderAdvancedBrowser() {
+        if (!this.advancedBrowserOpen) return html``;
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const uniqueValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.map(item => item[key]).filter(Boolean))).sort();
+        const advancedName = this.advancedName.trim().toLowerCase();
+        const advancedChips = chips.filter(item => {
+            const displayName = `${item.name} ${item.listname || ''}`.toLowerCase();
+            return (!advancedName || displayName.includes(advancedName))
+                && (!this.advancedVendor || item.vendor === this.advancedVendor)
+                && (!this.advancedType || item.type === this.advancedType)
+                && (!this.advancedFamily || item.family === this.advancedFamily);
+        }).sort((left, right) => {
+            const leftValue = this.advancedSort === 'name' ? (left.listname || left.name || '') : this.advancedClassification(left);
+            const rightValue = this.advancedSort === 'name' ? (right.listname || right.name || '') : this.advancedClassification(right);
+            const result = leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: 'base' });
+            return this.advancedSortDirection === 'asc' ? result : -result;
+        });
+        const sortIndicator = (sort: 'name' | 'classification') => this.advancedSort === sort ? (this.advancedSortDirection === 'asc' ? ' ↑' : ' ↓') : '';
+
+        return html`
                 <div class="advanced-chip-overlay" role="presentation">
                     <button class="advanced-chip-backdrop" type="button" aria-label="Close advanced chip browser" @click=${() => this.closeAdvancedBrowser()}></button>
                     <section class="advanced-chip-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-chip-title">
@@ -579,18 +622,20 @@ export class SelectElement extends LitElement {
                             <label><span>Family</span><select .value=${this.advancedFamily} @change=${(ev: Event) => { this.advancedFamily = (ev.target as HTMLSelectElement).value; this.advancedSelectedChip = null; }}><option value="">All families</option>${uniqueValues('family').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
                         </div>
                         <div class="advanced-chip-results" role="grid" aria-label="Chip results">
-                            <div class="advanced-chip-row advanced-chip-head" role="row"><span>Name</span><span>Vendor</span><span>Type</span><span>Family</span></div>
+                            <div class="advanced-chip-row advanced-chip-head" role="row">
+                                <button type="button" @click=${() => this.toggleAdvancedSort('name')}>Name${sortIndicator('name')}</button>
+                                <button type="button" @click=${() => this.toggleAdvancedSort('classification')}>Vendor / Type / Family${sortIndicator('classification')}</button>
+                            </div>
                             ${advancedChips.map(item => html`
                                 <button type="button" role="row" class="advanced-chip-row ${this.advancedSelectedChip === item ? 'selected' : ''}"
                                     @click=${() => { this.advancedSelectedChip = item; }} @dblclick=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
-                                    <strong>${item.listname || item.name}</strong><span>${item.vendor || '—'}</span><span>${item.type || '—'}</span><span>${item.family || '—'}</span>
+                                    <strong>${item.listname || item.name}</strong><span>${this.advancedClassification(item) || '—'}</span>
                                 </button>`)}
                             ${advancedChips.length ? html`` : html`<div class="advanced-chip-no-results">No chips match these filters.</div>`}
                         </div>
                         <footer><span>${advancedChips.length} results</span><button type="button" class="configButton" @click=${() => this.closeAdvancedBrowser()}>Cancel</button><button type="button" class="configButton advanced-chip-open" ?disabled=${!this.advancedSelectedChip} @click=${() => this.confirmAdvancedChip()}>Open</button></footer>
                     </section>
-                </div>` : html``}
-        `;
+                </div>`;
     }
 
     createRenderRoot() {

@@ -19,10 +19,35 @@ const submitActions = document.getElementById('comment-submit-actions') as HTMLE
 const submitButton = document.getElementById('comment-submit') as HTMLButtonElement;
 const messageElement = document.getElementById('message');
 const listElement = document.getElementById('comment-list');
+const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+const THEME_STORAGE_KEY = 'chipannotation-comments-theme';
+type Theme = 'light' | 'dark';
 
 let currentUser: UserInfo = {userId: 0, userName: 'guest'};
 let comments: Comment[] = [];
 let newestFirst = true;
+
+function currentTheme(): Theme {
+    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+}
+
+function updateThemeButton() {
+    const dark = currentTheme() === 'dark';
+    themeToggle.textContent = dark ? '☀' : '☾';
+    themeToggle.title = dark ? 'Use light theme' : 'Use dark theme';
+    themeToggle.setAttribute('aria-label', themeToggle.title);
+}
+
+function setTheme(theme: Theme) {
+    document.documentElement.dataset.theme = theme;
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (_) {
+        // Theme switching still works when storage is unavailable.
+    }
+    updateThemeButton();
+}
 
 function setMessage(message: string, error: boolean = false) {
     messageElement.textContent = message;
@@ -166,8 +191,10 @@ sortButton.onclick = () => {
     updateSortButton();
     renderComments();
 };
+themeToggle.onclick = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
 
 updateSortButton();
+updateThemeButton();
 
 window.addEventListener('message', event => {
     if (event.data && event.data.type === 'chipannotation-login-done') {

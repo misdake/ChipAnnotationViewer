@@ -42,6 +42,40 @@ export class TitleElement extends LitElement {
 
     userId: number;
     private createdAnnotationIdToSelect = 0;
+    private readonly closeUserMenuOnOutsideClick = (event: PointerEvent) => {
+        if (!this.menuOpen || this.contains(event.target as Node)) return;
+        this.menuOpen = false;
+        this.hideControlsHint();
+    };
+
+    private hideControlsHint() {
+        document.getElementById('hint')?.classList.remove('visible');
+    }
+
+    private toggleControlsHint() {
+        const toggle = this.querySelector('#hintToggle') as HTMLButtonElement;
+        const hint = document.getElementById('hint');
+        if (!toggle || !hint) return;
+        const show = !hint.classList.contains('visible');
+        hint.classList.toggle('visible', show);
+        toggle.setAttribute('aria-expanded', String(show));
+        if (!show) return;
+        const rect = toggle.getBoundingClientRect();
+        const hintRect = hint.getBoundingClientRect();
+        hint.style.top = `${Math.max(8, Math.min(window.innerHeight - hintRect.height - 8, rect.bottom + 8))}px`;
+        hint.style.left = `${Math.min(window.innerWidth - hintRect.width - 8, Math.max(8, rect.right - hintRect.width))}px`;
+    }
+
+    connectedCallback(): void {
+        super.connectedCallback();
+        document.addEventListener('pointerdown', this.closeUserMenuOnOutsideClick);
+    }
+
+    disconnectedCallback(): void {
+        document.removeEventListener('pointerdown', this.closeUserMenuOnOutsideClick);
+        this.hideControlsHint();
+        super.disconnectedCallback();
+    }
     private toast(message: string, kind: ToastKind = "success") {
         notifyToast(message, kind);
     }
@@ -260,6 +294,7 @@ export class TitleElement extends LitElement {
     }
     private toggleUserMenu() {
         this.menuOpen = !this.menuOpen;
+        if (!this.menuOpen) this.hideControlsHint();
         this.requestUpdate();
     }
 
@@ -277,50 +312,49 @@ export class TitleElement extends LitElement {
                 <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
                 <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
             </div>`;
-        const accountAction = this.userId > 0
-            ? html`<button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>`
-            : html`<button id="userLoginInline" type="button" @click="${this.onClickLogin}">Login</button>`;
-        const loginControl = html`
+        const loginControl = this.userId > 0 ? html`
             <div class="userMenu">
                 <div class="userMenuRow">
-                    <span class="userMenuName">${this.userId > 0 ? this.userName : 'Guest'}</span>
-                    <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>▾</button>
+                    <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>
+                        <span class="userMenuName">${this.userName}</span><span class="userMenuArrow" aria-hidden="true">▾</span>
+                    </button>
                 </div>
                 <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
-                    ${accountAction}
+                    <button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>
+                    <button id="hintToggle" type="button" aria-describedby="hint" aria-expanded="false" @click=${this.toggleControlsHint}>Controls</button>
                     ${projectLinks}
                 </div>
-            </div>`;
+            </div>` : html`
+                <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`;
         const canDelete = this.editMode === 'update'
             && this.annotation
             && this.annotation.aid > 0
             && this.annotation.userId === this.userId;
         const buttonLine = this.editMode !== 'none'
             ? html`
-                <div class="annotationActionRow">
-                    <button id="buttonSaveAnnotation" class="iconButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
-                    ${canDelete
-                        ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
-                        : html``}
-                </div>
+                <button id="buttonSaveAnnotation" class="topBarIconButton saveAnnotationButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
+                ${canDelete
+                    ? html`<button class="topBarIconButton deleteAnnotationButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
+                    : html``}
             `
             : html``;
         const titleRow = this.editMode !== 'none'
             ? html`
-                <div class="titleInput">
-                    <label for="dataTitle">Title:</label>
-                    <input id="inputTitle" type="text" class="configText" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
-                </div>
+                <label class="selector-field annotationTitleField">
+                    <span class="selector-field-label">Title</span>
+                    <span class="selector-control">
+                        <input id="inputTitle" type="text" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
+                        ${buttonLine}
+                    </span>
+                </label>
             `
             : html``;
 
         return html`
-            <div class="titleInput loginInput">
-                <label for="loginMenu">Login:</label>
+            ${titleRow}
+            <div class="loginInput">
                 <div id="loginMenu" class="loginControl">${loginControl}</div>
             </div>
-            ${titleRow}
-            ${buttonLine}
         `;
     }
 

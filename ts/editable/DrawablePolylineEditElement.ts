@@ -24,6 +24,8 @@ export class PolylineEdit extends LitElement {
 
     @property({ type: Boolean })
     showActions: boolean = true;
+    @property({ type: Boolean })
+    showTransformActions: boolean = true;
 
     @property()
     canvas: Canvas;
@@ -190,13 +192,15 @@ export class PolylineEdit extends LitElement {
             : html``;
 
         return html`
-            <div class="toolButtonRow">
-                <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
-                <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
-                <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
-                <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
+            ${this.showActions || this.showTransformActions ? html`<div class="toolButtonRow">
                 ${actionButtons}
-            </div>
+                ${this.showTransformActions ? html`
+                    <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
+                    <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
+                    <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
+                    <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
+                ` : html``}
+            </div>` : html``}
             <div id="polylineAreaContainer">
                 <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
                 <span id="polylineTextArea">${this.area}</span>

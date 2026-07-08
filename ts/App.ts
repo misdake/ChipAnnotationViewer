@@ -27,6 +27,8 @@ let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
 const editorLayoutMedia = window.matchMedia("(min-width: 900px)");
 let isEditingEnabled = false;
+type PrimaryMouseTool = "select" | "pan";
+let primaryMouseTool: PrimaryMouseTool = "select";
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -35,13 +37,18 @@ canvas.addLayers(...Layers.create(canvas));
 canvas.addEditors(...(isReadOnly ? [new EditorCameraControl(canvas)] : Editors.create(canvas)));
 
 function enterBaseEditors() {
+    EditorCameraControl.allowLeftMousePan = !isEditingEnabled || primaryMouseTool === "pan";
+    canvas.getElement().style.cursor = primaryMouseTool === "pan" ? "grab" : "";
     canvas.enterEditors(
         EditorName.CAMERA_CONTROL,
-        ...(isEditingEnabled ? [EditorName.SELECT] : []),
+        ...(isEditingEnabled && primaryMouseTool === "select" ? [EditorName.SELECT] : []),
     );
 }
 
 function enterEditingEditors(...editors: EditorName[]) {
+    primaryMouseTool = "select";
+    EditorCameraControl.allowLeftMousePan = false;
+    canvas.getElement().style.cursor = "";
     canvas.enterEditors(
         EditorName.CAMERA_CONTROL,
         ...(isEditingEnabled ? [EditorName.SELECT, ...editors] : []),
@@ -65,15 +72,22 @@ function setActiveTool(buttonId: string) {
     });
 }
 
-document.getElementById("buttonSelect").onclick = () => {
+function activatePrimaryMouseTool(tool: PrimaryMouseTool) {
+    primaryMouseTool = tool;
     Selection.deselectAny();
     enterBaseEditors();
-    setActiveTool("buttonSelect");
+    setActiveTool(tool === "select" ? "buttonSelect" : "buttonPan");
+}
+
+function restorePrimaryToolHighlight() {
+    setActiveTool(primaryMouseTool === "select" ? "buttonSelect" : "buttonPan");
+}
+
+document.getElementById("buttonSelect").onclick = () => {
+    activatePrimaryMouseTool("select");
 };
 document.getElementById("buttonPan").onclick = () => {
-    Selection.deselectAny();
-    enterBaseEditors();
-    setActiveTool("buttonPan");
+    activatePrimaryMouseTool("pan");
 };
 
 document.getElementById("buttonCreatePolyline").onclick = () => {
@@ -152,9 +166,9 @@ class App {
         const editable = editMode !== 'none';
         const toolRail = document.getElementById("toolRail");
         if (toolRail) toolRail.hidden = !editable;
-        EditorCameraControl.allowLeftMousePan = !editable;
         if (isEditingEnabled === editable) return;
         isEditingEnabled = editable;
+        primaryMouseTool = editable ? "select" : "pan";
         document.getElementById("editControls").hidden = !editable;
         Selection.deselectAny();
         enterBaseEditors();
@@ -178,23 +192,6 @@ class App {
             event.returnValue = "";
         });
 
-        const hintToggle = document.getElementById("hintToggle");
-        const hintElement = document.getElementById("hint");
-        if (hintToggle && hintElement) {
-            const showHint = () => {
-                const rect = hintToggle.getBoundingClientRect();
-                hintElement.classList.add("visible");
-                const hintRect = hintElement.getBoundingClientRect();
-                hintElement.style.top = `${Math.max(8, rect.top - hintRect.height - 8)}px`;
-                hintElement.style.left = `${Math.min(window.innerWidth - hintRect.width - 8, Math.max(8, rect.left))}px`;
-            };
-            const hideHint = () => hintElement.classList.remove("visible");
-            hintToggle.addEventListener("mouseenter", showHint);
-            hintToggle.addEventListener("mouseleave", hideHint);
-            hintToggle.addEventListener("focus", showHint);
-            hintToggle.addEventListener("blur", hideHint);
-        }
-
         const panelDivider = html`<div class="panel-divider"></div>`;
 
         Selection.register(SelectType.POLYLINE, (polyline) => {
@@ -204,6 +201,7 @@ class App {
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
+            restorePrimaryToolHighlight();
         });
 
         Selection.register(SelectType.POLYLINE_CREATE, (polyline) => {
@@ -214,6 +212,7 @@ class App {
             render(html``, document.getElementById("panelSelected"));
             polylineCreateMode = "polyline";
             enterBaseEditors();
+            restorePrimaryToolHighlight();
         });
 
         Selection.register(SelectType.TEXT, (text) => {
@@ -223,6 +222,7 @@ class App {
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
+            restorePrimaryToolHighlight();
         });
 
         Selection.register(SelectType.TEXT_CREATE, (text) => {
@@ -231,6 +231,7 @@ class App {
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
+            restorePrimaryToolHighlight();
         });
 
         Selection.register(SelectType.MULTIPLE, (items) => {
@@ -244,7 +245,7 @@ class App {
                 }
             }
             const polylinePanel = polylines.length > 0
-                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .showActions=${false} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .showActions=${false} .showTransformActions=${false} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
                 : html``;
             const textPanel = texts.length > 0
                 ? html`<textedit-element .texts=${texts} .showActions=${false} .canvas=${canvas}></textedit-element>`
@@ -256,6 +257,7 @@ class App {
         }, () => {
             render(html``, document.getElementById("panelSelected"));
             enterBaseEditors();
+            restorePrimaryToolHighlight();
         });
     }
 
@@ -445,11 +447,11 @@ function interceptKeys(evt: KeyboardEvent) {
     if (!ctrlDown && !evt.altKey) {
         const key = evt.key.toLowerCase();
         const toolButtonByKey: Record<string, string> = {
-            v: "buttonSelect",
-            h: "buttonPan",
-            p: "buttonCreatePolyline",
-            r: "buttonCreateRect",
-            t: "buttonCreateText",
+            "1": "buttonSelect",
+            "2": "buttonPan",
+            "3": "buttonCreatePolyline",
+            "4": "buttonCreateRect",
+            "5": "buttonCreateText",
         };
         const buttonId = toolButtonByKey[key];
         const button = buttonId ? document.getElementById(buttonId) as HTMLButtonElement : null;

@@ -79,6 +79,8 @@ export class SelectElement extends LitElement {
     chipCommentCount: number = null;
     @property({type: Number})
     annotationCommentCount: number = null;
+    @property({type: Number})
+    private annotationCommentTargetId: number = 0;
     @property({type: Boolean})
     canCreateAnnotation: boolean = false;
 
@@ -304,6 +306,7 @@ export class SelectElement extends LitElement {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
         this.annotation_current = null;
+        this.annotationCommentTargetId = 0;
         this.replaceUrl();
 
         if (chip) {
@@ -432,6 +435,7 @@ export class SelectElement extends LitElement {
         const selectionVersion = ++this.annotationSelectionVersion;
         this.annotation_id_toload = annotation ? annotation.aid : 0;
         this.annotation_current = annotation;
+        this.annotationCommentTargetId = annotation && annotation.aid > 0 ? annotation.aid : 0;
         this.annotationCommentCount = null;
         commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0);
         if (annotation.aid > 0) {
@@ -552,9 +556,6 @@ export class SelectElement extends LitElement {
         let array: Annotation[] = [];
 
         const annotationCount = annotations ? annotations.length : 0;
-        options.push(html`<option disabled>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}</option>`);
-        array.push(null);
-
         let current: Annotation = null;
         for (let annotation of annotations) {
             if (!annotation.title) {
@@ -571,6 +572,9 @@ export class SelectElement extends LitElement {
             }
             array.push(annotation);
         }
+
+        options.unshift(html`<option disabled ?selected=${!current}>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}</option>`);
+        array.unshift(null);
 
         return { html: options, array: array, current: current }
     }
@@ -629,7 +633,7 @@ export class SelectElement extends LitElement {
                             ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
                         </select>
                         <button class="topBarIconButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
-                        ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
+                        ${this.renderCommentButton(this.annotationCommentTargetId, this.annotationCommentCount, 'Annotation comments', this.annotationCommentTargetId <= 0)}
                         ${this.canCreateAnnotation && this.chip_content_current
                             ? html`<button class="topBarIconButton" title="New annotation" aria-label="New annotation" @click=${() => this.requestNewAnnotation()}>${newAnnotationIcon}</button>`
                             : html``}

@@ -35,6 +35,15 @@ const newAnnotationIcon = html`
         <path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><path d="M13 3v5h5"/><path d="M15 17h6M18 14v6"/>
     </svg>`;
 
+const openChipIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 6h10"/>
+        <path d="M4 11h7"/>
+        <path d="M4 16h6"/>
+        <circle cx="16.5" cy="15.5" r="3.5"/>
+        <path d="M19 18l2 2"/>
+    </svg>`;
+
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
     for (let param of paramNames) {
@@ -435,7 +444,15 @@ export class SelectElement extends LitElement {
     private clearAnnotationSelection() {
         if (!this.annotation_current || this.annotation_current.aid <= 0) return;
         if (!this.canDiscardCurrent()) return;
+        const annotations = (this.annotationlist_array || []).filter((item): item is Annotation => !!item);
+        const { html, array } = SelectElement.showAnnotationList(annotations, 0);
+        this.annotationlist_html = html;
+        this.annotationlist_array = array;
         this.selectedAnnotation(SelectElement.getDummyAnnotation());
+        this.updateComplete.then(() => {
+            const select = this.querySelector("#annotationSelect") as HTMLSelectElement;
+            if (select) select.selectedIndex = 0;
+        });
     }
 
     private requestNewAnnotation() {
@@ -584,7 +601,7 @@ export class SelectElement extends LitElement {
             array.push(annotation);
         }
 
-        options.unshift(html`<option disabled ?selected=${!current}>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}</option>`);
+        options.unshift(html`<option disabled ?selected=${!current}>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}...</option>`);
         array.unshift(null);
 
         return { html: options, array: array, current: current }
@@ -635,7 +652,7 @@ export class SelectElement extends LitElement {
                         </span>
                         ${chip
                             ? html`
-                                <button class="topBarIconButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
+                                <button class="topBarIconButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>${openChipIcon}</button>
                                 ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', false)}
                                 <button class="topBarIconButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
                             : html`
@@ -646,12 +663,14 @@ export class SelectElement extends LitElement {
                 <label class="selector-field">
                     <span class="selector-field-label ui-section-label">Annotation</span>
                     <span class="selector-control">
-                        <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
-                            ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
-                        </select>
-                        ${this.annotation_current && this.annotation_current.aid > 0
-                            ? html`<button class="topBarIconButton" title="Clear annotation selection" aria-label="Clear annotation selection" @click=${() => this.clearAnnotationSelection()}>${clearIcon}</button>`
-                            : html``}
+                        <span class="annotation-picker">
+                            <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
+                                ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
+                            </select>
+                            ${this.annotation_current && this.annotation_current.aid > 0
+                                ? html`<button type="button" class="chip-search-clear annotation-select-clear" title="Clear annotation selection" aria-label="Clear annotation selection" @click=${() => this.clearAnnotationSelection()}>${clearIcon}</button>`
+                                : html``}
+                        </span>
                         <button class="topBarIconButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
                         ${this.renderCommentButton(this.annotationCommentTargetId, this.annotationCommentCount, 'Annotation comments', this.annotationCommentTargetId <= 0)}
                         ${this.canCreateAnnotation && this.chip_content_current

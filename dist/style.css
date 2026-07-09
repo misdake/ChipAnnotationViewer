@@ -962,7 +962,7 @@ body {
 
 #selectPanel>select-element>.workspace-selectors {
     display: grid;
-    grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     padding: 0;
     border: 0;
@@ -998,7 +998,8 @@ body {
     min-width: 0;
 }
 
-.chip-picker {
+.chip-picker,
+.annotation-picker {
     position: relative;
     flex: 1 1 auto;
     min-width: 0;
@@ -1122,6 +1123,20 @@ body {
     font-size: 12px;
 }
 
+#annotationSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 30px;
+}
+
+#annotationSelect::-ms-expand {
+    display: none;
+}
+
+.annotation-select-clear {
+    right: 3px;
+}
+
 .topBarIconButton {
     position: relative;
     box-sizing: border-box;
@@ -1162,9 +1177,12 @@ body {
 }
 
 .chipBrowseButton {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: -1px;
+    color: #fff;
+}
+
+.chipBrowseButton svg {
+    width: 15px;
+    height: 15px;
 }
 
 .commentButton {

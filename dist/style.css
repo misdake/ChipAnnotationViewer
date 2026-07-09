@@ -1018,9 +1018,41 @@ body {
     font-size: 12px;
 }
 
+.chip-picker input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+}
+
 .chip-picker input[type="search"]:focus {
     border-color: var(--brand);
     box-shadow: 0 0 0 2px rgba(79, 140, 255, .15);
+}
+
+.chip-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 23px;
+    height: 23px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ink-muted);
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.chip-search-clear svg {
+    width: 13px;
+    height: 13px;
+}
+
+.chip-search-clear:hover {
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, .12);
 }
 
 .chip-quick-list {

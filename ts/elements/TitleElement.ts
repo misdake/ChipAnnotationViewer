@@ -3,7 +3,7 @@ import { Annotation, AnnotationData } from '../data/Annotation';
 import { ChipContent } from '../data/Chip';
 import { Canvas } from '../Canvas';
 import { ClientApi } from '../data/ClientApi';
-import { deleteIcon, newAnnotationIcon, redoIcon, saveIcon, undoIcon } from '../util/Icons';
+import { deleteIcon, saveIcon } from '../util/Icons';
 import { notifyToast, ToastKind } from '../util/Toast';
 import { AppModal, AppModalContext } from '../util/AppModal';
 
@@ -34,14 +34,6 @@ export class TitleElement extends LitElement {
     onAnnotationCreated: () => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
-    @property()
-    onUndo: () => void;
-    @property()
-    onRedo: () => void;
-    @property({ type: Boolean })
-    canUndo: boolean = false;
-    @property({ type: Boolean })
-    canRedo: boolean = false;
 
     @property()
     userName: string;
@@ -50,6 +42,40 @@ export class TitleElement extends LitElement {
 
     userId: number;
     private createdAnnotationIdToSelect = 0;
+    private readonly closeUserMenuOnOutsideClick = (event: PointerEvent) => {
+        if (!this.menuOpen || this.contains(event.target as Node)) return;
+        this.menuOpen = false;
+        this.hideControlsHint();
+    };
+
+    private hideControlsHint() {
+        document.getElementById('hint')?.classList.remove('visible');
+    }
+
+    private toggleControlsHint() {
+        const toggle = this.querySelector('#hintToggle') as HTMLButtonElement;
+        const hint = document.getElementById('hint');
+        if (!toggle || !hint) return;
+        const show = !hint.classList.contains('visible');
+        hint.classList.toggle('visible', show);
+        toggle.setAttribute('aria-expanded', String(show));
+        if (!show) return;
+        const rect = toggle.getBoundingClientRect();
+        const hintRect = hint.getBoundingClientRect();
+        hint.style.top = `${Math.max(8, Math.min(window.innerHeight - hintRect.height - 8, rect.bottom + 8))}px`;
+        hint.style.left = `${Math.min(window.innerWidth - hintRect.width - 8, Math.max(8, rect.right - hintRect.width))}px`;
+    }
+
+    connectedCallback(): void {
+        super.connectedCallback();
+        document.addEventListener('pointerdown', this.closeUserMenuOnOutsideClick);
+    }
+
+    disconnectedCallback(): void {
+        document.removeEventListener('pointerdown', this.closeUserMenuOnOutsideClick);
+        this.hideControlsHint();
+        super.disconnectedCallback();
+    }
     private toast(message: string, kind: ToastKind = "success") {
         notifyToast(message, kind);
     }
@@ -60,6 +86,10 @@ export class TitleElement extends LitElement {
 
     private notifyAnnotationDeleted(aid: number) {
         window.dispatchEvent(new CustomEvent<number>("chipannotation-annotation-deleted", { detail: aid }));
+    }
+
+    private notifyAnnotationUpdated(aid: number) {
+        window.dispatchEvent(new CustomEvent<number>("chipannotation-annotation-updated", { detail: aid }));
     }
 
     private getLogin() {
@@ -92,6 +122,7 @@ export class TitleElement extends LitElement {
             }
             ClientApi.closeAllLoginTabs();
         });
+        window.addEventListener('chipannotation-new-annotation-requested', () => this.openCreateAnnotationModal());
     }
 
     private getData(): string {
@@ -128,6 +159,7 @@ export class TitleElement extends LitElement {
                 Object.assign(this.annotation, r);
                 this.toast('Saved');
                 if (this.onAnnotationSaved) this.onAnnotationSaved();
+                this.notifyAnnotationUpdated(r.aid);
             }).catch(e => {
                 console.log('updateAnnotation error:', e);
                 this.toast('Save failed', 'warning');
@@ -262,6 +294,7 @@ export class TitleElement extends LitElement {
     }
     private toggleUserMenu() {
         this.menuOpen = !this.menuOpen;
+        if (!this.menuOpen) this.hideControlsHint();
         this.requestUpdate();
     }
 
@@ -273,56 +306,55 @@ export class TitleElement extends LitElement {
         let title = '';
         if (this.annotation) title = this.titleValue !== undefined && this.titleValue !== null ? this.titleValue : (this.annotation.title || '');
 
-        let loginControl = this.userId > 0
-            ? html`
-                <div class="userMenu">
-                    <div class="userMenuRow">
-                        <span class="userMenuName">${this.userName}</span>
-                        <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu">▶</button>
-                        <button id="userLogoutInline" class="configButton" style="${this.menuOpen ? '' : 'display:none;'}" @click="${this.onClickLogout}">Logout</button>
-                    </div>
+        const projectLinks = html`
+            <div class="userMenuLinks" aria-label="Project links">
+                <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><img src="res/github.png" alt=""></a>
+                <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
+                <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
+            </div>`;
+        const loginControl = this.userId > 0 ? html`
+            <div class="userMenu">
+                <div class="userMenuRow">
+                    <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>
+                        <span class="userMenuName">${this.userName}</span><span class="userMenuArrow" aria-hidden="true">▾</span>
+                    </button>
                 </div>
-            `
-            : html`<button id="userLoginInline" class="configButton" @click="${this.onClickLogin}">Login</button>`;
+                <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
+                    <button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>
+                    <button id="hintToggle" type="button" aria-describedby="hint" aria-expanded="false" @click=${this.toggleControlsHint}>Controls</button>
+                    ${projectLinks}
+                </div>
+            </div>` : html`
+                <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`;
         const canDelete = this.editMode === 'update'
             && this.annotation
             && this.annotation.aid > 0
             && this.annotation.userId === this.userId;
-        const buttonLine = this.editMode !== 'none' || this.canCreate
+        const buttonLine = this.editMode !== 'none'
             ? html`
-                <div class="annotationActionRow">
-                    ${this.editMode !== 'none'
-                        ? html`
-                            <button id="buttonSaveAnnotation" class="iconButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
-                            <button id="buttonUndo" class="iconButton historyButton" ?disabled="${!this.canUndo}" @click="${() => this.onUndo && this.onUndo()}" title="Undo (Ctrl+Z)" aria-label="Undo">${undoIcon}</button>
-                            <button id="buttonRedo" class="iconButton historyButton" ?disabled="${!this.canRedo}" @click="${() => this.onRedo && this.onRedo()}" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo">${redoIcon}</button>
-                        `
-                        : html``}
-                    ${this.canCreate
-                        ? html`<button class="iconButton createIconButton annotationCreateButton" @click="${() => this.openCreateAnnotationModal()}" title="New Annotation" aria-label="New Annotation">${newAnnotationIcon}</button>`
-                        : html``}
-                    ${canDelete
-                        ? html`<button class="iconButton deleteIconButton annotationDeleteButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
-                        : html``}
-                </div>
+                <button id="buttonSaveAnnotation" class="topBarIconButton saveAnnotationButton" ?disabled="${!this.dirty}" @click="${() => this.uploadAnnotation()}" title="Save Annotation (Ctrl+S)" aria-label="Save Annotation">${saveIcon}</button>
+                ${canDelete
+                    ? html`<button class="topBarIconButton deleteAnnotationButton" @click="${() => this.openDeleteAnnotationModal()}" title="Delete Annotation" aria-label="Delete Annotation">${deleteIcon}</button>`
+                    : html``}
             `
             : html``;
         const titleRow = this.editMode !== 'none'
             ? html`
-                <div class="titleInput">
-                    <label for="dataTitle">Title:</label>
-                    <input id="inputTitle" type="text" class="configText" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
-                </div>
+                <label class="selector-field annotationTitleField">
+                    <span class="selector-field-label ui-section-label">Title</span>
+                    <span class="selector-control">
+                        <input id="inputTitle" type="text" value="${title}" @input="${(event: Event) => this.onTitleInput(event)}">
+                        ${buttonLine}
+                    </span>
+                </label>
             `
             : html``;
 
         return html`
-            <div class="titleInput loginInput">
-                <label for="loginMenu">Login:</label>
+            ${titleRow}
+            <div class="loginInput">
                 <div id="loginMenu" class="loginControl">${loginControl}</div>
             </div>
-            ${titleRow}
-            ${buttonLine}
         `;
     }
 

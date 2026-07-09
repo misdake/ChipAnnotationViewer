@@ -24,6 +24,10 @@ export class PolylineEdit extends LitElement {
 
     @property({ type: Boolean })
     showActions: boolean = true;
+    @property({ type: Boolean })
+    showTransformActions: boolean = true;
+    @property({ type: Boolean })
+    showMeasurement: boolean = true;
 
     @property()
     canvas: Canvas;
@@ -50,31 +54,66 @@ export class PolylineEdit extends LitElement {
     }
 
     @property()
-    area: string = "";
-    calcArea() {
+    measurementLabel: string = "Length";
+    @property()
+    measurementValue: string = "";
+    private measurementTimer: number = null;
+    private unsubscribeHistory: () => void = null;
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.unsubscribeHistory = annotationHistory.subscribe(() => {
+            if (!this.showMeasurement) return;
+            if (this.measurementTimer !== null) window.clearTimeout(this.measurementTimer);
+            this.measurementTimer = window.setTimeout(() => {
+                this.measurementTimer = null;
+                this.calculateMeasurement();
+            }, 600);
+        });
+    }
+
+    disconnectedCallback() {
+        if (this.unsubscribeHistory) this.unsubscribeHistory();
+        if (this.measurementTimer !== null) window.clearTimeout(this.measurementTimer);
+        super.disconnectedCallback();
+    }
+
+    firstUpdated() {
+        if (this.showMeasurement) this.calculateMeasurement();
+    }
+
+    private calculateMeasurement() {
         let width = this.chipContent.widthMillimeter;
         let height = this.chipContent.heightMillimeter;
-        let unit = "mm";
+        let lengthUnit = "mm";
+        let areaUnit = "mm²";
         if (!(this.chipContent.widthMillimeter > 0 && this.chipContent.heightMillimeter > 0)) {
             width = this.chipContent.width;
             height = this.chipContent.height;
-            unit = "pixels";
+            lengthUnit = "pixels";
+            areaUnit = "pixels²";
         }
-        let totalValue = 0;
+        let totalArea = 0;
+        let totalLength = 0;
+        let hasArea = false;
+        let hasLength = false;
         for (const polyline of this.polylines) {
             if (polyline.style.fill) {
                 let area = polyline.calculator.area();
-                let areaMM2 = area / this.chipContent.width / this.chipContent.height * width * height;
-                totalValue += areaMM2;
-                unit = "mm²";
+                totalArea += area / this.chipContent.width / this.chipContent.height * width * height;
+                hasArea = true;
             } else {
                 let length = polyline.calculator.length();
-                let lengthMM = length * Math.sqrt(width * height / this.chipContent.width / this.chipContent.height);
-                totalValue += lengthMM;
+                totalLength += length * Math.sqrt(width * height / this.chipContent.width / this.chipContent.height);
+                hasLength = true;
             }
         }
-        totalValue = Math.round(totalValue * 100) / 100;
-        this.area = totalValue + unit;
+        const format = (value: number) => Math.round(value * 100) / 100;
+        this.measurementLabel = hasArea && hasLength ? "Area / Length" : hasArea ? "Area" : "Length";
+        this.measurementValue = [
+            hasArea ? `${format(totalArea)} ${areaUnit}` : "",
+            hasLength ? `${format(totalLength)} ${lengthUnit}` : "",
+        ].filter(Boolean).join(" / ");
     }
 
     private getTransformTargets(): (DrawablePolyline | DrawableText)[] {
@@ -174,6 +213,7 @@ export class PolylineEdit extends LitElement {
         if (changedProperties.has("polylines")) {
             this.strokeChangedByUser = false;
             this.fillChangedByUser = false;
+            if (this.showMeasurement && this.chipContent) this.calculateMeasurement();
         }
     }
 
@@ -190,17 +230,19 @@ export class PolylineEdit extends LitElement {
             : html``;
 
         return html`
-            <div class="toolButtonRow">
-                <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
-                <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
-                <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
-                <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
+            ${this.showActions || this.showTransformActions ? html`<div class="toolButtonRow">
                 ${actionButtons}
-            </div>
-            <div id="polylineAreaContainer">
-                <button class="configButton" @click=${() => this.calcArea()}>Area/Length</button>
-                <span id="polylineTextArea">${this.area}</span>
-            </div>
+                ${this.showTransformActions ? html`
+                    <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
+                    <button class="iconButton" @click=${() => this.rotateCW()} title="Rotate CW">${rotateCWIcon}</button>
+                    <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
+                    <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
+                ` : html``}
+            </div>` : html``}
+            ${this.showMeasurement ? html`<div id="polylineAreaContainer" class="polylineMeasurement">
+                <span>${this.measurementLabel}</span>
+                <strong id="polylineTextArea">${this.measurementValue}</strong>
+            </div>` : html``}
 
             <div class="editorConfigSection${strokeVisible ? "" : " collapsed"}${this.strokeChangedByUser ? "" : " noAnimation"}">
                 <div class="configColorHeader">

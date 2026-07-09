@@ -6,6 +6,8 @@ import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
+import { render as renderTemplate } from 'lit-html';
+import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
 
 const commentIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -16,6 +18,21 @@ const chipInfoIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" aria-hidden="true">
         <path d="M12 5h.01" />
         <path d="M12 11v8" />
+    </svg>`;
+
+const refreshIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.5-2.4L20 11M4 13l2.4 4.4A7 7 0 0 0 17.9 15"/>
+    </svg>`;
+
+const clearIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18"/>
+    </svg>`;
+
+const newAnnotationIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><path d="M13 3v5h5"/><path d="M15 17h6M18 14v6"/>
     </svg>`;
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
@@ -67,12 +84,38 @@ export class SelectElement extends LitElement {
     chipCommentCount: number = null;
     @property({type: Number})
     annotationCommentCount: number = null;
+    @property({type: Number})
+    private annotationCommentTargetId: number = 0;
+    @property({type: Boolean})
+    canCreateAnnotation: boolean = false;
 
     @property()
     annotation_current: Annotation;
     annotation_content_current: AnnotationContent;
     private annotationSelectionVersion = 0;
     private chipSelectionVersion = 0;
+    @property()
+    private chipQuery = '';
+    @property({ type: Boolean })
+    private chipPickerOpen = false;
+    @property({ type: Boolean })
+    private showAllChips = false;
+    @property({ type: Boolean })
+    private advancedBrowserOpen = false;
+    @property()
+    private advancedName = '';
+    @property()
+    private advancedVendor = '';
+    @property()
+    private advancedType = '';
+    @property()
+    private advancedFamily = '';
+    @property()
+    private advancedSort: 'name' | 'classification' = 'classification';
+    @property()
+    private advancedSortDirection: 'asc' | 'desc' = 'asc';
+    @property()
+    private advancedSelectedChip: Chip = null;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
@@ -91,6 +134,8 @@ export class SelectElement extends LitElement {
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
 
         this.refreshChipList();
+        commentsPanel.setCountRefreshHandler(target => this.refreshCommentsTarget(target));
+        commentsPanel.setStateChangeHandler(() => this.requestUpdate());
 
         window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
@@ -102,6 +147,12 @@ export class SelectElement extends LitElement {
             const custom = ev as CustomEvent<number>;
             if (!this.chip_content_current || !custom.detail) return;
             this.annotation_id_toload = 0;
+            this.refreshAnnotationList();
+        });
+        window.addEventListener('chipannotation-annotation-updated', (ev: Event) => {
+            const custom = ev as CustomEvent<number>;
+            if (!this.chip_content_current || !custom.detail) return;
+            this.annotation_id_toload = custom.detail;
             this.refreshAnnotationList();
         });
     }
@@ -251,12 +302,16 @@ export class SelectElement extends LitElement {
         const selectionVersion = ++this.chipSelectionVersion;
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
+        this.chipQuery = chip ? (chip.listname || chip.name) : '';
+        this.chipPickerOpen = false;
         this.chipCommentCount = null;
         this.annotationCommentCount = null;
+        commentsPanel.followChip(chip ? chip.name : '', 0);
         if (this.onSelectChip) this.onSelectChip(chip);
         this.annotationlist_html = [];
         this.annotationlist_array = [];
         this.annotation_current = null;
+        this.annotationCommentTargetId = 0;
         this.replaceUrl();
 
         if (chip) {
@@ -274,6 +329,73 @@ export class SelectElement extends LitElement {
                 SelectElement.warnNetwork(`Could not load chip data for ${chip.name}`, error);
             });
         }
+    }
+
+    private openAdvancedBrowser() {
+        this.advancedName = '';
+        this.advancedVendor = '';
+        this.advancedType = '';
+        this.advancedFamily = '';
+        this.advancedSelectedChip = this.chip_current;
+        this.advancedBrowserOpen = true;
+    }
+
+    private closeAdvancedBrowser() {
+        this.advancedBrowserOpen = false;
+    }
+
+    private confirmAdvancedChip() {
+        if (!this.advancedSelectedChip || !this.canDiscardCurrent()) return;
+        this.selectedChip(this.advancedSelectedChip);
+        this.closeAdvancedBrowser();
+    }
+
+    private toggleAdvancedSort(sort: 'name' | 'classification') {
+        if (this.advancedSort === sort) {
+            this.advancedSortDirection = this.advancedSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.advancedSort = sort;
+            this.advancedSortDirection = 'asc';
+        }
+        this.advancedSelectedChip = null;
+    }
+
+    private advancedClassification(chip: Chip): string {
+        return [chip.vendor, chip.type, chip.family].filter(Boolean).join(' / ');
+    }
+
+    private setAdvancedFacet(key: 'vendor' | 'type' | 'family', value: string) {
+        const property = `advanced${key.charAt(0).toUpperCase()}${key.slice(1)}` as 'advancedVendor' | 'advancedType' | 'advancedFamily';
+        this[property] = value;
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const name = this.advancedName.trim().toLowerCase();
+        const otherKeys = (['vendor', 'type', 'family'] as const).filter(item => item !== key);
+
+        for (const otherKey of otherKeys) {
+            const otherProperty = `advanced${otherKey.charAt(0).toUpperCase()}${otherKey.slice(1)}` as 'advancedVendor' | 'advancedType' | 'advancedFamily';
+            const selected = this[otherProperty];
+            if (!selected) continue;
+            const compatible = chips.some(chip => {
+                const displayName = `${chip.name} ${chip.listname || ''}`.toLowerCase();
+                return (!name || displayName.includes(name)) && (!value || chip[key] === value) && chip[otherKey] === selected;
+            });
+            if (!compatible) this[otherProperty] = '';
+        }
+        this.advancedSelectedChip = null;
+    }
+
+    protected updated(): void {
+        const root = document.getElementById('advancedChipModalRoot');
+        if (root) renderTemplate(this.renderAdvancedBrowser(), root);
+    }
+
+    disconnectedCallback(): void {
+        commentsPanel.setCountRefreshHandler(null);
+        commentsPanel.setStateChangeHandler(null);
+        commentsPanel.clearTarget();
+        const root = document.getElementById('advancedChipModalRoot');
+        if (root) renderTemplate(html``, root);
+        super.disconnectedCallback();
     }
     private refreshAnnotationList() {
         if (!this.canDiscardCurrent()) return;
@@ -303,13 +425,30 @@ export class SelectElement extends LitElement {
             return;
         }
         let annotation = this.annotationlist_array[index];
+        if (!annotation) {
+            this.restoreAnnotationSelect();
+            return;
+        }
         this.selectedAnnotation(annotation);
+    }
+
+    private clearAnnotationSelection() {
+        if (!this.annotation_current || this.annotation_current.aid <= 0) return;
+        if (!this.canDiscardCurrent()) return;
+        this.selectedAnnotation(SelectElement.getDummyAnnotation());
+    }
+
+    private requestNewAnnotation() {
+        if (!this.canCreateAnnotation || !this.chip_content_current) return;
+        window.dispatchEvent(new CustomEvent('chipannotation-new-annotation-requested'));
     }
     private selectedAnnotation(annotation: Annotation) {
         const selectionVersion = ++this.annotationSelectionVersion;
         this.annotation_id_toload = annotation ? annotation.aid : 0;
         this.annotation_current = annotation;
+        this.annotationCommentTargetId = annotation && annotation.aid > 0 ? annotation.aid : 0;
         this.annotationCommentCount = null;
+        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0);
         if (annotation.aid > 0) {
             ClientApi.getAnnotationContent(annotation.aid).then(content => {
                 if (selectionVersion !== this.annotationSelectionVersion) return;
@@ -357,6 +496,7 @@ export class SelectElement extends LitElement {
         ClientApi.getCommentCount(chipName, 0).then(count => {
             if (selectionVersion !== this.chipSelectionVersion || this.chip_current.name !== chipName) return;
             this.chipCommentCount = count;
+            commentsPanel.updateCount(this.commentsTarget(0, count));
         }).catch(error => {
             if (selectionVersion !== this.chipSelectionVersion) return;
             console.warn('Could not load chip comment count', error);
@@ -367,6 +507,7 @@ export class SelectElement extends LitElement {
         ClientApi.getCommentCount(annotation.chipName, annotation.aid).then(count => {
             if (selectionVersion !== this.annotationSelectionVersion || this.annotation_current !== annotation) return;
             this.annotationCommentCount = count;
+            commentsPanel.updateCount(this.commentsTarget(annotation.aid, count));
         }).catch(error => {
             if (selectionVersion !== this.annotationSelectionVersion) return;
             console.warn('Could not load annotation comment count', error);
@@ -376,12 +517,33 @@ export class SelectElement extends LitElement {
     private openComments(annotation: number) {
         const chip = this.chip_current;
         if (!chip) return;
-        window.open(`comments.html?chip=${encodeURIComponent(chip.name)}&annotation=${annotation}`, '_blank', 'noopener');
+        const count = annotation === 0 ? this.chipCommentCount : this.annotationCommentCount;
+        commentsPanel.toggle(this.commentsTarget(annotation, count || 0));
+    }
+
+    private commentsTarget(annotation: number, count: number): CommentsTarget {
+        return {
+            chipName: this.chip_current ? this.chip_current.name : '',
+            annotation,
+            count: count || 0,
+            label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+        };
+    }
+
+    private refreshCommentsTarget(target: CommentsTarget) {
+        if (!this.chip_current || target.chipName !== this.chip_current.name) return;
+        if (target.annotation === 0) {
+            this.loadChipCommentCount(target.chipName, this.chipSelectionVersion);
+        } else if (this.annotation_current && this.annotation_current.aid === target.annotation) {
+            this.loadAnnotationCommentCount(this.annotation_current, this.annotationSelectionVersion);
+        }
     }
 
     private renderCommentButton(annotation: number, count: number, title: string, disabled: boolean) {
+        const target = disabled ? null : this.commentsTarget(annotation, count || 0);
+        const active = !!target && commentsPanel.isOpen(target);
         return html`
-            <button class="commentButton" ?disabled=${disabled} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
+            <button class="topBarIconButton commentButton ${active ? 'commentButtonActive' : ''}" ?disabled=${disabled} aria-pressed=${active ? 'true' : 'false'} title=${title} aria-label=${title} @click=${() => this.openComments(annotation)}>
                 ${commentIcon}
                 ${count === null ? html`` : html`<span class="commentCount ${count === 0 ? 'commentCountEmpty' : ''}" aria-label=${`${count} comments`}>${count}</span>`}
             </button>`;
@@ -404,13 +566,7 @@ export class SelectElement extends LitElement {
         let options: TemplateResult[] = [];
         let array: Annotation[] = [];
 
-        const annotationCountLabel = annotations.length === 1
-            ? "1 annotation"
-            : `${annotations.length} annotations`;
-        options.push(html`
-            <option>${annotationCountLabel}</option>`);
-        array.push(SelectElement.getDummyAnnotation());
-
+        const annotationCount = annotations ? annotations.length : 0;
         let current: Annotation = null;
         for (let annotation of annotations) {
             if (!annotation.title) {
@@ -428,29 +584,141 @@ export class SelectElement extends LitElement {
             array.push(annotation);
         }
 
+        options.unshift(html`<option disabled ?selected=${!current}>${annotationCount} ${annotationCount === 1 ? 'annotation' : 'annotations'}</option>`);
+        array.unshift(null);
+
         return { html: options, array: array, current: current }
     }
 
     render() {
         const chip = this.chip_content_current;
+        const query = this.chipQuery.trim().toLowerCase();
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const filteredChips = chips.filter(item => {
+            const searchText = `${item.name} ${item.listname || ''} ${item.vendor || ''} ${item.type || ''} ${item.family || ''}`.toLowerCase();
+            return !query || searchText.includes(query);
+        });
+        const quickChips = filteredChips.slice(0, this.showAllChips ? 80 : 8);
+        const annotationOptionOffset = 0;
+        const annotationOptions = this.annotationlist_html || [];
+        const hasAnnotationOptions = annotationOptions.length > 0;
 
         return html`
-            <div style="display:flex; align-items:center; width:100%; max-width:100%; min-width:0; white-space:nowrap; overflow:visible;">
-                <select id="chipSelect" @change=${(ev: Event) => this.uiSelectedChip((<HTMLSelectElement>ev.target).selectedIndex)}>
-                    ${this.chiplist_html}
-                </select>
-                ${chip
-                ? html`<button class="chipInfoButton" style="margin-left:1px;" title="Chip Information" aria-label="Chip Information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
-                : html`<span class="chipInfoButton chipInfoButtonDisabled" style="margin-left:1px;" title="Chip Information">${chipInfoIcon}</span>`
-            }
-                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', !this.chip_current)}
-                <select id="annotationSelect" style="margin-left:8px;" @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex)}>
-                    ${this.annotationlist_html}
-                </select>
-                <button class="refreshButton" style="margin-left:1px;" @click="${() => this.refreshAnnotationList()}">\xA0</button>
-                ${this.renderCommentButton(this.annotation_current ? this.annotation_current.aid : 0, this.annotationCommentCount, 'Annotation comments', !this.annotation_current || this.annotation_current.aid <= 0)}
+            <div class="workspace-selectors">
+                <label class="selector-field">
+                    <span class="selector-field-label ui-section-label">Chip</span>
+                    <span class="selector-control">
+                        <span class="chip-picker">
+                            <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
+                                .value=${this.chipQuery}
+                                @focus=${() => { this.chipPickerOpen = true; }}
+                                @blur=${() => window.setTimeout(() => { this.chipPickerOpen = false; }, 0)}
+                                @input=${(ev: Event) => { this.chipQuery = (ev.target as HTMLInputElement).value; this.chipPickerOpen = true; this.showAllChips = false; }}
+                                @keydown=${(ev: KeyboardEvent) => {
+                                    if (ev.key === 'Escape') this.chipPickerOpen = false;
+                                    if (ev.key === 'Enter' && quickChips.length === 1) this.selectedChip(quickChips[0]);
+                                }}>
+                            ${this.chipQuery ? html`
+                                <button type="button" class="chip-search-clear" title="Clear chip search" aria-label="Clear chip search"
+                                    @mousedown=${(ev: Event) => ev.preventDefault()}
+                                    @click=${() => { this.chipQuery = ''; this.showAllChips = false; this.chipPickerOpen = true; }}>
+                                    ${clearIcon}
+                                </button>` : html``}
+                            ${this.chipPickerOpen ? html`
+                                <div class="chip-quick-list" @mousedown=${(ev: Event) => ev.preventDefault()}>
+                                    ${quickChips.length ? quickChips.map(item => html`
+                                        <button type="button" class="chip-quick-item" @click=${() => this.canDiscardCurrent() && this.selectedChip(item)}>
+                                            <strong>${item.listname || item.name}</strong>
+                                            <span>${[item.vendor, item.type, item.family].filter(Boolean).join(' · ')}</span>
+                                        </button>`) : html`<div class="chip-quick-empty">No matching chips</div>`}
+                                </div>` : html``}
+                        </span>
+                        ${chip
+                            ? html`
+                                <button class="topBarIconButton chipBrowseButton" title="Advanced chip browser" aria-label="Advanced chip browser" @click=${() => this.openAdvancedBrowser()}>•••</button>
+                                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', false)}
+                                <button class="topBarIconButton" title="Chip information" aria-label="Chip information" @click=${() => this.openGlobalChipInfoModal()}>${chipInfoIcon}</button>`
+                            : html`
+                                ${this.renderCommentButton(0, this.chipCommentCount, 'Chip comments', true)}
+                                <span class="topBarIconButton topBarIconButtonDisabled" title="Chip information" aria-disabled="true">${chipInfoIcon}</span>`}
+                    </span>
+                </label>
+                <label class="selector-field">
+                    <span class="selector-field-label ui-section-label">Annotation</span>
+                    <span class="selector-control">
+                        <select id="annotationSelect" aria-label="Annotation" ?disabled=${!hasAnnotationOptions} @change=${(ev: Event) => this.uiSelectedAnnotation((<HTMLSelectElement>ev.target).selectedIndex + annotationOptionOffset)}>
+                            ${hasAnnotationOptions ? annotationOptions : html`<option>No annotations</option>`}
+                        </select>
+                        ${this.annotation_current && this.annotation_current.aid > 0
+                            ? html`<button class="topBarIconButton" title="Clear annotation selection" aria-label="Clear annotation selection" @click=${() => this.clearAnnotationSelection()}>${clearIcon}</button>`
+                            : html``}
+                        <button class="topBarIconButton" title="Refresh annotations" aria-label="Refresh annotations" @click="${() => this.refreshAnnotationList()}">${refreshIcon}</button>
+                        ${this.renderCommentButton(this.annotationCommentTargetId, this.annotationCommentCount, 'Annotation comments', this.annotationCommentTargetId <= 0)}
+                        ${this.canCreateAnnotation && this.chip_content_current
+                            ? html`<button class="topBarIconButton" title="New annotation" aria-label="New annotation" @click=${() => this.requestNewAnnotation()}>${newAnnotationIcon}</button>`
+                            : html``}
+                    </span>
+                </label>
             </div>
         `;
+    }
+
+    private renderAdvancedBrowser() {
+        if (!this.advancedBrowserOpen) return html``;
+        const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
+        const advancedName = this.advancedName.trim().toLowerCase();
+        const matchesName = (item: Chip) => {
+            const displayName = `${item.name} ${item.listname || ''}`.toLowerCase();
+            return !advancedName || displayName.includes(advancedName);
+        };
+        const facetValues = (key: 'vendor' | 'type' | 'family') => Array.from(new Set(chips.filter(item => {
+            return matchesName(item)
+                && (key === 'vendor' || !this.advancedVendor || item.vendor === this.advancedVendor)
+                && (key === 'type' || !this.advancedType || item.type === this.advancedType)
+                && (key === 'family' || !this.advancedFamily || item.family === this.advancedFamily);
+        }).map(item => item[key]).filter(Boolean))).sort();
+        const advancedChips = chips.filter(item => {
+            return matchesName(item)
+                && (!this.advancedVendor || item.vendor === this.advancedVendor)
+                && (!this.advancedType || item.type === this.advancedType)
+                && (!this.advancedFamily || item.family === this.advancedFamily);
+        }).sort((left, right) => {
+            const leftValue = this.advancedSort === 'name' ? (left.listname || left.name || '') : this.advancedClassification(left);
+            const rightValue = this.advancedSort === 'name' ? (right.listname || right.name || '') : this.advancedClassification(right);
+            const result = leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: 'base' });
+            return this.advancedSortDirection === 'asc' ? result : -result;
+        });
+        const sortIndicator = (sort: 'name' | 'classification') => this.advancedSort === sort ? (this.advancedSortDirection === 'asc' ? ' ↑' : ' ↓') : '';
+
+        return html`
+                <div class="advanced-chip-overlay" role="presentation">
+                    <button class="advanced-chip-backdrop" type="button" aria-label="Close advanced chip browser" @click=${() => this.closeAdvancedBrowser()}></button>
+                    <section class="advanced-chip-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-chip-title">
+                        <header>
+                            <div><h2 id="advanced-chip-title">Open Chip</h2><p>Filter the complete chip catalog, select a row, then open it.</p></div>
+                            <button class="advanced-chip-close" type="button" aria-label="Close" @click=${() => this.closeAdvancedBrowser()}>×</button>
+                        </header>
+                        <div class="advanced-chip-filters">
+                            <label><span>Name</span><input type="search" .value=${this.advancedName} @input=${(ev: Event) => { this.advancedName = (ev.target as HTMLInputElement).value; this.advancedSelectedChip = null; }} placeholder="Search chip name"></label>
+                            <label><span>Vendor</span><select .value=${this.advancedVendor} @change=${(ev: Event) => this.setAdvancedFacet('vendor', (ev.target as HTMLSelectElement).value)}><option value="">All vendors</option>${facetValues('vendor').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Type</span><select .value=${this.advancedType} @change=${(ev: Event) => this.setAdvancedFacet('type', (ev.target as HTMLSelectElement).value)}><option value="">All types</option>${facetValues('type').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                            <label><span>Family</span><select .value=${this.advancedFamily} @change=${(ev: Event) => this.setAdvancedFacet('family', (ev.target as HTMLSelectElement).value)}><option value="">All families</option>${facetValues('family').map(value => html`<option value=${value}>${value}</option>`)}</select></label>
+                        </div>
+                        <div class="advanced-chip-results" role="grid" aria-label="Chip results">
+                            <div class="advanced-chip-row advanced-chip-head" role="row">
+                                <button type="button" @click=${() => this.toggleAdvancedSort('name')}>Name${sortIndicator('name')}</button>
+                                <button type="button" @click=${() => this.toggleAdvancedSort('classification')}>Vendor / Type / Family${sortIndicator('classification')}</button>
+                            </div>
+                            ${advancedChips.map(item => html`
+                                <button type="button" role="row" class="advanced-chip-row ${this.advancedSelectedChip === item ? 'selected' : ''}"
+                                    @click=${() => { this.advancedSelectedChip = item; }} @dblclick=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
+                                    <strong>${item.listname || item.name}</strong><span>${this.advancedClassification(item) || '—'}</span>
+                                </button>`)}
+                            ${advancedChips.length ? html`` : html`<div class="advanced-chip-no-results">No chips match these filters.</div>`}
+                        </div>
+                        <footer><span>${advancedChips.length} results</span><button type="button" class="configButton" @click=${() => this.closeAdvancedBrowser()}>Cancel</button><button type="button" class="configButton advanced-chip-open" ?disabled=${!this.advancedSelectedChip} @click=${() => this.confirmAdvancedChip()}>Open</button></footer>
+                    </section>
+                </div>`;
     }
 
     createRenderRoot() {

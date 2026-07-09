@@ -26,11 +26,14 @@
   },
   "dependencies": {
     "hammerjs": "^2.0.8",
+    "jspanel4": "^4.16.1",
     "lit-element": "^2.2.1",
     "lit-html": "^1.1.2"
   },
   "devDependencies": {
     "@types/hammerjs": "^2.0.46",
+    "css-loader": "^7.1.4",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
     "webpack": "^5.105.2",

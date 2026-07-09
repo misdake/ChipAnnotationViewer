@@ -97,6 +97,9 @@ export class ClientApi {
     static getCommentCount(chipName: string, annotation: number): Promise<number> {
         return ClientApi.get(`${API_SERVER}/comment/count/${encodeURIComponent(chipName)}/${annotation}`);
     }
+    static openCommentEvents(chipName: string, annotation: number): EventSource {
+        return new EventSource(`${API_SERVER}/comment/events/${encodeURIComponent(chipName)}/${annotation}`, {withCredentials: true});
+    }
     static listComments(chipName: string, annotation: number): Promise<Comment[]> {
         return ClientApi.get(`${API_SERVER}/comment/list/${encodeURIComponent(chipName)}/${annotation}`);
     }

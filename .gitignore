@@ -4,9 +4,7 @@
 /node_modules
 /.test-dist
 /.rpt2_cache
-/dist/app.js
-/dist/login.js
-/dist/comments.js
+/dist/*.js
 /dist/*.map
 /dist/*.LICENSE.txt
 /viewer_conf.dev.json

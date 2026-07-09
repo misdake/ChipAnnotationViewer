@@ -19,10 +19,49 @@ const submitActions = document.getElementById('comment-submit-actions') as HTMLE
 const submitButton = document.getElementById('comment-submit') as HTMLButtonElement;
 const messageElement = document.getElementById('message');
 const listElement = document.getElementById('comment-list');
+const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+const THEME_STORAGE_KEY = 'chipannotation-comments-theme';
+type Theme = 'light' | 'dark';
 
 let currentUser: UserInfo = {userId: 0, userName: 'guest'};
 let comments: Comment[] = [];
 let newestFirst = true;
+let commentEvents: EventSource = null;
+let commentEventsReady = false;
+let realtimeRefreshTimer: number = null;
+let commentsLoadPromise: Promise<void> = null;
+let reloadAfterCurrentLoad = false;
+
+function notifyParentCommentsChanged() {
+    if (window.parent === window) return;
+    window.parent.postMessage({
+        type: 'chipannotation-comments-changed',
+        chip: chipName,
+        annotation,
+    }, window.location.origin);
+}
+
+function currentTheme(): Theme {
+    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+}
+
+function updateThemeButton() {
+    const dark = currentTheme() === 'dark';
+    themeToggle.textContent = dark ? '☀' : '☾';
+    themeToggle.title = dark ? 'Use light theme' : 'Use dark theme';
+    themeToggle.setAttribute('aria-label', themeToggle.title);
+}
+
+function setTheme(theme: Theme) {
+    document.documentElement.dataset.theme = theme;
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (_) {
+        // Theme switching still works when storage is unavailable.
+    }
+    updateThemeButton();
+}
 
 function setMessage(message: string, error: boolean = false) {
     messageElement.textContent = message;
@@ -45,6 +84,7 @@ function updateSortButton() {
 
 function renderComments() {
     listElement.innerHTML = '';
+    listElement.setAttribute('aria-busy', 'false');
     if (comments.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'empty';
@@ -91,18 +131,62 @@ async function loadUser() {
         statusElement.textContent = `Logged in as ${currentUser.userName}`;
         loginButton.hidden = true;
         textarea.hidden = false;
+        textarea.disabled = false;
         submitActions.hidden = false;
     } else {
         statusElement.textContent = 'Sign in to post a comment.';
         loginButton.hidden = false;
         textarea.hidden = true;
+        textarea.disabled = true;
         submitActions.hidden = true;
     }
 }
 
-async function loadComments() {
-    comments = await ClientApi.listComments(chipName, annotation);
-    renderComments();
+async function loadComments(render: boolean = true) {
+    if (realtimeRefreshTimer !== null) {
+        window.clearTimeout(realtimeRefreshTimer);
+        realtimeRefreshTimer = null;
+    }
+    if (commentsLoadPromise) {
+        reloadAfterCurrentLoad = true;
+        await commentsLoadPromise;
+        return;
+    }
+    commentsLoadPromise = (async () => {
+        comments = await ClientApi.listComments(chipName, annotation);
+        if (render) renderComments();
+        notifyParentCommentsChanged();
+    })();
+    try {
+        await commentsLoadPromise;
+    } finally {
+        commentsLoadPromise = null;
+    }
+    if (reloadAfterCurrentLoad) {
+        reloadAfterCurrentLoad = false;
+        await loadComments(true);
+    }
+}
+
+function connectCommentEvents() {
+    if (commentEvents) commentEvents.close();
+    commentEventsReady = false;
+    commentEvents = ClientApi.openCommentEvents(chipName, annotation);
+    commentEvents.addEventListener('ready', () => {
+        if (commentEventsReady) scheduleRealtimeRefresh();
+        commentEventsReady = true;
+    });
+    commentEvents.addEventListener('comments', scheduleRealtimeRefresh);
+}
+
+function scheduleRealtimeRefresh() {
+    if (realtimeRefreshTimer !== null) window.clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = window.setTimeout(() => {
+        realtimeRefreshTimer = null;
+        loadComments().catch(error => {
+            setMessage(error instanceof Error ? error.message : 'Could not update comments.', true);
+        });
+    }, 150);
 }
 
 async function getAnnotationTitle(): Promise<string> {
@@ -145,17 +229,23 @@ async function initialize() {
         setMessage('The URL must include a non-empty chip parameter, and annotation must be a non-negative integer.', true);
         loginButton.hidden = true;
         form.hidden = true;
+        delete document.documentElement.dataset.loading;
         return;
     }
 
     try {
-        titleElement.textContent = annotation === 0
-            ? `Comments on ${chipName}`
-            : `Comments on ${chipName} / ${await getAnnotationTitle()}`;
-        await loadUser();
-        await loadComments();
+        titleElement.textContent = `Comments on ${chipName}`;
+        const titlePromise = annotation === 0 ? Promise.resolve('') : getAnnotationTitle();
+        const [, , annotationTitle] = await Promise.all([loadUser(), loadComments(false), titlePromise]);
+        if (annotationTitle) titleElement.textContent = `Comments on ${chipName} / ${annotationTitle}`;
+        renderComments();
+        connectCommentEvents();
     } catch (error) {
+        listElement.innerHTML = '';
+        listElement.setAttribute('aria-busy', 'false');
         setMessage(error instanceof Error ? error.message : 'Could not load comments.', true);
+    } finally {
+        delete document.documentElement.dataset.loading;
     }
 }
 
@@ -166,14 +256,21 @@ sortButton.onclick = () => {
     updateSortButton();
     renderComments();
 };
+themeToggle.onclick = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
 
 updateSortButton();
+updateThemeButton();
 
 window.addEventListener('message', event => {
     if (event.data && event.data.type === 'chipannotation-login-done') {
         ClientApi.closeAllLoginTabs();
         initialize();
     }
+});
+
+window.addEventListener('beforeunload', () => {
+    if (commentEvents) commentEvents.close();
+    if (realtimeRefreshTimer !== null) window.clearTimeout(realtimeRefreshTimer);
 });
 
 form.onsubmit = async event => {

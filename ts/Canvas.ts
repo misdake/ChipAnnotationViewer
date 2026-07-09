@@ -55,11 +55,12 @@ export class Canvas {
     public init(): void {
         let self = this;
         let convertMouseEvent = (event: MouseEvent) => {
+            const rect = this.canvasElement.getBoundingClientRect();
             return {
                 button: event.button,
                 buttons: event.buttons,
-                offsetX: event.offsetX * window.devicePixelRatio,
-                offsetY: event.offsetY * window.devicePixelRatio,
+                offsetX: (event.clientX - rect.left) * window.devicePixelRatio,
+                offsetY: (event.clientY - rect.top) * window.devicePixelRatio,
                 movementX: event.movementX * window.devicePixelRatio,
                 movementY: event.movementY * window.devicePixelRatio,
                 ctrlKey: event.ctrlKey,
@@ -68,11 +69,12 @@ export class Canvas {
             }
         };
         let convertWheelEvent = (event: WheelEvent) => {
+            const rect = this.canvasElement.getBoundingClientRect();
             return {
                 button: event.button,
                 buttons: event.buttons,
-                offsetX: event.offsetX * window.devicePixelRatio,
-                offsetY: event.offsetY * window.devicePixelRatio,
+                offsetX: (event.clientX - rect.left) * window.devicePixelRatio,
+                offsetY: (event.clientY - rect.top) * window.devicePixelRatio,
                 movementX: event.movementX * window.devicePixelRatio,
                 movementY: event.movementY * window.devicePixelRatio,
                 ctrlKey: event.ctrlKey,

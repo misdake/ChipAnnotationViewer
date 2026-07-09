@@ -6,6 +6,7 @@ import { Env } from "../Env";
 import { Camera } from "../Camera";
 
 export class EditorCameraControl extends Editor {
+    public static allowLeftMousePan = false;
 
     constructor(canvas: Canvas) {
         super(EditorName.CAMERA_CONTROL, canvas);
@@ -13,7 +14,7 @@ export class EditorCameraControl extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage("drag right button to view map", UsageType.MOUSE),
+            Editor.usage(EditorCameraControl.allowLeftMousePan ? "drag left or right button to pan map" : "drag right button to pan map", UsageType.MOUSE),
             Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
         ];
     }
@@ -22,6 +23,7 @@ export class EditorCameraControl extends Editor {
         let self = this;
         this._mouseListener = new class extends MouseListener {
             private down = false;
+            private buttonMask = 0;
             private lastX = -1;
             private lastY = -1;
             private lastPanX = -1;
@@ -39,19 +41,26 @@ export class EditorCameraControl extends Editor {
                 return true;
             }
             onmousedown(event: MouseIn): boolean {
-                if (event.button !== 2) return false;
+                const isRightButton = event.button === 2;
+                const isAllowedLeftButton = event.button === 0 && EditorCameraControl.allowLeftMousePan;
+                if (!isRightButton && !isAllowedLeftButton) return false;
                 this.down = true;
+                this.buttonMask = isRightButton ? 2 : 1;
                 this.lastX = event.offsetX;
                 this.lastY = event.offsetY;
+                self.canvas.getElement().style.cursor = "grabbing";
                 return true;
             }
             onmouseup(event: MouseIn): boolean {
-                if (event.button !== 2 && !this.down) return false;
+                if (!this.down) return false;
                 this.down = false;
+                this.buttonMask = 0;
+                self.canvas.getElement().style.cursor = EditorCameraControl.allowLeftMousePan ? "grab" : "";
                 return true;
             }
             onmousemove(event: MouseIn): boolean {
-                if (this.down && (event.buttons & 2)) {
+                if (this.down && (event.buttons & this.buttonMask)) {
+                    self.canvas.getElement().style.cursor = "grabbing";
                     let camera = self.canvas.getCamera();
                     camera.action();
                     let offsetX = event.offsetX;
@@ -66,6 +75,11 @@ export class EditorCameraControl extends Editor {
                     self.canvas.requestRender();
                     return true;
                 } else {
+                    if (this.down && event.buttons === 0) {
+                        this.down = false;
+                        this.buttonMask = 0;
+                        self.canvas.getElement().style.cursor = EditorCameraControl.allowLeftMousePan ? "grab" : "";
+                    }
                     return false;
                 }
             }

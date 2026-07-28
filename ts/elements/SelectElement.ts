@@ -105,10 +105,10 @@ export class SelectElement extends LitElement {
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
+    @property()
+    private chipFilter = '';
     @property({ type: Boolean })
     private chipPickerOpen = false;
-    @property({ type: Boolean })
-    private showAllChips = false;
     @property({ type: Boolean })
     private advancedBrowserOpen = false;
     @property()
@@ -312,6 +312,7 @@ export class SelectElement extends LitElement {
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
         this.chipQuery = chip ? (chip.listname || chip.name) : '';
+        this.chipFilter = this.chipQuery;
         this.chipPickerOpen = false;
         this.chipCommentCount = null;
         this.annotationCommentCount = null;
@@ -607,15 +608,37 @@ export class SelectElement extends LitElement {
         return { html: options, array: array, current: current }
     }
 
+    // chip search: filter by the input value minus the selected text, so select-all means "show everything"
+
+    private syncChipFilter(input: HTMLInputElement) {
+        const value = input.value;
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || 0;
+        this.chipFilter = value.slice(0, start) + value.slice(end);
+    }
+
+    private onChipSearchFocus(ev: FocusEvent) {
+        this.chipPickerOpen = true;
+        const input = ev.target as HTMLInputElement;
+        input.select();
+        this.syncChipFilter(input);
+        // a mouse click collapses the selection on mouseup, after the focus event, so select all again
+        window.setTimeout(() => {
+            if (document.activeElement !== input) return;
+            input.select();
+            this.syncChipFilter(input);
+        }, 0);
+    }
+
     render() {
         const chip = this.chip_content_current;
-        const query = this.chipQuery.trim().toLowerCase();
+        const query = this.chipFilter.trim().toLowerCase();
         const chips = (this.chiplist_array || []).filter((item): item is Chip => !!item);
         const filteredChips = chips.filter(item => {
             const searchText = `${item.name} ${item.listname || ''} ${item.vendor || ''} ${item.type || ''} ${item.family || ''}`.toLowerCase();
             return !query || searchText.includes(query);
         });
-        const quickChips = filteredChips.slice(0, this.showAllChips ? 80 : 8);
+        const quickChips = filteredChips;
         const annotationOptionOffset = 0;
         const annotationOptions = this.annotationlist_html || [];
         const hasAnnotationOptions = annotationOptions.length > 0;
@@ -628,9 +651,10 @@ export class SelectElement extends LitElement {
                         <span class="chip-picker">
                             <input id="chipSearch" type="search" aria-label="Search chip" autocomplete="off"
                                 .value=${this.chipQuery}
-                                @focus=${() => { this.chipPickerOpen = true; }}
+                                @focus=${(ev: FocusEvent) => this.onChipSearchFocus(ev)}
                                 @blur=${() => window.setTimeout(() => { this.chipPickerOpen = false; }, 0)}
-                                @input=${(ev: Event) => { this.chipQuery = (ev.target as HTMLInputElement).value; this.chipPickerOpen = true; this.showAllChips = false; }}
+                                @input=${(ev: Event) => { const input = ev.target as HTMLInputElement; this.chipQuery = input.value; this.syncChipFilter(input); this.chipPickerOpen = true; }}
+                                @select=${(ev: Event) => this.syncChipFilter(ev.target as HTMLInputElement)}
                                 @keydown=${(ev: KeyboardEvent) => {
                                     if (ev.key === 'Escape') this.chipPickerOpen = false;
                                     if (ev.key === 'Enter' && quickChips.length === 1) this.selectedChip(quickChips[0]);
@@ -638,7 +662,7 @@ export class SelectElement extends LitElement {
                             ${this.chipQuery ? html`
                                 <button type="button" class="chip-search-clear" title="Clear chip search" aria-label="Clear chip search"
                                     @mousedown=${(ev: Event) => ev.preventDefault()}
-                                    @click=${() => { this.chipQuery = ''; this.showAllChips = false; this.chipPickerOpen = true; }}>
+                                    @click=${() => { this.chipQuery = ''; this.chipFilter = ''; this.chipPickerOpen = true; }}>
                                     ${clearIcon}
                                 </button>` : html``}
                             ${this.chipPickerOpen ? html`

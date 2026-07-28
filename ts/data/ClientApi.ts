@@ -53,6 +53,14 @@ export class ClientApi {
         openedWindows.length = 0;
     }
 
+    static storeLoginToken(event: MessageEvent): boolean {
+        if (event.origin !== new URL(API_SERVER).origin) return false;
+        const token = event.data ? event.data.token : undefined;
+        if (typeof token !== 'string' || token.length === 0) return false;
+        localStorage.setItem('chipannotation-token', token);
+        return true;
+    }
+
     static getCurrentLogin(): Promise<UserInfo> {
         return ClientApi.get(`${API_SERVER}/login/get`);
     }

@@ -92,6 +92,11 @@ export class ClientApi {
         return ClientApi.get(`${API_SERVER}/annotation/get/${aid}`);
     }
 
+    //resolve a legacy GitHub issue comment id (old url param) to the imported annotation
+    static getAnnotationByCommentId(commentId: number): Promise<Annotation> {
+        return ClientApi.get(`${API_SERVER}/annotation/bycomment/${commentId}`);
+    }
+
     static createAnnotation(chipName: string, title: string, content: string): Promise<Annotation> {
         return ClientApi.post(`${API_SERVER}/annotation/create/${encodeURIComponent(chipName)}`, {title, content, version: ANNOTATION_DATA_VERSION});
     }

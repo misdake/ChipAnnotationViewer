@@ -140,9 +140,32 @@ export class SelectElement extends LitElement {
         let url_string = window.location.href;
         let url = new URL(url_string);
         this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
-        this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation', 'commentId'), 10);
+        this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation'), 10);
 
-        this.refreshChipList();
+        //legacy urls use commentId (GitHub issue comment id); resolve it to an annotation id
+        //before loading, then the normal selection flow rewrites the url to the new params
+        const commentId = parseInt(url.searchParams.get('commentId') || '0', 10);
+        if (!(this.annotation_id_toload > 0) && commentId > 0) {
+            ClientApi.getAnnotationByCommentId(commentId).then(annotation => {
+                if (annotation && annotation.aid > 0) {
+                    this.annotation_id_toload = annotation.aid;
+                    this.chip_name_toload = annotation.chipName || this.chip_name_toload;
+                } else {
+                    notifyToast('The linked annotation no longer exists', 'warning');
+                }
+                this.refreshChipList();
+            }).catch(error => {
+                const missing = error instanceof Error && error.message.indexOf('400') >= 0;
+                if (missing) {
+                    notifyToast('The linked annotation no longer exists', 'warning');
+                } else {
+                    SelectElement.warnNetwork('Could not resolve the linked annotation', error);
+                }
+                this.refreshChipList();
+            });
+        } else {
+            this.refreshChipList();
+        }
         commentsPanel.setCountRefreshHandler(target => this.refreshCommentsTarget(target));
         commentsPanel.setStateChangeHandler(() => this.requestUpdate());
 

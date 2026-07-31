@@ -841,7 +841,7 @@ export class SelectElement extends LitElement {
                     <button class="advanced-chip-backdrop" type="button" aria-label="Close advanced chip browser" @click=${() => this.closeAdvancedBrowser()}></button>
                     <section class="advanced-chip-modal" role="dialog" aria-modal="true" aria-labelledby="advanced-chip-title">
                         <header>
-                            <div><h2 id="advanced-chip-title">Open Chip</h2><p>Filter the complete chip catalog, select a row, then open it.</p></div>
+                            <div><h2 id="advanced-chip-title">Open Chip</h2><p>Filter the complete chip catalog, then click a row to open it.</p></div>
                             <button class="advanced-chip-close" type="button" aria-label="Close" @click=${() => this.closeAdvancedBrowser()}>×</button>
                         </header>
                         <div class="advanced-chip-filters">
@@ -857,12 +857,12 @@ export class SelectElement extends LitElement {
                             </div>
                             ${advancedChips.map(item => html`
                                 <button type="button" role="row" class="advanced-chip-row ${this.advancedSelectedChip === item ? 'selected' : ''}"
-                                    @click=${() => { this.advancedSelectedChip = item; }} @dblclick=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
+                                    @click=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
                                     <strong>${item.listname || item.name}</strong><span>${this.advancedClassification(item) || '—'}</span>
                                 </button>`)}
                             ${advancedChips.length ? html`` : html`<div class="advanced-chip-no-results">No chips match these filters.</div>`}
                         </div>
-                        <footer><span>${advancedChips.length} results</span><button type="button" class="configButton" @click=${() => this.closeAdvancedBrowser()}>Cancel</button><button type="button" class="configButton advanced-chip-open" ?disabled=${!this.advancedSelectedChip} @click=${() => this.confirmAdvancedChip()}>Open</button></footer>
+                        <footer><span>${advancedChips.length} results</span><button type="button" class="configButton" @click=${() => this.closeAdvancedBrowser()}>Cancel</button></footer>
                     </section>
                 </div>`;
     }

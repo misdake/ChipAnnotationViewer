@@ -96,7 +96,7 @@ class AppModalElement extends LitElement {
         });
     }
 
-    private close(runCancel: boolean = false) {
+    public close(runCancel: boolean = false) {
         if (!this.openState) return;
         const config = this.config;
         this.openState = false;
@@ -321,5 +321,10 @@ export class AppModal {
 
     static open(config: AppModalConfig) {
         this.ensureElement().open(config);
+    }
+
+    static close() {
+        const element = document.getElementById(this.ELEMENT_ID) as AppModalElement;
+        if (element) element.close();
     }
 }

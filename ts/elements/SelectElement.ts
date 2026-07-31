@@ -3,7 +3,7 @@ import { Chip, ChipContent } from '../data/Chip';
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
-import { ClientApi } from '../data/ClientApi';
+import { ClientApi, RecentUpdateDay, RecentUpdateEvent } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
@@ -42,6 +42,13 @@ const openChipIcon = html`
         <path d="M4 16h6"/>
         <circle cx="16.5" cy="15.5" r="3.5"/>
         <path d="M19 18l2 2"/>
+    </svg>`;
+
+const recentUpdatesIcon = html`
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M12 7v5l3.5 2"/>
     </svg>`;
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
@@ -166,6 +173,7 @@ export class SelectElement extends LitElement {
         } else {
             this.refreshChipList();
         }
+        this.mountRecentUpdatesFab();
         commentsPanel.setCountRefreshHandler(target => this.refreshCommentsTarget(target));
         commentsPanel.setStateChangeHandler(() => this.requestUpdate());
 
@@ -533,6 +541,75 @@ export class SelectElement extends LitElement {
         return !this.canDiscardCurrentAnnotation || this.canDiscardCurrentAnnotation();
     }
 
+    private openRecentUpdates() {
+        ClientApi.listRecentUpdates().then(days => {
+            AppModal.open({
+                title: 'Recent updates',
+                ariaLabel: 'Recent updates',
+                primaryText: 'Close',
+                showCancel: false,
+                body: this.renderRecentUpdates(days),
+                onSubmit: () => true,
+            });
+        }).catch(error => {
+            SelectElement.warnNetwork('Could not load recent updates', error);
+        });
+    }
+
+    private mountRecentUpdatesFab() {
+        const fab = document.createElement('button');
+        fab.className = 'recentUpdatesFab';
+        fab.title = 'Recent updates';
+        fab.setAttribute('aria-label', 'Recent updates');
+        fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3.5 2"/></svg>';
+        fab.addEventListener('click', () => this.openRecentUpdates());
+        document.body.appendChild(fab);
+    }
+
+    private renderRecentUpdates(days: RecentUpdateDay[]): TemplateResult {
+        if (!days || days.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+        return html`<div class="recentUpdatesList">${days.map(day => html`
+            <div class="recentUpdatesDay">${day.day}</div>
+            ${day.events.map(event => this.renderRecentUpdateRow(event))}
+        `)}</div>`;
+    }
+
+    private renderRecentUpdateRow(event: RecentUpdateEvent): TemplateResult {
+        const isChip = event.kind === 'chip';
+        const badge = isChip ? 'New chip' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
+        const badgeClass = isChip ? 'chip' : event.kind === 'annotation-create' ? 'create' : 'update';
+        const text = isChip ? (event.chipDisplay || event.chip) : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
+        const href = `?chip=${encodeURIComponent(event.chip)}${!isChip && event.aid ? `&annotation=${event.aid}` : ''}`;
+        const time = new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        return html`
+            <a class="recentUpdatesRow" href="${href}" @click=${(ev: MouseEvent) => this.onRecentUpdateClick(ev, event)}>
+                <span class="recentUpdatesBadge recentUpdatesBadge-${badgeClass}">${badge}</span>
+                <span class="recentUpdatesText">${text}</span>
+                <span class="recentUpdatesTime">${time}</span>
+            </a>`;
+    }
+
+    private onRecentUpdateClick(ev: MouseEvent, event: RecentUpdateEvent) {
+        if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+        ev.preventDefault();
+        AppModal.close();
+        this.openFromRecent(event.chip, event.kind === 'chip' ? 0 : (event.aid || 0));
+    }
+
+    private openFromRecent(chipName: string, aid: number) {
+        if (!this.canDiscardCurrent()) return;
+        if (this.chip_current && this.chip_current.name === chipName) {
+            if (aid > 0) {
+                this.annotation_id_toload = aid;
+                this.refreshAnnotationList();
+            }
+            return;
+        }
+        this.chip_name_toload = chipName;
+        this.annotation_id_toload = aid;
+        this.refreshChipList();
+    }
+
     private loadChipCommentCount(chipName: string, selectionVersion: number) {
         ClientApi.getCommentCount(chipName, 0).then(count => {
             if (selectionVersion !== this.chipSelectionVersion || this.chip_current.name !== chipName) return;
@@ -725,6 +802,9 @@ export class SelectElement extends LitElement {
                             : html``}
                     </span>
                 </label>
+                <div class="recentUpdatesCell">
+                    <button class="topBarIconButton recentUpdatesButton" title="Recent updates" aria-label="Recent updates" @click=${() => this.openRecentUpdates()}>${recentUpdatesIcon}</button>
+                </div>
             </div>
         `;
     }

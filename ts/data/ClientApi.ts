@@ -8,6 +8,21 @@ const API_SERVER = __API_SERVER__;
 
 type UserInfo = { userName: string, userId: number };
 
+export type RecentUpdateEvent = {
+    kind: 'chip' | 'annotation-create' | 'annotation-update';
+    time: number;
+    chip: string;
+    chipDisplay?: string;
+    aid?: number;
+    title?: string;
+    userName?: string;
+};
+
+export type RecentUpdateDay = {
+    day: string;
+    events: RecentUpdateEvent[];
+};
+
 function getToken() {
     let token = localStorage.getItem('chipannotation-token');
     return token && token !== 'undefined' ? token : null;
@@ -86,6 +101,10 @@ export class ClientApi {
     }
     static listAnnotationByUpdateTime(): Promise<Annotation[]> {
         return ClientApi.get(`${API_SERVER}/annotation/listrecent`);
+    }
+
+    static listRecentUpdates(): Promise<RecentUpdateDay[]> {
+        return ClientApi.get(`${API_SERVER}/rss/recent.json`);
     }
 
     static getAnnotationContent(aid: number): Promise<AnnotationContent> {

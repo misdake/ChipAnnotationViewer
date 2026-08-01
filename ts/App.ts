@@ -193,6 +193,7 @@ class App {
                 .onSelectChipContent=${(chipContent: ChipContent) => this.onSelectChipContent(chipContent)}
                 .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData) => this.onSelectAnnotation(annotation, data)}
                 .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
+                .isCurrentAnnotationDirty=${() => this.hasAnnotationChanges()}
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();

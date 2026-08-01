@@ -14,6 +14,10 @@ export class Annotation {
 
     createTime: number;
     updateTime: number;
+
+    //listchip may include the full content inline; selection then needs no extra request
+    version?: number;
+    content?: string;
 }
 
 export class AnnotationContent {

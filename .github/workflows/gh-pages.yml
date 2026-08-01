@@ -3,9 +3,9 @@ name: GitHub Pages
 on:
   workflow_dispatch:
   push:
-    branches: [ v3-dev ]
+    branches: [ v3 ]
   pull_request:
-    branches: [ v3-dev ]
+    branches: [ v3 ]
 
 jobs:
   build:

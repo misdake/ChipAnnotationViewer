@@ -111,6 +111,7 @@ export class TitleElement extends LitElement {
 
         window.addEventListener('message', (e: MessageEvent) => {
             if (e.data && e.data.type === 'chipannotation-login-done') {
+                ClientApi.storeLoginToken(e);
                 this.getLogin();
                 ClientApi.closeAllLoginTabs();
             }

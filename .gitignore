@@ -1,4 +1,6 @@
 /.idea
+/.codex
+/.agents
 /js
 /out
 /node_modules

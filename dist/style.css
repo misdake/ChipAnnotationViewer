@@ -950,9 +950,9 @@ body {
 }
 
 #selectPanel {
-    flex: 1 1 520px;
+    flex: 1 1 640px;
     min-width: 280px;
-    max-width: 520px;
+    max-width: 640px;
 }
 
 #selectPanel>select-element {
@@ -962,7 +962,7 @@ body {
 
 #selectPanel>select-element>.workspace-selectors {
     display: grid;
-    grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 10px;
     padding: 0;
     border: 0;
@@ -998,7 +998,8 @@ body {
     min-width: 0;
 }
 
-.chip-picker {
+.chip-picker,
+.annotation-picker {
     position: relative;
     flex: 1 1 auto;
     min-width: 0;
@@ -1122,6 +1123,20 @@ body {
     font-size: 12px;
 }
 
+#annotationSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 30px;
+}
+
+#annotationSelect::-ms-expand {
+    display: none;
+}
+
+.annotation-select-clear {
+    right: 3px;
+}
+
 .topBarIconButton {
     position: relative;
     box-sizing: border-box;
@@ -1161,10 +1176,153 @@ body {
     cursor: default;
 }
 
+.topBarIconButton.recentUpdatesButton {
+    margin-left: 0;
+    border-color: transparent;
+    background: var(--brand);
+    color: #fff;
+}
+
+.topBarIconButton.recentUpdatesButton:hover:not(:disabled):not(.topBarIconButtonDisabled) {
+    border-color: transparent;
+    background: var(--brand-hover);
+    color: #fff;
+}
+
+.recentUpdatesCell {
+    align-self: end;
+}
+
+.recentUpdatesFab {
+    display: none;
+}
+
+.recentUpdatesList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.recentUpdatesDay {
+    margin: 10px 2px 4px;
+    color: var(--ink-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.recentUpdatesDay:first-child {
+    margin-top: 2px;
+}
+
+.recentUpdatesRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.recentUpdatesRow:hover {
+    border-color: var(--line);
+    background: var(--panel-3);
+    color: var(--text-primary);
+}
+
+.recentUpdatesBadge {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.recentUpdatesBadge-chip {
+    color: #7db4ff;
+    background: rgba(79, 140, 255, 0.16);
+}
+
+.recentUpdatesBadge-create {
+    color: #4ade80;
+    background: rgba(16, 185, 129, 0.16);
+}
+
+.recentUpdatesBadge-update {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.16);
+}
+
+.recentUpdatesText {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recentUpdatesTime {
+    flex: 0 0 auto;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.recentUpdatesEmpty {
+    padding: 18px 8px;
+    color: var(--ink-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+@media (max-width: 899.98px) {
+    .recentUpdatesCell {
+        display: none;
+    }
+
+    .recentUpdatesFab {
+        position: fixed;
+        z-index: 1000;
+        top: 10px;
+        right: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 6px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: var(--brand);
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .recentUpdatesFab svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+    }
+
+    .recentUpdatesFab:hover {
+        background: var(--brand-hover);
+    }
+}
+
 .chipBrowseButton {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: -1px;
+    color: #fff;
+}
+
+.chipBrowseButton svg {
+    width: 15px;
+    height: 15px;
 }
 
 .commentButton {
@@ -1237,7 +1395,7 @@ body {
     position: relative;
     display: grid;
     grid-template-rows: auto auto minmax(220px, 1fr) auto;
-    width: min(760px, calc(100vw - 56px));
+    width: min(640px, calc(100vw - 56px));
     height: min(680px, calc(100vh - 56px));
     overflow: hidden;
     border: 1px solid var(--line-strong);
@@ -1335,8 +1493,9 @@ body {
 }
 
 .advanced-chip-row {
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(280px, 1.4fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
     gap: 14px;
     align-items: center;
     width: 100%;
@@ -1431,15 +1590,6 @@ button.advanced-chip-row.selected {
     min-height: 32px;
 }
 
-.advanced-chip-modal>footer .advanced-chip-open {
-    background: var(--brand);
-}
-
-.advanced-chip-modal>footer .advanced-chip-open:disabled {
-    background: var(--panel-3);
-    opacity: .45;
-}
-
 @media (max-width: 720px) {
     .advanced-chip-overlay {
         padding: 8px;
@@ -1469,36 +1619,6 @@ button.advanced-chip-row.selected {
         padding: 0 8px 8px;
     }
 
-    .advanced-chip-head {
-        display: none;
-    }
-
-    button.advanced-chip-row {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 5px 10px;
-        min-height: 68px;
-        padding: 7px 8px;
-    }
-
-    button.advanced-chip-row>*::before {
-        display: block;
-        margin-bottom: 1px;
-        color: var(--ink-muted);
-        font-size: 8px;
-        font-weight: 700;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        opacity: .75;
-    }
-
-    button.advanced-chip-row>strong::before {
-        content: "Name";
-    }
-
-    button.advanced-chip-row>span:nth-child(2)::before {
-        content: "Vendor / Type / Family";
-    }
-
     .advanced-chip-modal>footer {
         min-height: 50px;
         padding: 0 12px;
@@ -1506,9 +1626,9 @@ button.advanced-chip-row.selected {
 }
 
 #annotationTitle {
-    flex: 0 1 500px;
-    min-width: 300px;
-    max-width: 500px;
+    flex: 0 1 350px;
+    min-width: 250px;
+    max-width: 350px;
     margin-left: auto;
 }
 

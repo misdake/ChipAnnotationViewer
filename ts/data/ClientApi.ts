@@ -8,6 +8,21 @@ const API_SERVER = __API_SERVER__;
 
 type UserInfo = { userName: string, userId: number };
 
+export type RecentUpdateEvent = {
+    kind: 'chip' | 'annotation-create' | 'annotation-update';
+    time: number;
+    chip: string;
+    chipDisplay?: string;
+    aid?: number;
+    title?: string;
+    userName?: string;
+};
+
+export type RecentUpdateDay = {
+    day: string;
+    events: RecentUpdateEvent[];
+};
+
 function getToken() {
     let token = localStorage.getItem('chipannotation-token');
     return token && token !== 'undefined' ? token : null;
@@ -53,6 +68,14 @@ export class ClientApi {
         openedWindows.length = 0;
     }
 
+    static storeLoginToken(event: MessageEvent): boolean {
+        if (event.origin !== new URL(API_SERVER).origin) return false;
+        const token = event.data ? event.data.token : undefined;
+        if (typeof token !== 'string' || token.length === 0) return false;
+        localStorage.setItem('chipannotation-token', token);
+        return true;
+    }
+
     static getCurrentLogin(): Promise<UserInfo> {
         return ClientApi.get(`${API_SERVER}/login/get`);
     }
@@ -80,8 +103,17 @@ export class ClientApi {
         return ClientApi.get(`${API_SERVER}/annotation/listrecent`);
     }
 
+    static listRecentUpdates(): Promise<RecentUpdateDay[]> {
+        return ClientApi.get(`${API_SERVER}/rss/recent.json`);
+    }
+
     static getAnnotationContent(aid: number): Promise<AnnotationContent> {
         return ClientApi.get(`${API_SERVER}/annotation/get/${aid}`);
+    }
+
+    //resolve a legacy GitHub issue comment id (old url param) to the imported annotation
+    static getAnnotationByCommentId(commentId: number): Promise<Annotation> {
+        return ClientApi.get(`${API_SERVER}/annotation/bycomment/${commentId}`);
     }
 
     static createAnnotation(chipName: string, title: string, content: string): Promise<Annotation> {

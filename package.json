@@ -2,6 +2,7 @@
   "name": "chip-annotation-viewer",
   "version": "3.0.0",
   "description": "",
+  "license": "MIT",
   "main": "app.js",
   "engines": {
     "node": "24"

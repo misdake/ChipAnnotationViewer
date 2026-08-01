@@ -360,6 +360,9 @@ export class SelectElement extends LitElement {
 
         if (chip) {
             this.loadChipCommentCount(chip.name, selectionVersion);
+            //fire both requests up front so they run in parallel; the list is applied only after the chip content
+            const annotationsPromise = ClientApi.listAnnotationByChip(chip.name);
+            annotationsPromise.catch(() => {}); //rejection is handled in applyAnnotationList
             SelectElement.fetchChipDetail(chip).then(chipDetail => {
                 if (selectionVersion !== this.chipSelectionVersion) return;
                 this.chip_content_current = chipDetail;
@@ -368,7 +371,7 @@ export class SelectElement extends LitElement {
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
                 this.annotation_id_toload = save;
                 this.replaceUrl();
-                this.refreshAnnotationList();
+                this.applyAnnotationList(chipDetail, annotationsPromise);
             }).catch(error => {
                 SelectElement.warnNetwork(`Could not load chip data for ${chip.name}`, error);
             });
@@ -443,10 +446,14 @@ export class SelectElement extends LitElement {
     }
     private refreshAnnotationList() {
         if (!this.canDiscardCurrent()) return;
+        if (!this.chip_content_current) return;
+        this.applyAnnotationList(this.chip_content_current, ClientApi.listAnnotationByChip(this.chip_content_current.name));
+    }
+
+    private applyAnnotationList(chipContent: ChipContent, annotationsPromise: Promise<Annotation[]>) {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
-        const chipContent = this.chip_content_current;
-        ClientApi.listAnnotationByChip(chipContent.name).then(annotations => {
+        annotationsPromise.then(annotations => {
             if (this.chip_content_current !== chipContent) return; //chip switched while loading
             this.annotationContentCache.clear();
             for (let annotation of annotations || []) {

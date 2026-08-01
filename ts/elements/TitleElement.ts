@@ -311,7 +311,7 @@ export class TitleElement extends LitElement {
             <div class="userMenuLinks" aria-label="Project links">
                 <a href="https://github.com/misdake/ChipAnnotationViewer" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><img src="res/github.png" alt=""></a>
                 <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
-                <a href="https://misdake.github.io/ChipAnnotationTool/log/rssday.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
+                <a href="https://rgbuv.xyz/chipannotation3/rss/daily.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
             </div>`;
         const loginControl = this.userId > 0 ? html`
             <div class="userMenu">

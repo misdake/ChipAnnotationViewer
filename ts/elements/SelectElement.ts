@@ -95,6 +95,8 @@ export class SelectElement extends LitElement {
     onSelectAnnotation: (annotation: Annotation, data: AnnotationData) => void;
     @property()
     canDiscardCurrentAnnotation: () => boolean;
+    @property()
+    isCurrentAnnotationDirty: () => boolean;
 
     @property({type: Number})
     chipCommentCount: number = null;
@@ -108,6 +110,7 @@ export class SelectElement extends LitElement {
     @property()
     annotation_current: Annotation;
     annotation_content_current: AnnotationContent;
+    private annotationContentCache: Map<number, AnnotationData> = new Map();
     private annotationSelectionVersion = 0;
     private chipSelectionVersion = 0;
     @property()
@@ -357,6 +360,9 @@ export class SelectElement extends LitElement {
 
         if (chip) {
             this.loadChipCommentCount(chip.name, selectionVersion);
+            //fire both requests up front so they run in parallel; the list is applied only after the chip content
+            const annotationsPromise = ClientApi.listAnnotationByChip(chip.name);
+            annotationsPromise.catch(() => {}); //rejection is handled in applyAnnotationList
             SelectElement.fetchChipDetail(chip).then(chipDetail => {
                 if (selectionVersion !== this.chipSelectionVersion) return;
                 this.chip_content_current = chipDetail;
@@ -365,7 +371,7 @@ export class SelectElement extends LitElement {
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
                 this.annotation_id_toload = save;
                 this.replaceUrl();
-                this.refreshAnnotationList();
+                this.applyAnnotationList(chipDetail, annotationsPromise);
             }).catch(error => {
                 SelectElement.warnNetwork(`Could not load chip data for ${chip.name}`, error);
             });
@@ -440,9 +446,24 @@ export class SelectElement extends LitElement {
     }
     private refreshAnnotationList() {
         if (!this.canDiscardCurrent()) return;
+        if (!this.chip_content_current) return;
+        this.applyAnnotationList(this.chip_content_current, ClientApi.listAnnotationByChip(this.chip_content_current.name));
+    }
+
+    private applyAnnotationList(chipContent: ChipContent, annotationsPromise: Promise<Annotation[]>) {
         this.annotationlist_html = [];
         this.annotationlist_array = [];
-        ClientApi.listAnnotationByChip(this.chip_content_current.name).then(annotations => {
+        annotationsPromise.then(annotations => {
+            if (this.chip_content_current !== chipContent) return; //chip switched while loading
+            this.annotationContentCache.clear();
+            for (let annotation of annotations || []) {
+                if (!annotation.content) continue;
+                try {
+                    this.annotationContentCache.set(annotation.aid, upgradeAnnotationData(JSON.parse(annotation.content)));
+                } catch (error) {
+                    console.warn('Could not parse annotation content', annotation.aid, error);
+                }
+            }
             let { html, array, current } = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
             this.annotation_current = current;
             this.annotationlist_html = html;
@@ -454,6 +475,7 @@ export class SelectElement extends LitElement {
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
             }
         }).catch(error => {
+            if (this.chip_content_current !== chipContent) return;
             SelectElement.warnNetwork('Could not load annotations from the server', error);
         });
     }
@@ -497,22 +519,40 @@ export class SelectElement extends LitElement {
         this.annotation_current = annotation;
         this.annotationCommentTargetId = annotation && annotation.aid > 0 ? annotation.aid : 0;
         this.annotationCommentCount = null;
-        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0);
+        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0, annotation ? annotation.title : '');
         if (annotation.aid > 0) {
-            ClientApi.getAnnotationContent(annotation.aid).then(content => {
-                if (selectionVersion !== this.annotationSelectionVersion) return;
-                let data = upgradeAnnotationData(JSON.parse(content.content));
-                if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
-                this.loadAnnotationCommentCount(annotation, selectionVersion);
-                this.replaceUrl();
-            }).catch(error => {
-                if (selectionVersion !== this.annotationSelectionVersion) return;
-                SelectElement.warnNetwork('Could not load annotation content', error);
-            });
+            let data = this.annotationContentCache.get(annotation.aid) || AnnotationData.dummy();
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+            this.loadAnnotationCommentCount(annotation, selectionVersion);
+            this.replaceUrl();
+            this.revalidateAnnotationContent(annotation, selectionVersion);
         } else {
             if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy());
             this.replaceUrl();
         }
+    }
+
+    //fetch the latest content in the background: apply it only when it differs and there are no unsaved local changes
+    private revalidateAnnotationContent(annotation: Annotation, selectionVersion: number) {
+        ClientApi.getAnnotationContent(annotation.aid).then(content => {
+            if (selectionVersion !== this.annotationSelectionVersion) return;
+            if (this.annotation_current !== annotation) return; //chip or annotation switched while loading
+            if (content && content.content === annotation.content) return;
+            if (this.isCurrentAnnotationDirty && this.isCurrentAnnotationDirty()) return;
+            let data: AnnotationData;
+            try {
+                data = upgradeAnnotationData(JSON.parse(content.content));
+            } catch (error) {
+                console.warn('Could not parse annotation content', annotation.aid, error);
+                return;
+            }
+            annotation.content = content.content;
+            annotation.version = content.version;
+            this.annotationContentCache.set(annotation.aid, data);
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+        }).catch(error => {
+            console.warn('Could not revalidate annotation content', annotation.aid, error);
+        });
     }
 
     private static fetchChipDetail(chip: Chip): Promise<ChipContent> {
@@ -645,6 +685,8 @@ export class SelectElement extends LitElement {
             annotation,
             count: count || 0,
             label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+            title: annotation > 0 && this.annotation_current && this.annotation_current.aid === annotation
+                ? (this.annotation_current.title || '') : undefined,
         };
     }
 

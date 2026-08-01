@@ -3,6 +3,7 @@ export interface CommentsTarget {
     annotation: number;
     count: number;
     label: string;
+    title?: string;
 }
 
 type JsPanelElement = HTMLElement & {
@@ -34,10 +35,17 @@ class CommentsPanelManager {
     private onStateChange: () => void = null;
     private createPromise: Promise<void> = null;
     private shouldExpandOnCreate = false;
+    private userId = 0;
+    private userName = '';
 
     constructor() {
         window.addEventListener('message', event => this.onMessage(event));
         window.addEventListener('resize', () => this.fitViewport());
+    }
+
+    public setUser(userId: number, userName: string) {
+        this.userId = userId || 0;
+        this.userName = userName || '';
     }
 
     public setCountRefreshHandler(handler: (target: CommentsTarget) => void) {
@@ -87,13 +95,13 @@ class CommentsPanelManager {
         }
     }
 
-    public followAnnotation(chipName: string, annotation: number, count: number) {
+    public followAnnotation(chipName: string, annotation: number, count: number, title?: string) {
         if (!this.target || this.target.annotation === 0) return;
         if (annotation <= 0) {
             this.clearTarget();
             return;
         }
-        this.showTarget({ ...this.target, chipName, annotation, count: count || 0 }, false);
+        this.showTarget({ ...this.target, chipName, annotation, count: count || 0, title: title || '' }, false);
     }
 
     private showTarget(target: CommentsTarget, expand: boolean) {
@@ -268,7 +276,13 @@ class CommentsPanelManager {
             annotation: String(this.target.annotation),
         });
         if (compact) params.set('compact', '1');
-        return `comments.html?${params.toString()}`;
+        //pass the login state and annotation title so the subpage can render instantly without waiting for /login/get or the annotation list
+        if (this.userId > 0) {
+            params.set('uid', String(this.userId));
+            if (this.userName) params.set('uname', this.userName);
+        }
+        if (this.target.title) params.set('title', this.target.title);
+        return `comments.html#${params.toString()}`;
     }
 
     private updateIframe() {

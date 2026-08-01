@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChipAnnotation Comments</title>
+    <script>
+        document.documentElement.dataset.loading = 'true';
+        const compact = new URLSearchParams(location.search).get('compact') === '1';
+        if (compact) {
+            document.documentElement.dataset.theme = 'dark';
+            document.documentElement.dataset.compact = 'true';
+        } else {
+            try {
+                const savedTheme = localStorage.getItem('chipannotation-comments-theme');
+                document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+            } catch (_) {
+                document.documentElement.dataset.theme = 'dark';
+            }
+        }
+    </script>
+    <style>
+        :root {
+            color-scheme: light; font-family: Arial, Helvetica, sans-serif;
+            --page: #f6f8fa; --surface: #fff; --surface-muted: #f6f8fa; --surface-hover: #eef1f4;
+            --text: #1f2328; --muted: #57606a; --border: #d0d7de; --border-strong: #8c959f;
+            --success: #1a7f37; --danger: #cf222e; --primary: #1f883d;
+        }
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --page: #090d13; --surface: #151c28; --surface-muted: #111823; --surface-hover: #202b3b;
+            --text: #e6ebf2; --muted: #8995a8; --border: #293446; --border-strong: #3b4960;
+            --success: #3fb950; --danger: #ff7b72; --primary: #238636;
+        }
+        body { margin: 0; background: var(--page); color: var(--text); }
+        main { box-sizing: border-box; width: min(840px, 100%); margin: 0 auto; padding: 24px 16px 48px; }
+        .page-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+        h1 { flex: 1 1 auto; margin: 0; font-size: 24px; overflow-wrap: anywhere; }
+        button { border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface-muted); color: var(--text); padding: 6px 12px; cursor: pointer; }
+        button:hover { background: var(--surface-hover); }
+        button:disabled { cursor: default; opacity: .6; }
+        #theme-toggle { flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; font-size: 14px; line-height: 1; }
+        form { margin-bottom: 20px; }
+        textarea { box-sizing: border-box; display: block; width: 100%; min-height: 120px; resize: vertical; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text); padding: 10px; font: inherit; line-height: 1.5; }
+        textarea::placeholder { color: var(--muted); }
+        .form-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; color: var(--muted); font-size: 13px; }
+        .login-controls, .form-submit-actions, .comment-toolbar { display: flex; align-items: center; gap: 8px; }
+        .form-submit-actions { margin-left: auto; }
+        .login-controls button, .form-submit-actions button, .comment-toolbar button { box-sizing: border-box; min-height: 34px; }
+        .comment-list-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; }
+        .comment-toolbar { flex: 0 0 auto; justify-content: flex-end; }
+        .comment-toolbar button { min-height: 28px; padding: 4px 9px; font-size: 12px; }
+        #comment-submit { color: #fff; border-color: var(--primary); background: var(--primary); }
+        #message { min-height: 20px; margin: 0; color: var(--success); }
+        #message.error { color: var(--danger); }
+        .comment { margin-top: 12px; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+        .comment header { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); border-radius: 5px 5px 0 0; background: var(--surface-muted); color: var(--muted); font-size: 13px; }
+        .comment header strong { color: var(--text); }
+        .delete-button { margin-left: auto; padding: 3px 8px; color: var(--danger); }
+        .comment-content { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+        .empty { color: var(--muted); }
+        :root[data-loading="true"] #comment-content,
+        :root[data-loading="true"] #comment-submit-actions { visibility: hidden; }
+        .comment-skeleton { height: 66px; margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; background: linear-gradient(var(--surface-muted) 28px, var(--surface) 28px); }
+        :root[data-compact="true"] main { width: 100%; padding: 10px 10px 24px; }
+        :root[data-compact="true"] .page-header { justify-content: flex-end; margin-bottom: 6px; }
+        :root[data-compact="true"] .page-header h1 { display: none; }
+        :root[data-compact="true"] #theme-toggle { display: none; }
+        :root[data-compact="true"] form { margin-bottom: 10px; }
+        :root[data-compact="true"] textarea { min-height: 82px; max-height: 180px; padding: 8px; }
+        :root[data-compact="true"] .form-actions { align-items: flex-start; gap: 6px; font-size: 11px; }
+        :root[data-compact="true"] .login-controls, :root[data-compact="true"] .form-submit-actions { gap: 5px; }
+        :root[data-compact="true"] .form-submit-actions span { display: none; }
+        :root[data-compact="true"] .login-controls button, :root[data-compact="true"] .form-submit-actions button { min-height: 28px; padding: 4px 8px; }
+        :root[data-compact="true"] .comment-list-header { margin: 4px 0; }
+        :root[data-compact="true"] .comment { margin-top: 8px; }
+        :root[data-compact="true"] .comment-skeleton { height: 58px; margin-top: 8px; background: linear-gradient(var(--surface-muted) 25px, var(--surface) 25px); }
+        :root[data-compact="true"] .comment header { gap: 8px; padding: 6px 8px; font-size: 11px; }
+        :root[data-compact="true"] .comment-content { padding: 8px; font-size: 12px; line-height: 1.45; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+<main>
+    <div class="page-header">
+        <h1 id="comment-title">Comments</h1>
+        <button id="theme-toggle" type="button" aria-label="Switch color theme"></button>
+    </div>
+    <form id="comment-form">
+        <textarea id="comment-content" maxlength="10000" required disabled placeholder="Enter a comment (plain text, multiple lines supported)"></textarea>
+        <div class="form-actions">
+            <div class="login-controls">
+                <span id="login-status">Checking login status...</span>
+                <button id="login-button" type="button" hidden>Sign in with GitHub</button>
+            </div>
+            <div id="comment-submit-actions" class="form-submit-actions">
+                <span>Maximum 10,000 characters</span>
+                <button id="comment-submit" type="submit">Post comment</button>
+            </div>
+        </div>
+    </form>
+    <div class="comment-list-header">
+        <div id="message" role="status"></div>
+        <div class="comment-toolbar">
+            <button id="refresh-button" type="button">Refresh</button>
+            <button id="sort-button" type="button"></button>
+        </div>
+    </div>
+    <section id="comment-list" aria-live="polite" aria-busy="true">
+        <div class="comment-skeleton" aria-hidden="true"></div>
+        <div class="comment-skeleton" aria-hidden="true"></div>
+    </section>
+</main>
+<script src="comments.js"></script>
+</body>
+</html>

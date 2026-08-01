@@ -7,7 +7,8 @@
     <title>ChipAnnotation Comments</title>
     <script>
         document.documentElement.dataset.loading = 'true';
-        const compact = new URLSearchParams(location.search).get('compact') === '1';
+        const paramSource = location.hash.length > 1 ? location.hash.slice(1) : location.search;
+        const compact = new URLSearchParams(paramSource).get('compact') === '1';
         if (compact) {
             document.documentElement.dataset.theme = 'dark';
             document.documentElement.dataset.compact = 'true';

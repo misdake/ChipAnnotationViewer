@@ -10,4 +10,3 @@
 /dist/*.map
 /dist/*.LICENSE.txt
 /viewer_conf.dev.json
-/viewer_conf.prod.json

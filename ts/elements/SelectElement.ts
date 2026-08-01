@@ -519,7 +519,7 @@ export class SelectElement extends LitElement {
         this.annotation_current = annotation;
         this.annotationCommentTargetId = annotation && annotation.aid > 0 ? annotation.aid : 0;
         this.annotationCommentCount = null;
-        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0);
+        commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0, annotation ? annotation.title : '');
         if (annotation.aid > 0) {
             let data = this.annotationContentCache.get(annotation.aid) || AnnotationData.dummy();
             if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
@@ -685,6 +685,8 @@ export class SelectElement extends LitElement {
             annotation,
             count: count || 0,
             label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+            title: annotation > 0 && this.annotation_current && this.annotation_current.aid === annotation
+                ? (this.annotation_current.title || '') : undefined,
         };
     }
 

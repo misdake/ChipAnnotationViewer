@@ -3,10 +3,21 @@ import { ClientApi } from './data/ClientApi';
 
 type UserInfo = { userId: number, userName: string };
 
-const params = new URLSearchParams(window.location.search);
-const chipName = params.get('chip') || '';
-const annotationParam = params.get('annotation');
-const annotation = annotationParam === null || annotationParam === '' ? 0 : Number(annotationParam);
+//params live in the hash so every comments url shares one cached html document; fall back to query for legacy links
+function readParams() {
+    const source = window.location.hash.length > 1 ? window.location.hash.slice(1) : window.location.search;
+    const params = new URLSearchParams(source);
+    const annotationParam = params.get('annotation');
+    return {
+        chipName: params.get('chip') || '',
+        annotation: annotationParam === null || annotationParam === '' ? 0 : Number(annotationParam),
+        uid: Number(params.get('uid') || '0'),
+        uname: params.get('uname') || '',
+        title: params.get('title') || '',
+    };
+}
+
+let { chipName, annotation, uid, uname, title: passedTitle } = readParams();
 
 const titleElement = document.getElementById('comment-title');
 const statusElement = document.getElementById('login-status');
@@ -125,8 +136,7 @@ function renderComments() {
     }
 }
 
-async function loadUser() {
-    currentUser = await ClientApi.getCurrentLogin();
+function applyLoginUi() {
     if (currentUser.userId) {
         statusElement.textContent = `Logged in as ${currentUser.userName}`;
         loginButton.hidden = true;
@@ -140,6 +150,11 @@ async function loadUser() {
         textarea.disabled = true;
         submitActions.hidden = true;
     }
+}
+
+async function loadUser() {
+    currentUser = await ClientApi.getCurrentLogin();
+    applyLoginUi();
 }
 
 async function loadComments(render: boolean = true) {
@@ -224,6 +239,7 @@ async function deleteComment(cid: number, button: HTMLButtonElement) {
 }
 
 async function initialize() {
+    document.documentElement.dataset.loading = 'true';
     if (!chipName || !Number.isSafeInteger(annotation) || annotation < 0) {
         titleElement.textContent = 'Invalid comment parameters';
         setMessage('The URL must include a non-empty chip parameter, and annotation must be a non-negative integer.', true);
@@ -233,10 +249,16 @@ async function initialize() {
         return;
     }
 
+    //login state passed via the url renders instantly; /login/get still runs afterwards to verify and correct it
+    if (uid > 0) {
+        currentUser = {userId: uid, userName: uname};
+        applyLoginUi();
+    }
+
     try {
         titleElement.textContent = `Comments on ${chipName}`;
-        const titlePromise = annotation === 0 ? Promise.resolve('') : getAnnotationTitle();
-        const [, , annotationTitle] = await Promise.all([loadUser(), loadComments(false), titlePromise]);
+        const titlePromise = annotation === 0 || passedTitle ? Promise.resolve(passedTitle || '') : getAnnotationTitle();
+        const [, annotationTitle] = await Promise.all([loadComments(false), titlePromise]);
         if (annotationTitle) titleElement.textContent = `Comments on ${chipName} / ${annotationTitle}`;
         renderComments();
         connectCommentEvents();
@@ -247,6 +269,10 @@ async function initialize() {
     } finally {
         delete document.documentElement.dataset.loading;
     }
+
+    loadUser().catch(error => {
+        setMessage(error instanceof Error ? error.message : 'Could not check login status.', true);
+    });
 }
 
 loginButton.onclick = () => ClientApi.openLoginTab();
@@ -267,6 +293,24 @@ window.addEventListener('message', event => {
         ClientApi.closeAllLoginTabs();
         initialize();
     }
+});
+
+//the parent panel retargets this page by changing only the url hash, which does not reload the document
+window.addEventListener('hashchange', () => {
+    const next = readParams();
+    if (next.chipName === chipName && next.annotation === annotation) {
+        uid = next.uid;
+        uname = next.uname;
+        passedTitle = next.title;
+        return;
+    }
+    ({chipName, annotation, uid, uname, title: passedTitle} = next);
+    if (commentEvents) {
+        commentEvents.close();
+        commentEvents = null;
+    }
+    comments = [];
+    initialize();
 });
 
 window.addEventListener('beforeunload', () => {

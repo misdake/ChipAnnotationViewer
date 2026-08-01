@@ -21,6 +21,7 @@ import {packRgba} from "./util/Color";
 import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
 import {annotationHistory} from "./history/AnnotationHistory";
 import {notifyToast, ToastDetail} from "./util/Toast";
+import {commentsPanel} from "./comments/CommentsPanel";
 
 let url_string = window.location.href;
 let url = new URL(url_string);
@@ -309,6 +310,7 @@ class App {
     }
 
     private onUserChange(userId: number, userName: string) {
+        commentsPanel.setUser(userId, userName);
         if (this.userId === userId && this.userName === userName) return;
         this.userId = userId;
         this.userName = userName;

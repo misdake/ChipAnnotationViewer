@@ -1,4 +1,4 @@
-import { customElement, html, LitElement, property } from "lit-element";
+import { customElement, html, LitElement, property, TemplateResult } from "lit-element";
 import { Canvas } from "../Canvas";
 import { annotationHistory, HistoryDrawable } from "../history/AnnotationHistory";
 import { cloneIcon, deleteIcon, flipXIcon, flipYIcon, rotateCCWIcon, rotateCWIcon } from "../util/Icons";
@@ -12,6 +12,8 @@ export class MultipleEditElement extends LitElement {
 
     @property()
     canvas: Canvas;
+    @property()
+    extraActions: TemplateResult;
 
     private confirmDelete() {
         DeleteConfirmation.confirm(`${this.drawables.length} selected items`).then(confirmed => {
@@ -48,6 +50,7 @@ export class MultipleEditElement extends LitElement {
                 <button class="iconButton" @click=${() => this.transform("rotateCW")} title="Rotate CW">${rotateCWIcon}</button>
                 <button class="iconButton" @click=${() => this.transform("flipX")} title="Flip X">${flipXIcon}</button>
                 <button class="iconButton" @click=${() => this.transform("flipY")} title="Flip Y">${flipYIcon}</button>
+                ${this.extraActions || html``}
             </div>
         `;
     }

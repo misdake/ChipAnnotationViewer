@@ -92,6 +92,20 @@ function restorePrimaryToolHighlight() {
     setActiveTool(primaryMouseTool === "select" ? "buttonSelect" : "buttonPan");
 }
 
+function renderFocusSelectionButton(drawables: Drawable[]) {
+    return html`
+        <button class="iconButton selectionFocusButton" type="button" title="Focus selection" aria-label="Focus selection"
+            @click=${() => {
+                canvas.focusDrawables(drawables);
+                canvas.getElement().focus({preventScroll: true});
+            }}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/>
+                <rect x="8" y="8" width="8" height="8" rx="1"/>
+            </svg>
+        </button>`;
+}
+
 function prepareCreateTool(buttonId: string, selectionType: SelectType): boolean {
     const selected = Selection.getSelected();
     if (selected.type !== selectionType) return true;
@@ -224,9 +238,9 @@ class App {
         const panelDivider = html`<div class="panel-divider"></div>`;
 
         Selection.register(SelectType.POLYLINE, (polyline) => {
-            const panel = isEditingEnabled
-                ? polyline.ui.render(canvas, this.chipContent)
-                : html`<polylineedit-element .polylines=${[polyline]} .canvas=${canvas} .chipContent=${this.chipContent} .measurementOnly=${true}></polylineedit-element>`;
+            const focusAction = renderFocusSelectionButton([polyline]);
+            const panel = html`<polylineedit-element .polylines=${[polyline]} .canvas=${canvas} .chipContent=${this.chipContent}
+                .measurementOnly=${!isEditingEnabled} .extraActions=${focusAction}></polylineedit-element>`;
             render(html`${panelDivider}${panel}`, document.getElementById("panelSelected"));
             if (isEditingEnabled) enterEditingEditors(EditorName.POLYLINE_EDIT);
             else enterBaseEditors();
@@ -249,7 +263,11 @@ class App {
         });
 
         Selection.register(SelectType.TEXT, (text) => {
-            render(isEditingEnabled ? html`${panelDivider}${text.renderUi(canvas)}` : html``, document.getElementById("panelSelected"));
+            const focusAction = renderFocusSelectionButton([text]);
+            const panel = isEditingEnabled
+                ? html`<textedit-element .texts=${[text]} .canvas=${canvas} .extraActions=${focusAction}></textedit-element>`
+                : html`<div class="toolButtonRow">${focusAction}</div>`;
+            render(html`${panelDivider}${panel}`, document.getElementById("panelSelected"));
             if (isEditingEnabled) enterEditingEditors(EditorName.TEXT_EDIT);
             else enterBaseEditors();
             setActiveTool("buttonSelect");
@@ -284,9 +302,10 @@ class App {
             const textPanel = isEditingEnabled && texts.length > 0
                 ? html`<textedit-element .texts=${texts} .showActions=${false} .canvas=${canvas}></textedit-element>`
                 : html``;
+            const focusAction = renderFocusSelectionButton(items as Drawable[]);
             const selectionActions = isEditingEnabled
-                ? html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`
-                : html``;
+                ? html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .extraActions=${focusAction}></multipleedit-element>`
+                : html`<div class="toolButtonRow">${focusAction}</div>`;
             render(html`${panelDivider}${selectionActions}${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
             if (isEditingEnabled) enterEditingEditors(EditorName.MULTIPLE_EDIT);
             else enterBaseEditors();

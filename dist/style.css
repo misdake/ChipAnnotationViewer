@@ -1983,6 +1983,14 @@ button.advanced-chip-row.selected {
     margin-top: 5px;
 }
 
+.selectionFocusButton svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .panel-divider {
     display: none;
 }

@@ -1,4 +1,4 @@
-import { customElement, html, LitElement, property } from "lit-element";
+import { customElement, html, LitElement, property, TemplateResult } from "lit-element";
 import { DrawablePolyline } from "./DrawablePolyline";
 import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
@@ -30,6 +30,8 @@ export class PolylineEdit extends LitElement {
     showMeasurement: boolean = true;
     @property({ type: Boolean })
     measurementOnly: boolean = false;
+    @property()
+    extraActions: TemplateResult;
 
     @property()
     canvas: Canvas;
@@ -221,11 +223,13 @@ export class PolylineEdit extends LitElement {
 
     render() {
         if (this.measurementOnly) {
-            return this.showMeasurement ? html`
-                <div id="polylineAreaContainer" class="polylineMeasurement">
-                    <span>${this.measurementLabel}</span>
-                    <strong id="polylineTextArea">${this.measurementValue}</strong>
-                </div>` : html``;
+            return html`
+                ${this.extraActions ? html`<div class="toolButtonRow">${this.extraActions}</div>` : html``}
+                ${this.showMeasurement ? html`
+                    <div id="polylineAreaContainer" class="polylineMeasurement">
+                        <span>${this.measurementLabel}</span>
+                        <strong id="polylineTextArea">${this.measurementValue}</strong>
+                    </div>` : html``}`;
         }
         const strokeState = this.getStrokeState();
         const fillState = this.getFillState();
@@ -239,7 +243,7 @@ export class PolylineEdit extends LitElement {
             : html``;
 
         return html`
-            ${this.showActions || this.showTransformActions ? html`<div class="toolButtonRow">
+            ${this.showActions || this.showTransformActions || this.extraActions ? html`<div class="toolButtonRow">
                 ${actionButtons}
                 ${this.showTransformActions ? html`
                     <button class="iconButton" @click=${() => this.rotateCCW()} title="Rotate CCW">${rotateCCWIcon}</button>
@@ -247,6 +251,7 @@ export class PolylineEdit extends LitElement {
                     <button class="iconButton" @click=${() => this.flipX()} title="Flip X">${flipXIcon}</button>
                     <button class="iconButton" @click=${() => this.flipY()} title="Flip Y">${flipYIcon}</button>
                 ` : html``}
+                ${this.extraActions || html``}
             </div>` : html``}
             ${this.showMeasurement ? html`<div id="polylineAreaContainer" class="polylineMeasurement">
                 <span>${this.measurementLabel}</span>

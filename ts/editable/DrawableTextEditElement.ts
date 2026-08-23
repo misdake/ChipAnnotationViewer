@@ -1,4 +1,4 @@
-import { customElement, html, LitElement, property } from "lit-element";
+import { customElement, html, LitElement, property, TemplateResult } from "lit-element";
 import { DrawableText } from "./DrawableText";
 import { Canvas } from "../Canvas";
 import { alphaOf, rgbOf } from "../util/Color";
@@ -22,6 +22,8 @@ export class TextEdit extends LitElement {
 
     @property({ type: Boolean })
     showActions: boolean = true;
+    @property()
+    extraActions: TemplateResult;
 
     deleteText() {
         annotationHistory.removeDrawables(this.canvas, this.texts, "text.delete");
@@ -83,11 +85,14 @@ export class TextEdit extends LitElement {
     render() {
         const multiline = this.getMultiline();
         const textValue = this.getText() || "";
-        const actionButtons = this.showActions
+        const actionButtons = this.showActions || this.extraActions
             ? html`
                 <div class="toolButtonRow">
-                    <button class="iconButton deleteIconButton" @click=${() => this.confirmDeleteText()} title="Delete Text" aria-label="Delete Text">${deleteIcon}</button>
-                    <button class="iconButton" @click=${() => this.copyText()} title="Clone Text" aria-label="Clone Text">${cloneIcon}</button>
+                    ${this.showActions ? html`
+                        <button class="iconButton deleteIconButton" @click=${() => this.confirmDeleteText()} title="Delete Text" aria-label="Delete Text">${deleteIcon}</button>
+                        <button class="iconButton" @click=${() => this.copyText()} title="Clone Text" aria-label="Clone Text">${cloneIcon}</button>
+                    ` : html``}
+                    ${this.extraActions || html``}
                 </div>
             `
             : html``;

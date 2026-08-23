@@ -3,6 +3,7 @@ import {Chip, ChipContent} from "./data/Chip";
 import { ANNOTATION_DATA_VERSION, Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
 import {html, render} from "lit-html";
 import "./elements/SelectElement";
+import type {SharedChipFocus} from "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
@@ -220,7 +221,7 @@ class App {
         render(html`
             <select-element 
                 .onSelectChip=${(chip: Chip) => this.onSelectChip(chip)}
-                .onSelectChipContent=${(chipContent: ChipContent) => this.onSelectChipContent(chipContent)}
+                .onSelectChipContent=${(chipContent: ChipContent, sharedFocus?: SharedChipFocus) => this.onSelectChipContent(chipContent, sharedFocus)}
                 .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData, focus: boolean) => this.onSelectAnnotation(annotation, data, focus)}
                 .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
                 .isCurrentAnnotationDirty=${() => this.hasAnnotationChanges()}
@@ -371,11 +372,12 @@ class App {
         enterBaseEditors();
     }
 
-    onSelectChipContent(chipContent: ChipContent) {
+    onSelectChipContent(chipContent: ChipContent, sharedFocus?: SharedChipFocus) {
         this.chipContent = chipContent;
         this.annotationTitleDraft = '';
         this.refresh();
         canvas.loadChip(chipContent);
+        if (sharedFocus) canvas.focusAABB(sharedFocus.bounds, sharedFocus.padding);
         annotationHistory.reset();
         this.markAnnotationClean(false);
         Selection.deselectAny();

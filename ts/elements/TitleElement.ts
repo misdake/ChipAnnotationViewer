@@ -6,11 +6,15 @@ import { ClientApi } from '../data/ClientApi';
 import { deleteIcon, saveIcon } from '../util/Icons';
 import { notifyToast, ToastKind } from '../util/Toast';
 import { AppModal, AppModalContext } from '../util/AppModal';
+import { Selection, SelectType } from '../layers/Selection';
+import { DrawablePolyline } from '../editable/DrawablePolyline';
+import { AABB } from '../util/AABB';
 
+type ShareFocusMode = 'none' | 'selection' | 'view';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
-    private static readonly SHARE_FOCUS_STORAGE_KEY = 'chipannotation-share-focus';
+    private static readonly SHARE_FOCUS_STORAGE_KEY = 'chipannotation-share-focus-mode';
     @property()
     chipContent: ChipContent;
     @property()
@@ -300,26 +304,48 @@ export class TitleElement extends LitElement {
         this.requestUpdate();
     }
 
-    private createShareUrl(focusAnnotation: boolean): string {
+    private createShareUrl(focusMode: ShareFocusMode, selectionBounds: AABB, viewBounds: AABB): string {
         const url = new URL(window.location.href);
         url.search = '';
         url.hash = '';
         if (this.chipContent && this.chipContent.name) url.searchParams.set('chip', this.chipContent.name);
         if (this.annotation && this.annotation.aid > 0) {
             url.searchParams.set('annotation', String(this.annotation.aid));
-            if (focusAnnotation) url.searchParams.set('focus', 'annotation');
+        }
+        const bounds = focusMode === 'selection' ? selectionBounds : focusMode === 'view' ? viewBounds : null;
+        if (bounds) {
+            url.searchParams.set('focus', focusMode);
+            url.searchParams.set('bounds', [bounds.x1, bounds.y1, bounds.x2, bounds.y2]
+                .map(value => Number(value.toFixed(4)).toString()).join(','));
         }
         return url.toString();
+    }
+
+    private getSelectedPolylineBounds(): AABB {
+        if (!this.annotation || this.annotation.aid <= 0) return null;
+        const selected = Selection.getSelected();
+        let polylines: DrawablePolyline[] = [];
+        if (selected.type === SelectType.POLYLINE || selected.type === SelectType.POLYLINE_CREATE) {
+            polylines = [selected.item as DrawablePolyline];
+        } else if (selected.type === SelectType.MULTIPLE) {
+            polylines = (selected.item || []).filter(item => item instanceof DrawablePolyline) as DrawablePolyline[];
+        }
+        if (!polylines.length) return null;
+        const bounds = AABB.combineAll(polylines.map(polyline => polyline.aabb()));
+        return [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite) ? bounds : null;
     }
 
     private openShareModal() {
         this.menuOpen = false;
         this.hideControlsHint();
-        const hasAnnotation = !!this.annotation && this.annotation.aid > 0;
-        let focusAnnotation = hasAnnotation && localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY) === 'true';
+        const selectionBounds = this.getSelectedPolylineBounds();
+        const viewBounds = this.canvas && this.chipContent ? this.canvas.getVisibleAABB() : null;
+        const storedMode = localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY);
+        let focusMode: ShareFocusMode = storedMode === 'selection' || storedMode === 'view' ? storedMode : 'none';
+        if ((focusMode === 'selection' && !selectionBounds) || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
         const updateUrl = () => {
             const input = document.getElementById('shareUrlInput') as HTMLInputElement;
-            if (input) input.value = this.createShareUrl(focusAnnotation);
+            if (input) input.value = this.createShareUrl(focusMode, selectionBounds, viewBounds);
         };
         AppModal.open({
             title: 'Share',
@@ -328,17 +354,18 @@ export class TitleElement extends LitElement {
             cancelText: 'Close',
             body: html`
                 <div class="shareConfig">
-                    ${hasAnnotation ? html`
-                        <label class="shareFocusOption">
-                            <input type="checkbox" .checked=${focusAnnotation}
-                                @change=${(event: Event) => {
-                                    focusAnnotation = (event.target as HTMLInputElement).checked;
-                                    localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, String(focusAnnotation));
-                                    updateUrl();
-                                }}>
-                            <span>Focus annotation on open</span>
-                        </label>` : html``}
-                    <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusAnnotation)} aria-label="Share URL">
+                    <label class="shareFocusLabel" for="shareFocusMode">Open behavior</label>
+                    <select id="shareFocusMode" .value=${focusMode}
+                        @change=${(event: Event) => {
+                            focusMode = (event.target as HTMLSelectElement).value as ShareFocusMode;
+                            localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, focusMode);
+                            updateUrl();
+                        }}>
+                        <option value="none">No extra focus</option>
+                        <option value="selection" ?disabled=${!selectionBounds}>Focus selected polyline</option>
+                        <option value="view" ?disabled=${!viewBounds}>Focus current view</option>
+                    </select>
+                    <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusMode, selectionBounds, viewBounds)} aria-label="Share URL">
                 </div>
             `,
             onSubmit: context => this.copyShareUrl(context),

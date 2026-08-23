@@ -105,6 +105,13 @@ export class Camera {
         this.checkXy();
         return true;
     }
+    public getVisibleAABB(): AABB {
+        if (!this.canvas) return null;
+        this.action();
+        const topLeft = this.screenXyToCanvas(0, 0);
+        const bottomRight = this.screenXyToCanvas(this.canvas.getWidth(), this.canvas.getHeight());
+        return new AABB(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+    }
     public getTileLevel(): number {
         return Math.min(Math.max(Math.round(this.getZoom()), 0), this.maxLevel);
     }

@@ -8,6 +8,12 @@ import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
 import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
+import { AABB } from '../util/AABB';
+
+export interface SharedChipFocus {
+    bounds: AABB;
+    padding: number;
+}
 
 const commentIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -78,7 +84,7 @@ export class SelectElement extends LitElement {
     chip_content_current: ChipContent;
 
     @property()
-    onSelectChipContent: (chipContent: ChipContent) => void;
+    onSelectChipContent: (chipContent: ChipContent, sharedFocus?: SharedChipFocus) => void;
 
     // chip selection box
 
@@ -113,6 +119,8 @@ export class SelectElement extends LitElement {
     private annotationContentCache: Map<number, AnnotationData> = new Map();
     private annotationSelectionVersion = 0;
     private focusAnnotationId = 0;
+    private sharedFocusToLoad: SharedChipFocus = null;
+    private sharedFocusChipName = '';
     private recentUpdatesCache: RecentUpdateDay[] = null;
     private chipSelectionVersion = 0;
     @property()
@@ -153,11 +161,22 @@ export class SelectElement extends LitElement {
         let url = new URL(url_string);
         this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation'), 10);
-        if (url.searchParams.get('focus') === 'annotation' && this.annotation_id_toload > 0) {
+        const focusMode = url.searchParams.get('focus');
+        if (focusMode === 'annotation' && this.annotation_id_toload > 0) {
             this.focusAnnotationId = this.annotation_id_toload;
+        } else if ((focusMode === 'selection' && this.annotation_id_toload > 0) || focusMode === 'view') {
+            const values = (url.searchParams.get('bounds') || '').split(',').map(Number);
+            if (values.length === 4 && values.every(Number.isFinite) && values[2] >= values[0] && values[3] >= values[1]) {
+                this.sharedFocusToLoad = {
+                    bounds: new AABB(values[0], values[1], values[2], values[3]),
+                    padding: focusMode === 'selection' ? 48 : 0,
+                };
+                this.sharedFocusChipName = this.chip_name_toload;
+            }
         }
-        if (url.searchParams.has('focus')) {
+        if (url.searchParams.has('focus') || url.searchParams.has('bounds')) {
             url.searchParams.delete('focus');
+            url.searchParams.delete('bounds');
             history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
         }
 
@@ -352,6 +371,10 @@ export class SelectElement extends LitElement {
     }
     private selectedChip(chip: Chip) {
         const selectionVersion = ++this.chipSelectionVersion;
+        if (this.sharedFocusToLoad && chip && chip.name !== this.sharedFocusChipName) {
+            this.sharedFocusToLoad = null;
+            this.sharedFocusChipName = '';
+        }
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
         this.chipQuery = chip ? (chip.listname || chip.name) : '';
@@ -375,7 +398,12 @@ export class SelectElement extends LitElement {
             SelectElement.fetchChipDetail(chip).then(chipDetail => {
                 if (selectionVersion !== this.chipSelectionVersion) return;
                 this.chip_content_current = chipDetail;
-                if (this.onSelectChipContent) this.onSelectChipContent(chipDetail);
+                const sharedFocus = chip.name === this.sharedFocusChipName ? this.sharedFocusToLoad : null;
+                if (sharedFocus) {
+                    this.sharedFocusToLoad = null;
+                    this.sharedFocusChipName = '';
+                }
+                if (this.onSelectChipContent) this.onSelectChipContent(chipDetail, sharedFocus);
                 let save = this.annotation_id_toload;
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
                 this.annotation_id_toload = save;

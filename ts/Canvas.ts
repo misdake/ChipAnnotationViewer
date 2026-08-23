@@ -356,9 +356,15 @@ export class Canvas {
             if (included.has(text)) bounds.push(text.validateCanvasAABB(this.camera, this.renderer));
         }
         if (!bounds.length) return false;
-        const focused = this.camera.fitToAABB(AABB.combineAll(bounds), padding);
+        return this.focusAABB(AABB.combineAll(bounds), padding);
+    }
+    public focusAABB(bounds: AABB, padding: number = 48): boolean {
+        const focused = this.camera.fitToAABB(bounds, padding);
         if (focused) this.requestRender();
         return focused;
+    }
+    public getVisibleAABB(): AABB {
+        return this.camera.getVisibleAABB();
     }
 
     public save(): AnnotationData {

@@ -1808,14 +1808,12 @@ button.advanced-chip-row.selected {
     max-width: 100%;
 }
 
-.shareFocusOption {
-    display: flex;
-    align-items: center;
-    gap: 7px;
+.shareFocusLabel {
     color: var(--ink);
     font-size: 12px;
 }
 
+.shareConfig > select,
 .shareConfig > #shareUrlInput {
     box-sizing: border-box;
     width: 100%;
@@ -1828,6 +1826,10 @@ button.advanced-chip-row.selected {
     color: var(--ink);
     font: inherit;
     font-size: 12px;
+}
+
+.shareConfig > select {
+    cursor: pointer;
 }
 
 #annotationTitle .userMenuLinks {

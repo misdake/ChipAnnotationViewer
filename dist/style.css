@@ -1813,7 +1813,6 @@ button.advanced-chip-row.selected {
     font-size: 12px;
 }
 
-.shareConfig > select,
 .shareConfig > #shareUrlInput {
     box-sizing: border-box;
     width: 100%;
@@ -1828,8 +1827,39 @@ button.advanced-chip-row.selected {
     font-size: 12px;
 }
 
-.shareConfig > select {
+.shareFocusOptions {
+    display: grid;
+    gap: 3px;
+}
+
+.shareFocusOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 5px;
     cursor: pointer;
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.shareFocusOption:hover {
+    background: rgba(79, 140, 255, .1);
+}
+
+.shareFocusOption.disabled {
+    cursor: default;
+    color: var(--muted);
+    opacity: .65;
+}
+
+.shareFocusOption.disabled:hover {
+    background: transparent;
+}
+
+.shareFocusOption input {
+    margin: 0;
 }
 
 #annotationTitle .userMenuLinks {

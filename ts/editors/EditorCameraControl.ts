@@ -24,9 +24,9 @@ export class EditorCameraControl extends Editor {
 
     usages(): Usage[] {
         return [
-            Editor.usage(EditorCameraControl.allowLeftMousePan ? "drag left or right button to pan map" : "drag right button to pan map", UsageType.MOUSE),
-            Editor.usage("drag middle button to zoom to an area", UsageType.MOUSE),
-            Editor.usage("mouse wheel to zoom", UsageType.MOUSE),
+            Editor.usage(EditorCameraControl.allowLeftMousePan ? "drag the left or right button to pan" : "drag the right button to pan", UsageType.MOUSE),
+            Editor.usage("drag the middle button to frame and focus an area", UsageType.MOUSE),
+            Editor.usage("scroll the mouse wheel to zoom", UsageType.MOUSE),
         ];
     }
 
@@ -198,6 +198,8 @@ export class EditorCameraControl extends Editor {
         if (!this.zoomBoxVisible) return;
         const p1 = this.camera.canvasToScreen(this.zoomBoxStartX, this.zoomBoxStartY);
         const p2 = this.camera.canvasToScreen(this.zoomBoxCurrentX, this.zoomBoxCurrentY);
+        env.renderer.setColor("rgba(245, 158, 11, .2)");
+        env.renderer.drawRect(p1.x, p1.y, p2.x, p2.y, true, false);
         env.renderer.setColor("rgba(245, 158, 11, .95)");
         env.renderer.drawRect(p1.x, p1.y, p2.x, p2.y, false, true, Math.max(1, window.devicePixelRatio));
     }

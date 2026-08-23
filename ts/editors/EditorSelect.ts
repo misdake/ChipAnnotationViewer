@@ -52,21 +52,20 @@ export class EditorSelect extends Editor {
     usages(): Usage[] {
         if (this.measurementOnly) {
             return [
-                Editor.usage("left click to select a polygon"),
-                Editor.usage("click again to cycle overlapping polygons"),
-                Editor.usage("hold ctrl to add to the measurement"),
-                Editor.usage("drag on empty area to box select polygons"),
-                Editor.usage("right click to deselect all"),
+                Editor.usage("left click a polygon; click again nearby to cycle overlaps"),
+                Editor.usage("hold ctrl while clicking or box selecting to add polygons"),
+                Editor.usage("drag empty space to box select polygons"),
+                Editor.usage("use Focus beside the measurement to fit selected polygons"),
+                Editor.usage("right click to clear the selection"),
             ];
         }
         return [
-            Editor.usage("left click to select"),
-            Editor.usage("click again to cycle overlapping items"),
-            Editor.usage("left click on selected to drag and move"),
-            Editor.usage("hold ctrl to add to selection or merge selections"),
-            Editor.usage("right click to deselect all"),
-            Editor.usage("drag on empty area to box select"),
-            Editor.usage("hold ctrl while box selecting to merge with current selection"),
+            Editor.usage("left click an item; click again nearby to cycle overlaps"),
+            Editor.usage("hold ctrl while clicking or box selecting to add items"),
+            Editor.usage("drag empty space to box select"),
+            Editor.usage("drag selected items to move them"),
+            Editor.usage("use Focus in the selection panel to fit selected items"),
+            Editor.usage("right click to clear the selection"),
         ];
     }
 

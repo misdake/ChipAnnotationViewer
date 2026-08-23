@@ -354,17 +354,28 @@ export class TitleElement extends LitElement {
             cancelText: 'Close',
             body: html`
                 <div class="shareConfig">
-                    <label class="shareFocusLabel" for="shareFocusMode">Open behavior</label>
-                    <select id="shareFocusMode" .value=${focusMode}
+                    <span class="shareFocusLabel" id="shareFocusLabel">Open behavior</span>
+                    <div class="shareFocusOptions" role="radiogroup" aria-labelledby="shareFocusLabel"
                         @change=${(event: Event) => {
-                            focusMode = (event.target as HTMLSelectElement).value as ShareFocusMode;
+                            focusMode = (event.target as HTMLInputElement).value as ShareFocusMode;
                             localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, focusMode);
                             updateUrl();
                         }}>
-                        <option value="none">No extra focus</option>
-                        <option value="selection" ?disabled=${!selectionBounds}>Focus selected polyline</option>
-                        <option value="view" ?disabled=${!viewBounds}>Focus current view</option>
-                    </select>
+                        <label class="shareFocusOption">
+                            <input type="radio" name="shareFocusMode" value="none" .checked=${focusMode === 'none'}>
+                            <span>No extra focus</span>
+                        </label>
+                        <label class="shareFocusOption ${!selectionBounds ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="selection"
+                                .checked=${focusMode === 'selection'} ?disabled=${!selectionBounds}>
+                            <span>Focus selected polyline</span>
+                        </label>
+                        <label class="shareFocusOption ${!viewBounds ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="view"
+                                .checked=${focusMode === 'view'} ?disabled=${!viewBounds}>
+                            <span>Focus current view</span>
+                        </label>
+                    </div>
                     <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusMode, selectionBounds, viewBounds)} aria-label="Share URL">
                 </div>
             `,

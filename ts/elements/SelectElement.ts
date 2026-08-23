@@ -440,9 +440,13 @@ export class SelectElement extends LitElement {
         this.advancedSelectedChip = null;
     }
 
-    protected updated(): void {
+    protected updated(changedProperties: Map<PropertyKey, unknown>): void {
         const root = document.getElementById('advancedChipModalRoot');
         if (root) renderTemplate(this.renderAdvancedBrowser(), root);
+        if (this.chipPickerOpen && !this.chipFilter.trim()
+            && (changedProperties.has('chipPickerOpen') || changedProperties.has('chipFilter'))) {
+            this.scrollCurrentQuickChipIntoView();
+        }
     }
 
     disconnectedCallback(): void {
@@ -789,6 +793,16 @@ export class SelectElement extends LitElement {
         this.chipFilter = value.slice(0, start) + value.slice(end);
     }
 
+    private scrollCurrentQuickChipIntoView() {
+        const list = this.querySelector('.chip-quick-list') as HTMLElement | null;
+        if (!list) return;
+        const current = list.querySelector('.chip-quick-item[data-current="true"]') as HTMLElement | null;
+        if (!current) return;
+        const listRect = list.getBoundingClientRect();
+        const currentRect = current.getBoundingClientRect();
+        list.scrollTop += currentRect.top - listRect.top - (list.clientHeight - currentRect.height) / 2;
+    }
+
     private onChipSearchFocus(ev: FocusEvent) {
         this.chipPickerOpen = true;
         const input = ev.target as HTMLInputElement;
@@ -840,7 +854,8 @@ export class SelectElement extends LitElement {
                             ${this.chipPickerOpen ? html`
                                 <div class="chip-quick-list" @mousedown=${(ev: Event) => ev.preventDefault()}>
                                     ${quickChips.length ? quickChips.map(item => html`
-                                        <button type="button" class="chip-quick-item" @click=${() => this.canDiscardCurrent() && this.selectedChip(item)}>
+                                        <button type="button" class="chip-quick-item" data-current=${item.name === this.chip_current?.name ? 'true' : 'false'}
+                                            @click=${() => this.canDiscardCurrent() && this.selectedChip(item)}>
                                             <strong>${item.listname || item.name}</strong>
                                             <span>${[item.vendor, item.type, item.family].filter(Boolean).join(' · ')}</span>
                                         </button>`) : html`<div class="chip-quick-empty">No matching chips</div>`}

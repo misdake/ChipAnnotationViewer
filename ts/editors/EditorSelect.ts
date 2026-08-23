@@ -30,10 +30,20 @@ export class EditorSelect extends Editor {
     private dragMoveStartY = 0;
     private selectedEditable: EditableMove & EditableDeleteClone & EditableColor;
     private moveTransaction: HistoryTransaction = null;
+    private selectedDragMoved = false;
     private rightClickStartX = 0;
     private rightClickStartY = 0;
     private isRightClickDragging = false;
+    private pickCycle: {
+        items: (Drawable & EditablePick)[];
+        x: number;
+        y: number;
+        zoom: number;
+        index: number;
+    } = null;
     private static readonly BOX_SELECT_MIN_DRAG_PX = 6;
+    private static readonly PICK_CYCLE_NEAR_PX = 6;
+    private static readonly PICK_CYCLE_ZOOM_EPSILON = 0.001;
 
     constructor(canvas: Canvas) {
         super(EditorName.SELECT, canvas);
@@ -43,6 +53,7 @@ export class EditorSelect extends Editor {
         if (this.measurementOnly) {
             return [
                 Editor.usage("left click to select a polygon"),
+                Editor.usage("click again to cycle overlapping polygons"),
                 Editor.usage("hold ctrl to add to the measurement"),
                 Editor.usage("drag on empty area to box select polygons"),
                 Editor.usage("right click to deselect all"),
@@ -50,6 +61,7 @@ export class EditorSelect extends Editor {
         }
         return [
             Editor.usage("left click to select"),
+            Editor.usage("click again to cycle overlapping items"),
             Editor.usage("left click on selected to drag and move"),
             Editor.usage("hold ctrl to add to selection or merge selections"),
             Editor.usage("right click to deselect all"),
@@ -95,8 +107,11 @@ export class EditorSelect extends Editor {
                     if (!self.measurementOnly && self.isPointOnSelectedDrawable(x, y)) {
                         self.isDraggingSelected = true;
                         self.isBoxSelecting = false;
+                        self.selectedDragMoved = false;
                         self.dragMoveStartX = x;
                         self.dragMoveStartY = y;
+                        self.dragStartScreenX = event.offsetX;
+                        self.dragStartScreenY = event.offsetY;
                         let selected = self.getSelectedDrawables();
                         self.selectedEditable = editableMultiple(selected);
                         self.moveTransaction = annotationHistory.begin(self.canvas, selected, event.ctrlKey ? "selection.clone.drag" : "selection.move");
@@ -134,6 +149,7 @@ export class EditorSelect extends Editor {
                     if (!self.isRightClickDragging && Selection.getSelected().type) {
                         Selection.deselectAny();
                     }
+                    self.resetPickCycle();
                     self.isRightClickDragging = false;
                     return false;
                 }
@@ -142,6 +158,7 @@ export class EditorSelect extends Editor {
                     let x = canvasXY.x, y = canvasXY.y;
 
                     if (self.isDraggingSelected) {
+                        const selectInsteadOfDrag = !self.selectedDragMoved && !event.ctrlKey;
                         self.isDraggingSelected = false;
                         self.selectedEditable = null;
                         if (annotationHistory.isActive(self.moveTransaction)) {
@@ -149,12 +166,15 @@ export class EditorSelect extends Editor {
                         }
                         self.moveTransaction = null;
                         self.canvas.getElement().style.cursor = "";
+                        if (selectInsteadOfDrag) self.selectAtPoint(x, y, env, false);
+                        else self.resetPickCycle();
                         self.canvas.requestRender();
                         return true;
                     }
 
                     if (self.isBoxSelecting) {
                         if (self.dragging) {
+                            self.resetPickCycle();
                             let selected = self.previewSelection;
                             if (selected.length > 0) {
                                 if (!event.ctrlKey) {
@@ -195,42 +215,7 @@ export class EditorSelect extends Editor {
                             }
                         } else {
                             let candidates = self.measurementOnly ? env.polylines : undefined;
-                            let { item, type } = self.pickAny(x, y, env, candidates);
-                            if (item) {
-                                if (!event.ctrlKey) {
-                                    Selection.select(type, item);
-                                } else {
-                                    let current = Selection.getSelected();
-                                    let currentType = current.type;
-                                    if (!currentType) {
-                                        Selection.select(type, item);
-                                    } else if (currentType === SelectType.MULTIPLE) {
-                                        let array = <(Drawable & EditablePick)[]>current.item;
-                                        let index = array.indexOf(item);
-                                        if (index >= 0) {
-                                            array.splice(index, 1);
-                                            if (array.length === 0) {
-                                                Selection.deselectAny();
-                                            } else if (array.length === 1) {
-                                                Selection.select(array[0].pickType, array[0]);
-                                            } else {
-                                                Selection.select(SelectType.MULTIPLE, array);
-                                            }
-                                        } else {
-                                            array.push(item);
-                                            Selection.select(SelectType.MULTIPLE, array);
-                                        }
-                                    } else {
-                                        if (current.item !== item) {
-                                            Selection.select(SelectType.MULTIPLE, [<Drawable>current.item, item]);
-                                        } else {
-                                            Selection.deselectAny();
-                                        }
-                                    }
-                                }
-                            } else if (!event.ctrlKey) {
-                                Selection.deselectAny();
-                            }
+                            self.selectAtPoint(x, y, env, event.ctrlKey, candidates);
                         }
                         self.isBoxSelecting = false;
                         self.dragging = false;
@@ -268,6 +253,7 @@ export class EditorSelect extends Editor {
                     }
                     let dx = x - self.dragMoveStartX;
                     let dy = y - self.dragMoveStartY;
+                    if (dx || dy) self.selectedDragMoved = true;
                     self.selectedEditable.move(dx, dy);
                     self.canvas.requestRender();
                     self.dragMoveStartX = x;
@@ -353,6 +339,79 @@ export class EditorSelect extends Editor {
 
     exit(env: Env): void {
         annotationHistory.commitActive(env.canvas);
+    }
+
+    private resetPickCycle() {
+        this.pickCycle = null;
+    }
+
+    private pickForClick(x: number, y: number, env: Env, candidates?: EditablePick[]): { item: Drawable & EditablePick, type: SelectType } {
+        const hits = this.pickAll(x, y, env, candidates);
+        const ordered = [
+            ...hits.filter(item => item.pickType === SelectType.TEXT).reverse(),
+            ...hits.filter(item => item.pickType === SelectType.POLYLINE).reverse(),
+        ];
+        if (!ordered.length) {
+            this.resetPickCycle();
+            return {item: undefined, type: undefined};
+        }
+
+        let index = 0;
+        const zoom = this.camera.getZoom();
+        if (ordered.length > 1 && this.pickCycle) {
+            const sameItems = ordered.length === this.pickCycle.items.length
+                && ordered.every((item, itemIndex) => item === this.pickCycle.items[itemIndex]);
+            const nearby = this.camera.canvasSizeToScreen(Math.hypot(x - this.pickCycle.x, y - this.pickCycle.y))
+                <= EditorSelect.PICK_CYCLE_NEAR_PX;
+            const sameZoom = Math.abs(zoom - this.pickCycle.zoom) <= EditorSelect.PICK_CYCLE_ZOOM_EPSILON;
+            if (sameItems && nearby && sameZoom) index = (this.pickCycle.index + 1) % ordered.length;
+        }
+
+        if (ordered.length > 1) {
+            this.pickCycle = {items: ordered, x, y, zoom, index};
+        } else {
+            this.resetPickCycle();
+        }
+        const item = ordered[index];
+        return {item, type: item.pickType};
+    }
+
+    private selectAtPoint(x: number, y: number, env: Env, ctrlKey: boolean, candidates?: EditablePick[]) {
+        let {item, type} = this.pickForClick(x, y, env, candidates);
+        if (!item) {
+            if (!ctrlKey) Selection.deselectAny();
+            return;
+        }
+        if (!ctrlKey) {
+            Selection.select(type, item);
+            return;
+        }
+
+        let current = Selection.getSelected();
+        let currentType = current.type;
+        if (!currentType) {
+            Selection.select(type, item);
+        } else if (currentType === SelectType.MULTIPLE) {
+            let array = <(Drawable & EditablePick)[]>current.item;
+            let index = array.indexOf(item);
+            if (index >= 0) {
+                array.splice(index, 1);
+                if (array.length === 0) {
+                    Selection.deselectAny();
+                } else if (array.length === 1) {
+                    Selection.select(array[0].pickType, array[0]);
+                } else {
+                    Selection.select(SelectType.MULTIPLE, array);
+                }
+            } else {
+                array.push(item);
+                Selection.select(SelectType.MULTIPLE, array);
+            }
+        } else if (current.item !== item) {
+            Selection.select(SelectType.MULTIPLE, [<Drawable>current.item, item]);
+        } else {
+            Selection.deselectAny();
+        }
     }
 
 

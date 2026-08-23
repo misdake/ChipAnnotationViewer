@@ -344,6 +344,7 @@ class App {
         this.chip = chip;
         this.annotation = null;
         this.annotationTitleDraft = '';
+        canvas.getElement().focus({preventScroll: true});
         annotationHistory.reset();
         this.markAnnotationClean(false);
         this.refresh();
@@ -511,11 +512,13 @@ function interceptKeys(evt: KeyboardEvent) {
     // Check for undo/redo
     if (ctrlDown && evt.key.toLowerCase() === 'z' && !evt.shiftKey) {
         if (!isEditingEnabled) return true;
+        evt.preventDefault();
         annotationHistory.undo(canvas);
         return false;
     }
     else if ((ctrlDown && evt.key.toLowerCase() === 'z' && evt.shiftKey) || (ctrlDown && evt.key.toLowerCase() === 'y')) {
         if (!isEditingEnabled) return true;
+        evt.preventDefault();
         annotationHistory.redo(canvas);
         return false;
     }

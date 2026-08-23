@@ -88,7 +88,7 @@ export class Canvas {
 
         this.canvasElement.onclick = event => {
             let e = convertMouseEvent(event);
-            this.canvasElement.focus();
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -111,6 +111,7 @@ export class Canvas {
         };
         this.canvasElement.onwheel = event => {
             let e = convertWheelEvent(event);
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -122,6 +123,7 @@ export class Canvas {
         };
         this.canvasElement.onmousedown = event => {
             let e = convertMouseEvent(event);
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();

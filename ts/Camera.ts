@@ -87,6 +87,24 @@ export class Camera {
         this.position.y = (this.yMin + this.yMax) / 2;
         this.setScaleTo(this.getFitScale());
     }
+    public fitToAABB(aabb: AABB, padding: number = 48): boolean {
+        if (!this.canvas || !aabb) return false;
+        const values = [aabb.x1, aabb.y1, aabb.x2, aabb.y2];
+        if (!values.every(Number.isFinite) || aabb.x2 < aabb.x1 || aabb.y2 < aabb.y1) return false;
+
+        const availableWidth = Math.max(1, this.canvas.getWidth() - padding * 2);
+        const availableHeight = Math.max(1, this.canvas.getHeight() - padding * 2);
+        const width = Math.max(0, aabb.x2 - aabb.x1);
+        const height = Math.max(0, aabb.y2 - aabb.y1);
+        const scaleX = width > 0 ? availableWidth / width : this.scaleMax;
+        const scaleY = height > 0 ? availableHeight / height : this.scaleMax;
+
+        this.position.x = aabb.centerX;
+        this.position.y = aabb.centerY;
+        this.setScaleTo(Math.min(scaleX, scaleY));
+        this.checkXy();
+        return true;
+    }
     public getTileLevel(): number {
         return Math.min(Math.max(Math.round(this.getZoom()), 0), this.maxLevel);
     }

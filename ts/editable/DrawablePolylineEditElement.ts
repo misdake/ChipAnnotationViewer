@@ -28,6 +28,8 @@ export class PolylineEdit extends LitElement {
     showTransformActions: boolean = true;
     @property({ type: Boolean })
     showMeasurement: boolean = true;
+    @property({ type: Boolean })
+    measurementOnly: boolean = false;
 
     @property()
     canvas: Canvas;
@@ -218,6 +220,13 @@ export class PolylineEdit extends LitElement {
     }
 
     render() {
+        if (this.measurementOnly) {
+            return this.showMeasurement ? html`
+                <div id="polylineAreaContainer" class="polylineMeasurement">
+                    <span>${this.measurementLabel}</span>
+                    <strong id="polylineTextArea">${this.measurementValue}</strong>
+                </div>` : html``;
+        }
         const strokeState = this.getStrokeState();
         const fillState = this.getFillState();
         const strokeVisible = strokeState !== "none";

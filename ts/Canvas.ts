@@ -11,6 +11,7 @@ import {LayerName} from "./layers/Layers";
 import {Editor, UsageType} from "./editors/Editor";
 import {EditorName} from "./editors/Editors";
 import {Env} from "./Env";
+import {AABB} from "./util/AABB";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -338,6 +339,15 @@ export class Canvas {
                 layer.loadData(this.env);
             }
         }
+    }
+    public focusData(padding: number = 48): boolean {
+        const bounds: AABB[] = [];
+        for (const polyline of this.env.polylines || []) bounds.push(polyline.aabb());
+        for (const text of this.env.texts || []) bounds.push(text.validateCanvasAABB(this.camera, this.renderer));
+        if (!bounds.length) return false;
+        const focused = this.camera.fitToAABB(AABB.combineAll(bounds), padding);
+        if (focused) this.requestRender();
+        return focused;
     }
 
     public save(): AnnotationData {

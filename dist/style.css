@@ -1205,6 +1205,32 @@ body {
     overflow-y: auto;
 }
 
+.recentUpdatesStatus {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    gap: 7px;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.recentUpdatesSpinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: recentUpdatesSpin .8s linear infinite;
+}
+
+.recentUpdatesError {
+    color: #f87171;
+}
+
+@keyframes recentUpdatesSpin {
+    to { transform: rotate(360deg); }
+}
+
 .recentUpdatesDay {
     margin: 10px 2px 4px;
     color: var(--ink-muted);
@@ -1691,6 +1717,9 @@ button.advanced-chip-row.selected {
 
 #annotationTitle .userMenuRow {
     height: 29px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
 
 #annotationTitle .userMenuToggle {
@@ -1750,6 +1779,7 @@ button.advanced-chip-row.selected {
 }
 
 #annotationTitle #userLogoutInline,
+#annotationTitle #shareViewButton,
 #annotationTitle #hintToggle {
     width: 100%;
     height: 30px;
@@ -1765,8 +1795,42 @@ button.advanced-chip-row.selected {
 }
 
 #annotationTitle #userLogoutInline:hover,
+#annotationTitle #shareViewButton:hover,
 #annotationTitle #hintToggle:hover {
     background: rgba(79, 140, 255, .14);
+}
+
+.shareConfig {
+    display: grid;
+    gap: 10px;
+    min-width: min(560px, 76vw);
+}
+
+.shareFocusOption {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.shareUrlRow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.shareUrlRow input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 32px;
+    padding: 0 9px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--panel-3);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
 }
 
 #annotationTitle .userMenuLinks {

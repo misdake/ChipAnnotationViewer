@@ -10,6 +10,7 @@ import { AppModal, AppModalContext } from '../util/AppModal';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
+    private static readonly SHARE_FOCUS_STORAGE_KEY = 'chipannotation-share-focus';
     @property()
     chipContent: ChipContent;
     @property()
@@ -299,6 +300,67 @@ export class TitleElement extends LitElement {
         this.requestUpdate();
     }
 
+    private createShareUrl(focusAnnotation: boolean): string {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        if (this.chipContent && this.chipContent.name) url.searchParams.set('chip', this.chipContent.name);
+        if (this.annotation && this.annotation.aid > 0) {
+            url.searchParams.set('annotation', String(this.annotation.aid));
+            if (focusAnnotation) url.searchParams.set('focus', 'annotation');
+        }
+        return url.toString();
+    }
+
+    private openShareModal() {
+        this.menuOpen = false;
+        this.hideControlsHint();
+        const hasAnnotation = !!this.annotation && this.annotation.aid > 0;
+        let focusAnnotation = hasAnnotation && localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY) === 'true';
+        const updateUrl = () => {
+            const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+            if (input) input.value = this.createShareUrl(focusAnnotation);
+        };
+        AppModal.open({
+            title: 'Share',
+            ariaLabel: 'Share current view',
+            primaryText: 'Close',
+            showCancel: false,
+            body: html`
+                <div class="shareConfig">
+                    <label class="shareFocusOption">
+                        <input type="checkbox" .checked=${focusAnnotation} ?disabled=${!hasAnnotation}
+                            @change=${(event: Event) => {
+                                focusAnnotation = (event.target as HTMLInputElement).checked;
+                                localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, String(focusAnnotation));
+                                updateUrl();
+                            }}>
+                        <span>Focus annotation on open</span>
+                    </label>
+                    <div class="shareUrlRow">
+                        <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusAnnotation)} aria-label="Share URL">
+                        <button class="configButton" type="button" @click=${() => this.copyShareUrl()}>Copy</button>
+                    </div>
+                </div>
+            `,
+            onSubmit: () => true,
+        });
+    }
+
+    private async copyShareUrl() {
+        const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+        if (!input) return;
+        try {
+            await navigator.clipboard.writeText(input.value);
+            this.toast('Link copied', 'copied');
+        } catch (_error) {
+            input.focus({preventScroll: true});
+            input.select();
+            if (document.execCommand('copy')) this.toast('Link copied', 'copied');
+            else this.toast('Could not copy link', 'warning');
+        }
+    }
+
     private onTitleInput(event: Event) {
         if (this.onAnnotationChanged) this.onAnnotationChanged((event.target as HTMLInputElement).value);
     }
@@ -313,20 +375,23 @@ export class TitleElement extends LitElement {
                 <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
                 <a href="https://rgbuv.xyz/chipannotation3/rss/daily.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
             </div>`;
-        const loginControl = this.userId > 0 ? html`
+        const loginControl = html`
             <div class="userMenu">
                 <div class="userMenuRow">
+                    ${this.userId > 0 ? html`` : html`
+                        <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`}
                     <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>
-                        <span class="userMenuName">${this.userName}</span><span class="userMenuArrow" aria-hidden="true">▾</span>
+                        ${this.userId > 0 ? html`<span class="userMenuName">${this.userName}</span>` : html``}
+                        <span class="userMenuArrow" aria-hidden="true">▾</span>
                     </button>
                 </div>
                 <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
-                    <button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>
+                    ${this.userId > 0 ? html`<button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>` : html``}
+                    <button id="shareViewButton" type="button" @click=${() => this.openShareModal()}>Share</button>
                     <button id="hintToggle" type="button" aria-describedby="hint" aria-expanded="false" @click=${this.toggleControlsHint}>Controls</button>
                     ${projectLinks}
                 </div>
-            </div>` : html`
-                <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`;
+            </div>`;
         const canDelete = this.editMode === 'update'
             && this.annotation
             && this.annotation.aid > 0

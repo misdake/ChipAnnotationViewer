@@ -14,6 +14,8 @@ import { annotationHistory, HistoryTransaction } from "../history/AnnotationHist
 
 export class EditorSelect extends Editor {
 
+    public measurementOnly = false;
+
     private dragging = false;
     private dragStartX = 0;
     private dragStartY = 0;
@@ -38,6 +40,14 @@ export class EditorSelect extends Editor {
     }
 
     usages(): Usage[] {
+        if (this.measurementOnly) {
+            return [
+                Editor.usage("left click to select a polygon"),
+                Editor.usage("hold ctrl to add to the measurement"),
+                Editor.usage("drag on empty area to box select polygons"),
+                Editor.usage("right click to deselect all"),
+            ];
+        }
         return [
             Editor.usage("left click to select"),
             Editor.usage("left click on selected to drag and move"),
@@ -82,7 +92,7 @@ export class EditorSelect extends Editor {
                     let canvasXY = self.camera.screenXyToCanvas(event.offsetX, event.offsetY);
                     let x = canvasXY.x, y = canvasXY.y;
 
-                    if (self.isPointOnSelectedDrawable(x, y)) {
+                    if (!self.measurementOnly && self.isPointOnSelectedDrawable(x, y)) {
                         self.isDraggingSelected = true;
                         self.isBoxSelecting = false;
                         self.dragMoveStartX = x;
@@ -184,7 +194,8 @@ export class EditorSelect extends Editor {
                                 Selection.deselectAny();
                             }
                         } else {
-                            let { item, type } = self.pickAny(x, y, env);
+                            let candidates = self.measurementOnly ? env.polylines : undefined;
+                            let { item, type } = self.pickAny(x, y, env, candidates);
                             if (item) {
                                 if (!event.ctrlKey) {
                                     Selection.select(type, item);
@@ -225,7 +236,7 @@ export class EditorSelect extends Editor {
                         self.dragging = false;
                         self.previewSelection = [];
                         self.canvas.requestRender();
-                        if (self.getSelectedDrawables().length > 0 && self.isPointOnSelectedDrawable(x, y)) {
+                        if (!self.measurementOnly && self.getSelectedDrawables().length > 0 && self.isPointOnSelectedDrawable(x, y)) {
                             self.canvas.getElement().style.cursor = "grab";
                         } else {
                             self.canvas.getElement().style.cursor = "";
@@ -288,12 +299,14 @@ export class EditorSelect extends Editor {
 
                         self.previewSelection = [];
 
-                        for (let text of env.texts) {
-                            let aabb = self.getAABB(text);
-                            if (aabb) {
-                                let partiallyContained = !(aabb.x2 < minX || aabb.x1 > maxX || aabb.y2 < minY || aabb.y1 > maxY);
-                                if (partiallyContained) {
-                                    self.previewSelection.push(text);
+                        if (!self.measurementOnly) {
+                            for (let text of env.texts) {
+                                let aabb = self.getAABB(text);
+                                if (aabb) {
+                                    let partiallyContained = !(aabb.x2 < minX || aabb.x1 > maxX || aabb.y2 < minY || aabb.y1 > maxY);
+                                    if (partiallyContained) {
+                                        self.previewSelection.push(text);
+                                    }
                                 }
                             }
                         }
@@ -311,7 +324,7 @@ export class EditorSelect extends Editor {
 
                 if (!self.isBoxSelecting) {
                     let selected = self.getSelectedDrawables();
-                    if (selected.length > 0 && self.isPointOnSelectedDrawable(x, y)) {
+                    if (!self.measurementOnly && selected.length > 0 && self.isPointOnSelectedDrawable(x, y)) {
                         self.canvas.getElement().style.cursor = "grab";
                     } else {
                         self.canvas.getElement().style.cursor = "";

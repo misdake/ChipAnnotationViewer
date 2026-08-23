@@ -92,7 +92,7 @@ export class SelectElement extends LitElement {
     annotationlist_array: Annotation[];
 
     @property()
-    onSelectAnnotation: (annotation: Annotation, data: AnnotationData) => void;
+    onSelectAnnotation: (annotation: Annotation, data: AnnotationData, focus: boolean) => void;
     @property()
     canDiscardCurrentAnnotation: () => boolean;
     @property()
@@ -112,6 +112,8 @@ export class SelectElement extends LitElement {
     annotation_content_current: AnnotationContent;
     private annotationContentCache: Map<number, AnnotationData> = new Map();
     private annotationSelectionVersion = 0;
+    private focusAnnotationId = 0;
+    private recentUpdatesCache: RecentUpdateDay[] = null;
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
@@ -151,6 +153,13 @@ export class SelectElement extends LitElement {
         let url = new URL(url_string);
         this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation'), 10);
+        if (url.searchParams.get('focus') === 'annotation' && this.annotation_id_toload > 0) {
+            this.focusAnnotationId = this.annotation_id_toload;
+        }
+        if (url.searchParams.has('focus')) {
+            url.searchParams.delete('focus');
+            history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+        }
 
         //legacy urls use commentId (GitHub issue comment id); resolve it to an annotation id
         //before loading, then the normal selection flow rewrites the url to the new params
@@ -472,6 +481,7 @@ export class SelectElement extends LitElement {
             if (current) {
                 this.selectedAnnotation(current);
             } else {
+                this.focusAnnotationId = 0;
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
             }
         }).catch(error => {
@@ -521,13 +531,16 @@ export class SelectElement extends LitElement {
         this.annotationCommentCount = null;
         commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0, annotation ? annotation.title : '');
         if (annotation.aid > 0) {
-            let data = this.annotationContentCache.get(annotation.aid) || AnnotationData.dummy();
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+            const cachedData = this.annotationContentCache.get(annotation.aid);
+            let data = cachedData || AnnotationData.dummy();
+            const focus = !!cachedData && this.focusAnnotationId === annotation.aid;
+            if (focus) this.focusAnnotationId = 0;
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data, focus);
             this.loadAnnotationCommentCount(annotation, selectionVersion);
             this.replaceUrl();
             this.revalidateAnnotationContent(annotation, selectionVersion);
         } else {
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy());
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy(), false);
             this.replaceUrl();
         }
     }
@@ -549,7 +562,9 @@ export class SelectElement extends LitElement {
             annotation.content = content.content;
             annotation.version = content.version;
             this.annotationContentCache.set(annotation.aid, data);
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+            const focus = this.focusAnnotationId === annotation.aid;
+            if (focus) this.focusAnnotationId = 0;
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data, focus);
         }).catch(error => {
             console.warn('Could not revalidate annotation content', annotation.aid, error);
         });
@@ -582,18 +597,33 @@ export class SelectElement extends LitElement {
     }
 
     private openRecentUpdates() {
-        ClientApi.listRecentUpdates().then(days => {
-            AppModal.open({
-                title: 'Recent updates',
-                ariaLabel: 'Recent updates',
-                primaryText: 'Close',
-                showCancel: false,
-                body: this.renderRecentUpdates(days),
-                onSubmit: () => true,
-            });
-        }).catch(error => {
-            SelectElement.warnNetwork('Could not load recent updates', error);
+        const handle = AppModal.open({
+            title: 'Recent updates',
+            ariaLabel: 'Recent updates',
+            primaryText: 'Close',
+            showCancel: false,
+            body: this.renderRecentUpdatesState(this.recentUpdatesCache, true),
+            onSubmit: () => true,
         });
+        ClientApi.listRecentUpdates().then(days => {
+            this.recentUpdatesCache = days || [];
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false));
+        }).catch(error => {
+            console.warn('Could not load recent updates', error);
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false, 'Could not refresh recent updates.'));
+        });
+    }
+
+    private renderRecentUpdatesState(days: RecentUpdateDay[], loading: boolean, error: string = ''): TemplateResult {
+        return html`
+            <div class="recentUpdatesStatus" aria-live="polite">
+                ${loading ? html`<span class="recentUpdatesSpinner" aria-hidden="true"></span><span>Refreshing...</span>` : html``}
+                ${error ? html`<span class="recentUpdatesError">${error}</span>` : html``}
+            </div>
+            ${days
+                ? this.renderRecentUpdates(days)
+                : html`<div class="recentUpdatesEmpty">${error ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
+        `;
     }
 
     private mountRecentUpdatesFab() {

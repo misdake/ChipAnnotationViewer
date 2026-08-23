@@ -36,6 +36,12 @@ export interface AppModalConfig {
     onCancel?: () => void;
 }
 
+export interface AppModalHandle {
+    setBody: (body: TemplateResult) => void;
+    setStatus: (message: string, kind?: ModalStatusKind) => void;
+    isOpen: () => boolean;
+}
+
 @customElement("app-modal")
 class AppModalElement extends LitElement {
     @property({ type: Boolean })
@@ -73,7 +79,7 @@ class AppModalElement extends LitElement {
         return this;
     }
 
-    public open(config: AppModalConfig) {
+    public open(config: AppModalConfig): number {
         this.cancelCurrentModal();
 
         this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -94,6 +100,22 @@ class AppModalElement extends LitElement {
             if (version !== this.openVersion || !this.openState) return;
             this.focusInput();
         });
+        return version;
+    }
+
+    public isOpenVersion(version: number): boolean {
+        return this.openState && this.openVersion === version;
+    }
+
+    public setBodyForVersion(version: number, body: TemplateResult) {
+        if (!this.isOpenVersion(version) || !this.config) return;
+        this.config = {...this.config, body};
+        this.requestUpdate();
+    }
+
+    public setStatusForVersion(version: number, message: string, kind: ModalStatusKind = "warning") {
+        if (!this.isOpenVersion(version)) return;
+        this.setStatus(message, kind);
     }
 
     public close(runCancel: boolean = false) {
@@ -319,8 +341,14 @@ export class AppModal {
         return element;
     }
 
-    static open(config: AppModalConfig) {
-        this.ensureElement().open(config);
+    static open(config: AppModalConfig): AppModalHandle {
+        const element = this.ensureElement();
+        const version = element.open(config);
+        return {
+            setBody: body => element.setBodyForVersion(version, body),
+            setStatus: (message, kind) => element.setStatusForVersion(version, message, kind),
+            isOpen: () => element.isOpenVersion(version),
+        };
     }
 
     static close() {

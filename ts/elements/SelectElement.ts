@@ -238,7 +238,7 @@ export class SelectElement extends LitElement {
         rows.push(row("Name", chip.name || ""));
         rows.push(row("Type", `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`));
         rows.push(row("Size (px)", `${chip.width} x ${chip.height}`));
-        if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm2, ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
+        if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm², ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
         if (specUrl) rows.push(row("Spec", link(specUrl, specUrl)));
         if (hasAuthor) rows.push(row("Credit", authorUrl ? link(authorName, authorUrl) : authorName, "chipInfoCreditRow"));
         rows.push(row("Source", sourceText ? link(sourceText, sourceText) : ""));

@@ -32,6 +32,7 @@ let isEditingEnabled = false;
 let isSelectionEnabled = false;
 type PrimaryMouseTool = "select" | "pan";
 let primaryMouseTool: PrimaryMouseTool = "select";
+let primaryMouseToolSelectedByUser = false;
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
@@ -82,6 +83,7 @@ function setActiveTool(buttonId: string) {
 
 function activatePrimaryMouseTool(tool: PrimaryMouseTool) {
     primaryMouseTool = tool;
+    primaryMouseToolSelectedByUser = true;
     Selection.deselectAny();
     enterBaseEditors();
 }
@@ -100,6 +102,7 @@ function prepareCreateTool(buttonId: string, selectionType: SelectType): boolean
 }
 
 document.getElementById("buttonSelect").onclick = () => {
+    if (!isSelectionEnabled) return;
     activatePrimaryMouseTool("select");
 };
 document.getElementById("buttonPan").onclick = () => {
@@ -183,7 +186,8 @@ class App {
     private applyEditMode() {
         const editMode = this.getEditMode();
         const editable = editMode !== 'none';
-        const selectable = !!this.annotation && this.annotation.aid > 0;
+        const selectable = editorLayoutMedia.matches && !!this.annotation && this.annotation.aid > 0;
+        if (editable && !isEditingEnabled && !primaryMouseToolSelectedByUser) primaryMouseTool = "select";
         const toolRail = document.getElementById("toolRail");
         if (toolRail) toolRail.hidden = !selectable;
         const capabilityChanged = isEditingEnabled !== editable || isSelectionEnabled !== selectable;
@@ -360,8 +364,13 @@ class App {
     }
 
     onSelectAnnotation(annotation: Annotation, data: AnnotationData, focus: boolean = false) {
+        const previousAnnotationId = this.annotation ? this.annotation.aid : 0;
         this.annotation = annotation;
         this.annotationTitleDraft = annotation ? (annotation.title || '') : '';
+        if (annotation && annotation.aid > 0 && annotation.aid !== previousAnnotationId && !this.ownsCurrentAnnotation()) {
+            primaryMouseTool = "pan";
+            primaryMouseToolSelectedByUser = false;
+        }
 
         canvas.loadData(data);
         if (focus) canvas.focusData();
@@ -491,7 +500,8 @@ function interceptKeys(evt: KeyboardEvent) {
         };
         const buttonId = toolButtonByKey[key];
         const button = buttonId ? document.getElementById(buttonId) as HTMLButtonElement : null;
-        if (button && !button.disabled && (buttonId === "buttonSelect" || buttonId === "buttonPan" || isEditingEnabled)) {
+        const primaryToolAvailable = buttonId === "buttonPan" || (buttonId === "buttonSelect" && isSelectionEnabled);
+        if (button && !button.disabled && (primaryToolAvailable || isEditingEnabled)) {
             evt.preventDefault();
             button.click();
             return false;

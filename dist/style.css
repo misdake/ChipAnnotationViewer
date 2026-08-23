@@ -916,10 +916,10 @@ body {
 
 #canvas2d {
     position: absolute !important;
-    top: 0;
+    top: var(--editor-top);
     left: 0;
     width: 100% !important;
-    height: 100% !important;
+    height: calc(100% - var(--editor-top)) !important;
     background-color: #090d13;
     background-image: radial-gradient(circle, rgba(95, 111, 135, .17) 1px, transparent 1px);
     background-size: 20px 20px;
@@ -1879,7 +1879,11 @@ button.advanced-chip-row.selected {
     text-align: center;
 }
 
-#editControls {
+#editControls[hidden] {
+    display: none !important;
+}
+
+#editControls:not([hidden]) {
     display: contents;
 }
 
@@ -2213,6 +2217,11 @@ body.comments-panel-visible #toast {
 @media (max-width: 899.98px) {
     :root {
         --editor-top: 0px;
+    }
+
+    #toolRail,
+    #propertyPanel {
+        display: none !important;
     }
 
     #topBar {

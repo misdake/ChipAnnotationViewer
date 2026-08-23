@@ -28,6 +28,8 @@ export class TitleElement extends LitElement {
     @property({ type: Boolean })
     canCreate: boolean = false;
     @property({ type: Boolean })
+    creatingFromScratch: boolean = false;
+    @property({ type: Boolean })
     dirty: boolean = false;
     @property()
     getCreateAnnotationData: () => AnnotationData;
@@ -38,7 +40,7 @@ export class TitleElement extends LitElement {
     @property()
     canDiscardCurrentAnnotation: () => boolean;
     @property()
-    onAnnotationCreated: (annotation?: Annotation, data?: AnnotationData, usedScratchDocument?: boolean) => void;
+    onAnnotationCreated: (annotation?: Annotation, data?: AnnotationData) => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
 
@@ -178,7 +180,7 @@ export class TitleElement extends LitElement {
 
     private openCreateAnnotationModal() {
         if (!this.canCreate || !this.chipContent) return;
-        if (this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
+        if (!this.creatingFromScratch && this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
 
         this.createdAnnotationIdToSelect = 0;
         this.annotationDataToCreate = this.getCreateAnnotationData
@@ -241,8 +243,7 @@ export class TitleElement extends LitElement {
             this.toast("Created");
             if (this.onAnnotationCreated) {
                 const data = this.annotationDataToCreate || AnnotationData.dummy();
-                this.onAnnotationCreated(listed, data,
-                    (data.polylines || []).length + (data.texts || []).length > 0);
+                this.onAnnotationCreated(listed, data);
             }
             this.notifyAnnotationCreated(createdAid);
             this.annotationDataToCreate = null;

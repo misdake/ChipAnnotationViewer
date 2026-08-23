@@ -185,12 +185,11 @@ class App {
     private annotation: Annotation;
     private userId: number = 0;
     private userName: string = '';
-    private annotationBaselineSnapshot: string = '';
-    private annotationDirty: boolean = false;
+    private documentBaselineSnapshot: string = '';
+    private documentDirty: boolean = false;
     private annotationTitleDraft: string = '';
-    private allowNextAnnotationSelectionDiscard: boolean = false;
-    private scratchDocuments: Map<string, AnnotationData> = new Map();
-    private promotedAnnotationData: Map<number, { data: AnnotationData; consumeScratch: boolean }> = new Map();
+    private allowNextDocumentDiscard: boolean = false;
+    private promotedAnnotationData: Map<number, AnnotationData> = new Map();
 
     private hasLoadedCurrentChip(): boolean {
         return !!this.chipContent && (!this.chip || this.chip.name === this.chipContent.name);
@@ -209,17 +208,6 @@ class App {
         if (selected.type === SelectType.POLYLINE_CREATE || selected.type === SelectType.TEXT_CREATE) {
             Selection.deselect(selected.type);
         }
-    }
-
-    private captureScratchDocument() {
-        if (!this.isScratchDocument()) return;
-        this.cancelIncompleteCreation();
-        this.scratchDocuments.set(this.chipContent.name, canvas.save());
-    }
-
-    private getScratchDocument(): AnnotationData {
-        if (!this.chipContent) return AnnotationData.dummy();
-        return this.scratchDocuments.get(this.chipContent.name) || AnnotationData.dummy();
     }
 
     private getNewAnnotationData(): AnnotationData {
@@ -290,15 +278,15 @@ class App {
                 .onSelectChip=${(chip: Chip) => this.onSelectChip(chip)}
                 .onSelectChipContent=${(chipContent: ChipContent, sharedFocus?: SharedChipFocus) => this.onSelectChipContent(chipContent, sharedFocus)}
                 .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData, focus: boolean) => this.onSelectAnnotation(annotation, data, focus)}
-                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
-                .isCurrentAnnotationDirty=${() => this.hasAnnotationChanges()}
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentDocument()}
+                .isCurrentAnnotationDirty=${() => this.hasDocumentChanges()}
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
         editorLayoutMedia.addEventListener("change", () => this.refresh());
-        annotationHistory.subscribe(() => this.updateAnnotationDirtyState());
+        annotationHistory.subscribe(() => this.updateDocumentDirtyState());
         window.addEventListener("beforeunload", (event) => {
-            if (!this.annotationDirty) return;
+            if (!this.documentDirty) return;
             event.preventDefault();
             event.returnValue = "";
         });
@@ -400,24 +388,19 @@ class App {
                 .titleValue=${this.annotationTitleDraft}
                 .editMode="${editMode}"
                 .canCreate=${canCreate}
-                .dirty=${this.annotationDirty}
+                .creatingFromScratch=${this.isScratchDocument()}
+                .dirty=${this.documentDirty}
                 .getCreateAnnotationData=${() => this.getNewAnnotationData()}
                 .onAnnotationChanged=${(title: string) => this.onAnnotationTitleChanged(title)}
                 .onAnnotationSaved=${() => {
                     this.annotationTitleDraft = this.annotation ? (this.annotation.title || '') : '';
-                    this.markAnnotationClean();
+                    this.markDocumentClean();
                 }}
-                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
-                .onAnnotationCreated=${(created?: Annotation, data?: AnnotationData, usedScratchDocument?: boolean) => {
-                    this.allowNextAnnotationSelectionDiscard = true;
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentDocument()}
+                .onAnnotationCreated=${(created?: Annotation, data?: AnnotationData) => {
+                    this.allowNextDocumentDiscard = true;
                     if (created && created.aid > 0 && data) {
-                        this.promotedAnnotationData.set(created.aid, {
-                            data,
-                            consumeScratch: !!usedScratchDocument,
-                        });
-                        if (usedScratchDocument) {
-                            this.scratchDocuments.delete(created.chipName || this.chipContent?.name);
-                        }
+                        this.promotedAnnotationData.set(created.aid, data);
                     }
                 }}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
@@ -426,7 +409,7 @@ class App {
         const titleElement = document.querySelector("title-element") as HTMLElement & { updateComplete?: Promise<unknown> };
         if (titleElement && titleElement.updateComplete) titleElement.updateComplete.then(updateHistoryButtons);
         this.applyEditMode();
-        this.updateAnnotationDirtyState(false);
+        this.updateDocumentDirtyState(false);
     }
 
     private onUserChange(userId: number, userName: string) {
@@ -438,14 +421,13 @@ class App {
     }
 
     onSelectChip(chip: Chip) {
-        this.captureScratchDocument();
         this.chip = chip;
         this.chipContent = null;
         this.annotation = null;
         this.annotationTitleDraft = '';
         canvas.getElement().focus({preventScroll: true});
         annotationHistory.reset();
-        this.markAnnotationClean(false);
+        this.markDocumentClean(false);
         this.refresh();
         Selection.deselectAny();
         enterBaseEditors();
@@ -456,10 +438,10 @@ class App {
         this.annotationTitleDraft = '';
         this.refresh();
         canvas.loadChip(chipContent);
-        canvas.loadData(this.getScratchDocument());
+        canvas.loadData(AnnotationData.dummy());
         if (sharedFocus) canvas.focusAABB(sharedFocus.bounds, sharedFocus.padding);
         annotationHistory.reset();
-        this.markAnnotationClean(false);
+        this.markDocumentClean(false);
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
@@ -467,10 +449,9 @@ class App {
 
     onSelectAnnotation(annotation: Annotation, data: AnnotationData, focus: boolean = false) {
         const previousAnnotationId = this.annotation ? this.annotation.aid : 0;
-        const promoted = annotation && annotation.aid > 0
+        const promotedData = annotation && annotation.aid > 0
             ? this.promotedAnnotationData.get(annotation.aid)
             : null;
-        if (!previousAnnotationId && (!promoted || !promoted.consumeScratch)) this.captureScratchDocument();
         this.annotation = annotation;
         this.annotationTitleDraft = annotation ? (annotation.title || '') : '';
         if (annotation && annotation.aid > 0 && annotation.aid !== previousAnnotationId && !this.ownsCurrentAnnotation()) {
@@ -479,13 +460,10 @@ class App {
         }
 
         const dataToLoad = annotation && annotation.aid > 0
-            ? (promoted ? promoted.data : data)
-            : this.getScratchDocument();
-        if (promoted) {
+            ? (promotedData || data)
+            : AnnotationData.dummy();
+        if (promotedData) {
             this.promotedAnnotationData.delete(annotation.aid);
-            if (promoted.consumeScratch) {
-                this.scratchDocuments.delete(annotation.chipName || this.chipContent?.name);
-            }
         }
         canvas.loadData(dataToLoad);
         if (focus) canvas.focusData();
@@ -495,39 +473,39 @@ class App {
         enterBaseEditors();
         canvas.requestRender();
         this.refresh();
-        this.markAnnotationClean();
+        this.markDocumentClean();
     }
 
-    private confirmDiscardCurrentAnnotation(): boolean {
-        if (this.allowNextAnnotationSelectionDiscard) {
-            this.allowNextAnnotationSelectionDiscard = false;
+    private confirmDiscardCurrentDocument(): boolean {
+        if (this.allowNextDocumentDiscard) {
+            this.allowNextDocumentDiscard = false;
             return true;
         }
-        this.updateAnnotationDirtyState(false);
-        if (!this.annotationDirty) return true;
-        return window.confirm("Discard unsaved annotation changes?");
+        this.updateDocumentDirtyState(false);
+        if (!this.documentDirty) return true;
+        return window.confirm("Discard unsaved changes?");
     }
 
-    private markAnnotationClean(refresh: boolean = true) {
-        this.annotationBaselineSnapshot = this.createAnnotationSnapshot();
-        const changed = this.annotationDirty;
-        this.annotationDirty = false;
+    private markDocumentClean(refresh: boolean = true) {
+        this.documentBaselineSnapshot = this.createDocumentSnapshot();
+        const changed = this.documentDirty;
+        this.documentDirty = false;
         if (refresh && changed) this.refresh();
     }
 
-    private updateAnnotationDirtyState(refresh: boolean = true) {
-        const next = this.hasAnnotationChanges();
-        if (this.annotationDirty === next) return;
-        this.annotationDirty = next;
+    private updateDocumentDirtyState(refresh: boolean = true) {
+        const next = this.hasDocumentChanges();
+        if (this.documentDirty === next) return;
+        this.documentDirty = next;
         if (refresh) this.refresh();
     }
 
-    private hasAnnotationChanges(): boolean {
-        if (!this.ownsCurrentAnnotation() || !this.annotationBaselineSnapshot) return false;
-        return this.createAnnotationSnapshot() !== this.annotationBaselineSnapshot;
+    private hasDocumentChanges(): boolean {
+        if (!this.documentBaselineSnapshot) return false;
+        return this.createDocumentSnapshot() !== this.documentBaselineSnapshot;
     }
 
-    private createAnnotationSnapshot(): string {
+    private createDocumentSnapshot(): string {
         if (!this.annotation || !canvas) return "";
         return JSON.stringify({
             title: this.getCurrentAnnotationTitle(),
@@ -544,7 +522,7 @@ class App {
 
     private onAnnotationTitleChanged(title: string) {
         this.annotationTitleDraft = title;
-        this.updateAnnotationDirtyState();
+        this.updateDocumentDirtyState();
     }
 }
 

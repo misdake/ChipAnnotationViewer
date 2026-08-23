@@ -644,6 +644,13 @@ button.chipInfoCloseButton,
     color: #ef4444;
 }
 
+.createAnnotationDraftNotice {
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 #creationButtons {
     display: flex;
     gap: 6px;
@@ -916,10 +923,10 @@ body {
 
 #canvas2d {
     position: absolute !important;
-    top: 0;
+    top: var(--editor-top);
     left: 0;
     width: 100% !important;
-    height: 100% !important;
+    height: calc(100% - var(--editor-top)) !important;
     background-color: #090d13;
     background-image: radial-gradient(circle, rgba(95, 111, 135, .17) 1px, transparent 1px);
     background-size: 20px 20px;
@@ -1203,6 +1210,32 @@ body {
     gap: 2px;
     max-height: 60vh;
     overflow-y: auto;
+}
+
+.recentUpdatesStatus {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    gap: 7px;
+    color: var(--ink-muted);
+    font-size: 11px;
+}
+
+.recentUpdatesSpinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: recentUpdatesSpin .8s linear infinite;
+}
+
+.recentUpdatesError {
+    color: #f87171;
+}
+
+@keyframes recentUpdatesSpin {
+    to { transform: rotate(360deg); }
 }
 
 .recentUpdatesDay {
@@ -1691,6 +1724,9 @@ button.advanced-chip-row.selected {
 
 #annotationTitle .userMenuRow {
     height: 29px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
 
 #annotationTitle .userMenuToggle {
@@ -1750,6 +1786,7 @@ button.advanced-chip-row.selected {
 }
 
 #annotationTitle #userLogoutInline,
+#annotationTitle #shareViewButton,
 #annotationTitle #hintToggle {
     width: 100%;
     height: 30px;
@@ -1765,8 +1802,71 @@ button.advanced-chip-row.selected {
 }
 
 #annotationTitle #userLogoutInline:hover,
+#annotationTitle #shareViewButton:hover,
 #annotationTitle #hintToggle:hover {
     background: rgba(79, 140, 255, .14);
+}
+
+.shareConfig {
+    display: grid;
+    gap: 10px;
+    box-sizing: border-box;
+    width: min(380px, 100%);
+    max-width: 100%;
+}
+
+.shareFocusLabel {
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.shareConfig > #shareUrlInput {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    padding: 0 9px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--panel-3);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
+}
+
+.shareFocusOptions {
+    display: grid;
+    gap: 3px;
+}
+
+.shareFocusOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.shareFocusOption:hover {
+    background: rgba(79, 140, 255, .1);
+}
+
+.shareFocusOption.disabled {
+    cursor: default;
+    color: var(--muted);
+    opacity: .65;
+}
+
+.shareFocusOption.disabled:hover {
+    background: transparent;
+}
+
+.shareFocusOption input {
+    margin: 0;
 }
 
 #annotationTitle .userMenuLinks {
@@ -1818,7 +1918,11 @@ button.advanced-chip-row.selected {
     text-align: center;
 }
 
-#editControls {
+#editControls[hidden] {
+    display: none !important;
+}
+
+#editControls:not([hidden]) {
     display: contents;
 }
 
@@ -1916,6 +2020,14 @@ button.advanced-chip-row.selected {
 
 #panelSelected .toolButtonRow:first-child {
     margin-top: 5px;
+}
+
+.selectionFocusButton svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .panel-divider {
@@ -2152,6 +2264,11 @@ body.comments-panel-visible #toast {
 @media (max-width: 899.98px) {
     :root {
         --editor-top: 0px;
+    }
+
+    #toolRail,
+    #propertyPanel {
+        display: none !important;
     }
 
     #topBar {

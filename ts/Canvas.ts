@@ -11,6 +11,8 @@ import {LayerName} from "./layers/Layers";
 import {Editor, UsageType} from "./editors/Editor";
 import {EditorName} from "./editors/Editors";
 import {Env} from "./Env";
+import {AABB} from "./util/AABB";
+import {Drawable} from "./drawable/Drawable";
 
 export class Canvas {
     private readonly domElement: HTMLElement;
@@ -87,7 +89,7 @@ export class Canvas {
 
         this.canvasElement.onclick = event => {
             let e = convertMouseEvent(event);
-            this.canvasElement.focus();
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -110,6 +112,7 @@ export class Canvas {
         };
         this.canvasElement.onwheel = event => {
             let e = convertWheelEvent(event);
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -121,6 +124,7 @@ export class Canvas {
         };
         this.canvasElement.onmousedown = event => {
             let e = convertMouseEvent(event);
+            this.canvasElement.focus({preventScroll: true});
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -338,6 +342,29 @@ export class Canvas {
                 layer.loadData(this.env);
             }
         }
+    }
+    public focusData(padding: number = 48): boolean {
+        return this.focusDrawables([...(this.env.polylines || []), ...(this.env.texts || [])], padding);
+    }
+    public focusDrawables(drawables: Drawable[], padding: number = 48): boolean {
+        const included = new Set(drawables || []);
+        const bounds: AABB[] = [];
+        for (const polyline of this.env.polylines || []) {
+            if (included.has(polyline)) bounds.push(polyline.aabb());
+        }
+        for (const text of this.env.texts || []) {
+            if (included.has(text)) bounds.push(text.validateCanvasAABB(this.camera, this.renderer));
+        }
+        if (!bounds.length) return false;
+        return this.focusAABB(AABB.combineAll(bounds), padding);
+    }
+    public focusAABB(bounds: AABB, padding: number = 48): boolean {
+        const focused = this.camera.fitToAABB(bounds, padding);
+        if (focused) this.requestRender();
+        return focused;
+    }
+    public getVisibleAABB(): AABB {
+        return this.camera.getVisibleAABB();
     }
 
     public save(): AnnotationData {

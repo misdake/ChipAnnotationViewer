@@ -3,6 +3,7 @@ import {Chip, ChipContent} from "./data/Chip";
 import { ANNOTATION_DATA_VERSION, Annotation, AnnotationContent, AnnotationData } from './data/Annotation';
 import {html, render} from "lit-html";
 import "./elements/SelectElement";
+import type {SharedChipFocus} from "./elements/SelectElement";
 import "./elements/TitleElement";
 import "./editable/DrawablePolylineEditElement";
 import "./editable/DrawableTextEditElement";
@@ -16,6 +17,7 @@ import {Size} from "./util/Size";
 import {Drawable} from "./drawable/Drawable";
 import {EditablePick} from "./editable/Editable";
 import {EditorCameraControl} from "./editors/EditorCameraControl";
+import {EditorSelect} from "./editors/EditorSelect";
 import packageJson from "../package.json";
 import {packRgba} from "./util/Color";
 import {upgradeAnnotationData} from "./data/AnnotationDataUpgrade";
@@ -28,25 +30,33 @@ let url = new URL(url_string);
 let isReadOnly = !!url.searchParams.get("readonly");
 const editorLayoutMedia = window.matchMedia("(min-width: 900px)");
 let isEditingEnabled = false;
+let isScratchEditing = false;
+let isSelectionEnabled = false;
 type PrimaryMouseTool = "select" | "pan";
 let primaryMouseTool: PrimaryMouseTool = "select";
+let primaryMouseToolSelectedByUser = false;
 
 let canvas = new Canvas(document.getElementById("container"), 'canvas2d');
 canvas.init();
 
 canvas.addLayers(...Layers.create(canvas));
-canvas.addEditors(...(isReadOnly ? [new EditorCameraControl(canvas)] : Editors.create(canvas)));
+canvas.addEditors(...Editors.create(canvas));
 
 function enterBaseEditors() {
-    EditorCameraControl.allowLeftMousePan = !isEditingEnabled || primaryMouseTool === "pan";
+    const selectEditor = canvas.findEditor(EditorName.SELECT) as EditorSelect;
+    if (selectEditor) selectEditor.measurementOnly = !isEditingEnabled;
+    EditorCameraControl.allowLeftMousePan = !isSelectionEnabled || primaryMouseTool === "pan";
     canvas.getElement().style.cursor = primaryMouseTool === "pan" ? "grab" : "";
     canvas.enterEditors(
         EditorName.CAMERA_CONTROL,
-        ...(isEditingEnabled && primaryMouseTool === "select" ? [EditorName.SELECT] : []),
+        ...(isSelectionEnabled && primaryMouseTool === "select" ? [EditorName.SELECT] : []),
     );
+    restorePrimaryToolHighlight();
 }
 
 function enterEditingEditors(...editors: EditorName[]) {
+    const selectEditor = canvas.findEditor(EditorName.SELECT) as EditorSelect;
+    if (selectEditor) selectEditor.measurementOnly = false;
     primaryMouseTool = "select";
     EditorCameraControl.allowLeftMousePan = false;
     canvas.getElement().style.cursor = "";
@@ -75,13 +85,27 @@ function setActiveTool(buttonId: string) {
 
 function activatePrimaryMouseTool(tool: PrimaryMouseTool) {
     primaryMouseTool = tool;
+    primaryMouseToolSelectedByUser = true;
     Selection.deselectAny();
     enterBaseEditors();
-    setActiveTool(tool === "select" ? "buttonSelect" : "buttonPan");
 }
 
 function restorePrimaryToolHighlight() {
     setActiveTool(primaryMouseTool === "select" ? "buttonSelect" : "buttonPan");
+}
+
+function renderFocusSelectionButton(drawables: Drawable[]) {
+    return html`
+        <button class="iconButton selectionFocusButton" type="button" title="Focus selection" aria-label="Focus selection"
+            @click=${() => {
+                canvas.focusDrawables(drawables);
+                canvas.getElement().focus({preventScroll: true});
+            }}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/>
+                <rect x="8" y="8" width="8" height="8" rx="1"/>
+            </svg>
+        </button>`;
 }
 
 function prepareCreateTool(buttonId: string, selectionType: SelectType): boolean {
@@ -94,6 +118,7 @@ function prepareCreateTool(buttonId: string, selectionType: SelectType): boolean
 }
 
 document.getElementById("buttonSelect").onclick = () => {
+    if (!isSelectionEnabled) return;
     activatePrimaryMouseTool("select");
 };
 document.getElementById("buttonPan").onclick = () => {
@@ -160,10 +185,36 @@ class App {
     private annotation: Annotation;
     private userId: number = 0;
     private userName: string = '';
-    private annotationBaselineSnapshot: string = '';
-    private annotationDirty: boolean = false;
+    private documentBaselineSnapshot: string = '';
+    private documentDirty: boolean = false;
     private annotationTitleDraft: string = '';
-    private allowNextAnnotationSelectionDiscard: boolean = false;
+    private allowNextDocumentDiscard: boolean = false;
+    private promotedAnnotationData: Map<number, AnnotationData> = new Map();
+
+    private hasLoadedCurrentChip(): boolean {
+        return !!this.chipContent && (!this.chip || this.chip.name === this.chipContent.name);
+    }
+
+    private hasSelectedAnnotation(): boolean {
+        return !!this.annotation && this.annotation.aid > 0;
+    }
+
+    private isScratchDocument(): boolean {
+        return this.hasLoadedCurrentChip() && !this.hasSelectedAnnotation();
+    }
+
+    private cancelIncompleteCreation() {
+        const selected = Selection.getSelected();
+        if (selected.type === SelectType.POLYLINE_CREATE || selected.type === SelectType.TEXT_CREATE) {
+            Selection.deselect(selected.type);
+        }
+    }
+
+    private getNewAnnotationData(): AnnotationData {
+        if (!this.isScratchDocument()) return AnnotationData.dummy();
+        this.cancelIncompleteCreation();
+        return canvas.save();
+    }
 
     private ownsCurrentAnnotation(): boolean {
         return !isReadOnly && !!this.annotation && this.userId > 0
@@ -176,32 +227,66 @@ class App {
 
     private applyEditMode() {
         const editMode = this.getEditMode();
-        const editable = editMode !== 'none';
+        const annotationEditable = editMode !== 'none';
+        const scratch = editorLayoutMedia.matches && this.isScratchDocument();
+        const editorEnabled = annotationEditable || scratch;
+        const selectable = editorLayoutMedia.matches && this.hasLoadedCurrentChip()
+            && (scratch || this.hasSelectedAnnotation());
+        if (editorEnabled && !isEditingEnabled && !primaryMouseToolSelectedByUser) primaryMouseTool = "select";
         const toolRail = document.getElementById("toolRail");
-        if (toolRail) toolRail.hidden = !editable;
-        if (isEditingEnabled === editable) return;
-        isEditingEnabled = editable;
-        primaryMouseTool = editable ? "select" : "pan";
-        document.getElementById("editControls").hidden = !editable;
-        Selection.deselectAny();
+        if (toolRail) toolRail.hidden = !selectable;
+        const capabilityChanged = isEditingEnabled !== editorEnabled
+            || isScratchEditing !== scratch
+            || isSelectionEnabled !== selectable;
+        isEditingEnabled = editorEnabled;
+        isScratchEditing = scratch;
+        isSelectionEnabled = selectable;
+        document.getElementById("editControls").hidden = !isEditingEnabled;
+        const textButton = document.getElementById("buttonCreateText") as HTMLButtonElement;
+        if (textButton) {
+            textButton.title = scratch ? "Temporary text (5)" : "Text (5)";
+            textButton.setAttribute("aria-label", scratch ? "Temporary text" : "New text");
+        }
+        const selectButton = document.getElementById("buttonSelect") as HTMLButtonElement;
+        if (selectButton) {
+            selectButton.title = editorEnabled ? "Select and edit (1)" : "Select and measure (1)";
+            selectButton.setAttribute("aria-label", editorEnabled ? "Select and edit" : "Select and measure");
+        }
+        const polylineButton = document.getElementById("buttonCreatePolyline") as HTMLButtonElement;
+        if (polylineButton) {
+            polylineButton.title = scratch ? "Temporary polyline (3)" : "Polyline (3)";
+            polylineButton.setAttribute("aria-label", scratch ? "Temporary polyline" : "New polyline");
+        }
+        const rectButton = document.getElementById("buttonCreateRect") as HTMLButtonElement;
+        if (rectButton) {
+            rectButton.title = scratch ? "Temporary rectangle (4)" : "Rectangle (4)";
+            rectButton.setAttribute("aria-label", scratch ? "Temporary rectangle" : "New rectangle");
+        }
+        if (!capabilityChanged) {
+            restorePrimaryToolHighlight();
+            updateHistoryButtons();
+            return;
+        }
+        if (capabilityChanged) Selection.deselectAny();
         enterBaseEditors();
+        updateHistoryButtons();
     }
 
     public start() {
         render(html`
             <select-element 
                 .onSelectChip=${(chip: Chip) => this.onSelectChip(chip)}
-                .onSelectChipContent=${(chipContent: ChipContent) => this.onSelectChipContent(chipContent)}
-                .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData) => this.onSelectAnnotation(annotation, data)}
-                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
-                .isCurrentAnnotationDirty=${() => this.hasAnnotationChanges()}
+                .onSelectChipContent=${(chipContent: ChipContent, sharedFocus?: SharedChipFocus) => this.onSelectChipContent(chipContent, sharedFocus)}
+                .onSelectAnnotation=${(annotation: Annotation, data: AnnotationData, focus: boolean) => this.onSelectAnnotation(annotation, data, focus)}
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentDocument()}
+                .isCurrentAnnotationDirty=${() => this.hasDocumentChanges()}
             ></select-element>
         `, document.getElementById("selectPanel"));
         this.refresh();
         editorLayoutMedia.addEventListener("change", () => this.refresh());
-        annotationHistory.subscribe(() => this.updateAnnotationDirtyState());
+        annotationHistory.subscribe(() => this.updateDocumentDirtyState());
         window.addEventListener("beforeunload", (event) => {
-            if (!this.annotationDirty) return;
+            if (!this.documentDirty) return;
             event.preventDefault();
             event.returnValue = "";
         });
@@ -209,8 +294,12 @@ class App {
         const panelDivider = html`<div class="panel-divider"></div>`;
 
         Selection.register(SelectType.POLYLINE, (polyline) => {
-            render(html`${panelDivider}${polyline.ui.render(canvas, this.chipContent)}`, document.getElementById("panelSelected"));
-            enterEditingEditors(EditorName.POLYLINE_EDIT);
+            const focusAction = renderFocusSelectionButton([polyline]);
+            const panel = html`<polylineedit-element .polylines=${[polyline]} .canvas=${canvas} .chipContent=${this.chipContent}
+                .measurementOnly=${!isEditingEnabled} .extraActions=${focusAction}></polylineedit-element>`;
+            render(html`${panelDivider}${panel}`, document.getElementById("panelSelected"));
+            if (isEditingEnabled) enterEditingEditors(EditorName.POLYLINE_EDIT);
+            else enterBaseEditors();
             setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -230,8 +319,13 @@ class App {
         });
 
         Selection.register(SelectType.TEXT, (text) => {
-            render(html`${panelDivider}${text.renderUi(canvas)}`, document.getElementById("panelSelected"));
-            enterEditingEditors(EditorName.TEXT_EDIT);
+            const focusAction = renderFocusSelectionButton([text]);
+            const panel = isEditingEnabled
+                ? html`<textedit-element .texts=${[text]} .canvas=${canvas} .extraActions=${focusAction}></textedit-element>`
+                : html`<div class="toolButtonRow">${focusAction}</div>`;
+            render(html`${panelDivider}${panel}`, document.getElementById("panelSelected"));
+            if (isEditingEnabled) enterEditingEditors(EditorName.TEXT_EDIT);
+            else enterBaseEditors();
             setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -259,14 +353,18 @@ class App {
                 }
             }
             const polylinePanel = polylines.length > 0
-                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .showActions=${false} .showTransformActions=${false} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
+                ? html`<polylineedit-element .polylines=${polylines} .linkedDrawables=${items as (DrawablePolyline | DrawableText)[]} .showActions=${false} .showTransformActions=${false} .measurementOnly=${!isEditingEnabled} .canvas=${canvas} .chipContent=${this.chipContent}></polylineedit-element>`
                 : html``;
-            const textPanel = texts.length > 0
+            const textPanel = isEditingEnabled && texts.length > 0
                 ? html`<textedit-element .texts=${texts} .showActions=${false} .canvas=${canvas}></textedit-element>`
                 : html``;
-            const selectionActions = html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas}></multipleedit-element>`;
+            const focusAction = renderFocusSelectionButton(items as Drawable[]);
+            const selectionActions = isEditingEnabled
+                ? html`<multipleedit-element .drawables=${items as (DrawablePolyline | DrawableText)[]} .canvas=${canvas} .extraActions=${focusAction}></multipleedit-element>`
+                : html`<div class="toolButtonRow">${focusAction}</div>`;
             render(html`${panelDivider}${selectionActions}${polylinePanel}${textPanel}`, document.getElementById("panelSelected"));
-            enterEditingEditors(EditorName.MULTIPLE_EDIT);
+            if (isEditingEnabled) enterEditingEditors(EditorName.MULTIPLE_EDIT);
+            else enterBaseEditors();
             setActiveTool("buttonSelect");
         }, () => {
             render(html``, document.getElementById("panelSelected"));
@@ -290,15 +388,20 @@ class App {
                 .titleValue=${this.annotationTitleDraft}
                 .editMode="${editMode}"
                 .canCreate=${canCreate}
-                .dirty=${this.annotationDirty}
+                .creatingFromScratch=${this.isScratchDocument()}
+                .dirty=${this.documentDirty}
+                .getCreateAnnotationData=${() => this.getNewAnnotationData()}
                 .onAnnotationChanged=${(title: string) => this.onAnnotationTitleChanged(title)}
                 .onAnnotationSaved=${() => {
                     this.annotationTitleDraft = this.annotation ? (this.annotation.title || '') : '';
-                    this.markAnnotationClean();
+                    this.markDocumentClean();
                 }}
-                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentAnnotation()}
-                .onAnnotationCreated=${() => {
-                    this.allowNextAnnotationSelectionDiscard = true;
+                .canDiscardCurrentAnnotation=${() => this.confirmDiscardCurrentDocument()}
+                .onAnnotationCreated=${(created?: Annotation, data?: AnnotationData) => {
+                    this.allowNextDocumentDiscard = true;
+                    if (created && created.aid > 0 && data) {
+                        this.promotedAnnotationData.set(created.aid, data);
+                    }
                 }}
                 .onUserChange=${(userId: number, userName: string) => this.onUserChange(userId, userName)}
             ></title-element>
@@ -306,7 +409,7 @@ class App {
         const titleElement = document.querySelector("title-element") as HTMLElement & { updateComplete?: Promise<unknown> };
         if (titleElement && titleElement.updateComplete) titleElement.updateComplete.then(updateHistoryButtons);
         this.applyEditMode();
-        this.updateAnnotationDirtyState(false);
+        this.updateDocumentDirtyState(false);
     }
 
     private onUserChange(userId: number, userName: string) {
@@ -319,70 +422,90 @@ class App {
 
     onSelectChip(chip: Chip) {
         this.chip = chip;
+        this.chipContent = null;
+        this.annotation = null;
         this.annotationTitleDraft = '';
+        canvas.getElement().focus({preventScroll: true});
         annotationHistory.reset();
-        this.markAnnotationClean(false);
+        this.markDocumentClean(false);
         this.refresh();
         Selection.deselectAny();
         enterBaseEditors();
     }
 
-    onSelectChipContent(chipContent: ChipContent) {
+    onSelectChipContent(chipContent: ChipContent, sharedFocus?: SharedChipFocus) {
         this.chipContent = chipContent;
         this.annotationTitleDraft = '';
         this.refresh();
         canvas.loadChip(chipContent);
+        canvas.loadData(AnnotationData.dummy());
+        if (sharedFocus) canvas.focusAABB(sharedFocus.bounds, sharedFocus.padding);
         annotationHistory.reset();
-        this.markAnnotationClean(false);
+        this.markDocumentClean(false);
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
     }
 
-    onSelectAnnotation(annotation: Annotation, data: AnnotationData) {
+    onSelectAnnotation(annotation: Annotation, data: AnnotationData, focus: boolean = false) {
+        const previousAnnotationId = this.annotation ? this.annotation.aid : 0;
+        const promotedData = annotation && annotation.aid > 0
+            ? this.promotedAnnotationData.get(annotation.aid)
+            : null;
         this.annotation = annotation;
         this.annotationTitleDraft = annotation ? (annotation.title || '') : '';
+        if (annotation && annotation.aid > 0 && annotation.aid !== previousAnnotationId && !this.ownsCurrentAnnotation()) {
+            primaryMouseTool = "pan";
+            primaryMouseToolSelectedByUser = false;
+        }
 
-        canvas.loadData(data);
+        const dataToLoad = annotation && annotation.aid > 0
+            ? (promotedData || data)
+            : AnnotationData.dummy();
+        if (promotedData) {
+            this.promotedAnnotationData.delete(annotation.aid);
+        }
+        canvas.loadData(dataToLoad);
+        if (focus) canvas.focusData();
         annotationHistory.reset();
 
         Selection.deselectAny();
         enterBaseEditors();
         canvas.requestRender();
         this.refresh();
-        this.markAnnotationClean();
+        this.markDocumentClean();
     }
 
-    private confirmDiscardCurrentAnnotation(): boolean {
-        if (this.allowNextAnnotationSelectionDiscard) {
-            this.allowNextAnnotationSelectionDiscard = false;
+    private confirmDiscardCurrentDocument(): boolean {
+        if (this.allowNextDocumentDiscard) {
+            this.allowNextDocumentDiscard = false;
             return true;
         }
-        this.updateAnnotationDirtyState(false);
-        if (!this.annotationDirty) return true;
-        return window.confirm("Discard unsaved annotation changes?");
+        this.updateDocumentDirtyState(false);
+        if (!this.documentDirty) return true;
+        return window.confirm("Discard unsaved changes?");
     }
 
-    private markAnnotationClean(refresh: boolean = true) {
-        this.annotationBaselineSnapshot = this.createAnnotationSnapshot();
-        const changed = this.annotationDirty;
-        this.annotationDirty = false;
+    private markDocumentClean(refresh: boolean = true) {
+        this.documentBaselineSnapshot = this.createDocumentSnapshot();
+        const changed = this.documentDirty;
+        this.documentDirty = false;
         if (refresh && changed) this.refresh();
     }
 
-    private updateAnnotationDirtyState(refresh: boolean = true) {
-        const next = this.hasAnnotationChanges();
-        if (this.annotationDirty === next) return;
-        this.annotationDirty = next;
+    private updateDocumentDirtyState(refresh: boolean = true) {
+        const next = this.hasDocumentChanges();
+        if (this.documentDirty === next) return;
+        this.documentDirty = next;
         if (refresh) this.refresh();
     }
 
-    private hasAnnotationChanges(): boolean {
-        if (!this.ownsCurrentAnnotation() || !this.annotationBaselineSnapshot) return false;
-        return this.createAnnotationSnapshot() !== this.annotationBaselineSnapshot;
+    private hasDocumentChanges(): boolean {
+        if (!this.documentBaselineSnapshot) return false;
+        return this.createDocumentSnapshot() !== this.documentBaselineSnapshot;
     }
 
-    private createAnnotationSnapshot(): string {
+    private createDocumentSnapshot(): string {
         if (!this.annotation || !canvas) return "";
         return JSON.stringify({
             title: this.getCurrentAnnotationTitle(),
@@ -399,7 +522,7 @@ class App {
 
     private onAnnotationTitleChanged(title: string) {
         this.annotationTitleDraft = title;
-        this.updateAnnotationDirtyState();
+        this.updateDocumentDirtyState();
     }
 }
 
@@ -449,9 +572,10 @@ function interceptKeys(evt: KeyboardEvent) {
 
     // Save remains available while editing the annotation title.
     if (ctrlDown && evt.key.toLowerCase() === 's') {
-        if (!isEditingEnabled) return true;
+        const saveButton = document.getElementById("buttonSaveAnnotation") as HTMLButtonElement;
+        if (!saveButton) return true;
         evt.preventDefault();
-        (document.getElementById("buttonSaveAnnotation") as HTMLButtonElement)?.click();
+        saveButton.click();
         return false;
     }
 
@@ -470,7 +594,8 @@ function interceptKeys(evt: KeyboardEvent) {
         };
         const buttonId = toolButtonByKey[key];
         const button = buttonId ? document.getElementById(buttonId) as HTMLButtonElement : null;
-        if (button && !button.disabled && (buttonId === "buttonSelect" || buttonId === "buttonPan" || isEditingEnabled)) {
+        const primaryToolAvailable = buttonId === "buttonPan" || (buttonId === "buttonSelect" && isSelectionEnabled);
+        if (button && !button.disabled && (primaryToolAvailable || isEditingEnabled)) {
             evt.preventDefault();
             button.click();
             return false;
@@ -480,11 +605,13 @@ function interceptKeys(evt: KeyboardEvent) {
     // Check for undo/redo
     if (ctrlDown && evt.key.toLowerCase() === 'z' && !evt.shiftKey) {
         if (!isEditingEnabled) return true;
+        evt.preventDefault();
         annotationHistory.undo(canvas);
         return false;
     }
     else if ((ctrlDown && evt.key.toLowerCase() === 'z' && evt.shiftKey) || (ctrlDown && evt.key.toLowerCase() === 'y')) {
         if (!isEditingEnabled) return true;
+        evt.preventDefault();
         annotationHistory.redo(canvas);
         return false;
     }

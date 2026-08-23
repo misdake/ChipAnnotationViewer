@@ -8,6 +8,21 @@ import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
 import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
+import { AABB } from '../util/AABB';
+
+export interface SharedChipFocus {
+    bounds: AABB;
+    padding: number;
+}
+
+type HistoryWrite = 'push' | 'replace' | 'none';
+
+interface ViewerHistoryState {
+    chipAnnotationViewer: true;
+    index: number;
+    chip: string;
+    annotation: number;
+}
 
 const commentIcon = html`
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -78,7 +93,7 @@ export class SelectElement extends LitElement {
     chip_content_current: ChipContent;
 
     @property()
-    onSelectChipContent: (chipContent: ChipContent) => void;
+    onSelectChipContent: (chipContent: ChipContent, sharedFocus?: SharedChipFocus) => void;
 
     // chip selection box
 
@@ -92,7 +107,7 @@ export class SelectElement extends LitElement {
     annotationlist_array: Annotation[];
 
     @property()
-    onSelectAnnotation: (annotation: Annotation, data: AnnotationData) => void;
+    onSelectAnnotation: (annotation: Annotation, data: AnnotationData, focus: boolean) => void;
     @property()
     canDiscardCurrentAnnotation: () => boolean;
     @property()
@@ -112,6 +127,10 @@ export class SelectElement extends LitElement {
     annotation_content_current: AnnotationContent;
     private annotationContentCache: Map<number, AnnotationData> = new Map();
     private annotationSelectionVersion = 0;
+    private focusAnnotationId = 0;
+    private sharedFocusToLoad: SharedChipFocus = null;
+    private sharedFocusChipName = '';
+    private recentUpdatesCache: RecentUpdateDay[] = null;
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
@@ -135,22 +154,149 @@ export class SelectElement extends LitElement {
     private advancedSortDirection: 'asc' | 'desc' = 'asc';
     @property()
     private advancedSelectedChip: Chip = null;
+    private historyIndex = 0;
+    private restoringHistory = false;
 
     private static getDummyAnnotation: () => Annotation = () => ({ aid: 0, chipName: '', title: '', createTime: 0, updateTime: 0, userName: '', userId: 0 });
 
     // annotation selection box
 
-    private replaceUrl() {
-        let url = window.location.pathname + '?chip=' + encodeURIComponent(this.chip_current.name);
-        if (this.annotation_current && this.annotation_current.aid > 0) url += '&annotation=' + this.annotation_current.aid;
-        history.replaceState(null, '', url);
+    private static isViewerHistoryState(value: unknown): value is ViewerHistoryState {
+        const state = value as ViewerHistoryState;
+        return !!state && state.chipAnnotationViewer === true && Number.isInteger(state.index);
     }
+
+    private targetUrl(chipName: string, annotationId: number): string {
+        let url = `${window.location.pathname}?chip=${encodeURIComponent(chipName || 'Fiji')}`;
+        if (annotationId > 0) url += `&annotation=${annotationId}`;
+        return url;
+    }
+
+    private writeUrl(chipName: string, annotationId: number, write: HistoryWrite) {
+        if (write === 'none') return;
+        const index = write === 'push' ? this.historyIndex + 1 : this.historyIndex;
+        const state: ViewerHistoryState = {
+            chipAnnotationViewer: true,
+            index,
+            chip: chipName || 'Fiji',
+            annotation: annotationId > 0 ? annotationId : 0,
+        };
+        if (write === 'push') history.pushState(state, '', this.targetUrl(state.chip, state.annotation));
+        else history.replaceState(state, '', this.targetUrl(state.chip, state.annotation));
+        this.historyIndex = index;
+    }
+
+    private currentTarget(): { chip: string; annotation: number } {
+        return {
+            chip: this.chip_current ? this.chip_current.name : (this.chip_name_toload || 'Fiji'),
+            annotation: this.annotation_current && this.annotation_current.aid > 0 ? this.annotation_current.aid : 0,
+        };
+    }
+
+    private navigateFromUser(chipName: string, annotationId: number): boolean {
+        if (!chipName) return false;
+        const annotation = annotationId > 0 ? annotationId : 0;
+        const current = this.currentTarget();
+        if (current.chip === chipName && current.annotation === annotation) {
+            this.chipPickerOpen = false;
+            return true;
+        }
+        if (!this.canDiscardCurrent()) return false;
+        this.navigateToTarget(chipName, annotation, 'push');
+        return true;
+    }
+
+    private navigateToTarget(chipName: string, annotationId: number, write: HistoryWrite) {
+        const chip = chipName || 'Fiji';
+        const annotation = annotationId > 0 ? annotationId : 0;
+        this.writeUrl(chip, annotation, write);
+        this.chip_name_toload = chip;
+        this.annotation_id_toload = annotation;
+
+        if (this.chip_current && this.chip_current.name === chip) {
+            if (!this.chip_content_current) return;
+            if (annotation === 0) {
+                this.selectNoAnnotation();
+                return;
+            }
+            const target = (this.annotationlist_array || []).find(item => item && item.aid === annotation);
+            if (target) {
+                this.selectedAnnotation(target);
+            } else {
+                this.selectedAnnotation(SelectElement.getDummyAnnotation());
+                this.annotation_id_toload = annotation;
+                this.refreshAnnotationList(true);
+            }
+            return;
+        }
+
+        const targetChip = (this.chiplist_array || []).find(item => item && item.name === chip);
+        if (targetChip) this.selectedChip(targetChip);
+        else this.refreshChipList();
+    }
+
+    private initializeHistory(chipName: string, annotationId: number) {
+        const state = history.state;
+        this.historyIndex = SelectElement.isViewerHistoryState(state) ? state.index : 0;
+        history.replaceState({
+            chipAnnotationViewer: true,
+            index: this.historyIndex,
+            chip: chipName,
+            annotation: annotationId > 0 ? annotationId : 0,
+        } as ViewerHistoryState, '', window.location.href);
+        window.addEventListener('popstate', this.onPopState);
+    }
+
+    private readonly onPopState = (event: PopStateEvent) => {
+        const state = event.state;
+        if (this.restoringHistory) {
+            this.restoringHistory = false;
+            if (SelectElement.isViewerHistoryState(state)) this.historyIndex = state.index;
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        const chip = getUrlParam(url, 'Fiji', 'chip', 'map');
+        const annotation = parseInt(getUrlParam(url, '0', 'annotation'), 10) || 0;
+        const nextIndex = SelectElement.isViewerHistoryState(state) ? state.index : this.historyIndex;
+        const previousIndex = this.historyIndex;
+        if (!this.canDiscardCurrent()) {
+            const delta = previousIndex - nextIndex;
+            if (delta) {
+                this.restoringHistory = true;
+                history.go(delta);
+            }
+            return;
+        }
+
+        this.historyIndex = nextIndex;
+        this.navigateToTarget(chip, annotation, 'none');
+    };
 
     protected firstUpdated(): void {
         let url_string = window.location.href;
         let url = new URL(url_string);
         this.chip_name_toload = getUrlParam(url, 'Fiji', 'chip', 'map');
         this.annotation_id_toload = parseInt(getUrlParam(url, '0', 'annotation'), 10);
+        const focusMode = url.searchParams.get('focus');
+        if (focusMode === 'annotation' && this.annotation_id_toload > 0) {
+            this.focusAnnotationId = this.annotation_id_toload;
+        } else if ((focusMode === 'selection' && this.annotation_id_toload > 0) || focusMode === 'view') {
+            const values = (url.searchParams.get('bounds') || '').split(',').map(Number);
+            if (values.length === 4 && values.every(Number.isFinite) && values[2] >= values[0] && values[3] >= values[1]) {
+                this.sharedFocusToLoad = {
+                    bounds: new AABB(values[0], values[1], values[2], values[3]),
+                    padding: focusMode === 'selection' ? 48 : 0,
+                };
+                this.sharedFocusChipName = this.chip_name_toload;
+            }
+        }
+        if (url.searchParams.has('focus') || url.searchParams.has('bounds')) {
+            url.searchParams.delete('focus');
+            url.searchParams.delete('bounds');
+            history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+        }
+        this.initializeHistory(this.chip_name_toload, this.annotation_id_toload);
 
         //legacy urls use commentId (GitHub issue comment id); resolve it to an annotation id
         //before loading, then the normal selection flow rewrites the url to the new params
@@ -160,8 +306,10 @@ export class SelectElement extends LitElement {
                 if (annotation && annotation.aid > 0) {
                     this.annotation_id_toload = annotation.aid;
                     this.chip_name_toload = annotation.chipName || this.chip_name_toload;
+                    this.writeUrl(this.chip_name_toload, this.annotation_id_toload, 'replace');
                 } else {
                     notifyToast('The linked annotation no longer exists', 'warning');
+                    this.writeUrl(this.chip_name_toload, 0, 'replace');
                 }
                 this.refreshChipList();
             }).catch(error => {
@@ -171,6 +319,8 @@ export class SelectElement extends LitElement {
                 } else {
                     SelectElement.warnNetwork('Could not resolve the linked annotation', error);
                 }
+                this.annotation_id_toload = 0;
+                this.writeUrl(this.chip_name_toload, 0, 'replace');
                 this.refreshChipList();
             });
         } else {
@@ -183,14 +333,14 @@ export class SelectElement extends LitElement {
         window.addEventListener('chipannotation-annotation-created', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
             if (!this.chip_content_current || !custom.detail) return;
-            this.annotation_id_toload = custom.detail;
-            this.refreshAnnotationList();
+            this.navigateFromUser(this.chip_content_current.name, custom.detail);
         });
         window.addEventListener('chipannotation-annotation-deleted', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
             if (!this.chip_content_current || !custom.detail) return;
             this.annotation_id_toload = 0;
-            this.refreshAnnotationList();
+            this.writeUrl(this.chip_content_current.name, 0, 'replace');
+            this.refreshAnnotationList(true);
         });
         window.addEventListener('chipannotation-annotation-updated', (ev: Event) => {
             const custom = ev as CustomEvent<number>;
@@ -229,7 +379,7 @@ export class SelectElement extends LitElement {
         rows.push(row("Name", chip.name || ""));
         rows.push(row("Type", `${chip.vendor || ''} / ${chip.type || ''} / ${chip.family || ''}`));
         rows.push(row("Size (px)", `${chip.width} x ${chip.height}`));
-        if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm2, ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
+        if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm², ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
         if (specUrl) rows.push(row("Spec", link(specUrl, specUrl)));
         if (hasAuthor) rows.push(row("Credit", authorUrl ? link(authorName, authorUrl) : authorName, "chipInfoCreditRow"));
         rows.push(row("Source", sourceText ? link(sourceText, sourceText) : ""));
@@ -257,6 +407,16 @@ export class SelectElement extends LitElement {
     private refreshChipList() {
         SelectElement.fetchChipList().then(chips => {
             let { html, array, current } = SelectElement.showChipList(chips, this.chip_name_toload);
+            if (!current) {
+                const availableChips = chips || [];
+                current = availableChips.find(chip => chip.name === 'Fiji') || availableChips[0] || null;
+                if (current) {
+                    this.chip_name_toload = current.name;
+                    this.annotation_id_toload = 0;
+                    this.writeUrl(current.name, 0, 'replace');
+                    ({html, array} = SelectElement.showChipList(chips, current.name));
+                }
+            }
             this.chip_current = current;
             this.chiplist_html = html;
             this.chiplist_array = array;
@@ -332,19 +492,18 @@ export class SelectElement extends LitElement {
     //select chip
 
     private uiSelectedChip(index: number) {
-        if (!this.canDiscardCurrent()) {
-            this.restoreChipSelect();
-            return;
-        }
         let chip = this.chiplist_array[index];
-        if (chip) {
-            this.selectedChip(chip);
-        }
+        if (!chip || !this.navigateFromUser(chip.name, 0)) this.restoreChipSelect();
     }
     private selectedChip(chip: Chip) {
         const selectionVersion = ++this.chipSelectionVersion;
+        if (this.sharedFocusToLoad && chip && chip.name !== this.sharedFocusChipName) {
+            this.sharedFocusToLoad = null;
+            this.sharedFocusChipName = '';
+        }
         this.chip_name_toload = chip ? chip.name : '';
         this.chip_current = chip;
+        this.chip_content_current = null;
         this.chipQuery = chip ? (chip.listname || chip.name) : '';
         this.chipFilter = this.chipQuery;
         this.chipPickerOpen = false;
@@ -356,7 +515,6 @@ export class SelectElement extends LitElement {
         this.annotationlist_array = [];
         this.annotation_current = null;
         this.annotationCommentTargetId = 0;
-        this.replaceUrl();
 
         if (chip) {
             this.loadChipCommentCount(chip.name, selectionVersion);
@@ -366,11 +524,15 @@ export class SelectElement extends LitElement {
             SelectElement.fetchChipDetail(chip).then(chipDetail => {
                 if (selectionVersion !== this.chipSelectionVersion) return;
                 this.chip_content_current = chipDetail;
-                if (this.onSelectChipContent) this.onSelectChipContent(chipDetail);
+                const sharedFocus = chip.name === this.sharedFocusChipName ? this.sharedFocusToLoad : null;
+                if (sharedFocus) {
+                    this.sharedFocusToLoad = null;
+                    this.sharedFocusChipName = '';
+                }
+                if (this.onSelectChipContent) this.onSelectChipContent(chipDetail, sharedFocus);
                 let save = this.annotation_id_toload;
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
                 this.annotation_id_toload = save;
-                this.replaceUrl();
                 this.applyAnnotationList(chipDetail, annotationsPromise);
             }).catch(error => {
                 SelectElement.warnNetwork(`Could not load chip data for ${chip.name}`, error);
@@ -392,9 +554,9 @@ export class SelectElement extends LitElement {
     }
 
     private confirmAdvancedChip() {
-        if (!this.advancedSelectedChip || !this.canDiscardCurrent()) return;
-        this.selectedChip(this.advancedSelectedChip);
-        this.closeAdvancedBrowser();
+        if (this.advancedSelectedChip && this.navigateFromUser(this.advancedSelectedChip.name, 0)) {
+            this.closeAdvancedBrowser();
+        }
     }
 
     private toggleAdvancedSort(sort: 'name' | 'classification') {
@@ -431,12 +593,17 @@ export class SelectElement extends LitElement {
         this.advancedSelectedChip = null;
     }
 
-    protected updated(): void {
+    protected updated(changedProperties: Map<PropertyKey, unknown>): void {
         const root = document.getElementById('advancedChipModalRoot');
         if (root) renderTemplate(this.renderAdvancedBrowser(), root);
+        if (this.chipPickerOpen && !this.chipFilter.trim()
+            && (changedProperties.has('chipPickerOpen') || changedProperties.has('chipFilter'))) {
+            this.scrollCurrentQuickChipIntoView();
+        }
     }
 
     disconnectedCallback(): void {
+        window.removeEventListener('popstate', this.onPopState);
         commentsPanel.setCountRefreshHandler(null);
         commentsPanel.setStateChangeHandler(null);
         commentsPanel.clearTarget();
@@ -444,8 +611,8 @@ export class SelectElement extends LitElement {
         if (root) renderTemplate(html``, root);
         super.disconnectedCallback();
     }
-    private refreshAnnotationList() {
-        if (!this.canDiscardCurrent()) return;
+    private refreshAnnotationList(skipDiscard: boolean = false) {
+        if (!skipDiscard && !this.canDiscardCurrent()) return;
         if (!this.chip_content_current) return;
         this.applyAnnotationList(this.chip_content_current, ClientApi.listAnnotationByChip(this.chip_content_current.name));
     }
@@ -464,7 +631,8 @@ export class SelectElement extends LitElement {
                     console.warn('Could not parse annotation content', annotation.aid, error);
                 }
             }
-            let { html, array, current } = SelectElement.showAnnotationList(annotations, this.annotation_id_toload);
+            const requestedAnnotationId = this.annotation_id_toload;
+            let { html, array, current } = SelectElement.showAnnotationList(annotations, requestedAnnotationId);
             this.annotation_current = current;
             this.annotationlist_html = html;
             this.annotationlist_array = array;
@@ -472,7 +640,12 @@ export class SelectElement extends LitElement {
             if (current) {
                 this.selectedAnnotation(current);
             } else {
+                this.focusAnnotationId = 0;
                 this.selectedAnnotation(SelectElement.getDummyAnnotation());
+                if (requestedAnnotationId > 0) {
+                    notifyToast('The linked annotation no longer exists', 'warning');
+                    this.writeUrl(chipContent.name, 0, 'replace');
+                }
             }
         }).catch(error => {
             if (this.chip_content_current !== chipContent) return;
@@ -483,21 +656,18 @@ export class SelectElement extends LitElement {
     //select annotation
 
     private uiSelectedAnnotation(index: number) {
-        if (!this.canDiscardCurrent()) {
-            this.restoreAnnotationSelect();
-            return;
-        }
         let annotation = this.annotationlist_array[index];
-        if (!annotation) {
+        if (!annotation || !this.navigateFromUser(this.chip_current?.name, annotation.aid)) {
             this.restoreAnnotationSelect();
-            return;
         }
-        this.selectedAnnotation(annotation);
     }
 
     private clearAnnotationSelection() {
         if (!this.annotation_current || this.annotation_current.aid <= 0) return;
-        if (!this.canDiscardCurrent()) return;
+        if (!this.navigateFromUser(this.chip_current?.name, 0)) return;
+    }
+
+    private selectNoAnnotation() {
         const annotations = (this.annotationlist_array || []).filter((item): item is Annotation => !!item);
         const { html, array } = SelectElement.showAnnotationList(annotations, 0);
         this.annotationlist_html = html;
@@ -521,14 +691,15 @@ export class SelectElement extends LitElement {
         this.annotationCommentCount = null;
         commentsPanel.followAnnotation(this.chip_current ? this.chip_current.name : '', annotation ? annotation.aid : 0, 0, annotation ? annotation.title : '');
         if (annotation.aid > 0) {
-            let data = this.annotationContentCache.get(annotation.aid) || AnnotationData.dummy();
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+            const cachedData = this.annotationContentCache.get(annotation.aid);
+            let data = cachedData || AnnotationData.dummy();
+            const focus = !!cachedData && this.focusAnnotationId === annotation.aid;
+            if (focus) this.focusAnnotationId = 0;
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data, focus);
             this.loadAnnotationCommentCount(annotation, selectionVersion);
-            this.replaceUrl();
             this.revalidateAnnotationContent(annotation, selectionVersion);
         } else {
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy());
-            this.replaceUrl();
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, AnnotationData.dummy(), false);
         }
     }
 
@@ -549,7 +720,9 @@ export class SelectElement extends LitElement {
             annotation.content = content.content;
             annotation.version = content.version;
             this.annotationContentCache.set(annotation.aid, data);
-            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data);
+            const focus = this.focusAnnotationId === annotation.aid;
+            if (focus) this.focusAnnotationId = 0;
+            if (this.onSelectAnnotation) this.onSelectAnnotation(annotation, data, focus);
         }).catch(error => {
             console.warn('Could not revalidate annotation content', annotation.aid, error);
         });
@@ -582,18 +755,33 @@ export class SelectElement extends LitElement {
     }
 
     private openRecentUpdates() {
-        ClientApi.listRecentUpdates().then(days => {
-            AppModal.open({
-                title: 'Recent updates',
-                ariaLabel: 'Recent updates',
-                primaryText: 'Close',
-                showCancel: false,
-                body: this.renderRecentUpdates(days),
-                onSubmit: () => true,
-            });
-        }).catch(error => {
-            SelectElement.warnNetwork('Could not load recent updates', error);
+        const handle = AppModal.open({
+            title: 'Recent updates',
+            ariaLabel: 'Recent updates',
+            primaryText: 'Close',
+            showCancel: false,
+            body: this.renderRecentUpdatesState(this.recentUpdatesCache, true),
+            onSubmit: () => true,
         });
+        ClientApi.listRecentUpdates().then(days => {
+            this.recentUpdatesCache = days || [];
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false));
+        }).catch(error => {
+            console.warn('Could not load recent updates', error);
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false, 'Could not refresh recent updates.'));
+        });
+    }
+
+    private renderRecentUpdatesState(days: RecentUpdateDay[], loading: boolean, error: string = ''): TemplateResult {
+        return html`
+            <div class="recentUpdatesStatus" aria-live="polite">
+                ${loading ? html`<span class="recentUpdatesSpinner" aria-hidden="true"></span><span>Refreshing...</span>` : html``}
+                ${error ? html`<span class="recentUpdatesError">${error}</span>` : html``}
+            </div>
+            ${days
+                ? this.renderRecentUpdates(days)
+                : html`<div class="recentUpdatesEmpty">${error ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
+        `;
     }
 
     private mountRecentUpdatesFab() {
@@ -637,17 +825,7 @@ export class SelectElement extends LitElement {
     }
 
     private openFromRecent(chipName: string, aid: number) {
-        if (!this.canDiscardCurrent()) return;
-        if (this.chip_current && this.chip_current.name === chipName) {
-            if (aid > 0) {
-                this.annotation_id_toload = aid;
-                this.refreshAnnotationList();
-            }
-            return;
-        }
-        this.chip_name_toload = chipName;
-        this.annotation_id_toload = aid;
-        this.refreshChipList();
+        this.navigateFromUser(chipName, aid);
     }
 
     private loadChipCommentCount(chipName: string, selectionVersion: number) {
@@ -759,6 +937,16 @@ export class SelectElement extends LitElement {
         this.chipFilter = value.slice(0, start) + value.slice(end);
     }
 
+    private scrollCurrentQuickChipIntoView() {
+        const list = this.querySelector('.chip-quick-list') as HTMLElement | null;
+        if (!list) return;
+        const current = list.querySelector('.chip-quick-item[data-current="true"]') as HTMLElement | null;
+        if (!current) return;
+        const listRect = list.getBoundingClientRect();
+        const currentRect = current.getBoundingClientRect();
+        list.scrollTop += currentRect.top - listRect.top - (list.clientHeight - currentRect.height) / 2;
+    }
+
     private onChipSearchFocus(ev: FocusEvent) {
         this.chipPickerOpen = true;
         const input = ev.target as HTMLInputElement;
@@ -799,7 +987,7 @@ export class SelectElement extends LitElement {
                                 @select=${(ev: Event) => this.syncChipFilter(ev.target as HTMLInputElement)}
                                 @keydown=${(ev: KeyboardEvent) => {
                                     if (ev.key === 'Escape') this.chipPickerOpen = false;
-                                    if (ev.key === 'Enter' && quickChips.length === 1) this.selectedChip(quickChips[0]);
+                                    if (ev.key === 'Enter' && quickChips.length === 1) this.navigateFromUser(quickChips[0].name, 0);
                                 }}>
                             ${this.chipQuery ? html`
                                 <button type="button" class="chip-search-clear" title="Clear chip search" aria-label="Clear chip search"
@@ -810,7 +998,8 @@ export class SelectElement extends LitElement {
                             ${this.chipPickerOpen ? html`
                                 <div class="chip-quick-list" @mousedown=${(ev: Event) => ev.preventDefault()}>
                                     ${quickChips.length ? quickChips.map(item => html`
-                                        <button type="button" class="chip-quick-item" @click=${() => this.canDiscardCurrent() && this.selectedChip(item)}>
+                                        <button type="button" class="chip-quick-item" data-current=${item.name === this.chip_current?.name ? 'true' : 'false'}
+                                            @click=${() => this.navigateFromUser(item.name, 0)}>
                                             <strong>${item.listname || item.name}</strong>
                                             <span>${[item.vendor, item.type, item.family].filter(Boolean).join(' · ')}</span>
                                         </button>`) : html`<div class="chip-quick-empty">No matching chips</div>`}

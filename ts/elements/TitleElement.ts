@@ -6,10 +6,15 @@ import { ClientApi } from '../data/ClientApi';
 import { deleteIcon, saveIcon } from '../util/Icons';
 import { notifyToast, ToastKind } from '../util/Toast';
 import { AppModal, AppModalContext } from '../util/AppModal';
+import { Selection, SelectType } from '../layers/Selection';
+import { DrawablePolyline } from '../editable/DrawablePolyline';
+import { AABB } from '../util/AABB';
 
+type ShareFocusMode = 'none' | 'selection' | 'view';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
+    private static readonly SHARE_FOCUS_STORAGE_KEY = 'chipannotation-share-focus-mode';
     @property()
     chipContent: ChipContent;
     @property()
@@ -23,7 +28,11 @@ export class TitleElement extends LitElement {
     @property({ type: Boolean })
     canCreate: boolean = false;
     @property({ type: Boolean })
+    creatingFromScratch: boolean = false;
+    @property({ type: Boolean })
     dirty: boolean = false;
+    @property()
+    getCreateAnnotationData: () => AnnotationData;
     @property()
     onAnnotationChanged: (title: string) => void;
     @property()
@@ -31,7 +40,7 @@ export class TitleElement extends LitElement {
     @property()
     canDiscardCurrentAnnotation: () => boolean;
     @property()
-    onAnnotationCreated: () => void;
+    onAnnotationCreated: (annotation?: Annotation, data?: AnnotationData) => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
 
@@ -42,6 +51,7 @@ export class TitleElement extends LitElement {
 
     userId: number;
     private createdAnnotationIdToSelect = 0;
+    private annotationDataToCreate: AnnotationData = null;
     private readonly closeUserMenuOnOutsideClick = (event: PointerEvent) => {
         if (!this.menuOpen || this.contains(event.target as Node)) return;
         this.menuOpen = false;
@@ -170,12 +180,21 @@ export class TitleElement extends LitElement {
 
     private openCreateAnnotationModal() {
         if (!this.canCreate || !this.chipContent) return;
-        if (this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
+        if (!this.creatingFromScratch && this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
 
         this.createdAnnotationIdToSelect = 0;
+        this.annotationDataToCreate = this.getCreateAnnotationData
+            ? this.getCreateAnnotationData()
+            : AnnotationData.dummy();
+        const temporaryItemCount = (this.annotationDataToCreate.polylines || []).length
+            + (this.annotationDataToCreate.texts || []).length;
         AppModal.open({
             title: "New Annotation",
             ariaLabel: "New Annotation",
+            body: temporaryItemCount > 0 ? html`
+                <div class="createAnnotationDraftNotice">
+                    ${temporaryItemCount} temporary item${temporaryItemCount === 1 ? '' : 's'} will be included.
+                </div>` : html``,
             input: {
                 label: "Title",
                 required: true,
@@ -189,6 +208,7 @@ export class TitleElement extends LitElement {
             },
             onCancel: () => {
                 this.createdAnnotationIdToSelect = 0;
+                this.annotationDataToCreate = null;
             },
         });
     }
@@ -209,7 +229,7 @@ export class TitleElement extends LitElement {
         try {
             let createdAid = this.createdAnnotationIdToSelect;
             if (!createdAid) {
-                const dataString = JSON.stringify(AnnotationData.dummy());
+                const dataString = JSON.stringify(this.annotationDataToCreate || AnnotationData.dummy());
                 const created = await ClientApi.createAnnotation(this.chipContent.name, title, dataString);
                 createdAid = created.aid;
                 this.createdAnnotationIdToSelect = createdAid;
@@ -217,11 +237,16 @@ export class TitleElement extends LitElement {
             }
 
             const annotations = await ClientApi.listAnnotationByChip(this.chipContent.name);
-            const listed = annotations && annotations.some(annotation => annotation.aid === createdAid);
+            const listed = annotations && annotations.find(annotation => annotation.aid === createdAid);
             if (!listed) throw new Error("Created annotation was not returned by the annotation list");
 
             this.toast("Created");
+            if (this.onAnnotationCreated) {
+                const data = this.annotationDataToCreate || AnnotationData.dummy();
+                this.onAnnotationCreated(listed, data);
+            }
             this.notifyAnnotationCreated(createdAid);
+            this.annotationDataToCreate = null;
             return true;
         } catch (e) {
             console.log("createAnnotation error:", e);
@@ -299,6 +324,114 @@ export class TitleElement extends LitElement {
         this.requestUpdate();
     }
 
+    private createShareUrl(focusMode: ShareFocusMode, selectionBounds: AABB, viewBounds: AABB): string {
+        const url = new URL(window.location.href);
+        url.search = '';
+        url.hash = '';
+        if (this.chipContent && this.chipContent.name) url.searchParams.set('chip', this.chipContent.name);
+        if (this.annotation && this.annotation.aid > 0) {
+            url.searchParams.set('annotation', String(this.annotation.aid));
+        }
+        const bounds = focusMode === 'selection' ? selectionBounds : focusMode === 'view' ? viewBounds : null;
+        if (bounds) {
+            url.searchParams.set('focus', focusMode);
+            url.searchParams.set('bounds', [bounds.x1, bounds.y1, bounds.x2, bounds.y2]
+                .map(value => Number(value.toFixed(4)).toString()).join(','));
+        }
+        return url.toString();
+    }
+
+    private getSelectedPolylineBounds(): AABB {
+        if (!this.annotation || this.annotation.aid <= 0) return null;
+        const selected = Selection.getSelected();
+        let polylines: DrawablePolyline[] = [];
+        if (selected.type === SelectType.POLYLINE || selected.type === SelectType.POLYLINE_CREATE) {
+            polylines = [selected.item as DrawablePolyline];
+        } else if (selected.type === SelectType.MULTIPLE) {
+            polylines = (selected.item || []).filter(item => item instanceof DrawablePolyline) as DrawablePolyline[];
+        }
+        if (!polylines.length) return null;
+        const bounds = AABB.combineAll(polylines.map(polyline => polyline.aabb()));
+        return [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite) ? bounds : null;
+    }
+
+    private openShareModal() {
+        this.menuOpen = false;
+        this.hideControlsHint();
+        const selectionBounds = this.getSelectedPolylineBounds();
+        const viewBounds = this.canvas && this.chipContent ? this.canvas.getVisibleAABB() : null;
+        const storedMode = localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY);
+        let focusMode: ShareFocusMode = storedMode === 'selection' || storedMode === 'view' ? storedMode : 'none';
+        if ((focusMode === 'selection' && !selectionBounds) || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
+        const updateUrl = () => {
+            const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+            if (input) input.value = this.createShareUrl(focusMode, selectionBounds, viewBounds);
+        };
+        AppModal.open({
+            title: 'Share',
+            ariaLabel: 'Share current view',
+            primaryText: 'Copy',
+            cancelText: 'Close',
+            body: html`
+                <div class="shareConfig">
+                    <span class="shareFocusLabel" id="shareFocusLabel">Open behavior</span>
+                    <div class="shareFocusOptions" role="radiogroup" aria-labelledby="shareFocusLabel"
+                        @change=${(event: Event) => {
+                            focusMode = (event.target as HTMLInputElement).value as ShareFocusMode;
+                            localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, focusMode);
+                            updateUrl();
+                        }}>
+                        <label class="shareFocusOption">
+                            <input type="radio" name="shareFocusMode" value="none" .checked=${focusMode === 'none'}>
+                            <span>No extra focus</span>
+                        </label>
+                        <label class="shareFocusOption ${!selectionBounds ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="selection"
+                                .checked=${focusMode === 'selection'} ?disabled=${!selectionBounds}>
+                            <span>Focus selected polyline</span>
+                        </label>
+                        <label class="shareFocusOption ${!viewBounds ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="view"
+                                .checked=${focusMode === 'view'} ?disabled=${!viewBounds}>
+                            <span>Focus current view</span>
+                        </label>
+                    </div>
+                    <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusMode, selectionBounds, viewBounds)} aria-label="Share URL">
+                </div>
+            `,
+            onSubmit: context => this.copyShareUrl(context),
+        });
+    }
+
+    private async copyShareUrl(context: AppModalContext): Promise<boolean> {
+        const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+        if (!input) {
+            context.setStatus('Could not find the share URL.', 'error');
+            return false;
+        }
+        context.setPrimaryText('Copying...');
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard API unavailable');
+            await navigator.clipboard.writeText(input.value);
+            this.toast('Link copied', 'copied');
+            return true;
+        } catch (clipboardError) {
+            try {
+                input.focus({preventScroll: true});
+                input.select();
+                if (document.execCommand('copy')) {
+                    this.toast('Link copied', 'copied');
+                    return true;
+                }
+            } catch (fallbackError) {
+                console.warn('Could not copy share URL', clipboardError, fallbackError);
+            }
+            context.setPrimaryText('Copy');
+            context.setStatus('Clipboard permission was denied. Please copy the selected URL manually.', 'error');
+            return false;
+        }
+    }
+
     private onTitleInput(event: Event) {
         if (this.onAnnotationChanged) this.onAnnotationChanged((event.target as HTMLInputElement).value);
     }
@@ -313,20 +446,23 @@ export class TitleElement extends LitElement {
                 <a href="https://twitter.com/rSkip" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><img src="res/twitter.png" alt=""></a>
                 <a href="https://rgbuv.xyz/chipannotation3/rss/daily.xml" target="_blank" rel="noopener" title="RSS" aria-label="RSS"><img src="res/rss.png" alt=""></a>
             </div>`;
-        const loginControl = this.userId > 0 ? html`
+        const loginControl = html`
             <div class="userMenu">
                 <div class="userMenuRow">
+                    ${this.userId > 0 ? html`` : html`
+                        <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`}
                     <button class="userMenuToggle" @click="${this.toggleUserMenu}" aria-label="User menu" aria-expanded=${this.menuOpen}>
-                        <span class="userMenuName">${this.userName}</span><span class="userMenuArrow" aria-hidden="true">▾</span>
+                        ${this.userId > 0 ? html`<span class="userMenuName">${this.userName}</span>` : html``}
+                        <span class="userMenuArrow" aria-hidden="true">▾</span>
                     </button>
                 </div>
                 <div class="userMenuDropdown" ?hidden=${!this.menuOpen}>
-                    <button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>
+                    ${this.userId > 0 ? html`<button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>` : html``}
+                    <button id="shareViewButton" type="button" @click=${() => this.openShareModal()}>Share</button>
                     <button id="hintToggle" type="button" aria-describedby="hint" aria-expanded="false" @click=${this.toggleControlsHint}>Controls</button>
                     ${projectLinks}
                 </div>
-            </div>` : html`
-                <button id="userLoginButton" type="button" @click="${this.onClickLogin}">Login</button>`;
+            </div>`;
         const canDelete = this.editMode === 'update'
             && this.annotation
             && this.annotation.aid > 0

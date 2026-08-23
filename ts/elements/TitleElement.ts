@@ -30,13 +30,15 @@ export class TitleElement extends LitElement {
     @property({ type: Boolean })
     dirty: boolean = false;
     @property()
+    getCreateAnnotationData: () => AnnotationData;
+    @property()
     onAnnotationChanged: (title: string) => void;
     @property()
     onAnnotationSaved: () => void;
     @property()
     canDiscardCurrentAnnotation: () => boolean;
     @property()
-    onAnnotationCreated: () => void;
+    onAnnotationCreated: (annotation?: Annotation, data?: AnnotationData, usedScratchDocument?: boolean) => void;
     @property()
     onUserChange: (userId: number, userName: string) => void;
 
@@ -47,6 +49,7 @@ export class TitleElement extends LitElement {
 
     userId: number;
     private createdAnnotationIdToSelect = 0;
+    private annotationDataToCreate: AnnotationData = null;
     private readonly closeUserMenuOnOutsideClick = (event: PointerEvent) => {
         if (!this.menuOpen || this.contains(event.target as Node)) return;
         this.menuOpen = false;
@@ -178,9 +181,18 @@ export class TitleElement extends LitElement {
         if (this.canDiscardCurrentAnnotation && !this.canDiscardCurrentAnnotation()) return;
 
         this.createdAnnotationIdToSelect = 0;
+        this.annotationDataToCreate = this.getCreateAnnotationData
+            ? this.getCreateAnnotationData()
+            : AnnotationData.dummy();
+        const temporaryItemCount = (this.annotationDataToCreate.polylines || []).length
+            + (this.annotationDataToCreate.texts || []).length;
         AppModal.open({
             title: "New Annotation",
             ariaLabel: "New Annotation",
+            body: temporaryItemCount > 0 ? html`
+                <div class="createAnnotationDraftNotice">
+                    ${temporaryItemCount} temporary item${temporaryItemCount === 1 ? '' : 's'} will be included.
+                </div>` : html``,
             input: {
                 label: "Title",
                 required: true,
@@ -194,6 +206,7 @@ export class TitleElement extends LitElement {
             },
             onCancel: () => {
                 this.createdAnnotationIdToSelect = 0;
+                this.annotationDataToCreate = null;
             },
         });
     }
@@ -214,7 +227,7 @@ export class TitleElement extends LitElement {
         try {
             let createdAid = this.createdAnnotationIdToSelect;
             if (!createdAid) {
-                const dataString = JSON.stringify(AnnotationData.dummy());
+                const dataString = JSON.stringify(this.annotationDataToCreate || AnnotationData.dummy());
                 const created = await ClientApi.createAnnotation(this.chipContent.name, title, dataString);
                 createdAid = created.aid;
                 this.createdAnnotationIdToSelect = createdAid;
@@ -222,11 +235,17 @@ export class TitleElement extends LitElement {
             }
 
             const annotations = await ClientApi.listAnnotationByChip(this.chipContent.name);
-            const listed = annotations && annotations.some(annotation => annotation.aid === createdAid);
+            const listed = annotations && annotations.find(annotation => annotation.aid === createdAid);
             if (!listed) throw new Error("Created annotation was not returned by the annotation list");
 
             this.toast("Created");
+            if (this.onAnnotationCreated) {
+                const data = this.annotationDataToCreate || AnnotationData.dummy();
+                this.onAnnotationCreated(listed, data,
+                    (data.polylines || []).length + (data.texts || []).length > 0);
+            }
             this.notifyAnnotationCreated(createdAid);
+            this.annotationDataToCreate = null;
             return true;
         } catch (e) {
             console.log("createAnnotation error:", e);

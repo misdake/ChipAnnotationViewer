@@ -644,6 +644,13 @@ button.chipInfoCloseButton,
     color: #ef4444;
 }
 
+.createAnnotationDraftNotice {
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 #creationButtons {
     display: flex;
     gap: 6px;

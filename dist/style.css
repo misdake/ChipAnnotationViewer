@@ -1803,7 +1803,9 @@ button.advanced-chip-row.selected {
 .shareConfig {
     display: grid;
     gap: 10px;
-    min-width: min(560px, 76vw);
+    box-sizing: border-box;
+    width: min(380px, 100%);
+    max-width: 100%;
 }
 
 .shareFocusOption {
@@ -1814,14 +1816,9 @@ button.advanced-chip-row.selected {
     font-size: 12px;
 }
 
-.shareUrlRow {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.shareUrlRow input {
-    flex: 1 1 auto;
+.shareConfig > #shareUrlInput {
+    box-sizing: border-box;
+    width: 100%;
     min-width: 0;
     height: 32px;
     padding: 0 9px;

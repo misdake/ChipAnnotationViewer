@@ -324,40 +324,53 @@ export class TitleElement extends LitElement {
         AppModal.open({
             title: 'Share',
             ariaLabel: 'Share current view',
-            primaryText: 'Close',
-            showCancel: false,
+            primaryText: 'Copy',
+            cancelText: 'Close',
             body: html`
                 <div class="shareConfig">
-                    <label class="shareFocusOption">
-                        <input type="checkbox" .checked=${focusAnnotation} ?disabled=${!hasAnnotation}
-                            @change=${(event: Event) => {
-                                focusAnnotation = (event.target as HTMLInputElement).checked;
-                                localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, String(focusAnnotation));
-                                updateUrl();
-                            }}>
-                        <span>Focus annotation on open</span>
-                    </label>
-                    <div class="shareUrlRow">
-                        <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusAnnotation)} aria-label="Share URL">
-                        <button class="configButton" type="button" @click=${() => this.copyShareUrl()}>Copy</button>
-                    </div>
+                    ${hasAnnotation ? html`
+                        <label class="shareFocusOption">
+                            <input type="checkbox" .checked=${focusAnnotation}
+                                @change=${(event: Event) => {
+                                    focusAnnotation = (event.target as HTMLInputElement).checked;
+                                    localStorage.setItem(TitleElement.SHARE_FOCUS_STORAGE_KEY, String(focusAnnotation));
+                                    updateUrl();
+                                }}>
+                            <span>Focus annotation on open</span>
+                        </label>` : html``}
+                    <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusAnnotation)} aria-label="Share URL">
                 </div>
             `,
-            onSubmit: () => true,
+            onSubmit: context => this.copyShareUrl(context),
         });
     }
 
-    private async copyShareUrl() {
+    private async copyShareUrl(context: AppModalContext): Promise<boolean> {
         const input = document.getElementById('shareUrlInput') as HTMLInputElement;
-        if (!input) return;
+        if (!input) {
+            context.setStatus('Could not find the share URL.', 'error');
+            return false;
+        }
+        context.setPrimaryText('Copying...');
         try {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('Clipboard API unavailable');
             await navigator.clipboard.writeText(input.value);
             this.toast('Link copied', 'copied');
-        } catch (_error) {
-            input.focus({preventScroll: true});
-            input.select();
-            if (document.execCommand('copy')) this.toast('Link copied', 'copied');
-            else this.toast('Could not copy link', 'warning');
+            return true;
+        } catch (clipboardError) {
+            try {
+                input.focus({preventScroll: true});
+                input.select();
+                if (document.execCommand('copy')) {
+                    this.toast('Link copied', 'copied');
+                    return true;
+                }
+            } catch (fallbackError) {
+                console.warn('Could not copy share URL', clipboardError, fallbackError);
+            }
+            context.setPrimaryText('Copy');
+            context.setStatus('Clipboard permission was denied. Please copy the selected URL manually.', 'error');
+            return false;
         }
     }
 

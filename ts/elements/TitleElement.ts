@@ -10,7 +10,7 @@ import { Selection, SelectType } from '../layers/Selection';
 import { DrawablePolyline } from '../editable/DrawablePolyline';
 import { AABB } from '../util/AABB';
 
-type ShareFocusMode = 'none' | 'selection' | 'view';
+type ShareFocusMode = 'none' | 'annotation' | 'selection' | 'view';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
@@ -331,6 +331,7 @@ export class TitleElement extends LitElement {
         if (this.chipContent && this.chipContent.name) url.searchParams.set('chip', this.chipContent.name);
         if (this.annotation && this.annotation.aid > 0) {
             url.searchParams.set('annotation', String(this.annotation.aid));
+            if (focusMode === 'annotation') url.searchParams.set('focus', 'annotation');
         }
         const bounds = focusMode === 'selection' ? selectionBounds : focusMode === 'view' ? viewBounds : null;
         if (bounds) {
@@ -358,11 +359,15 @@ export class TitleElement extends LitElement {
     private openShareModal() {
         this.menuOpen = false;
         this.hideControlsHint();
+        const hasAnnotation = !!this.annotation && this.annotation.aid > 0;
         const selectionBounds = this.getSelectedPolylineBounds();
         const viewBounds = this.canvas && this.chipContent ? this.canvas.getVisibleAABB() : null;
         const storedMode = localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY);
-        let focusMode: ShareFocusMode = storedMode === 'selection' || storedMode === 'view' ? storedMode : 'none';
-        if ((focusMode === 'selection' && !selectionBounds) || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
+        let focusMode: ShareFocusMode = storedMode === 'annotation' || storedMode === 'selection' || storedMode === 'view'
+            ? storedMode : 'none';
+        if ((focusMode === 'annotation' && !hasAnnotation)
+            || (focusMode === 'selection' && !selectionBounds)
+            || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
         const updateUrl = () => {
             const input = document.getElementById('shareUrlInput') as HTMLTextAreaElement;
             if (input) input.value = this.createShareUrl(focusMode, selectionBounds, viewBounds);
@@ -384,6 +389,11 @@ export class TitleElement extends LitElement {
                         <label class="shareFocusOption">
                             <input type="radio" name="shareFocusMode" value="none" .checked=${focusMode === 'none'}>
                             <span>No extra focus</span>
+                        </label>
+                        <label class="shareFocusOption ${!hasAnnotation ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="annotation"
+                                .checked=${focusMode === 'annotation'} ?disabled=${!hasAnnotation}>
+                            <span>Focus annotation</span>
                         </label>
                         <label class="shareFocusOption ${!selectionBounds ? 'disabled' : ''}">
                             <input type="radio" name="shareFocusMode" value="selection"

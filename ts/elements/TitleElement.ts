@@ -10,7 +10,7 @@ import { Selection, SelectType } from '../layers/Selection';
 import { DrawablePolyline } from '../editable/DrawablePolyline';
 import { AABB } from '../util/AABB';
 
-type ShareFocusMode = 'none' | 'selection' | 'view';
+type ShareFocusMode = 'none' | 'annotation' | 'selection' | 'view';
 
 @customElement('title-element')
 export class TitleElement extends LitElement {
@@ -331,6 +331,7 @@ export class TitleElement extends LitElement {
         if (this.chipContent && this.chipContent.name) url.searchParams.set('chip', this.chipContent.name);
         if (this.annotation && this.annotation.aid > 0) {
             url.searchParams.set('annotation', String(this.annotation.aid));
+            if (focusMode === 'annotation') url.searchParams.set('focus', 'annotation');
         }
         const bounds = focusMode === 'selection' ? selectionBounds : focusMode === 'view' ? viewBounds : null;
         if (bounds) {
@@ -358,13 +359,17 @@ export class TitleElement extends LitElement {
     private openShareModal() {
         this.menuOpen = false;
         this.hideControlsHint();
+        const hasAnnotation = !!this.annotation && this.annotation.aid > 0;
         const selectionBounds = this.getSelectedPolylineBounds();
         const viewBounds = this.canvas && this.chipContent ? this.canvas.getVisibleAABB() : null;
         const storedMode = localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY);
-        let focusMode: ShareFocusMode = storedMode === 'selection' || storedMode === 'view' ? storedMode : 'none';
-        if ((focusMode === 'selection' && !selectionBounds) || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
+        let focusMode: ShareFocusMode = storedMode === 'annotation' || storedMode === 'selection' || storedMode === 'view'
+            ? storedMode : 'none';
+        if ((focusMode === 'annotation' && !hasAnnotation)
+            || (focusMode === 'selection' && !selectionBounds)
+            || (focusMode === 'view' && !viewBounds)) focusMode = 'none';
         const updateUrl = () => {
-            const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+            const input = document.getElementById('shareUrlInput') as HTMLTextAreaElement;
             if (input) input.value = this.createShareUrl(focusMode, selectionBounds, viewBounds);
         };
         AppModal.open({
@@ -385,6 +390,11 @@ export class TitleElement extends LitElement {
                             <input type="radio" name="shareFocusMode" value="none" .checked=${focusMode === 'none'}>
                             <span>No extra focus</span>
                         </label>
+                        <label class="shareFocusOption ${!hasAnnotation ? 'disabled' : ''}">
+                            <input type="radio" name="shareFocusMode" value="annotation"
+                                .checked=${focusMode === 'annotation'} ?disabled=${!hasAnnotation}>
+                            <span>Focus annotation</span>
+                        </label>
                         <label class="shareFocusOption ${!selectionBounds ? 'disabled' : ''}">
                             <input type="radio" name="shareFocusMode" value="selection"
                                 .checked=${focusMode === 'selection'} ?disabled=${!selectionBounds}>
@@ -396,7 +406,8 @@ export class TitleElement extends LitElement {
                             <span>Focus current view</span>
                         </label>
                     </div>
-                    <input id="shareUrlInput" type="text" readonly .value=${this.createShareUrl(focusMode, selectionBounds, viewBounds)} aria-label="Share URL">
+                    <textarea id="shareUrlInput" rows="3" wrap="soft" readonly spellcheck="false"
+                        .value=${this.createShareUrl(focusMode, selectionBounds, viewBounds)} aria-label="Share URL"></textarea>
                 </div>
             `,
             onSubmit: context => this.copyShareUrl(context),
@@ -404,7 +415,7 @@ export class TitleElement extends LitElement {
     }
 
     private async copyShareUrl(context: AppModalContext): Promise<boolean> {
-        const input = document.getElementById('shareUrlInput') as HTMLInputElement;
+        const input = document.getElementById('shareUrlInput') as HTMLTextAreaElement;
         if (!input) {
             context.setStatus('Could not find the share URL.', 'error');
             return false;
@@ -430,6 +441,93 @@ export class TitleElement extends LitElement {
             context.setStatus('Clipboard permission was denied. Please copy the selected URL manually.', 'error');
             return false;
         }
+    }
+
+    private openChangelogModal() {
+        this.menuOpen = false;
+        this.hideControlsHint();
+        AppModal.open({
+            title: 'Changelog',
+            ariaLabel: 'Application changelog',
+            primaryText: 'Close',
+            showCancel: false,
+            body: html`
+                <div class="changelog" aria-label="Changes since version 3.0">
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.4.0</span>
+                            <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-08-25">2026-08-25</time>
+                        </h4>
+                        <ul>
+                            <li>Added an in-app changelog to the user menu.</li>
+                            <li>Improved long share-link display and restored links that reopen the focused annotation.</li>
+                            <li>Highlighted chip-image credit and source links with a clearer attribution group.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.3.0</span>
+                            <time datetime="2026-08-23">2026-08-23</time>
+                        </h4>
+                        <ul>
+                            <li>Added share links with a more reliable copy flow.</li>
+                            <li>Added selection and box-focus controls, plus share links that reopen the current view or selected geometry.</li>
+                            <li>Read-only mode can select and measure annotations.</li>
+                            <li>Added temporary chip measurements, with correctly formatted die-area units.</li>
+                            <li>Refined responsive canvas tools, selection interactions, and chip-picker scrolling.</li>
+                            <li>Browser back and forward navigation now follows chip and annotation changes.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.2.0</span>
+                            <time datetime="2026-08-01">2026-08-01</time>
+                        </h4>
+                        <ul>
+                            <li>Chip details and annotation lists now load in parallel when switching chips.</li>
+                            <li>Annotation contents preload with the list, then safely revalidate on selection.</li>
+                            <li>Comment pages keep their state in the URL hash and render login state and titles immediately.</li>
+                            <li>The RSS shortcut now points to the daily update feed.</li>
+                            <li>Production API configuration is now tracked for reliable CI and GitHub Pages builds.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.1.0</span>
+                            <time datetime="2026-08-01">2026-08-01</time>
+                        </h4>
+                        <ul>
+                            <li>Refined the chip and annotation selector controls.</li>
+                            <li>Improved cross-origin login token handling.</li>
+                            <li>The quick chip list now shows all chips, filters as you type, and opens chips with one click.</li>
+                            <li>Legacy comment links now resolve through the current comment endpoint.</li>
+                            <li>Added Recent Updates backed by the server feed.</li>
+                            <li>Fixed advanced-browser overflow.</li>
+                            <li>Added GitHub Pages deployment and the MIT license.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.0.0</span>
+                            <time datetime="2026-07-09">2026-07-09</time>
+                        </h4>
+                        <ul>
+                            <li>Migrated annotations and authentication to the new server API.</li>
+                            <li>Introduced a responsive editor workspace with read-only navigation and an advanced chip browser.</li>
+                            <li>Added modal-based annotation creation, upgraded editing actions, and unsaved-change protection.</li>
+                            <li>Added multiline text editing, foldable color controls, editable hex colors, and packed RGBA storage.</li>
+                            <li>Versioned the annotation JSON format for future data upgrades.</li>
+                            <li>Added annotation undo and redo history.</li>
+                            <li>Added global chip information, image credits, tile caching, and seamless image tiles.</li>
+                            <li>Added chip and annotation comments, including an embedded panel and real-time updates.</li>
+                            <li>Added clearer network feedback, editor hints, and a controls guide.</li>
+                        </ul>
+                    </section>
+                </div>
+            `,
+            onSubmit: () => true,
+        });
     }
 
     private onTitleInput(event: Event) {
@@ -460,6 +558,7 @@ export class TitleElement extends LitElement {
                     ${this.userId > 0 ? html`<button id="userLogoutInline" type="button" @click="${this.onClickLogout}">Logout</button>` : html``}
                     <button id="shareViewButton" type="button" @click=${() => this.openShareModal()}>Share</button>
                     <button id="hintToggle" type="button" aria-describedby="hint" aria-expanded="false" @click=${this.toggleControlsHint}>Controls</button>
+                    <button id="changelogButton" type="button" @click=${() => this.openChangelogModal()}>Changelog</button>
                     ${projectLinks}
                 </div>
             </div>`;

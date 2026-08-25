@@ -381,8 +381,14 @@ export class SelectElement extends LitElement {
         rows.push(row("Size (px)", `${chip.width} x ${chip.height}`));
         if (hasDieSize) rows.push(row("Die Size", `${fmt(dieAreaMm2)} mm², ${fmt(widthMm)} mm x ${fmt(heightMm)} mm`));
         if (specUrl) rows.push(row("Spec", link(specUrl, specUrl)));
-        if (hasAuthor) rows.push(row("Credit", authorUrl ? link(authorName, authorUrl) : authorName, "chipInfoCreditRow"));
-        rows.push(row("Source", sourceText ? link(sourceText, sourceText) : ""));
+        if (hasAuthor || sourceText) {
+            const attributionRows: TemplateResult[] = [];
+            if (hasAuthor) attributionRows.push(row("Credit", authorUrl ? link(authorName, authorUrl) : authorName, "chipInfoCreditRow"));
+            attributionRows.push(row("Source", sourceText ? link(sourceText, sourceText) : "", "chipInfoSourceRow"));
+            rows.push(html`<div class="chipInfoAttributionGroup">${attributionRows}</div>`);
+        } else {
+            rows.push(row("Source", ""));
+        }
 
         AppModal.open({
             title: "Chip Information",

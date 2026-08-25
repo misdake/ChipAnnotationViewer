@@ -582,6 +582,95 @@ button.chipInfoCloseButton,
     text-decoration: underline;
 }
 
+.chipInfoAttributionGroup {
+    position: relative;
+    box-sizing: border-box;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding: 10px 10px 2px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 4% 8%, rgba(245, 158, 11, 0.075), transparent 38%) padding-box,
+        radial-gradient(circle at 96% 92%, rgba(34, 211, 238, 0.075), transparent 40%) padding-box,
+        linear-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95)) padding-box,
+        linear-gradient(120deg, rgba(245, 158, 11, 0.72), rgba(96, 165, 250, 0.3) 48%, rgba(34, 211, 238, 0.72)) border-box;
+    box-shadow:
+        -3px 0 15px rgba(245, 158, 11, 0.14),
+        3px 0 15px rgba(34, 211, 238, 0.14);
+    animation: chipInfoAttributionGlow 3.4s ease-in-out infinite;
+}
+
+.chipInfoAttributionGroup::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: translateX(-130%);
+    background: linear-gradient(105deg,
+        transparent 34%,
+        rgba(255, 255, 255, 0.2) 49%,
+        transparent 64%);
+    animation: chipInfoAttributionShimmer 4.6s ease-in-out infinite;
+}
+
+.chipInfoAttributionGroup .chipInfoRow {
+    position: relative;
+    z-index: 1;
+}
+
+.chipInfoAttributionGroup .chipInfoRow:last-child {
+    margin-bottom: 8px;
+}
+
+.chipInfoCreditRow .chipInfoLink {
+    color: #FBBF24;
+}
+
+.chipInfoSourceRow .chipInfoLink {
+    color: var(--accent-color);
+}
+
+.chipInfoAttributionGroup:hover,
+.chipInfoAttributionGroup:focus-within {
+    animation: none;
+    box-shadow:
+        -4px 0 20px rgba(245, 158, 11, 0.3),
+        4px 0 20px rgba(34, 211, 238, 0.3),
+        0 0 28px rgba(96, 165, 250, 0.12);
+}
+
+@keyframes chipInfoAttributionGlow {
+    0%, 100% {
+        box-shadow:
+            -3px 0 14px rgba(245, 158, 11, 0.13),
+            3px 0 14px rgba(34, 211, 238, 0.13);
+    }
+    50% {
+        box-shadow:
+            -4px 0 20px rgba(245, 158, 11, 0.27),
+            4px 0 20px rgba(34, 211, 238, 0.27),
+            0 0 24px rgba(96, 165, 250, 0.1);
+    }
+}
+
+@keyframes chipInfoAttributionShimmer {
+    0%, 38% {
+        transform: translateX(-130%);
+    }
+    62%, 100% {
+        transform: translateX(130%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chipInfoAttributionGroup,
+    .chipInfoAttributionGroup::after {
+        animation: none;
+    }
+}
+
 .deleteAnnotationWarning {
     margin-bottom: 8px;
     color: var(--warning-color);
@@ -1787,7 +1876,8 @@ button.advanced-chip-row.selected {
 
 #annotationTitle #userLogoutInline,
 #annotationTitle #shareViewButton,
-#annotationTitle #hintToggle {
+#annotationTitle #hintToggle,
+#annotationTitle #changelogButton {
     width: 100%;
     height: 30px;
     padding: 0 9px;
@@ -1803,8 +1893,68 @@ button.advanced-chip-row.selected {
 
 #annotationTitle #userLogoutInline:hover,
 #annotationTitle #shareViewButton:hover,
-#annotationTitle #hintToggle:hover {
+#annotationTitle #hintToggle:hover,
+#annotationTitle #changelogButton:hover {
     background: rgba(79, 140, 255, .14);
+}
+
+.changelog {
+    display: grid;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.changelogRelease {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.changelogRelease:first-child {
+    padding-top: 0;
+}
+
+.changelogRelease:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.changelogRelease h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 7px;
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.changelogCurrent {
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(79, 140, 255, .16);
+    color: var(--brand);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.changelogRelease time {
+    margin-left: auto;
+    color: var(--ink-muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.changelogRelease ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--ink-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.changelogRelease li + li {
+    margin-top: 3px;
 }
 
 .shareConfig {
@@ -1824,14 +1974,16 @@ button.advanced-chip-row.selected {
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
-    height: 32px;
-    padding: 0 9px;
+    min-height: 68px;
+    padding: 7px 9px;
     border: 1px solid var(--line);
     border-radius: 5px;
     background: var(--panel-3);
     color: var(--ink);
     font: inherit;
     font-size: 12px;
+    line-height: 1.4;
+    resize: vertical;
 }
 
 .shareFocusOptions {

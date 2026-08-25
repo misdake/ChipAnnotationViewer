@@ -455,8 +455,19 @@ export class TitleElement extends LitElement {
                 <div class="changelog" aria-label="Changes since version 3.0">
                     <section class="changelogRelease">
                         <h4>
-                            <span>3.3.0</span>
+                            <span>3.4.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-08-25">2026-08-25</time>
+                        </h4>
+                        <ul>
+                            <li>Added an in-app changelog to the user menu.</li>
+                            <li>Improved long share-link display and restored links that reopen the focused annotation.</li>
+                            <li>Highlighted chip-image credit and source links with a clearer attribution group.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.3.0</span>
                             <time datetime="2026-08-23">2026-08-23</time>
                         </h4>
                         <ul>

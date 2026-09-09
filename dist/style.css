@@ -2010,7 +2010,11 @@ button.advanced-chip-row.selected {
 .shareFocusOption.disabled {
     cursor: default;
     color: var(--muted);
-    opacity: .65;
+}
+
+.shareFocusUnavailableReason {
+    color: #cf8f95;
+    font-weight: 600;
 }
 
 .shareFocusOption.disabled:hover {

@@ -31,6 +31,8 @@ export interface AppModalConfig {
     cancelText?: string;
     showCancel?: boolean;
     initialStatus?: string;
+    initialStatusKind?: ModalStatusKind;
+    statusPlacement?: "body" | "header";
     onSubmit: (context: AppModalContext) => boolean | void | Promise<boolean | void>;
     onInputChange?: (value: string, context: AppModalContext) => void;
     onCancel?: () => void;
@@ -86,7 +88,7 @@ class AppModalElement extends LitElement {
         this.config = config;
         this.inputValue = config.input ? (config.input.value || "") : "";
         this.statusMessage = config.initialStatus || "";
-        this.statusKind = "warning";
+        this.statusKind = config.initialStatusKind || "warning";
         this.primaryText = config.primaryText;
         this.submitting = false;
         this.primaryDisabled = this.computePrimaryDisabled();
@@ -282,6 +284,7 @@ class AppModalElement extends LitElement {
     render() {
         const config = this.config;
         const input = config && config.input;
+        const statusInHeader = config && config.statusPlacement === "header";
         const primaryClass = `configButton appModalPrimary${config && config.primaryClassName ? ` ${config.primaryClassName}` : ""}`;
 
         return html`
@@ -290,6 +293,9 @@ class AppModalElement extends LitElement {
                 <div class="chipInfoModal" role="dialog" aria-modal="true" aria-label=${config ? (config.ariaLabel || config.title) : ""}>
                     <div class="chipInfoModalHeader">
                         <h3 class="appModalTitle">${config ? config.title : ""}</h3>
+                        ${statusInHeader && this.statusMessage
+                            ? html`<p class="appModalStatus appModalHeaderStatus appModalStatus-${this.statusKind}" aria-live="polite">${this.statusMessage}</p>`
+                            : html``}
                         <button class="chipInfoCloseButton appModalClose" type="button" aria-label="Cancel" @click=${() => this.close(true)}>
                             <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">
                                 <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>
@@ -314,7 +320,9 @@ class AppModalElement extends LitElement {
                                 </div>
                             `
                             : html``}
-                        <p class="appModalStatus appModalStatus-${this.statusKind}">${this.statusMessage}</p>
+                        ${statusInHeader
+                            ? html``
+                            : html`<p class="appModalStatus appModalStatus-${this.statusKind}" aria-live="polite">${this.statusMessage}</p>`}
                         <div class="deleteAnnotationActions">
                             ${config && config.showCancel !== false
                                 ? html`<button class="configButton appModalCancel" type="button" @click=${() => this.close(true)}>${config.cancelText || "Cancel"}</button>`

@@ -767,27 +767,28 @@ export class SelectElement extends LitElement {
             ariaLabel: 'Recent updates',
             primaryText: 'Close',
             showCancel: false,
-            body: this.renderRecentUpdatesState(this.recentUpdatesCache, true),
+            initialStatus: 'Refreshing...',
+            initialStatusKind: 'saving',
+            statusPlacement: 'header',
+            body: this.renderRecentUpdatesState(this.recentUpdatesCache),
             onSubmit: () => true,
         });
         ClientApi.listRecentUpdates().then(days => {
             this.recentUpdatesCache = days || [];
-            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false));
+            handle.setStatus('');
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache));
         }).catch(error => {
             console.warn('Could not load recent updates', error);
-            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false, 'Could not refresh recent updates.'));
+            handle.setStatus('Could not refresh recent updates.', 'error');
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, true));
         });
     }
 
-    private renderRecentUpdatesState(days: RecentUpdateDay[], loading: boolean, error: string = ''): TemplateResult {
+    private renderRecentUpdatesState(days: RecentUpdateDay[], refreshFailed: boolean = false): TemplateResult {
         return html`
-            <div class="recentUpdatesStatus" aria-live="polite">
-                ${loading ? html`<span class="recentUpdatesSpinner" aria-hidden="true"></span><span>Refreshing...</span>` : html``}
-                ${error ? html`<span class="recentUpdatesError">${error}</span>` : html``}
-            </div>
             ${days
                 ? this.renderRecentUpdates(days)
-                : html`<div class="recentUpdatesEmpty">${error ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
+                : html`<div class="recentUpdatesEmpty">${refreshFailed ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
         `;
     }
 
@@ -1042,7 +1043,7 @@ export class SelectElement extends LitElement {
                     </span>
                 </label>
                 <div class="recentUpdatesCell">
-                    <button class="topBarIconButton recentUpdatesButton" title="Recent updates" aria-label="Recent updates" @click=${() => this.openRecentUpdates()}>${recentUpdatesIcon}</button>
+                    <button class="topBarIconButton recentUpdatesButton" title="Recent updates" aria-label="Recent updates" @click=${() => this.openRecentUpdates()}>${recentUpdatesIcon}<span>Recent</span></button>
                 </div>
             </div>
         `;

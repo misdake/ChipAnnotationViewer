@@ -459,8 +459,18 @@ export class TitleElement extends LitElement {
                 <div class="changelog" aria-label="Changes since version 3.0">
                     <section class="changelogRelease">
                         <h4>
-                            <span>3.4.0</span>
+                            <span>3.5.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-09-09">2026-09-09</time>
+                        </h4>
+                        <ul>
+                            <li>Share links can now focus a selected polyline or text annotation, with clearer reasons when a focus option is unavailable.</li>
+                            <li>Grouped adjacent chips by vendor, type, and family in both the quick picker and Open Chip browser.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.4.0</span>
                             <time datetime="2026-08-25">2026-08-25</time>
                         </h4>
                         <ul>

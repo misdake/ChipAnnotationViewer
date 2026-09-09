@@ -8,6 +8,8 @@ import { notifyToast, ToastKind } from '../util/Toast';
 import { AppModal, AppModalContext } from '../util/AppModal';
 import { Selection, SelectType } from '../layers/Selection';
 import { DrawablePolyline } from '../editable/DrawablePolyline';
+import { DrawableText } from '../editable/DrawableText';
+import { Drawable } from '../drawable/Drawable';
 import { AABB } from '../util/AABB';
 
 type ShareFocusMode = 'none' | 'annotation' | 'selection' | 'view';
@@ -342,17 +344,19 @@ export class TitleElement extends LitElement {
         return url.toString();
     }
 
-    private getSelectedPolylineBounds(): AABB {
+    private getSelectedAnnotationBounds(): AABB {
         if (!this.annotation || this.annotation.aid <= 0) return null;
         const selected = Selection.getSelected();
-        let polylines: DrawablePolyline[] = [];
-        if (selected.type === SelectType.POLYLINE || selected.type === SelectType.POLYLINE_CREATE) {
-            polylines = [selected.item as DrawablePolyline];
+        let drawables: Drawable[] = [];
+        if (selected.type === SelectType.POLYLINE || selected.type === SelectType.POLYLINE_CREATE
+            || selected.type === SelectType.TEXT || selected.type === SelectType.TEXT_CREATE) {
+            drawables = [selected.item as DrawablePolyline | DrawableText];
         } else if (selected.type === SelectType.MULTIPLE) {
-            polylines = (selected.item || []).filter(item => item instanceof DrawablePolyline) as DrawablePolyline[];
+            drawables = (selected.item || []).filter(item => item instanceof DrawablePolyline || item instanceof DrawableText);
         }
-        if (!polylines.length) return null;
-        const bounds = AABB.combineAll(polylines.map(polyline => polyline.aabb()));
+        if (!drawables.length || !this.canvas) return null;
+        const bounds = this.canvas.getDrawablesAABB(drawables);
+        if (!bounds) return null;
         return [bounds.x1, bounds.y1, bounds.x2, bounds.y2].every(Number.isFinite) ? bounds : null;
     }
 
@@ -360,7 +364,7 @@ export class TitleElement extends LitElement {
         this.menuOpen = false;
         this.hideControlsHint();
         const hasAnnotation = !!this.annotation && this.annotation.aid > 0;
-        const selectionBounds = this.getSelectedPolylineBounds();
+        const selectionBounds = this.getSelectedAnnotationBounds();
         const viewBounds = this.canvas && this.chipContent ? this.canvas.getVisibleAABB() : null;
         const storedMode = localStorage.getItem(TitleElement.SHARE_FOCUS_STORAGE_KEY);
         let focusMode: ShareFocusMode = storedMode === 'annotation' || storedMode === 'selection' || storedMode === 'view'
@@ -393,17 +397,17 @@ export class TitleElement extends LitElement {
                         <label class="shareFocusOption ${!hasAnnotation ? 'disabled' : ''}">
                             <input type="radio" name="shareFocusMode" value="annotation"
                                 .checked=${focusMode === 'annotation'} ?disabled=${!hasAnnotation}>
-                            <span>Focus annotation</span>
+                            <span>Focus annotation${!hasAnnotation ? html` <span class="shareFocusUnavailableReason">(No annotation selected)</span>` : ''}</span>
                         </label>
                         <label class="shareFocusOption ${!selectionBounds ? 'disabled' : ''}">
                             <input type="radio" name="shareFocusMode" value="selection"
                                 .checked=${focusMode === 'selection'} ?disabled=${!selectionBounds}>
-                            <span>Focus selected polyline</span>
+                            <span>Focus selected annotation${!selectionBounds ? html` <span class="shareFocusUnavailableReason">(${hasAnnotation ? 'No polyline or text selected' : 'No annotation selected'})</span>` : ''}</span>
                         </label>
                         <label class="shareFocusOption ${!viewBounds ? 'disabled' : ''}">
                             <input type="radio" name="shareFocusMode" value="view"
                                 .checked=${focusMode === 'view'} ?disabled=${!viewBounds}>
-                            <span>Focus current view</span>
+                            <span>Focus current view${!viewBounds ? html` <span class="shareFocusUnavailableReason">(No chip loaded)</span>` : ''}</span>
                         </label>
                     </div>
                     <textarea id="shareUrlInput" rows="3" wrap="soft" readonly spellcheck="false"
@@ -455,8 +459,18 @@ export class TitleElement extends LitElement {
                 <div class="changelog" aria-label="Changes since version 3.0">
                     <section class="changelogRelease">
                         <h4>
-                            <span>3.4.0</span>
+                            <span>3.5.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-09-09">2026-09-09</time>
+                        </h4>
+                        <ul>
+                            <li>Share links can now focus a selected polyline or text annotation, with clearer reasons when a focus option is unavailable.</li>
+                            <li>Grouped adjacent chips by vendor, type, and family in both the quick picker and Open Chip browser.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.4.0</span>
                             <time datetime="2026-08-25">2026-08-25</time>
                         </h4>
                         <ul>

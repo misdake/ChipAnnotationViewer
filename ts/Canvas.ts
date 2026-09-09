@@ -346,7 +346,7 @@ export class Canvas {
     public focusData(padding: number = 48): boolean {
         return this.focusDrawables([...(this.env.polylines || []), ...(this.env.texts || [])], padding);
     }
-    public focusDrawables(drawables: Drawable[], padding: number = 48): boolean {
+    public getDrawablesAABB(drawables: Drawable[]): AABB {
         const included = new Set(drawables || []);
         const bounds: AABB[] = [];
         for (const polyline of this.env.polylines || []) {
@@ -355,8 +355,11 @@ export class Canvas {
         for (const text of this.env.texts || []) {
             if (included.has(text)) bounds.push(text.validateCanvasAABB(this.camera, this.renderer));
         }
-        if (!bounds.length) return false;
-        return this.focusAABB(AABB.combineAll(bounds), padding);
+        return bounds.length ? AABB.combineAll(bounds) : null;
+    }
+    public focusDrawables(drawables: Drawable[], padding: number = 48): boolean {
+        const bounds = this.getDrawablesAABB(drawables);
+        return bounds ? this.focusAABB(bounds, padding) : false;
     }
     public focusAABB(bounds: AABB, padding: number = 48): boolean {
         const focused = this.camera.fitToAABB(bounds, padding);

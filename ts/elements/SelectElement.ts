@@ -9,6 +9,7 @@ import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
 import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
 import { AABB } from '../util/AABB';
+import { groupAdjacentChips } from '../util/ChipGrouping';
 
 export interface SharedChipFocus {
     bounds: AABB;
@@ -975,6 +976,7 @@ export class SelectElement extends LitElement {
             return !query || searchText.includes(query);
         });
         const quickChips = filteredChips;
+        const groupedQuickChips = groupAdjacentChips(quickChips);
         const annotationOptionOffset = 0;
         const annotationOptions = this.annotationlist_html || [];
         const hasAnnotationOptions = annotationOptions.length > 0;
@@ -1003,8 +1005,8 @@ export class SelectElement extends LitElement {
                                 </button>` : html``}
                             ${this.chipPickerOpen ? html`
                                 <div class="chip-quick-list" @mousedown=${(ev: Event) => ev.preventDefault()}>
-                                    ${quickChips.length ? quickChips.map(item => html`
-                                        <button type="button" class="chip-quick-item" data-current=${item.name === this.chip_current?.name ? 'true' : 'false'}
+                                    ${groupedQuickChips.length ? groupedQuickChips.map(({item, tone}) => html`
+                                        <button type="button" class="chip-quick-item chip-group-${tone}" data-current=${item.name === this.chip_current?.name ? 'true' : 'false'}
                                             @click=${() => this.navigateFromUser(item.name, 0)}>
                                             <strong>${item.listname || item.name}</strong>
                                             <span>${[item.vendor, item.type, item.family].filter(Boolean).join(' · ')}</span>
@@ -1072,6 +1074,7 @@ export class SelectElement extends LitElement {
             return this.advancedSortDirection === 'asc' ? result : -result;
         });
         const sortIndicator = (sort: 'name' | 'classification') => this.advancedSort === sort ? (this.advancedSortDirection === 'asc' ? ' ↑' : ' ↓') : '';
+        const groupedAdvancedChips = groupAdjacentChips(advancedChips);
 
         return html`
                 <div class="advanced-chip-overlay" role="presentation">
@@ -1092,8 +1095,8 @@ export class SelectElement extends LitElement {
                                 <button type="button" @click=${() => this.toggleAdvancedSort('name')}>Name${sortIndicator('name')}</button>
                                 <button type="button" @click=${() => this.toggleAdvancedSort('classification')}>Vendor / Type / Family${sortIndicator('classification')}</button>
                             </div>
-                            ${advancedChips.map(item => html`
-                                <button type="button" role="row" class="advanced-chip-row ${this.advancedSelectedChip === item ? 'selected' : ''}"
+                            ${groupedAdvancedChips.map(({item, tone}) => html`
+                                <button type="button" role="row" class="advanced-chip-row chip-group-${tone} ${this.advancedSelectedChip === item ? 'selected' : ''}"
                                     @click=${() => { this.advancedSelectedChip = item; this.confirmAdvancedChip(); }}>
                                     <strong>${item.listname || item.name}</strong><span>${this.advancedClassification(item) || '—'}</span>
                                 </button>`)}

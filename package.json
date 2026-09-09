@@ -18,7 +18,7 @@
   "scripts": {
     "build": "npm run build:prod",
     "test": "npm run test:history",
-    "test:history": "tsc --module commonjs --target es2019 --outDir .test-dist ts/history/HistoryTimeline.ts ts/history/EntityReconciler.ts && node --test tests/*.test.js",
+    "test:history": "tsc --module commonjs --target es2019 --outDir .test-dist ts/history/HistoryTimeline.ts ts/history/EntityReconciler.ts ts/util/ChipGrouping.ts && node --test tests/*.test.js",
     "dev": "npm run dev:dev",
     "build:dev": "webpack --mode development --env conf=dev",
     "build:prod": "webpack --mode production --env conf=prod --env production=true",

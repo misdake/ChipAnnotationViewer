@@ -124,7 +124,9 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this.invalidate();
     }
 
-    static readonly CHIP_LINK_REGEX = /@(chip|map)\[(\w+)]/;
+    //map is a legacy alias of chip; both generate a ?chip= link
+    static readonly CHIP_LINK_REGEX = /@(?:chip|map)\[(\w+)]/;
+    //comment is a legacy form: its id is a GitHub comment id, so it must use the commentId url param
     static readonly ANNOTATION_LINK_REGEX = /@(annotation|comment)\[(\w+)]\(([0-9]+)\)/;
 
     set text(value: string) {
@@ -137,13 +139,17 @@ export class DrawableText implements EditablePick, EditableDeleteClone, Editable
         this._link = null;
         let chipLink = DrawableText.CHIP_LINK_REGEX.exec(value);
         let annotationLink = DrawableText.ANNOTATION_LINK_REGEX.exec(value);
-        if (chipLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(chipLink[2])}`;
-        if (annotationLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(annotationLink[2])}&annotation=${annotationLink[3]}`;
+        if (chipLink) this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(chipLink[1])}`;
+        if (annotationLink) {
+            const idParam = annotationLink[1] === 'comment' ? 'commentId' : 'annotation';
+            this._link = `${window.location.origin}${window.location.pathname}?chip=${encodeURIComponent(annotationLink[2])}&${idParam}=${annotationLink[3]}`;
+        }
 
         //remove link from rendering text
         this._text = this._sourceText;
         this._text = this._text.replace(DrawableText.CHIP_LINK_REGEX, "");
         this._text = this._text.replace(DrawableText.ANNOTATION_LINK_REGEX, "");
+        if (chipLink || annotationLink) this._text = this._text.replace(/\s+$/, "");
 
         if (chipLink || annotationLink) {
             console.log(this._link);

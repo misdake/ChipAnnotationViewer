@@ -3,7 +3,7 @@ import { Chip, ChipContent } from '../data/Chip';
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
-import { ClientApi, RecentUpdateDay, RecentUpdateEvent } from '../data/ClientApi';
+import { ClientApi, RecentUpdateEvent } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
@@ -66,6 +66,12 @@ const recentUpdatesIcon = html`
         <path d="M3 3v5h5"/>
         <path d="M12 7v5l3.5 2"/>
     </svg>`;
+
+function localDayKey(time: number): string {
+    const date = new Date(time);
+    const pad = (value: number) => (value < 10 ? '0' : '') + value;
+    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+}
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
@@ -131,7 +137,7 @@ export class SelectElement extends LitElement {
     private focusAnnotationId = 0;
     private sharedFocusToLoad: SharedChipFocus = null;
     private sharedFocusChipName = '';
-    private recentUpdatesCache: RecentUpdateDay[] = null;
+    private recentUpdatesCache: RecentUpdateEvent[] = null;
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
@@ -773,8 +779,8 @@ export class SelectElement extends LitElement {
             body: this.renderRecentUpdatesState(this.recentUpdatesCache),
             onSubmit: () => true,
         });
-        ClientApi.listRecentUpdates().then(days => {
-            this.recentUpdatesCache = days || [];
+        ClientApi.listRecentUpdates().then(events => {
+            this.recentUpdatesCache = events || [];
             handle.setStatus('');
             handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache));
         }).catch(error => {
@@ -784,10 +790,10 @@ export class SelectElement extends LitElement {
         });
     }
 
-    private renderRecentUpdatesState(days: RecentUpdateDay[], refreshFailed: boolean = false): TemplateResult {
+    private renderRecentUpdatesState(events: RecentUpdateEvent[], refreshFailed: boolean = false): TemplateResult {
         return html`
-            ${days
-                ? this.renderRecentUpdates(days)
+            ${events
+                ? this.renderRecentUpdates(events)
                 : html`<div class="recentUpdatesEmpty">${refreshFailed ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
         `;
     }
@@ -802,8 +808,15 @@ export class SelectElement extends LitElement {
         document.body.appendChild(fab);
     }
 
-    private renderRecentUpdates(days: RecentUpdateDay[]): TemplateResult {
-        if (!days || days.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+    private renderRecentUpdates(events: RecentUpdateEvent[]): TemplateResult {
+        if (!events || events.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+        const days: { day: string, events: RecentUpdateEvent[] }[] = [];
+        for (const event of events) {
+            const day = localDayKey(event.time);
+            const last = days[days.length - 1];
+            if (last && last.day === day) last.events.push(event);
+            else days.push({day, events: [event]});
+        }
         return html`<div class="recentUpdatesList">${days.map(day => html`
             <div class="recentUpdatesDay">${day.day}</div>
             ${day.events.map(event => this.renderRecentUpdateRow(event))}

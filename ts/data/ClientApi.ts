@@ -18,11 +18,6 @@ export type RecentUpdateEvent = {
     userName?: string;
 };
 
-export type RecentUpdateDay = {
-    day: string;
-    events: RecentUpdateEvent[];
-};
-
 function getToken() {
     let token = localStorage.getItem('chipannotation-token');
     return token && token !== 'undefined' ? token : null;
@@ -103,7 +98,7 @@ export class ClientApi {
         return ClientApi.get(`${API_SERVER}/annotation/listrecent`);
     }
 
-    static listRecentUpdates(): Promise<RecentUpdateDay[]> {
+    static listRecentUpdates(): Promise<RecentUpdateEvent[]> {
         return ClientApi.get(`${API_SERVER}/rss/recent.json`);
     }
 

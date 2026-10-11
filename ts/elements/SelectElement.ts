@@ -617,6 +617,7 @@ export class SelectElement extends LitElement {
 
     disconnectedCallback(): void {
         window.removeEventListener('popstate', this.onPopState);
+        this.cancelPendingCommentOpen();
         commentsPanel.setCountRefreshHandler(null);
         commentsPanel.setStateChangeHandler(null);
         commentsPanel.clearTarget();
@@ -825,9 +826,12 @@ export class SelectElement extends LitElement {
 
     private renderRecentUpdateRow(event: RecentUpdateEvent): TemplateResult {
         const isChip = event.kind === 'chip';
-        const badge = isChip ? 'New chip' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
-        const badgeClass = isChip ? 'chip' : event.kind === 'annotation-create' ? 'create' : 'update';
-        const text = isChip ? (event.chipDisplay || event.chip) : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
+        const isComment = event.kind === 'comment';
+        const badge = isChip ? 'New chip' : isComment ? 'Comment' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
+        const badgeClass = isChip ? 'chip' : isComment ? 'comment' : event.kind === 'annotation-create' ? 'create' : 'update';
+        const text = isChip ? (event.chipDisplay || event.chip)
+            : isComment ? `Comment on ${event.title || event.chipDisplay || event.chip}${event.userName ? ` by ${event.userName}` : ''}`
+            : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
         const href = `?chip=${encodeURIComponent(event.chip)}${!isChip && event.aid ? `&annotation=${event.aid}` : ''}`;
         const time = new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         return html`
@@ -842,7 +846,42 @@ export class SelectElement extends LitElement {
         if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
         ev.preventDefault();
         AppModal.close();
-        this.openFromRecent(event.chip, event.kind === 'chip' ? 0 : (event.aid || 0));
+        const aid = event.kind === 'chip' ? 0 : (event.aid || 0);
+        if (event.kind === 'comment' && this.navigateFromUser(event.chip, aid)) {
+            this.openCommentsWhenReady(event.chip, aid, event.title);
+            return;
+        }
+        this.cancelPendingCommentOpen();
+        this.openFromRecent(event.chip, aid);
+    }
+
+    private pendingCommentOpenVersion = 0;
+
+    private cancelPendingCommentOpen() {
+        this.pendingCommentOpenVersion++;
+    }
+
+    private openCommentsWhenReady(chipName: string, annotation: number, title?: string) {
+        const version = ++this.pendingCommentOpenVersion;
+        const tryOpen = (attemptsLeft: number) => {
+            if (version !== this.pendingCommentOpenVersion) return;
+            const chipReady = !!this.chip_current && this.chip_current.name === chipName;
+            const ready = annotation === 0
+                ? chipReady
+                : chipReady && !!this.annotation_current && this.annotation_current.aid === annotation;
+            if (ready) {
+                commentsPanel.open({
+                    chipName,
+                    annotation,
+                    count: annotation === 0 ? (this.chipCommentCount || 0) : (this.annotationCommentCount || 0),
+                    label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+                    title: annotation > 0 ? (title || '') : undefined,
+                });
+                return;
+            }
+            if (attemptsLeft > 0) window.setTimeout(() => tryOpen(attemptsLeft - 1), 100);
+        };
+        tryOpen(100);
     }
 
     private openFromRecent(chipName: string, aid: number) {
@@ -872,6 +911,7 @@ export class SelectElement extends LitElement {
     }
 
     private openComments(annotation: number) {
+        this.cancelPendingCommentOpen();
         const chip = this.chip_current;
         if (!chip) return;
         const count = annotation === 0 ? this.chipCommentCount : this.annotationCommentCount;

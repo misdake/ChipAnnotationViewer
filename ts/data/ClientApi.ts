@@ -9,7 +9,7 @@ const API_SERVER = __API_SERVER__;
 type UserInfo = { userName: string, userId: number };
 
 export type RecentUpdateEvent = {
-    kind: 'chip' | 'annotation-create' | 'annotation-update';
+    kind: 'chip' | 'annotation-create' | 'annotation-update' | 'comment';
     time: number;
     chip: string;
     chipDisplay?: string;

@@ -1524,6 +1524,11 @@ body {
     background: rgba(245, 158, 11, 0.16);
 }
 
+.recentUpdatesBadge-comment {
+    color: #c084fc;
+    background: rgba(168, 85, 247, 0.16);
+}
+
 .recentUpdatesText {
     flex: 1 1 auto;
     min-width: 0;

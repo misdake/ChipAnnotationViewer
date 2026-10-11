@@ -459,8 +459,19 @@ export class TitleElement extends LitElement {
                 <div class="changelog" aria-label="Changes since version 3.0">
                     <section class="changelogRelease">
                         <h4>
-                            <span>3.5.0</span>
+                            <span>3.6.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-10-11">2026-10-11</time>
+                        </h4>
+                        <ul>
+                            <li>Text annotations recognize @chip[chip], @annotation[chip](id) and legacy @map/@comment references and render them as clickable links.</li>
+                            <li>Polished the chip picker and recent updates dialog.</li>
+                            <li>Recent updates are grouped by local day and now list new comments; clicking a comment navigates to it and opens its comments panel.</li>
+                        </ul>
+                    </section>
+                    <section class="changelogRelease">
+                        <h4>
+                            <span>3.5.0</span>
                             <time datetime="2026-09-09">2026-09-09</time>
                         </h4>
                         <ul>

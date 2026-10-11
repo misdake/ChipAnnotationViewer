@@ -3,7 +3,7 @@ import { Chip, ChipContent } from '../data/Chip';
 import { NetUtil } from '../util/NetUtil';
 import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotation';
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
-import { ClientApi, RecentUpdateDay, RecentUpdateEvent } from '../data/ClientApi';
+import { ClientApi, RecentUpdateEvent } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
 import { AppModal } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
@@ -66,6 +66,12 @@ const recentUpdatesIcon = html`
         <path d="M3 3v5h5"/>
         <path d="M12 7v5l3.5 2"/>
     </svg>`;
+
+function localDayKey(time: number): string {
+    const date = new Date(time);
+    const pad = (value: number) => (value < 10 ? '0' : '') + value;
+    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+}
 
 function getUrlParam(url: URL, defaultValue: string, ...paramNames: string[]): string {
     let r = defaultValue;
@@ -131,7 +137,7 @@ export class SelectElement extends LitElement {
     private focusAnnotationId = 0;
     private sharedFocusToLoad: SharedChipFocus = null;
     private sharedFocusChipName = '';
-    private recentUpdatesCache: RecentUpdateDay[] = null;
+    private recentUpdatesCache: RecentUpdateEvent[] = null;
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
@@ -611,6 +617,7 @@ export class SelectElement extends LitElement {
 
     disconnectedCallback(): void {
         window.removeEventListener('popstate', this.onPopState);
+        this.cancelPendingCommentOpen();
         commentsPanel.setCountRefreshHandler(null);
         commentsPanel.setStateChangeHandler(null);
         commentsPanel.clearTarget();
@@ -767,27 +774,28 @@ export class SelectElement extends LitElement {
             ariaLabel: 'Recent updates',
             primaryText: 'Close',
             showCancel: false,
-            body: this.renderRecentUpdatesState(this.recentUpdatesCache, true),
+            initialStatus: 'Refreshing...',
+            initialStatusKind: 'saving',
+            statusPlacement: 'header',
+            body: this.renderRecentUpdatesState(this.recentUpdatesCache),
             onSubmit: () => true,
         });
-        ClientApi.listRecentUpdates().then(days => {
-            this.recentUpdatesCache = days || [];
-            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false));
+        ClientApi.listRecentUpdates().then(events => {
+            this.recentUpdatesCache = events || [];
+            handle.setStatus('');
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache));
         }).catch(error => {
             console.warn('Could not load recent updates', error);
-            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, false, 'Could not refresh recent updates.'));
+            handle.setStatus('Could not refresh recent updates.', 'error');
+            handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, true));
         });
     }
 
-    private renderRecentUpdatesState(days: RecentUpdateDay[], loading: boolean, error: string = ''): TemplateResult {
+    private renderRecentUpdatesState(events: RecentUpdateEvent[], refreshFailed: boolean = false): TemplateResult {
         return html`
-            <div class="recentUpdatesStatus" aria-live="polite">
-                ${loading ? html`<span class="recentUpdatesSpinner" aria-hidden="true"></span><span>Refreshing...</span>` : html``}
-                ${error ? html`<span class="recentUpdatesError">${error}</span>` : html``}
-            </div>
-            ${days
-                ? this.renderRecentUpdates(days)
-                : html`<div class="recentUpdatesEmpty">${error ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
+            ${events
+                ? this.renderRecentUpdates(events)
+                : html`<div class="recentUpdatesEmpty">${refreshFailed ? 'No cached updates available.' : 'Loading recent updates...'}</div>`}
         `;
     }
 
@@ -801,8 +809,15 @@ export class SelectElement extends LitElement {
         document.body.appendChild(fab);
     }
 
-    private renderRecentUpdates(days: RecentUpdateDay[]): TemplateResult {
-        if (!days || days.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+    private renderRecentUpdates(events: RecentUpdateEvent[]): TemplateResult {
+        if (!events || events.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+        const days: { day: string, events: RecentUpdateEvent[] }[] = [];
+        for (const event of events) {
+            const day = localDayKey(event.time);
+            const last = days[days.length - 1];
+            if (last && last.day === day) last.events.push(event);
+            else days.push({day, events: [event]});
+        }
         return html`<div class="recentUpdatesList">${days.map(day => html`
             <div class="recentUpdatesDay">${day.day}</div>
             ${day.events.map(event => this.renderRecentUpdateRow(event))}
@@ -811,9 +826,12 @@ export class SelectElement extends LitElement {
 
     private renderRecentUpdateRow(event: RecentUpdateEvent): TemplateResult {
         const isChip = event.kind === 'chip';
-        const badge = isChip ? 'New chip' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
-        const badgeClass = isChip ? 'chip' : event.kind === 'annotation-create' ? 'create' : 'update';
-        const text = isChip ? (event.chipDisplay || event.chip) : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
+        const isComment = event.kind === 'comment';
+        const badge = isChip ? 'New chip' : isComment ? 'Comment' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
+        const badgeClass = isChip ? 'chip' : isComment ? 'comment' : event.kind === 'annotation-create' ? 'create' : 'update';
+        const text = isChip ? (event.chipDisplay || event.chip)
+            : isComment ? `Comment on ${event.title || event.chipDisplay || event.chip}${event.userName ? ` by ${event.userName}` : ''}`
+            : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
         const href = `?chip=${encodeURIComponent(event.chip)}${!isChip && event.aid ? `&annotation=${event.aid}` : ''}`;
         const time = new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         return html`
@@ -828,7 +846,42 @@ export class SelectElement extends LitElement {
         if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
         ev.preventDefault();
         AppModal.close();
-        this.openFromRecent(event.chip, event.kind === 'chip' ? 0 : (event.aid || 0));
+        const aid = event.kind === 'chip' ? 0 : (event.aid || 0);
+        if (event.kind === 'comment' && this.navigateFromUser(event.chip, aid)) {
+            this.openCommentsWhenReady(event.chip, aid, event.title);
+            return;
+        }
+        this.cancelPendingCommentOpen();
+        this.openFromRecent(event.chip, aid);
+    }
+
+    private pendingCommentOpenVersion = 0;
+
+    private cancelPendingCommentOpen() {
+        this.pendingCommentOpenVersion++;
+    }
+
+    private openCommentsWhenReady(chipName: string, annotation: number, title?: string) {
+        const version = ++this.pendingCommentOpenVersion;
+        const tryOpen = (attemptsLeft: number) => {
+            if (version !== this.pendingCommentOpenVersion) return;
+            const chipReady = !!this.chip_current && this.chip_current.name === chipName;
+            const ready = annotation === 0
+                ? chipReady
+                : chipReady && !!this.annotation_current && this.annotation_current.aid === annotation;
+            if (ready) {
+                commentsPanel.open({
+                    chipName,
+                    annotation,
+                    count: annotation === 0 ? (this.chipCommentCount || 0) : (this.annotationCommentCount || 0),
+                    label: annotation === 0 ? 'Chip comments' : 'Annotation comments',
+                    title: annotation > 0 ? (title || '') : undefined,
+                });
+                return;
+            }
+            if (attemptsLeft > 0) window.setTimeout(() => tryOpen(attemptsLeft - 1), 100);
+        };
+        tryOpen(100);
     }
 
     private openFromRecent(chipName: string, aid: number) {
@@ -858,6 +911,7 @@ export class SelectElement extends LitElement {
     }
 
     private openComments(annotation: number) {
+        this.cancelPendingCommentOpen();
         const chip = this.chip_current;
         if (!chip) return;
         const count = annotation === 0 ? this.chipCommentCount : this.annotationCommentCount;
@@ -1042,7 +1096,7 @@ export class SelectElement extends LitElement {
                     </span>
                 </label>
                 <div class="recentUpdatesCell">
-                    <button class="topBarIconButton recentUpdatesButton" title="Recent updates" aria-label="Recent updates" @click=${() => this.openRecentUpdates()}>${recentUpdatesIcon}</button>
+                    <button class="topBarIconButton recentUpdatesButton" title="Recent updates" aria-label="Recent updates" @click=${() => this.openRecentUpdates()}>${recentUpdatesIcon}<span>Recent</span></button>
                 </div>
             </div>
         `;

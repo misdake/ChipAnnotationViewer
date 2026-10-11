@@ -9,18 +9,13 @@ const API_SERVER = __API_SERVER__;
 type UserInfo = { userName: string, userId: number };
 
 export type RecentUpdateEvent = {
-    kind: 'chip' | 'annotation-create' | 'annotation-update';
+    kind: 'chip' | 'annotation-create' | 'annotation-update' | 'comment';
     time: number;
     chip: string;
     chipDisplay?: string;
     aid?: number;
     title?: string;
     userName?: string;
-};
-
-export type RecentUpdateDay = {
-    day: string;
-    events: RecentUpdateEvent[];
 };
 
 function getToken() {
@@ -103,7 +98,7 @@ export class ClientApi {
         return ClientApi.get(`${API_SERVER}/annotation/listrecent`);
     }
 
-    static listRecentUpdates(): Promise<RecentUpdateDay[]> {
+    static listRecentUpdates(): Promise<RecentUpdateEvent[]> {
         return ClientApi.get(`${API_SERVER}/rss/recent.json`);
     }
 

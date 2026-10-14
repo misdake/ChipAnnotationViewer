@@ -830,7 +830,7 @@ export class SelectElement extends LitElement {
         const badge = isChip ? 'New chip' : isComment ? 'Comment' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
         const badgeClass = isChip ? 'chip' : isComment ? 'comment' : event.kind === 'annotation-create' ? 'create' : 'update';
         const text = isChip ? (event.chipDisplay || event.chip)
-            : isComment ? `Comment on ${event.title || event.chipDisplay || event.chip}${event.userName ? ` by ${event.userName}` : ''}`
+            : isComment ? `Comment on ${event.title ? `${event.title} (${event.chipDisplay || event.chip})` : (event.chipDisplay || event.chip)}${event.userName ? ` by ${event.userName}` : ''}`
             : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
         const href = `?chip=${encodeURIComponent(event.chip)}${!isChip && event.aid ? `&annotation=${event.aid}` : ''}`;
         const time = new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});

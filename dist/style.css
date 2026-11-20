@@ -2163,13 +2163,48 @@ button.advanced-chip-row.selected {
     border-bottom: 0;
 }
 
-.changelogRelease h4 {
+.changelogRelease summary {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 7px;
+    margin: 0;
     color: var(--ink);
     font-size: 14px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.changelogRelease[open] summary {
+    margin-bottom: 7px;
+}
+
+.changelogRelease summary::-webkit-details-marker {
+    display: none;
+}
+
+.changelogRelease summary::marker {
+    content: "";
+}
+
+.changelogRelease summary::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-left: 2px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translate(-1px, -1px);
+    transition: transform .15s ease;
+}
+
+.changelogRelease[open] summary::after {
+    transform: rotate(-135deg) translate(-1px, -1px);
+}
+
+.changelogRelease summary:hover {
+    color: var(--brand);
 }
 
 .changelogCurrent {

@@ -459,8 +459,19 @@ export class TitleElement extends LitElement {
                 <div class="changelog" aria-label="Changes since version 3.0">
                     <details class="changelogRelease" open>
                         <summary>
-                            <span>3.6.0</span>
+                            <span>3.7.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-11-20">2026-11-20</time>
+                        </summary>
+                        <ul>
+                            <li>Added type filters to the recent updates dialog.</li>
+                            <li>Fixed the box-selection border width.</li>
+                            <li>Comment entries in recent updates now show the chip name alongside the annotation title.</li>
+                        </ul>
+                    </details>
+                    <details class="changelogRelease" open>
+                        <summary>
+                            <span>3.6.0</span>
                             <time datetime="2026-10-11">2026-10-11</time>
                         </summary>
                         <ul>
@@ -479,7 +490,7 @@ export class TitleElement extends LitElement {
                             <li>Grouped adjacent chips by vendor, type, and family in both the quick picker and Open Chip browser.</li>
                         </ul>
                     </details>
-                    <details class="changelogRelease" open>
+                    <details class="changelogRelease">
                         <summary>
                             <span>3.4.0</span>
                             <time datetime="2026-08-25">2026-08-25</time>

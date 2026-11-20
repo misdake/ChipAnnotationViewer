@@ -42,6 +42,11 @@ export class Renderer {
         return onScreen + onCanvas;
     }
 
+    // a crisp 1 CSS pixel stroke, expressed in device pixels (the canvas is dpr-scaled)
+    public static cssLineWidth(): number {
+        return Math.max(1, window.devicePixelRatio || 1);
+    }
+
 
     //---------------------------------------------
     //polyline
@@ -117,12 +122,11 @@ export class Renderer {
     public renderCircle(camera: Camera, x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: Size) {
         let position = camera.canvasToScreen(x, y);
         let size = camera.canvasSizeToScreen(radius);
-        this.drawCircle(position.x, position.y, size, fill, stroke);
-        this.context.lineWidth = this.calculateLineWidth(camera, lineWidth);
+        this.drawCircle(position.x, position.y, size, fill, stroke, this.calculateLineWidth(camera, lineWidth));
     }
 
     public drawCircle(x: number, y: number, radius: number, fill: boolean, stroke: boolean, lineWidth?: number) {
-        if (lineWidth) this.context.lineWidth = lineWidth;
+        this.context.lineWidth = lineWidth || 1;
 
         this.context.beginPath();
         this.context.arc(x, y, radius, 0, Math.PI * 2);
@@ -137,7 +141,7 @@ export class Renderer {
     }
 
     public drawRect(x1: number, y1: number, x2: number, y2: number, fill: boolean, stroke: boolean, lineWidth?: number) {
-        if (lineWidth) this.context.lineWidth = lineWidth;
+        this.context.lineWidth = lineWidth || 1;
 
         this.context.beginPath();
         this.context.moveTo(x1, y1);

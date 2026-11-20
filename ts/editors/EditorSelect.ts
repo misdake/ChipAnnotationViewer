@@ -556,7 +556,7 @@ export class EditorSelect extends Editor {
             env.renderer.setColor("rgba(100, 149, 237, 0.2)");
             env.renderer.drawRect(x1, y1, x2, y2, true, false);
             env.renderer.setColor("rgba(100, 149, 237, 1)");
-            env.renderer.drawRect(x1, y1, x2, y2, false, true);
+            env.renderer.drawRect(x1, y1, x2, y2, false, true, Renderer.cssLineWidth());
 
             for (let drawable of this.previewSelection) {
                 switch (drawable.pickType) {

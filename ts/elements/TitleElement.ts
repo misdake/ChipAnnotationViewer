@@ -457,44 +457,55 @@ export class TitleElement extends LitElement {
             showCancel: false,
             body: html`
                 <div class="changelog" aria-label="Changes since version 3.0">
-                    <section class="changelogRelease">
-                        <h4>
-                            <span>3.6.0</span>
+                    <details class="changelogRelease" open>
+                        <summary>
+                            <span>3.7.0</span>
                             <span class="changelogCurrent">Current</span>
+                            <time datetime="2026-11-20">2026-11-20</time>
+                        </summary>
+                        <ul>
+                            <li>Added type filters to the recent updates dialog.</li>
+                            <li>Fixed the box-selection border width.</li>
+                            <li>Comment entries in recent updates now show the chip name alongside the annotation title.</li>
+                        </ul>
+                    </details>
+                    <details class="changelogRelease" open>
+                        <summary>
+                            <span>3.6.0</span>
                             <time datetime="2026-10-11">2026-10-11</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Text annotations recognize @chip[chip], @annotation[chip](id) and legacy @map/@comment references and render them as clickable links.</li>
                             <li>Polished the chip picker and recent updates dialog.</li>
                             <li>Recent updates are grouped by local day and now list new comments; clicking a comment navigates to it and opens its comments panel.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease" open>
+                        <summary>
                             <span>3.5.0</span>
                             <time datetime="2026-09-09">2026-09-09</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Share links can now focus a selected polyline or text annotation, with clearer reasons when a focus option is unavailable.</li>
                             <li>Grouped adjacent chips by vendor, type, and family in both the quick picker and Open Chip browser.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease">
+                        <summary>
                             <span>3.4.0</span>
                             <time datetime="2026-08-25">2026-08-25</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Added an in-app changelog to the user menu.</li>
                             <li>Improved long share-link display and restored links that reopen the focused annotation.</li>
                             <li>Highlighted chip-image credit and source links with a clearer attribution group.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease">
+                        <summary>
                             <span>3.3.0</span>
                             <time datetime="2026-08-23">2026-08-23</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Added share links with a more reliable copy flow.</li>
                             <li>Added selection and box-focus controls, plus share links that reopen the current view or selected geometry.</li>
@@ -503,12 +514,12 @@ export class TitleElement extends LitElement {
                             <li>Refined responsive canvas tools, selection interactions, and chip-picker scrolling.</li>
                             <li>Browser back and forward navigation now follows chip and annotation changes.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease">
+                        <summary>
                             <span>3.2.0</span>
                             <time datetime="2026-08-01">2026-08-01</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Chip details and annotation lists now load in parallel when switching chips.</li>
                             <li>Annotation contents preload with the list, then safely revalidate on selection.</li>
@@ -516,12 +527,12 @@ export class TitleElement extends LitElement {
                             <li>The RSS shortcut now points to the daily update feed.</li>
                             <li>Production API configuration is now tracked for reliable CI and GitHub Pages builds.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease">
+                        <summary>
                             <span>3.1.0</span>
                             <time datetime="2026-08-01">2026-08-01</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Refined the chip and annotation selector controls.</li>
                             <li>Improved cross-origin login token handling.</li>
@@ -531,12 +542,12 @@ export class TitleElement extends LitElement {
                             <li>Fixed advanced-browser overflow.</li>
                             <li>Added GitHub Pages deployment and the MIT license.</li>
                         </ul>
-                    </section>
-                    <section class="changelogRelease">
-                        <h4>
+                    </details>
+                    <details class="changelogRelease">
+                        <summary>
                             <span>3.0.0</span>
                             <time datetime="2026-07-09">2026-07-09</time>
-                        </h4>
+                        </summary>
                         <ul>
                             <li>Migrated annotations and authentication to the new server API.</li>
                             <li>Introduced a responsive editor workspace with read-only navigation and an advanced chip browser.</li>
@@ -548,7 +559,7 @@ export class TitleElement extends LitElement {
                             <li>Added chip and annotation comments, including an embedded panel and real-time updates.</li>
                             <li>Added clearer network feedback, editor hints, and a controls guide.</li>
                         </ul>
-                    </section>
+                    </details>
                 </div>
             `,
             onSubmit: () => true,

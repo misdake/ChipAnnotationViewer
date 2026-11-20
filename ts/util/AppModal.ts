@@ -33,6 +33,7 @@ export interface AppModalConfig {
     initialStatus?: string;
     initialStatusKind?: ModalStatusKind;
     statusPlacement?: "body" | "header";
+    footerExtra?: () => TemplateResult;
     onSubmit: (context: AppModalContext) => boolean | void | Promise<boolean | void>;
     onInputChange?: (value: string, context: AppModalContext) => void;
     onCancel?: () => void;
@@ -324,6 +325,9 @@ class AppModalElement extends LitElement {
                             ? html``
                             : html`<p class="appModalStatus appModalStatus-${this.statusKind}" aria-live="polite">${this.statusMessage}</p>`}
                         <div class="deleteAnnotationActions">
+                            ${config && config.footerExtra
+                                ? html`<div class="appModalFooterExtra">${config.footerExtra()}</div>`
+                                : html``}
                             ${config && config.showCancel !== false
                                 ? html`<button class="configButton appModalCancel" type="button" @click=${() => this.close(true)}>${config.cancelText || "Cancel"}</button>`
                                 : html``}

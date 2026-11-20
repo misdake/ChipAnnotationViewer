@@ -5,6 +5,7 @@ import { Canvas } from "../Canvas";
 import { Env } from "../Env";
 import { Camera } from "../Camera";
 import { AABB } from "../util/AABB";
+import { Renderer } from "../Renderer";
 
 export class EditorCameraControl extends Editor {
     public static allowLeftMousePan = false;
@@ -201,7 +202,7 @@ export class EditorCameraControl extends Editor {
         env.renderer.setColor("rgba(245, 158, 11, .2)");
         env.renderer.drawRect(p1.x, p1.y, p2.x, p2.y, true, false);
         env.renderer.setColor("rgba(245, 158, 11, .95)");
-        env.renderer.drawRect(p1.x, p1.y, p2.x, p2.y, false, true, Math.max(1, window.devicePixelRatio));
+        env.renderer.drawRect(p1.x, p1.y, p2.x, p2.y, false, true, Renderer.cssLineWidth());
     }
 
     private beginZoomBox(event: MouseIn) {

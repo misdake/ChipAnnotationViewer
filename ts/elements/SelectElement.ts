@@ -5,7 +5,7 @@ import { Annotation, AnnotationContent, AnnotationData } from '../data/Annotatio
 import { upgradeAnnotationData } from '../data/AnnotationDataUpgrade';
 import { ClientApi, RecentUpdateEvent } from '../data/ClientApi';
 import { notifyToast } from '../util/Toast';
-import { AppModal } from '../util/AppModal';
+import { AppModal, AppModalHandle } from '../util/AppModal';
 import { render as renderTemplate } from 'lit-html';
 import { commentsPanel, CommentsTarget } from '../comments/CommentsPanel';
 import { AABB } from '../util/AABB';
@@ -17,6 +17,8 @@ export interface SharedChipFocus {
 }
 
 type HistoryWrite = 'push' | 'replace' | 'none';
+
+type RecentUpdateFilterKind = RecentUpdateEvent['kind'];
 
 interface ViewerHistoryState {
     chipAnnotationViewer: true;
@@ -138,6 +140,13 @@ export class SelectElement extends LitElement {
     private sharedFocusToLoad: SharedChipFocus = null;
     private sharedFocusChipName = '';
     private recentUpdatesCache: RecentUpdateEvent[] = null;
+    private recentUpdatesHandle: AppModalHandle = null;
+    private recentUpdatesFilter: { [kind in RecentUpdateFilterKind]: boolean } = {
+        'chip': true,
+        'annotation-create': true,
+        'annotation-update': true,
+        'comment': true,
+    };
     private chipSelectionVersion = 0;
     @property()
     private chipQuery = '';
@@ -777,9 +786,11 @@ export class SelectElement extends LitElement {
             initialStatus: 'Refreshing...',
             initialStatusKind: 'saving',
             statusPlacement: 'header',
+            footerExtra: () => this.renderRecentUpdatesFilters(),
             body: this.renderRecentUpdatesState(this.recentUpdatesCache),
             onSubmit: () => true,
         });
+        this.recentUpdatesHandle = handle;
         ClientApi.listRecentUpdates().then(events => {
             this.recentUpdatesCache = events || [];
             handle.setStatus('');
@@ -789,6 +800,46 @@ export class SelectElement extends LitElement {
             handle.setStatus('Could not refresh recent updates.', 'error');
             handle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache, true));
         });
+    }
+
+    private renderRecentUpdatesFilters(): TemplateResult {
+        const filters: { kind: RecentUpdateFilterKind, label: string, title: string, modifier: string }[] = [
+            {kind: 'chip', label: 'Chip', title: 'Show new chips', modifier: 'Chip'},
+            {kind: 'annotation-create', label: 'Annotation', title: 'Show new annotations', modifier: 'AnnotationCreate'},
+            {kind: 'annotation-update', label: 'Updated', title: 'Show updated annotations', modifier: 'AnnotationUpdate'},
+            {kind: 'comment', label: 'Comment', title: 'Show comments', modifier: 'Comment'},
+        ];
+        return html`
+            <div class="recentUpdatesFilters" role="group" aria-label="Filter recent updates">
+                ${filters.map(({kind, label, title, modifier}) => {
+                    const on = this.recentUpdatesFilter[kind];
+                    return html`
+                        <button
+                            class="recentUpdatesFilter recentUpdatesFilter${modifier} ${on ? 'recentUpdatesFilterOn' : ''}"
+                            type="button"
+                            role="checkbox"
+                            aria-checked=${on ? 'true' : 'false'}
+                            title="${title}"
+                            @click=${() => this.toggleRecentUpdatesFilter(kind)}>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="currentColor" stroke-width="2"></rect>
+                                <path class="recentUpdatesFilterCheck" d="M8 12.4l2.7 2.7 5.3-5.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                            <span>${label}</span>
+                        </button>`;
+                })}
+            </div>`;
+    }
+
+    private toggleRecentUpdatesFilter(kind: RecentUpdateFilterKind) {
+        this.recentUpdatesFilter[kind] = !this.recentUpdatesFilter[kind];
+        if (this.recentUpdatesHandle) {
+            this.recentUpdatesHandle.setBody(this.renderRecentUpdatesState(this.recentUpdatesCache));
+        }
+    }
+
+    private recentUpdateMatchesFilter(event: RecentUpdateEvent): boolean {
+        return this.recentUpdatesFilter[event.kind] !== false;
     }
 
     private renderRecentUpdatesState(events: RecentUpdateEvent[], refreshFailed: boolean = false): TemplateResult {
@@ -811,8 +862,10 @@ export class SelectElement extends LitElement {
 
     private renderRecentUpdates(events: RecentUpdateEvent[]): TemplateResult {
         if (!events || events.length === 0) return html`<div class="recentUpdatesEmpty">No recent updates.</div>`;
+        const visible = events.filter(event => this.recentUpdateMatchesFilter(event));
+        if (visible.length === 0) return html`<div class="recentUpdatesEmpty">No updates match these filters.</div>`;
         const days: { day: string, events: RecentUpdateEvent[] }[] = [];
-        for (const event of events) {
+        for (const event of visible) {
             const day = localDayKey(event.time);
             const last = days[days.length - 1];
             if (last && last.day === day) last.events.push(event);
@@ -827,10 +880,10 @@ export class SelectElement extends LitElement {
     private renderRecentUpdateRow(event: RecentUpdateEvent): TemplateResult {
         const isChip = event.kind === 'chip';
         const isComment = event.kind === 'comment';
-        const badge = isChip ? 'New chip' : isComment ? 'Comment' : event.kind === 'annotation-create' ? 'New annotation' : 'Updated';
+        const badge = isChip ? 'Chip' : isComment ? 'Comment' : event.kind === 'annotation-create' ? 'Annotation' : 'Updated';
         const badgeClass = isChip ? 'chip' : isComment ? 'comment' : event.kind === 'annotation-create' ? 'create' : 'update';
         const text = isChip ? (event.chipDisplay || event.chip)
-            : isComment ? `Comment on ${event.title || event.chipDisplay || event.chip}${event.userName ? ` by ${event.userName}` : ''}`
+            : isComment ? `Comment on ${event.title ? `${event.title} (${event.chipDisplay || event.chip})` : (event.chipDisplay || event.chip)}${event.userName ? ` by ${event.userName}` : ''}`
             : `${event.title || 'Untitled'} (${event.chipDisplay || event.chip})${event.userName ? ` by ${event.userName}` : ''}`;
         const href = `?chip=${encodeURIComponent(event.chip)}${!isChip && event.aid ? `&annotation=${event.aid}` : ''}`;
         const time = new Date(event.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});

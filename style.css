@@ -501,8 +501,10 @@ input[type="number"]:focus {
 
 .chipInfoModalHeader {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: 8px 8px;
     padding: 10px 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -690,9 +692,19 @@ button.chipInfoCloseButton,
 
 .deleteAnnotationActions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
     gap: 6px;
     margin-top: 12px;
+}
+
+.appModalFooterExtra {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+    margin-right: auto;
 }
 
 .deleteAnnotationActions label.configButton {
@@ -1449,6 +1461,85 @@ body {
     color: #fff;
 }
 
+.recentUpdatesFilters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.recentUpdatesFilter {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 7px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--panel-2);
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.recentUpdatesFilterChip {
+    --filter-tone: #7db4ff;
+    --filter-tone-soft: rgba(79, 140, 255, 0.16);
+    --filter-tone-hover: rgba(79, 140, 255, 0.26);
+}
+
+.recentUpdatesFilterAnnotationCreate {
+    --filter-tone: #4ade80;
+    --filter-tone-soft: rgba(16, 185, 129, 0.16);
+    --filter-tone-hover: rgba(16, 185, 129, 0.26);
+}
+
+.recentUpdatesFilterAnnotationUpdate {
+    --filter-tone: #fbbf24;
+    --filter-tone-soft: rgba(245, 158, 11, 0.16);
+    --filter-tone-hover: rgba(245, 158, 11, 0.26);
+}
+
+.recentUpdatesFilterComment {
+    --filter-tone: #c084fc;
+    --filter-tone-soft: rgba(168, 85, 247, 0.16);
+    --filter-tone-hover: rgba(168, 85, 247, 0.26);
+}
+
+.recentUpdatesFilter svg {
+    display: block;
+    width: 11px;
+    height: 11px;
+}
+
+.recentUpdatesFilterCheck {
+    opacity: 0;
+}
+
+.recentUpdatesFilter:hover {
+    border-color: var(--filter-tone);
+    color: var(--filter-tone);
+}
+
+.recentUpdatesFilterOn {
+    border-color: var(--filter-tone);
+    background: var(--filter-tone-soft);
+    color: var(--filter-tone);
+}
+
+.recentUpdatesFilterOn .recentUpdatesFilterCheck {
+    opacity: 1;
+}
+
+.recentUpdatesFilterOn:hover {
+    background: var(--filter-tone-hover);
+    color: var(--filter-tone);
+}
+
 .recentUpdatesCell {
     align-self: end;
 }
@@ -1486,7 +1577,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 7px 8px;
+    padding: 7px 8px 7px 1px;
     border: 1px solid transparent;
     border-radius: 6px;
     color: var(--text-primary);
@@ -1500,12 +1591,15 @@ body {
 }
 
 .recentUpdatesBadge {
+    box-sizing: border-box;
     flex: 0 0 auto;
+    min-width: 66px;
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
     line-height: 1.4;
+    text-align: center;
     white-space: nowrap;
 }
 
@@ -2069,13 +2163,48 @@ button.advanced-chip-row.selected {
     border-bottom: 0;
 }
 
-.changelogRelease h4 {
+.changelogRelease summary {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 7px;
+    margin: 0;
     color: var(--ink);
     font-size: 14px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.changelogRelease[open] summary {
+    margin-bottom: 7px;
+}
+
+.changelogRelease summary::-webkit-details-marker {
+    display: none;
+}
+
+.changelogRelease summary::marker {
+    content: "";
+}
+
+.changelogRelease summary::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-left: 2px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translate(-1px, -1px);
+    transition: transform .15s ease;
+}
+
+.changelogRelease[open] summary::after {
+    transform: rotate(-135deg) translate(-1px, -1px);
+}
+
+.changelogRelease summary:hover {
+    color: var(--brand);
 }
 
 .changelogCurrent {
